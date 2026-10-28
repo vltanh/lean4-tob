@@ -1,3 +1,5 @@
 module
 
-/-! TINNiK: project scaffold. No mathematical declarations have been added. -/
+public import TINNiK.Statistics.Definitions
+
+/-! TINNiK definitions and representation bridges. Numbered results remain pending. -/

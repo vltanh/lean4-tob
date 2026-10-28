@@ -34,3 +34,30 @@ No paper-result baseline or completed proof corpus was produced in this round.
 The run's output is a compiled project scaffold, source inventories, independently
 reviewed findings and partial Lean counterexample certificates. No remote writes,
 publishing, Palomar preflight, submission or registration were performed.
+
+## Supplement review and shared foundations, 2026-10-27
+
+The second round began at 21:34:56 America/Chicago, after the user approved the
+ECToBlob genericity correction. During this round the user supplied both
+supplements and approved the TOB-QMC supplement's forward-only quartet lemma.
+
+At the 22:13 checkpoint, about 39 minutes into this round and 64 minutes after
+initial setup, the full build passed. The declaration audit checked 388 library
+declarations, including private and generated declarations, using only Lean's
+three standard axioms. This count is **not** a count of paper theorems: none of
+the numbered paper results has been proved. The two new counterexample scripts
+also compiled with standard axioms only.
+
+The same three agents were resumed for source review, statistics definitions,
+finite optimization, quartet and ancestral representations, and the finite
+sunlet certificate. Reviews were assigned to agents other than the respective
+authors. Root built the general multigraph, connectivity and bridge-contraction
+modules, integrated the work and performed the aggregate audit. The tree-only
+hierarchy kernel was adapted from the public phylogenetics library; its exact
+source and proof adaptations are recorded in [ADAPTED_SOURCES.md](docs/ADAPTED_SOURCES.md).
+
+Peak concurrency remained root plus three agents. One continuation briefly failed
+because the selected model was at capacity and was resumed without a model
+change. Active agent time, exact model revision, token totals and monetary cost
+remain unavailable; overlapping wall spans are not summed as compute time.
+Source/statement work continues. No publishing or registry action was taken.

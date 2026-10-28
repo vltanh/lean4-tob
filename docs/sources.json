@@ -33,11 +33,29 @@
       "local_ignored_path": "notes/tinnik/article.xml",
       "sha256": "a12468a276d74e58e641fdc245aa8e92ed45e9e8dbac34430dc69cde2dda2e17",
       "bytes": 1057600
+    },
+    {
+      "paper": "ECToBlob supplement",
+      "provided_by": "user",
+      "original_local_path": "/home/vltanh/Downloads/ectob_supp.pdf",
+      "local_ignored_path": "notes/paper2026/user_supplement.pdf",
+      "sha256": "bc5378d4f828f9e5d3f30b374fe6c52252cb2f3565d933f0327d7cc2fc671293",
+      "bytes": 1004790,
+      "pages": 6,
+      "content": "Simulation appendices A/B; no additional numbered mathematical results."
+    },
+    {
+      "paper": "TOB-QMC supplement",
+      "provided_by": "user",
+      "original_local_path": "/home/vltanh/Downloads/tob-qmc_supp.pdf",
+      "local_ignored_path": "notes/paper2025/tob-qmc_supp.pdf",
+      "sha256": "4ca03070f548c9487ea185e0b0218c361d88748f49f8938a196b2cc6caa25161",
+      "bytes": 3233904,
+      "pages": 43,
+      "internal_date": "2026-02-26",
+      "version_linkage": "Unconfirmed; internal numbering differs from main bioRxiv v5. Earlier internal date alone does not establish that this supplement was superseded."
     }
   ],
   "original_author_tex_available": false,
-  "unread_supplements": [
-    "ECToBlob A/B",
-    "TOB-QMC supplementary lemma and algorithms"
-  ]
+  "unread_supplements": []
 }

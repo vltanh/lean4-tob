@@ -10,6 +10,8 @@ Recorded 2026-10-27 (America/Chicago).
 
 Downloads and working inventories are kept under ignored `notes/`; they are not distributed with the library. The TINNiK publisher XML includes TeX equations, but is not the authors' original TeX source.
 
+The user supplied `ectob_supp.pdf` (6 pages) and `tob-qmc_supp.pdf` (43 pages) from Downloads on 2026-10-27. Both have been read and hashed. The ECToBlob supplement contains simulation appendices A/B. The TOB-QMC supplement is internally dated February 26, 2026 and uses some result numbers that differ from main v5. Its precise version linkage is unconfirmed; the internal date alone does not establish that a later supplement exists. Its mathematical claims are inventoried separately with a provisional crosswalk to the main text.
+
 ## Repository and toolchain
 
 - New local repository; branch `formalize/tree-of-blobs`. No draft existed.
@@ -27,12 +29,14 @@ The requested target is all mathematical results of the three papers, their cite
 
 Cited results that are out of reach may become explicit hypotheses named after their sources, as the invoked skill permits. Results proved in these papers may not be replaced with such hypotheses.
 
-The public `lean4-phylogenetics` and `lean4-camus` projects are candidates for prior work and reusable foundations. They have not been incorporated. In particular, the former's current network definitions are restricted to level 1; they cannot silently stand for arbitrary networks.
+The public `lean4-phylogenetics` and `lean4-camus` projects were surveyed for prior work and reusable foundations. A tree-only hierarchy kernel from the former was adapted with explicit provenance in [ADAPTED_SOURCES.md](ADAPTED_SOURCES.md). Its level-1 network definitions and coalescent modules were not imported; they cannot stand for arbitrary networks. CAMUS has not been incorporated.
 
 Default license: Apache-2.0. Local Git identity: The-Anh Vu-Le. Public authorship and maintainership remain to be confirmed before publication. AI systems are credited as tools, not human authors.
 
 No push, remote repository creation, publication, Palomar preflight, submission, or registration is authorized. Local work and milestone commits are authorized by the invoked skill.
 
-## Authorized correction
+## Authorized corrections
 
-The user explicitly approved using the closed probability simplex for TINNiK maximum-likelihood estimation while keeping the generating distribution strictly positive. The open-domain counterexample and correction are checked in `scripts/BoundaryCheck.lean`. ECToBlob Theorem 8.2 still requires a decision on its missing generic-parameter restriction; no altered statement has been introduced.
+The user explicitly approved using the closed probability simplex for TINNiK maximum-likelihood estimation while keeping the generating distribution strictly positive. The open-domain counterexample and correction are checked in `scripts/BoundaryCheck.lean`. On 2026-10-27 the user also explicitly approved restricting ECToBlob Theorem 8.2 to generic numerical parameters, outside the exceptional sets in both converse clauses of Assumption 1 for every induced quartet. This is a correction to the printed theorem, justified by E7 in REPORT.md, not an inferred standing hypothesis. The model-level generic claim and the pointwise parameter restriction must be kept separate in Lean.
+
+The user also approved retaining only the valid forward implication of supplied TOB-QMC supplement Lemma 2: a resolved quartet on the full tree of blobs implies that its induced subnetwork is treelike. The false converse is documented with a five-taxon sunlet counterexample (E11). The main v5 already distinguishes these two kinds of quartet.

@@ -1,7 +1,7 @@
 # Preliminary manual proof routes. NOT a passing formal proof audit.
 # All labels are assigned locally; original author TeX was not found.
 # proved=1 describes a proof in the paper, never a completed Lean proof.
-# Supplement entries remain incomplete and must be replaced after retrieval.
+# Supplied supplement is read; numbering crosswalk to main v5 remains provisional.
 # Manually extracted from exact v1 PDF and publisher JATS; author TeX unavailable.
 # ecto:* labels are local stable labels, not purported author TeX labels.
 # JATS IDs and page/text locators are in results.tsv. External citations tracked in inventory.md.
@@ -45,7 +45,7 @@ ecto:runtime_mul	claim	1	ecto:alg7_1
 ecto:selection_order	claim	1	ecto:alg7_1
 # Manual routes from bioRxiv 2025.11.05.686850v5 PDF, read in full.
 # No TeX obtained: all labels below assigned by inventory author. Source printed line numbers are in INVENTORY.md.
-# This file is incomplete until supplementary Lemma4 and Algorithms1–2 are retrieved.
+# User-supplied supplement read; exact linkage to v5 remains UNCONFIRMED. Its claims have separate labels.
 # Format required by route_check.py: label, environment, paper_proves, comma-separated numbered-result labels.
 # Lemmas1–2 are cited results; provenance/dependencies beyond this paper are in INVENTORY.md.
 tob2025:lemma1	lemma	0
@@ -56,9 +56,9 @@ tob2025:equation2	equation	1
 tob2025:equation3	equation	1
 tob2025:equation4	equation	1
 tob2025:lemma3	lemma	1	tob2025:equation1,tob2025:equation2,tob2025:equation3,tob2025:equation4
-# Supplementary lemma referenced at main lines503–505: exact statement and proof not yet read. Do not mark proved route final.
-tob2025:supplement_lemma4_UNREAD	lemma	0
-tob2025:theorem1	theorem	1	tob2025:lemma3,tob2025:supplement_lemma4_UNREAD
+# Supplementary lemma referenced at main lines503–505: supplied-source analogue read, but source crosswalk needs confirmation.
+tob2025:supplement_lemma4	lemma	1	tob2025:lemma3
+tob2025:theorem1	theorem	1	tob2025:lemma3,tob2025:supplement_lemma4
 # Unnumbered corollary in running text at lines517–522.
 tob2025:astral_corollary	corollary	1	tob2025:theorem1
 tob2025:lemma4	lemma	1	tob2025:lemma2
@@ -69,6 +69,27 @@ tob2025:3f1a_correctness	claim	1	tob2025:theorem2
 tob2025:consistency	claim	1	tob2025:theorem1,tob2025:theorem2,tinnik:theorem4
 tob2025:3f1a_complexity	claim	1
 tob2025:combined_search_consistency	claim	1	tob2025:consistency
+
+# User-supplied supplement, front page Feb26 2026, exact v5 linkage unconfirmed.
+# False/proof-gap claims are inventoried honestly, not claims that Lean can prove them unchanged.
+tob2025supplied:lemma2	lemma	1
+tob2025supplied:equation1	equation	0
+tob2025supplied:equation2	equation	1
+tob2025supplied:equation3	equation	1
+tob2025supplied:equation4	equation	1
+tob2025supplied:equation5	equation	1
+tob2025supplied:equation6	equation	1
+tob2025supplied:equation7	equation	1
+tob2025supplied:equation8	equation	1	tob2025supplied:equation6,tob2025supplied:equation7
+# main Lemma3/Lemma5 in supplied text have unresolved crosswalk; see inventory.
+tob2025supplied:lemma4	lemma	1	tob2025supplied:equation2,tob2025supplied:equation3,tob2025supplied:equation4,tob2025supplied:equation5,tob2025supplied:equation8
+tob2025supplied:lemma7	lemma	1
+tob2025supplied:lemma8	lemma	1
+tob2025supplied:theorem1	theorem	1	tob2025supplied:lemma7,tob2025supplied:lemma8
+tob2025supplied:algorithm1_cover	claim	1
+tob2025supplied:quad_families_disjoint	claim	1
+tob2025supplied:random_sampling_bound	claim	1
+tob2025supplied:algorithm2_complexity	claim	1
 # TINNiK routes manually derived from publisher XML and PDF.
 # Citations to other works stay in the inventory; these columns track paper-internal steps.
 tinnik:theorem1	theorem	0
