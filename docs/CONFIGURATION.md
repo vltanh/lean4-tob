@@ -5,7 +5,7 @@ Recorded 2026-10-27 (America/Chicago).
 ## Sources of record
 
 - ECToBlob: Rhodes, Allman, Ané and Baños, *Statistical inference of the Tree of Blobs of a phylogenetic network from quartet concordance factors*, [bioRxiv v1](https://www.biorxiv.org/content/10.64898/2026.05.28.728501v1). The bioRxiv API lists v1 dated 2026-05-31. The author's publications page lists the work as to appear in SIAM Journal on Life Sciences; no replacement version has been selected.
-- TOB-QMC: Dai, Han and Molloy, *Quartet-based species tree methods enable fast and consistent tree of blobs reconstruction under the network multispecies coalescent*, [Genome Research](https://doi.org/10.1101/gr.282203.126). The user explicitly selected the journal version after being told of its existence. The originally supplied bioRxiv v5 remains a comparison source, not the source of record.
+- TOB-QMC: Dai, Han and Molloy, *Quartet-based species tree methods enable fast and consistent tree of blobs reconstruction under the network multispecies coalescent*, [bioRxiv v5](https://www.biorxiv.org/content/10.1101/2025.11.05.686850v5), posted 2026-05-15. A later [Genome Research publication](https://doi.org/10.1101/gr.282203.126) exists. The user first selected the journal, then explicitly authorized bioRxiv fallback if the journal could not be retrieved. Publisher and Europe PMC access checks established that only the journal abstract was available, so the fallback applies. No equivalence of the journal and preprint proofs is claimed.
 - TINNiK: Allman, Baños, Mitchell and Rhodes, *TINNiK: inference of the tree of blobs of a species network under the coalescent model*, [Algorithms for Molecular Biology 19, 23 (2024)](https://doi.org/10.1186/s13015-024-00266-2).
 
 Downloads and working inventories are kept under ignored `notes/`; they are not distributed with the library. The TINNiK publisher XML includes TeX equations, but is not the authors' original TeX source.
@@ -32,3 +32,7 @@ The public `lean4-phylogenetics` and `lean4-camus` projects are candidates for p
 Default license: Apache-2.0. Local Git identity: The-Anh Vu-Le. Public authorship and maintainership remain to be confirmed before publication. AI systems are credited as tools, not human authors.
 
 No push, remote repository creation, publication, Palomar preflight, submission, or registration is authorized. Local work and milestone commits are authorized by the invoked skill.
+
+## Authorized correction
+
+The user explicitly approved using the closed probability simplex for TINNiK maximum-likelihood estimation while keeping the generating distribution strictly positive. The open-domain counterexample and correction are checked in `scripts/BoundaryCheck.lean`. ECToBlob Theorem 8.2 still requires a decision on its missing generic-parameter restriction; no altered statement has been introduced.

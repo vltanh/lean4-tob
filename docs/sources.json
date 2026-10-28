@@ -1,0 +1,43 @@
+{
+  "checked_on": "2026-10-27",
+  "timezone": "America/Chicago",
+  "sources": [
+    {
+      "paper": "ECToBlob",
+      "version": "10.64898/2026.05.28.728501v1",
+      "url": "https://www.biorxiv.org/content/10.64898/2026.05.28.728501v1.full.pdf",
+      "local_ignored_path": "notes/paper2026/paper.pdf",
+      "sha256": "a864c4f6beab82f39322f712de513ca0b20c8af6d30730684e038b2bc57785d1",
+      "bytes": 2050046
+    },
+    {
+      "paper": "TOB-QMC",
+      "version": "10.1101/2025.11.05.686850v5",
+      "url": "https://www.biorxiv.org/content/10.1101/2025.11.05.686850v5.full.pdf?download=1",
+      "local_ignored_path": "notes/paper2025/v5_new.pdf",
+      "sha256": "abba2fa89dc4a940e1083623bc31857af346f102c1a3359d124503216176aa15",
+      "bytes": 798508
+    },
+    {
+      "paper": "TINNiK",
+      "version": "10.1186/s13015-024-00266-2",
+      "url": "https://link.springer.com/content/pdf/10.1186/s13015-024-00266-2.pdf",
+      "local_ignored_path": "notes/tinnik/pdf.pdf",
+      "sha256": "fcf13d7e4ddeab02cb71cbd9e1893e0358d9e0a9b3b6ace131b02a7e80bc30ce",
+      "bytes": 4392332
+    },
+    {
+      "paper": "TINNiK XML",
+      "version": "PMC11539473",
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC11539473/fullTextXML",
+      "local_ignored_path": "notes/tinnik/article.xml",
+      "sha256": "a12468a276d74e58e641fdc245aa8e92ed45e9e8dbac34430dc69cde2dda2e17",
+      "bytes": 1057600
+    }
+  ],
+  "original_author_tex_available": false,
+  "unread_supplements": [
+    "ECToBlob A/B",
+    "TOB-QMC supplementary lemma and algorithms"
+  ]
+}

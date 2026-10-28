@@ -1,0 +1,92 @@
+# Preliminary manual proof routes. NOT a passing formal proof audit.
+# All labels are assigned locally; original author TeX was not found.
+# proved=1 describes a proof in the paper, never a completed Lean proof.
+# Supplement entries remain incomplete and must be replaced after retrieval.
+# Manually extracted from exact v1 PDF and publisher JATS; author TeX unavailable.
+# ecto:* labels are local stable labels, not purported author TeX labels.
+# JATS IDs and page/text locators are in results.tsv. External citations tracked in inventory.md.
+# proved=1 means the PAPER supplies an argument, not that Lean has proved it.
+# Equation3.3 is retained as printed for audit; no claim it is true.
+ecto:thm3_1	theorem	1	ecto:lem3_5,ecto:eq3_1,ecto:eq3_2,ecto:eq3_3
+ecto:rem3_2	remark	1	
+ecto:rem3_3	remark	0	ecto:thm3_1
+ecto:rem3_4	remark	0	ecto:eq3_1
+ecto:lem3_5	lemma	1	
+ecto:cor3_6	corollary	1	ecto:thm3_1
+ecto:thm4_1	theorem	1	
+ecto:cor4_2	corollary	1	ecto:thm4_1
+ecto:cor4_3	corollary	1	ecto:thm4_1
+ecto:assumption1	assumption	0	ecto:eq5_1,ecto:eq5_2
+ecto:prop5_1	proposition	1	ecto:assumption1,ecto:eq5_1,ecto:eq5_2
+ecto:rem5_2	remark	1	ecto:prop5_1,ecto:eq5_2
+ecto:lem6_1	lemma	1	ecto:eq6_1
+ecto:alg7_1	algorithm	0	
+ecto:lem8_1	lemma	1	
+ecto:thm8_2	theorem	1	ecto:lem6_1,ecto:lem8_1,ecto:cor4_2,ecto:cor4_3,ecto:assumption1,ecto:alg7_1
+ecto:rem8_3	remark	1	ecto:thm8_2
+ecto:rem8_4	remark	0	ecto:thm8_2
+# Equation 3.1: manually added reused equation or running-text claim.
+ecto:eq3_1	equation	0	
+# Equation 3.2: manually added reused equation or running-text claim.
+ecto:eq3_2	equation	1	
+# Equation 3.3: manually added reused equation or running-text claim.
+ecto:eq3_3	equation	1	
+# Equation 5.1: manually added reused equation or running-text claim.
+ecto:eq5_1	equation	0	
+# Equation 5.2: manually added reused equation or running-text claim.
+ecto:eq5_2	equation	0	
+# Equation 6.1: manually added reused equation or running-text claim.
+ecto:eq6_1	equation	0	
+# Unnumbered bi/quad runtime: manually added reused equation or running-text claim.
+ecto:runtime_biquad	claim	1	ecto:alg7_1
+# Unnumbered mul runtime: manually added reused equation or running-text claim.
+ecto:runtime_mul	claim	1	ecto:alg7_1
+# Unnumbered early/late ordering: manually added reused equation or running-text claim.
+ecto:selection_order	claim	1	ecto:alg7_1
+# Manual routes from bioRxiv 2025.11.05.686850v5 PDF, read in full.
+# No TeX obtained: all labels below assigned by inventory author. Source printed line numbers are in INVENTORY.md.
+# This file is incomplete until supplementary Lemma4 and Algorithms1–2 are retrieved.
+# Format required by route_check.py: label, environment, paper_proves, comma-separated numbered-result labels.
+# Lemmas1–2 are cited results; provenance/dependencies beyond this paper are in INVENTORY.md.
+tob2025:lemma1	lemma	0	
+tob2025:lemma2	lemma	0	
+# Equations1–4 are manually included because the proof of Lemma3 uses these displayed decompositions.
+tob2025:equation1	equation	1	
+tob2025:equation2	equation	1	
+tob2025:equation3	equation	1	
+tob2025:equation4	equation	1	
+tob2025:lemma3	lemma	1	tob2025:equation1,tob2025:equation2,tob2025:equation3,tob2025:equation4
+# Supplementary lemma referenced at main lines503–505: exact statement and proof not yet read. Do not mark proved route final.
+tob2025:supplement_lemma4_UNREAD	lemma	0	
+tob2025:theorem1	theorem	1	tob2025:lemma3,tob2025:supplement_lemma4_UNREAD
+# Unnumbered corollary in running text at lines517–522.
+tob2025:astral_corollary	corollary	1	tob2025:theorem1
+tob2025:lemma4	lemma	1	tob2025:lemma2
+tob2025:corollary1	corollary	1	tob2025:lemma2,tob2025:lemma4
+tob2025:theorem2	theorem	1	tob2025:corollary1,tob2025:lemma4
+# Unnumbered claims in running text at lines590–623; do not invent theorem numbers.
+tob2025:3f1a_correctness	claim	1	tob2025:theorem2
+tob2025:consistency	claim	1	tob2025:theorem1,tob2025:theorem2,tinnik:theorem4
+tob2025:3f1a_complexity	claim	1	
+tob2025:combined_search_consistency	claim	1	tob2025:consistency
+# TINNiK routes manually derived from publisher XML and PDF.
+# Citations to other works stay in the inventory; these columns track paper-internal steps.
+tinnik:theorem1	theorem	0	
+tinnik:theorem2	theorem	0	
+tinnik:theorem3	theorem	0	tinnik:theorem1,tinnik:theorem2
+tinnik:lex_index	claim	0	
+tinnik:b_inference_correct	claim	1	tinnik:theorem1,tinnik:theorem2,tinnik:theorem3
+tinnik:b_inference_complexity	claim	1	tinnik:lex_index
+tinnik:tinnik_complexity	claim	1	tinnik:b_inference_complexity
+tinnik:generic_noncentroid	claim	1	tinnik:theorem1
+tinnik:cut_line_mle	claim	1	
+tinnik:cut_log_likelihood	claim	1	tinnik:cut_line_mle
+tinnik:full_log_likelihood	claim	1	
+tinnik:lr_factorization	claim	1	tinnik:cut_log_likelihood,tinnik:full_log_likelihood
+tinnik:likelihood_gap_positive	claim	1	
+tinnik:proposition5	proposition	1	tinnik:line_distance
+tinnik:proposition6	proposition	1	tinnik:proposition5,tinnik:strip_derivatives
+tinnik:theorem4	theorem	1	tinnik:generic_noncentroid,tinnik:proposition5,tinnik:proposition6,tinnik:lr_factorization,tinnik:likelihood_gap_positive,tinnik:b_inference_correct
+# Manually added intermediate steps explicitly calculated in Proposition 5/6.
+tinnik:line_distance	claim	1	
+tinnik:strip_derivatives	claim	1	
