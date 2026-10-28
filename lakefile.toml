@@ -1,0 +1,40 @@
+name = "TreeOfBlobs"
+version = "0.1.0"
+keywords = ["math", "phylogenetics"]
+defaultTargets = ["Basic", "External", "TINNiK", "TOBQMC", "ECToBlob", "Challenge", "Solution"]
+
+[leanOptions]
+pp.unicode.fun = true
+autoImplicit = false
+maxSynthPendingDepth = 3
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+rev = "v4.36.0-rc1"
+
+[[lean_lib]]
+name = "Basic"
+globs = ["Basic", "Basic.+"]
+
+[[lean_lib]]
+name = "External"
+globs = ["External", "External.+"]
+
+[[lean_lib]]
+name = "TINNiK"
+globs = ["TINNiK", "TINNiK.+"]
+
+[[lean_lib]]
+name = "TOBQMC"
+globs = ["TOBQMC", "TOBQMC.+"]
+
+[[lean_lib]]
+name = "ECToBlob"
+globs = ["ECToBlob", "ECToBlob.+"]
+
+[[lean_lib]]
+name = "Challenge"
+
+[[lean_lib]]
+name = "Solution"
