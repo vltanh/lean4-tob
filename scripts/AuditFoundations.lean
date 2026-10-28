@@ -6,12 +6,16 @@ import all Basic.Analysis.SpecialFunctions.Erf
 import all Basic.Combinatorics.DirectedMultigraph
 import all Basic.Combinatorics.MultigraphBlobs
 import all Basic.Combinatorics.MultigraphConnectivity
+import all Basic.Combinatorics.MultigraphCutUniqueness
 import all Basic.Phylogenetics.AncestralRestriction
 import all Basic.Phylogenetics.ConcordanceFactor
 import all Basic.Phylogenetics.Hierarchy
+import all Basic.Phylogenetics.HierarchyGraph
+import all Basic.Phylogenetics.HierarchyParents
 import all Basic.Phylogenetics.Network
 import all Basic.Phylogenetics.Quartet
 import all Basic.Phylogenetics.Star
+import all Basic.Phylogenetics.TreeTopology
 import all TINNiK.Statistics.Definitions
 
 /-!

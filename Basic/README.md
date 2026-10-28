@@ -10,11 +10,15 @@ lemmas. They do not count as proofs of the papers' numbered results.
 | `Combinatorics/DirectedMultigraph` | Individually identified directed arcs, degrees, and a bridge to Mathlib multigraph cuts | Mathlib graph theory |
 | `Combinatorics/MultigraphConnectivity` | Undirected walks with allowed arc sets; edge-deletion characterization of bridges | Mathlib graph connectivity |
 | `Combinatorics/MultigraphBlobs` | Actual bridge-component quotient, connectedness, retained bridges, and preservation of labelled cuts | Mathlib graph contraction |
+| `Combinatorics/MultigraphCutUniqueness` | Uniqueness of cut sides up to complement in a connected multigraph | Mathlib graph cuts |
 | `Phylogenetics/Network` | Rooted multigraph data and separate finite network/metric laws | A phylogenetics library; a new Mathlib area would first need discussion on Lean Zulip |
 | `Phylogenetics/Quartet` | Unordered pair partitions, exactly three resolutions, and ordered-label bridges | A phylogenetics library |
 | `Phylogenetics/ConcordanceFactor` | Resolved/star probability laws, normalized CFs and coordinate relabeling | A phylogenetics library |
-| `Phylogenetics/AncestralRestriction` | Actual ancestral vertex/arc subtypes and exact adjacency/reachability bridges | A phylogenetics library |
+| `Phylogenetics/AncestralRestriction` | Actual ancestral vertex/arc subtypes, exact reachability and inherited network validity | A phylogenetics library |
 | `Phylogenetics/Hierarchy` | Finite tree hierarchy laws, compatible split families and restrictions | Adapted from the public phylogenetics library; see [provenance](../docs/ADAPTED_SOURCES.md) |
+| `Phylogenetics/HierarchyParents` | The actual unique parent of each non-root cluster | Same public source and provenance |
+| `Phylogenetics/HierarchyGraph` | Concrete graph realization, exact degrees, descendants and cut-family correspondence | A phylogenetics library |
+| `Phylogenetics/TreeTopology` | Finite topology types and exactly one displayed quartet for every binary tree | A phylogenetics library; adapted proof provenance recorded |
 | `Phylogenetics/Star` | Concrete finite rooted stars witnessing network validity | A phylogenetics library |
 
 The graph model permits parallel arcs and nonbinary vertices. Forgetting
@@ -30,3 +34,8 @@ The bridge-component quotient is constructed and its cut correspondence is
 proved. Identification with maximal 2-edge-connected subgraphs and suppression
 of degree-two vertices are still separate obligations. No reduced tree of blobs
 is claimed merely from a data type bearing that name.
+
+The finite hierarchy now has a concrete rooted graph realization whose labelled
+cut family is exactly its unrooted split family. Binary topologies have exactly
+one displayed split on each quartet. The converse representation for arbitrary
+graph trees, and contraction/suppression equivalences, remain to be proved.

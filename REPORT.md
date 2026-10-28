@@ -94,6 +94,7 @@ The identifiers below follow the order in which findings were independently chec
 | E11 | Supplied TOB-QMC supplement Lemma 2 | Its converse is false: a treelike induced quartet can restrict a star on the full tree of blobs. The user approved retaining only the forward direction, consistent with main v5. |
 | E12 | Supplied TOB-QMC supplement Lemma 4, Eq. (1), and main v5 lines 503–505 | The minimum of all three pairwise CF differences can be zero even for a species tree. Thus the asserted positivity fails and the perturbation premise can be impossible. This is a gap in the consistency proof, not a counterexample to the conditional perturbation implication. |
 | E13 | Supplied TOB-QMC supplement Lemma 4 proof | Strict coordinate errors are weakened to non-strict bounds, after which strict positivity is incorrectly claimed at the chosen boundary radius. Retaining strict inequalities repairs this step at the same radius. Equations (6)–(7) must cancel agreeing quartet terms before identifying the sums; the final intermediate line also repeats the tree index where the star index is needed. |
+| E14 | Supplied TOB-QMC supplement Lemma 8 | A trivial blob need not contain a reticulation: every singleton internal blob of a binary tree is a counterexample. The user approved requiring a nontrivial blob. |
 
 For E1, uniform cross-block CFs are realized by a rooted multifurcating species
 tree with one positive-length two-taxon cherry and four other pendant taxa.
@@ -140,6 +141,13 @@ strict coordinate-error inequalities for E13; the radius remains `π/(2|f₄(S)|
 The corrected probability margin is a proposed local proof repair, not yet a
 formal proof of the paper's theorem.
 
+For E14, take a rooted binary four-taxon tree `((a,b),(c,d))` and its singleton
+blob at the parent of a and b. It contains no reticulation. Two readers verified
+this against the supplement's explicit allowance of trivial blobs. The minimal
+intended correction is a nontrivial-blob hypothesis, approved by the user. The
+source's descendant-chain proof still needs its directed-path choices checked;
+approval of the statement correction does not certify that proof.
+
 Additional proof obligations remain: TINNiK's data-dependent choice of fitted
 line and the all-cut case; ECToBlob's bounds across every possible contraction
 state and whole-tree test, slack in asymptotic inequalities, and the unnecessary
@@ -160,9 +168,11 @@ pending proof reviews, not additional false-theorem claims.
   argument. It does not formalize the network construction, the product-measure
   null-set claim, or equality of the induced output laws.
 - [SunletCheck.lean](scripts/SunletCheck.lean) checks the full graph's acyclicity,
-  all 2,048 vertex cuts, and a two-versus-two bridge cut after deleting h and d.
-  It does not yet prove that this deletion is the paper's induced network or
-  execute suppression and the reduced-tree-of-blobs construction.
+  binary network validity, all 2,048 vertex cuts, and the exact ancestral vertex
+  and arc sets. An explicit isomorphism identifies the pruned graph with the
+  actual original-root ancestral restriction, where `ab|ce` is a certified cut
+  split. It does not yet execute LSA reduction, suppression or the reduced-tree-
+  of-blobs construction.
 - [TOBQMCGapCheck.lean](scripts/TOBQMCGapCheck.lean) checks the zero all-pairs
   gap, positivity of the dominant gap, and specialization of the usual quartet
   formula at length `log(4/3)`. It does not prove that coalescent formula.
@@ -197,6 +207,12 @@ At the 2026-10-27 22:13 America/Chicago checkpoint, `lake build` passed without
 warnings and the foundations audit checked all 388 library declarations using
 only the standard axioms. This includes definitions and generated/private
 declarations; it is not a count of paper results.
+
+At the 22:42 checkpoint, the build of 16 implemented modules and the expanded
+foundations audit passed for 522 declarations. The exact ancestral restriction,
+hierarchy graph realization and binary quartet-display bridges are now proved.
+Reduced-graph suppression, the arbitrary-network coalescent construction and
+the numbered paper results remain pending.
 
 ## Source coverage and remaining work
 

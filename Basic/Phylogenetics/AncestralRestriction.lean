@@ -9,9 +9,10 @@ those taxa and every arc whose target is retained. It preserves original arc
 identity, including parallel arcs. It retains the original root when that root
 reaches every vertex and the chosen taxon set is nonempty.
 
-This is the ancestral restriction before suppression. It is not an assertion
-that the result satisfies every network law. ECToBlob's least-stable-ancestor
-truncation and degree-two suppression are separate, pending constructions.
+This is the ancestral restriction before suppression. For a valid original network
+and nonempty selected taxa, we prove all defining network laws are preserved.
+The original root is retained; least-stable-ancestor truncation and degree-two
+suppression remain separate, pending constructions.
 -/
 
 @[expose] public section
@@ -120,7 +121,8 @@ def ancestralLeaf (Y : Set X) : Y → N.AncestralVertex Y :=
     (N.ancestralLeaf Y x).val = N.leaf x.val := rfl
 
 /-- Rooted and labeled data for the unsuppressed ancestral graph.
-No network validity theorem is assumed in this data structure. -/
+No network validity theorem is assumed in this data structure;
+`ancestralNetwork_isPhylogenetic` proves validity from the original network laws. -/
 def ancestralNetwork (Y : Set X) (hY : Y.Nonempty)
     (hroot : ∀ v, N.graph.Reaches N.root v) :
     RootedNetwork (N.AncestralVertex Y) (N.AncestralArc Y) Y where
@@ -151,5 +153,68 @@ theorem ancestralVertices_mono {Y Z : Set X} (hYZ : Y ⊆ Z) :
 theorem ancestralArcs_mono {Y Z : Set X} (hYZ : Y ⊆ Z) :
     N.ancestralArcs Y ⊆ N.ancestralArcs Z :=
   fun _ he => N.ancestralVertices_mono hYZ he
+
+
+/-- All arcs entering a retained vertex are retained, with arc identity preserved. -/
+def ancestralIncomingEquiv (Y : Set X) (v : N.AncestralVertex Y) :
+    {e : N.AncestralArc Y // (N.ancestralGraph Y).target e = v} ≃
+      {e : E // N.graph.target e = v.val} where
+  toFun e := ⟨e.val.val, congrArg Subtype.val e.property⟩
+  invFun e := ⟨⟨e.val, by
+    change N.graph.target e.val ∈ N.ancestralVertices Y
+    rw [e.property]
+    exact v.property⟩, Subtype.ext e.property⟩
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+/-- The ancestral restriction preserves each retained vertex's indegree. -/
+theorem ancestralGraph_indegree (Y : Set X) (v : N.AncestralVertex Y) :
+    (N.ancestralGraph Y).indegree v = N.graph.indegree v.val :=
+  Set.ncard_congr' (N.ancestralIncomingEquiv Y v)
+
+/-- The sinks of the unsuppressed ancestral graph are precisely its selected taxon labels. -/
+theorem ancestralGraph_leaves (hN : N.IsPhylogenetic) (Y : Set X)
+    (v : N.AncestralVertex Y) :
+    (N.ancestralGraph Y).outdegree v = 0 ↔ ∃ x : Y, N.ancestralLeaf Y x = v := by
+  let : Finite E := hN.finite_arcs
+  constructor
+  · intro hv
+    obtain ⟨x, hx, hpath⟩ := v.property
+    have hpath' : (N.ancestralGraph Y).Reaches v (N.ancestralLeaf Y ⟨x, hx⟩) :=
+      (N.ancestralGraph_reaches_iff Y _ _).mpr hpath
+    exact ⟨⟨x, hx⟩, (N.ancestralGraph Y).eq_of_reaches_of_outdegree_eq_zero hpath' hv⟩
+  · rintro ⟨x, rfl⟩
+    apply ((N.ancestralGraph Y).outdegree_eq_zero_iff _).mpr
+    intro e he
+    have hzero := (hN.leaves (N.leaf x.val)).mpr ⟨x.val, rfl⟩
+    exact (N.graph.outdegree_eq_zero_iff _).mp hzero e.val (congrArg Subtype.val he)
+
+/-- Keeping a nonempty set of taxa preserves all defining laws of the rooted
+unsuppressed network. This retains the original root, even for one selected taxon. -/
+theorem ancestralNetwork_isPhylogenetic (hN : N.IsPhylogenetic)
+    (Y : Set X) (hY : Y.Nonempty) :
+    (N.ancestralNetwork Y hY hN.root_reaches).IsPhylogenetic := by
+  let : Finite V := hN.finite_vertices
+  let : Finite E := hN.finite_arcs
+  let : Finite X := hN.finite_taxa
+  refine ⟨inferInstance, inferInstance, inferInstance,
+    N.ancestralGraph_isAcyclic Y hN.acyclic,
+    N.ancestralNetwork_root_reaches Y hY hN.root_reaches,
+    ?_, ?_, N.ancestralLeaf_injective Y hN.leaf_injective, ?_, ?_⟩
+  · change (N.ancestralGraph Y).indegree _ = 0
+    rw [N.ancestralGraph_indegree]
+    exact hN.root_indegree
+  · intro v hv
+    change 1 ≤ (N.ancestralGraph Y).indegree v
+    rw [N.ancestralGraph_indegree]
+    apply hN.nonroot_indegree v.val
+    intro heq
+    exact hv (Subtype.ext heq)
+  · intro x
+    change (N.ancestralGraph Y).indegree (N.ancestralLeaf Y x) = 1
+    rw [N.ancestralGraph_indegree]
+    exact hN.leaf_indegree x.val
+  · exact N.ancestralGraph_leaves hN Y
+
 
 end Phylogenetics.RootedNetwork

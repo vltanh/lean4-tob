@@ -61,3 +61,11 @@ because the selected model was at capacity and was resumed without a model
 change. Active agent time, exact model revision, token totals and monetary cost
 remain unavailable; overlapping wall spans are not summed as compute time.
 Source/statement work continues. No publishing or registry action was taken.
+
+At a further 22:42 checkpoint in the same round, the full build of 16 implemented
+modules passed and the aggregate audit checked 522 library declarations with
+standard axioms only. The sunlet certificate now includes the actual ancestral
+restriction and network validity. Added tree representations were independently
+reviewed, including exact quartet display and graph-to-cluster cut correspondence.
+This is approximately 68 minutes into the second round; paper-result statements
+and proofs remain unfinished.

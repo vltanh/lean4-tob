@@ -107,4 +107,19 @@ theorem isAcyclic_of_rank (rank : V → ℕ)
   intro v h
   exact lt_irrefl (rank v) (strict h)
 
+
+/-- With finitely many arcs, zero outdegree means that no arc leaves the vertex. -/
+theorem outdegree_eq_zero_iff [Finite E] (v : V) :
+    G.outdegree v = 0 ↔ ∀ e, G.source e ≠ v := by
+  rw [outdegree, Set.ncard_eq_zero]
+  exact Set.eq_empty_iff_forall_notMem
+
+/-- A vertex with no outgoing arc reaches only itself. -/
+theorem eq_of_reaches_of_outdegree_eq_zero [Finite E] {u v : V}
+    (h : G.Reaches u v) (hu : G.outdegree u = 0) : v = u := by
+  apply (Relation.reflTransGen_iff_eq (r := G.Adj) (a := u) ?_).mp h
+  rintro w ⟨e, he, _⟩
+  exact (G.outdegree_eq_zero_iff u).mp hu e he
+
+
 end DirectedMultigraph
