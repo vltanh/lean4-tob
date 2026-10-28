@@ -11,6 +11,7 @@ lemmas. They do not count as proofs of the papers' numbered results.
 | `Combinatorics/MultigraphConnectivity` | Undirected walks with allowed arc sets; edge-deletion characterization of bridges | Mathlib graph connectivity |
 | `Combinatorics/MultigraphBlobs` | Actual bridge-component quotient, connectedness, retained bridges, and preservation of labelled cuts | Mathlib graph contraction |
 | `Combinatorics/MultigraphCutUniqueness` | Uniqueness of cut sides up to complement in a connected multigraph | Mathlib graph cuts |
+| `Combinatorics/BridgeCutLaminar` | Bridge-deletion components and laminar cut sides avoiding a fixed vertex | Mathlib graph cuts |
 | `Phylogenetics/Network` | Rooted multigraph data and separate finite network/metric laws | A phylogenetics library; a new Mathlib area would first need discussion on Lean Zulip |
 | `Phylogenetics/Quartet` | Unordered pair partitions, exactly three resolutions, and ordered-label bridges | A phylogenetics library |
 | `Phylogenetics/ConcordanceFactor` | Resolved/star probability laws, normalized CFs and coordinate relabeling | A phylogenetics library |
@@ -20,6 +21,10 @@ lemmas. They do not count as proofs of the papers' numbered results.
 | `Phylogenetics/HierarchyGraph` | Concrete graph realization, exact degrees, descendants and cut-family correspondence | A phylogenetics library |
 | `Phylogenetics/TreeTopology` | Finite topology types and exactly one displayed quartet for every binary tree | A phylogenetics library; adapted proof provenance recorded |
 | `Phylogenetics/Star` | Concrete finite rooted stars witnessing network validity | A phylogenetics library |
+| `Phylogenetics/PendantCuts` | Singleton leaf cuts from the network degree laws | A phylogenetics library |
+| `Phylogenetics/CutHierarchy` | A valid network's cut hierarchy and exact graph realization of its split family | A phylogenetics library |
+| `Phylogenetics/QuartetScore` | Whole-tree PMF marginals, quartet counts and score identities | A phylogenetics library |
+| `Phylogenetics/Coalescent/{Defs,Forest,Factorization,Tavare}` | Finite Kingman kernels, probability laws and pure-death formula | Adapted from the public phylogenetics library; see [provenance](../docs/COALESCENT_SOURCES.md) |
 
 The graph model permits parallel arcs and nonbinary vertices. Forgetting
 multiplicity for cuts would be unsound: two parallel arcs are not bridges.

@@ -29,7 +29,7 @@ The requested target is all mathematical results of the three papers, their cite
 
 Cited results that are out of reach may become explicit hypotheses named after their sources, as the invoked skill permits. Results proved in these papers may not be replaced with such hypotheses.
 
-The public `lean4-phylogenetics` and `lean4-camus` projects were surveyed for prior work and reusable foundations. A tree-only hierarchy kernel from the former was adapted with explicit provenance in [ADAPTED_SOURCES.md](ADAPTED_SOURCES.md). Its level-1 network definitions and coalescent modules were not imported; they cannot stand for arbitrary networks. CAMUS has not been incorporated.
+The public `lean4-phylogenetics` and `lean4-camus` projects were surveyed for prior work and reusable foundations. A tree-only hierarchy kernel from the former was adapted with explicit provenance in [ADAPTED_SOURCES.md](ADAPTED_SOURCES.md). Selected network-independent finite Kingman modules were subsequently extracted; [COALESCENT_SOURCES.md](COALESCENT_SOURCES.md) records their scope and incomplete absorption/PMF work. The level-1 network syntax and NMSC modules were not imported; they cannot stand for arbitrary networks. CAMUS has not been incorporated.
 
 Default license: Apache-2.0. Local Git identity: The-Anh Vu-Le. Public authorship and maintainership remain to be confirmed before publication. AI systems are credited as tools, not human authors.
 

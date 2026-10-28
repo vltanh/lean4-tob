@@ -2,7 +2,8 @@
 
 **Status: incomplete formalization, at the inventory and statement-design gate.**
 No numbered result of the three papers has been stated or proved in the library.
-The compiled foundations include finite-score stability and multigraph/network data.
+The compiled foundations include finite-score stability, multigraph/network
+representations, exact quartet scores and selected finite Kingman kernels.
 The scripts described below check several source-audit
 counterexamples; they do not establish the papers' network or consistency theorems.
 
@@ -95,6 +96,7 @@ The identifiers below follow the order in which findings were independently chec
 | E12 | Supplied TOB-QMC supplement Lemma 4, Eq. (1), and main v5 lines 503–505 | The minimum of all three pairwise CF differences can be zero even for a species tree. Thus the asserted positivity fails and the perturbation premise can be impossible. This is a gap in the consistency proof, not a counterexample to the conditional perturbation implication. |
 | E13 | Supplied TOB-QMC supplement Lemma 4 proof | Strict coordinate errors are weakened to non-strict bounds, after which strict positivity is incorrectly claimed at the chosen boundary radius. Retaining strict inequalities repairs this step at the same radius. Equations (6)–(7) must cancel agreeing quartet terms before identifying the sums; the final intermediate line also repeats the tree index where the star index is needed. |
 | E14 | Supplied TOB-QMC supplement Lemma 8 | A trivial blob need not contain a reticulation: every singleton internal blob of a binary tree is a counterexample. The user approved requiring a nontrivial blob. |
+| E15 | Supplied TOB-QMC supplement §1.2 | The initial `α=ρ/(1−ρ)` conflicts with the later `ρ=1/(α+1)` and the stated independent/common-inheritance endpoints. The consistent inverse is `α=(1−ρ)/ρ`. A private reviewed urn draft checks this algebra; it is not an integrated NMSC model. |
 
 For E1, uniform cross-block CFs are realized by a rooted multifurcating species
 tree with one positive-length two-taxon cherry and four other pendant taxa.
@@ -255,10 +257,20 @@ work. The former supplies tree, coalescent and level-1 network foundations. Its
 network type does not establish the arbitrary-level or correlated-inheritance
 claims needed here. A small tree-only hierarchy kernel was extracted with its
 existing proof arguments and independently checked; [ADAPTED_SOURCES.md](docs/ADAPTED_SOURCES.md)
-records the commit, source regions, license and wrapper adaptations. Its network
-and coalescent modules were not imported. CAMUS remains a surveyed source only.
+records the commit, source regions, license and wrapper adaptations. Selected
+network-independent Kingman foundations were later extracted with provenance in
+[COALESCENT_SOURCES.md](docs/COALESCENT_SOURCES.md). Their integrated scope stops
+before absorption-law proofs and PMF wrappers. The source's level-1 network/NMSC
+modules were not imported. CAMUS remains a surveyed source only.
 
 The main immediate work is to implement the approved scopes and finish the
 definitions, source crosswalk and statements before proving paper
 results. Private follow-up-paper research and NEXT.md have not been developed;
 there is no novelty claim or completed research recommendation at this stage.
+
+The user requested a handoff before completion. [HANDOFF.md](docs/HANDOFF.md)
+records the stopped state and the exact remaining work; no complete paper
+formalization, final route audit or Palomar submission is claimed.
+The final build and all five certificate scripts pass. The library axiom audit
+checks 815 declarations across 24 implemented modules, including private and
+generated declarations, with only Lean's three standard axioms.

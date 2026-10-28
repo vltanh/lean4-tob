@@ -69,3 +69,19 @@ restriction and network validity. Added tree representations were independently
 reviewed, including exact quartet display and graph-to-cluster cut correspondence.
 This is approximately 68 minutes into the second round; paper-result statements
 and proofs remain unfinished.
+
+The user requested a handoff at approximately 22:52. New implementation stopped;
+the agents preserved unfinished work as ignored local drafts and wrote handoffs.
+At the final verification checkpoint, approximately 23:03 America/Chicago,
+the full build of 24 implemented modules passed, all five certificate scripts
+compiled, and the library audit checked 815 declarations with standard axioms
+only. This is about 114 minutes after initial setup and 88 minutes into the
+second round, including wrap-up; it is not time to a completed formalization.
+The selected finite Kingman extraction retains the source statements and proof
+bodies, with exact scope and attribution in
+[COALESCENT_SOURCES.md](docs/COALESCENT_SOURCES.md).
+
+All three agents have stopped. No numbered paper theorem was proved, and no
+complete statement baseline or Palomar package was produced. The resumable state
+is recorded in [HANDOFF.md](docs/HANDOFF.md), including the distinction between
+committed verified code and untracked local drafts. No remote writes were made.
