@@ -115,14 +115,15 @@ any selection of disjoint covers, the method on `k` independent gene trees retur
 probability tending to one.
 
 The proof combines Theorem 1 (`theorem1_optimal`), Theorem 2 (`theorem2`) and TINNiK's hypothesis tests, as
-the paper says. The paper cites TINNiK's Theorem 4 for the tests' being correct on all four-taxon subsets.
-That is a step of the proof of that theorem, not its statement (`TINNiK.tests_correct`), and it needs a
-strictly cut CF on every treelike subset, which 6a does not give: at parameters where a treelike subset has
-the CF `(1/3,1/3,1/3)` (a `3₂`-cycle has them) the tests are wrong there. The argument needs less: correct
+the paper says. The paper cites TINNiK's Theorem 4 for the tests' being correct on all four-taxon subsets. That is
+a step of the proof of that theorem, not its statement (`TINNiK.tests_correct`), for generic parameters at `ρ = 0`.
+
+Departure from the paper (E21 of the report): the argument here needs less than the citation. It uses correct
 answers on the non-treelike subsets, by 6a (`TINNiK.tendsto_testedB`), and on the subsets the tree of blobs
-resolves, by nonanomaly and exchangeability (`TINNiK.tendsto_not_testedB`, `NMSC.cut_alternatives`). A treelike subset around a false
-positive is harmless, since the edge is labelled by another subset. So this is the printed claim, under the
-printed assumptions. -/
+resolves, by nonanomaly and exchangeability (`TINNiK.tendsto_not_testedB`, `NMSC.cut_alternatives`). A treelike
+subset around a false positive is harmless, since the edge is labelled by another subset. This is not forced:
+correctness on all subsets also holds under the printed assumptions, with a further fact on level-1 networks
+that the argument here does not need. -/
 theorem consistency [Fintype V] [Fintype E] {N : RootedNetwork V E X} {θ : MetricData E} {ρ : ℝ}
     (hStd : StandardAssumptions N θ ρ) (hLevel : IsLevelOne N)
     (hNon : IsTQuartetNonanomalous N (nmscCF N θ ρ))

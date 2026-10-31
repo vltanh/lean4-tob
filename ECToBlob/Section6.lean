@@ -9,14 +9,9 @@ public import Mathlib.Analysis.SpecialFunctions.Trigonometric.ArctanDeriv
 
 Lemma 6.1. The combination methods are defined in `Basic/Phylogenetics/Defs.lean`.
 
-Departure from the paper, in the bound for the Cauchy combination (E8 of the report): `max(D, η, 1/2)` replaces the
-paper's `D`. The printed `f⁻¹(((k-1) f(D) + f(η))/k)` has the properties the lemma claims on `0 < η ≤ D < 1`, the only
-region `(min P, max P)` reaches when `min P > 0`, and that is where the paper uses it. But the lemma's statement
-also covers `D = 0` and `η > D`. The printed bound is not non-decreasing in `k` for `η > D`, and no
-bound agreeing with it for `η ≤ D` can have both properties the lemma claims at `D = 0`: it would equal
-`η` at `D = η`, and so, being non-decreasing in `D`, would be at most `η` at `D = 0`, where the claim
-is `∼ k η`. So the statement, as printed, needs another bound. The bound here is at least the printed one for `η ≤ D`, equal to it for `1/2 ≤ D`, and
-non-decreasing in `k`, `η` and `D`, with the claimed asymptotics for every `D < 1`.
+The bound for the Cauchy combination is the printed `f⁻¹(((k-1) f(D) + f(η))/k)`. The lemma gives no domain for
+`B`, and evaluates it only at `(min P, max P)`, so here it is stated on `0 ≤ η ≤ D < 1`, where the printed bound has the
+claimed properties (E8 of the report: off that domain it does not).
 
 Also exported, for the proof of Theorem 8.2: `minP_le_combineP` and `combineP_le_two_mul`, for multisets
 in `[0, 1]`.
@@ -273,11 +268,11 @@ theorem combineP_le_two_mul {m : TestCorrection} (hm : m = .bon ∨ m = .bbc) {P
 
 /-! ### The bound for the Cauchy combination -/
 
-/-- The bounding function of Lemma 6.1 for the Cauchy combination, `0` for `η ≤ 0`. -/
+/-- The bounding function of Lemma 6.1 for the Cauchy combination, `0` for `η ≤ 0`, as `f` is extended
+at `0` (E7 of the report). -/
 def cauchyBound (k : ℕ) (η D : ℝ) : ℝ :=
   if η ≤ 0 then 0 else
-    cauchyInverse (((((k : ℝ) - 1) * cauchyTransform (max (max D η) (1 / 2))) +
-      cauchyTransform η) / k)
+    cauchyInverse ((((k : ℝ) - 1) * cauchyTransform D + cauchyTransform η) / k)
 
 theorem cauchyBound_nonneg (k : ℕ) (η D : ℝ) : 0 ≤ cauchyBound k η D := by
   unfold cauchyBound
@@ -287,20 +282,7 @@ theorem cauchyBound_nonneg (k : ℕ) (η D : ℝ) : 0 ≤ cauchyBound k η D := 
 
 private lemma one_le_cast {k : ℕ} (hk : 1 ≤ k) : (1 : ℝ) ≤ k := by exact_mod_cast hk
 
-private lemma le_anchor (D η : ℝ) : η ≤ max (max D η) (1 / 2) :=
-  (le_max_right D η).trans (le_max_left _ _)
-
-private lemma anchor_pos (D η : ℝ) : 0 < max (max D η) (1 / 2) :=
-  lt_max_of_lt_right (by norm_num)
-
-private lemma anchor_lt_one {D η : ℝ} (hD : D < 1) (hη : η < 1) : max (max D η) (1 / 2) < 1 :=
-  max_lt (max_lt hD hη) (by norm_num)
-
-private lemma anchor_mono {D D' η η' : ℝ} (hD : D ≤ D') (hη : η ≤ η') :
-    max (max D η) (1 / 2 : ℝ) ≤ max (max D' η') (1 / 2) :=
-  max_le_max (max_le_max hD hη) le_rfl
-
-/-- The mean inside the bound is non-increasing in `η` and in the anchor. -/
+/-- The mean inside the bound is non-increasing in `η` and in `D`. -/
 private lemma mean_anti {k : ℕ} (hk : 1 ≤ k) {η η' E E' : ℝ} (hη : 0 < η) (hηη : η ≤ η')
     (hη' : η' < 1) (hE : 0 < E) (hEE : E ≤ E') (hE' : E' < 1) :
     (((k : ℝ) - 1) * cauchyTransform E' + cauchyTransform η') / k ≤
@@ -312,7 +294,7 @@ private lemma mean_anti {k : ℕ} (hk : 1 ≤ k) {η η' E E' : ℝ} (hη : 0 < 
   have h3 := mul_le_mul_of_nonneg_left h2 (show (0 : ℝ) ≤ (k : ℝ) - 1 by linarith)
   linarith
 
-/-- The mean inside the bound is non-increasing in `k`, when `η` is at most the anchor. -/
+/-- The mean inside the bound is non-increasing in `k`, when `η ≤ D`. -/
 private lemma mean_anti_k {k k' : ℕ} (hk : 1 ≤ k) (hkk : k ≤ k') {η E : ℝ} (hη : 0 < η)
     (hηE : η ≤ E) (hE : E < 1) :
     (((k' : ℝ) - 1) * cauchyTransform E + cauchyTransform η) / k' ≤
@@ -331,31 +313,31 @@ private lemma mean_anti_k {k k' : ℕ} (hk : 1 ≤ k) (hkk : k ≤ k') {η E : �
   have := div_le_div_of_nonneg_left (sub_nonneg.2 ha) hk0 hk2
   linarith
 
-private lemma cauchyBound_mono_k {k k' : ℕ} (hk : 1 ≤ k) (hkk : k ≤ k') {η D : ℝ} (hη1 : η < 1)
+private lemma cauchyBound_mono_k {k k' : ℕ} (hk : 1 ≤ k) (hkk : k ≤ k') {η D : ℝ} (hηD : η ≤ D)
     (hD1 : D < 1) : cauchyBound k η D ≤ cauchyBound k' η D := by
   unfold cauchyBound
   split_ifs with h
   · exact le_rfl
-  · exact cauchyInverse_anti
-      (mean_anti_k hk hkk (not_le.1 h) (le_anchor D η) (anchor_lt_one hD1 hη1))
+  · exact cauchyInverse_anti (mean_anti_k hk hkk (not_le.1 h) hηD hD1)
 
 private lemma cauchyBound_mono_eta {k : ℕ} (hk : 1 ≤ k) {η η' D : ℝ} (hηη : η ≤ η')
-    (hη1 : η' < 1) (hD1 : D < 1) : cauchyBound k η D ≤ cauchyBound k η' D := by
+    (hη'D : η' ≤ D) (hD1 : D < 1) : cauchyBound k η D ≤ cauchyBound k η' D := by
   by_cases h : η ≤ 0
   · rw [cauchyBound, ite_eq_left h]
     exact cauchyBound_nonneg _ _ _
   · have h' : ¬ η' ≤ 0 := fun h' => h (hηη.trans h')
+    have hη : 0 < η := not_le.1 h
     rw [cauchyBound, cauchyBound, ite_eq_right h, ite_eq_right h']
-    exact cauchyInverse_anti (mean_anti hk (not_le.1 h) hηη hη1 (anchor_pos D η)
-      (anchor_mono le_rfl hηη) (anchor_lt_one hD1 hη1))
+    exact cauchyInverse_anti (mean_anti hk hη hηη (hη'D.trans_lt hD1)
+      (hη.trans_le (hηη.trans hη'D)) le_rfl hD1)
 
-private lemma cauchyBound_mono_D {k : ℕ} (hk : 1 ≤ k) {η D D' : ℝ} (hη1 : η < 1) (hDD : D ≤ D')
+private lemma cauchyBound_mono_D {k : ℕ} (hk : 1 ≤ k) {η D D' : ℝ} (hηD : η ≤ D) (hDD : D ≤ D')
     (hD1 : D' < 1) : cauchyBound k η D ≤ cauchyBound k η D' := by
   unfold cauchyBound
   split_ifs with h
   · exact le_rfl
-  · exact cauchyInverse_anti (mean_anti hk (not_le.1 h) le_rfl hη1 (anchor_pos D η)
-      (anchor_mono hDD le_rfl) (anchor_lt_one hD1 hη1))
+  · exact cauchyInverse_anti (mean_anti hk (not_le.1 h) le_rfl (hηD.trans_lt (hDD.trans_lt hD1))
+      ((not_le.1 h).trans_le hηD) hDD hD1)
 
 /-- (6.1) for the Cauchy combination, the paper's computation: the transform of the minimum, and `k - 1`
 values at least the transform of the maximum. -/
@@ -368,7 +350,6 @@ theorem cauchyP_le_cauchyBound {P : Multiset ℝ} (hP : P ≠ 0) (h : ∀ p ∈ 
   have hlt : ∀ p ∈ P, p < 1 := fun p hp => (h p hp).2
   have hm := minP_mem hP fun p hp => (hlt p hp).le
   have hη := hpos _ hm
-  have hη1 := hlt _ hm
   have hD1 : maxP P < 1 := maxP_lt one_pos hlt
   rw [cauchyP_of_pos hpos hlt, cauchyBound, ite_eq_right (not_le.2 hη)]
   refine cauchyInverse_anti ?_
@@ -383,13 +364,11 @@ theorem cauchyP_le_cauchyBound {P : Multiset ℝ} (hP : P ≠ 0) (h : ∀ p ∈ 
   have hmem : ∀ p ∈ P', p ∈ P := fun p hp => by
     rw [hP']
     exact Multiset.mem_cons_of_mem hp
-  have hE := anchor_lt_one hD1 hη1
   have hrest := Multiset.card_nsmul_le_sum (s := P'.map cauchyTransform)
-    (a := cauchyTransform (max (max (maxP P) (minP P)) (1 / 2))) (by
+    (a := cauchyTransform (maxP P)) (by
       intro y hy
       obtain ⟨p, hp, rfl⟩ := Multiset.mem_map.1 hy
-      refine cauchyTransform_anti (hpos p (hmem p hp)) ?_ hE
-      exact (le_maxP_of_mem (hmem p hp)).trans ((le_max_left _ _).trans (le_max_left _ _)))
+      exact cauchyTransform_anti (hpos p (hmem p hp)) (le_maxP_of_mem (hmem p hp)) hD1)
   rw [Multiset.card_map, nsmul_eq_mul] at hrest
   have hk0 : (0 : ℝ) < Multiset.card P := by
     exact_mod_cast Multiset.card_pos.2 hP
@@ -403,7 +382,7 @@ theorem tendsto_cauchyBound_div {k : ℕ} (hk : 1 ≤ k) (D : ℝ) :
   have hk1 := one_le_cast hk
   have hk0 : (0 : ℝ) < k := by linarith
   have hpi := Real.pi_pos
-  set C := ((k : ℝ) - 1) * cauchyTransform (max D (1 / 2)) with hC
+  set C := ((k : ℝ) - 1) * cauchyTransform D with hC
   have hη0 : Tendsto (fun η : ℝ => η) (𝓝[>] 0) (𝓝 0) := tendsto_nhdsWithin_of_tendsto_nhds tendsto_id
   have hπη : Tendsto (fun η : ℝ => Real.pi * η) (𝓝[>] 0) (𝓝[≠] 0) := by
     refine tendsto_nhdsWithin_iff.2 ⟨by simpa using hη0.const_mul Real.pi, ?_⟩
@@ -460,16 +439,11 @@ theorem tendsto_cauchyBound_div {k : ℕ} (hk : 1 ≤ k) (D : ℝ) :
     field_simp
   rw [e] at hfinal
   refine hfinal.congr' ?_
-  have hsmall : ∀ᶠ η : ℝ in 𝓝[>] 0, η < 1 / 2 := by
-    refine mem_nhdsWithin_of_mem_nhds ?_
-    exact gt_mem_nhds (by norm_num)
-  filter_upwards [self_mem_nhdsWithin, hsmall, hyinf.eventually_gt_atTop 0] with η hη hη2 hypos
+  filter_upwards [self_mem_nhdsWithin, hyinf.eventually_gt_atTop 0] with η hη hypos
   have hη0' : (0 : ℝ) < η := hη
-  have hE : max (max D η) (1 / 2 : ℝ) = max D (1 / 2) := by
-    rw [max_assoc, max_eq_right hη2.le]
   simp only [Pi.div_apply]
   have hb : cauchyBound k η D = cauchyInverse (y η) := by
-    rw [cauchyBound, ite_eq_right (not_le.2 hη0'), hE]
+    rw [cauchyBound, ite_eq_right (not_le.2 hη0')]
   rw [hb]
   have hyne : y η ≠ 0 := hypos.ne'
   field_simp
@@ -558,25 +532,22 @@ private lemma lemma6_1Bound_equiv (m : TestCorrection) {k : ℕ} (hk : 1 ≤ k) 
     rw [← max_div_div_right hkη.le, div_self hkη.ne']
 
 /-- **Lemma 6.1**, part 1 (`ecto:lem6_1`, with (6.1), `ecto:eq6_1`). For each correction method there
-is a bounding function `B k η D` non-decreasing in `k`, `η` and `D` with
+is a bounding function `B k η D`, the paper's, non-decreasing in `k`, `η` and `D` on `0 ≤ η ≤ D < 1`, with
 `testCo(P) ≤ B_k(min(P), max(P))` for every multiset `P ⊂ [0, 1)` of size `k ≥ 1`, and
-`B_k(η, D) ∼ c k η` as `η → 0` for `D < 1` fixed.
-
-Departure from the paper: the anchor `max(D, η, 1/2)` replaces `D` in the bound for the Cauchy
-combination; see the header of this file. -/
+`B_k(η, D) ∼ c k η` as `η → 0` for `0 < D < 1` fixed. -/
 theorem lemma6_1_part1 (m : TestCorrection) : ∃ B : ℕ → ℝ → ℝ → ℝ,
     (∀ P : Multiset ℝ, P ≠ 0 → (∀ p ∈ P, 0 ≤ p ∧ p < 1) →
       combineP m P ≤ B (Multiset.card P) (minP P) (maxP P)) ∧
-    (∀ k k' η D, 1 ≤ k → k ≤ k' → 0 ≤ η → η < 1 → 0 ≤ D → D < 1 → B k η D ≤ B k' η D) ∧
-    (∀ k η η' D, 1 ≤ k → 0 ≤ η → η ≤ η' → η' < 1 → 0 ≤ D → D < 1 → B k η D ≤ B k η' D) ∧
-    (∀ k η D D', 1 ≤ k → 0 ≤ η → η < 1 → 0 ≤ D → D ≤ D' → D' < 1 → B k η D ≤ B k η D') ∧
-    ∀ k D, 1 ≤ k → 0 ≤ D → D < 1 →
+    (∀ k k' η D, 1 ≤ k → k ≤ k' → 0 ≤ η → η ≤ D → D < 1 → B k η D ≤ B k' η D) ∧
+    (∀ k η η' D, 1 ≤ k → 0 ≤ η → η ≤ η' → η' ≤ D → D < 1 → B k η D ≤ B k η' D) ∧
+    (∀ k η D D', 1 ≤ k → 0 ≤ η → η ≤ D → D ≤ D' → D' < 1 → B k η D ≤ B k η D') ∧
+    ∀ k D, 1 ≤ k → 0 < D → D < 1 →
       Asymptotics.IsEquivalent (𝓝[>] (0 : ℝ)) (fun η => B k η D)
         (fun η => boundConstant m * k * η) := by
   refine ⟨lemma6_1Bound m, fun P hP h => combineP_le_lemma6_1Bound m hP h, ?_, ?_, ?_,
     fun k D hk _ _ => lemma6_1Bound_equiv m hk D⟩
-  · intro k k' η D hk hkk hη hη1 _ hD1
-    have hC := cauchyBound_mono_k hk hkk hη1 hD1
+  · intro k k' η D hk hkk hη hηD hD1
+    have hC := cauchyBound_mono_k hk hkk hηD hD1
     have hB : (k : ℝ) * η ≤ k' * η :=
       mul_le_mul_of_nonneg_right (by exact_mod_cast hkk) hη
     cases m with
@@ -584,16 +555,16 @@ theorem lemma6_1_part1 (m : TestCorrection) : ∃ B : ℕ → ℝ → ℝ → �
     | cauchy => exact hC
     | bbc => exact mul_le_mul_of_nonneg_left (min_le_min hC hB) (by norm_num)
     | cbc => exact max_le_max hC hB
-  · intro k η η' D hk hη hηη hη1 _ hD1
-    have hC := cauchyBound_mono_eta hk hηη hη1 hD1
+  · intro k η η' D hk hη hηη hη'D hD1
+    have hC := cauchyBound_mono_eta hk hηη hη'D hD1
     have hB : (k : ℝ) * η ≤ k * η' := mul_le_mul_of_nonneg_left hηη (Nat.cast_nonneg _)
     cases m with
     | bon => exact hB
     | cauchy => exact hC
     | bbc => exact mul_le_mul_of_nonneg_left (min_le_min hC hB) (by norm_num)
     | cbc => exact max_le_max hC hB
-  · intro k η D D' hk _ hη1 _ hDD hD1
-    have hC := cauchyBound_mono_D hk hη1 hDD hD1
+  · intro k η D D' hk _ hηD hDD hD1
+    have hC := cauchyBound_mono_D hk hηD hDD hD1
     cases m with
     | bon => exact le_rfl
     | cauchy => exact hC

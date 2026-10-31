@@ -593,7 +593,7 @@ theorem lemma3 [Fintype V] [Fintype E] {N : RootedNetwork V E X} {θ : MetricDat
 
 /-- `π` is a margin of the perturbation lemma: a lower bound, over the 4-taxon sets that `T_N`
 resolves, on the differences between the concordance factor of the quartet tree `T_N` displays and those of the
-alternatives. E22 of the report: the printed "minimum of all differences" can vanish. -/
+alternatives. E22 of the report: the printed "minimum of all differences" vanishes, since the alternatives of a T-quartet are equal. -/
 def Margin (N : RootedNetwork V E X) (F : QuartetTree X → ℝ) (π : ℝ) : Prop :=
   ∀ s, Displays (treeOfBlobs N) s → ∀ r ∈ s.alternatives, π ≤ F s - F r
 

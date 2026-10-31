@@ -544,8 +544,9 @@ theorem exists_combineBounds (m : TestCorrection) (K : ℕ) {δ : ℝ} (hδ : 0 
       exact this.mono_left nhdsWithin_le_nhds
     · filter_upwards [self_mem_nhdsWithin] with τ hτ
       exact mul_pos hc₀ hτ
-  have hsmall : ∀ᶠ τ in 𝓝[>] (0 : ℝ), 1 / (4 * v) * τ < 1 := by
-    have : ∀ᶠ η in 𝓝[>] (0 : ℝ), η < 1 := eventually_of_mem (Ioo_mem_nhdsGT one_pos) fun _ h => h.2
+  have hsmall : ∀ᶠ τ in 𝓝[>] (0 : ℝ), 1 / (4 * v) * τ < 1 - δ := by
+    have : ∀ᶠ η in 𝓝[>] (0 : ℝ), η < 1 - δ :=
+      eventually_of_mem (Ioo_mem_nhdsGT (by linarith)) fun _ h => h.2
     exact htend.eventually this
   refine ⟨1 / (4 * v), hc₀, ?_⟩
   have hτ1 : ∀ᶠ τ in 𝓝[>] (0 : ℝ), τ < 1 :=
@@ -582,12 +583,11 @@ theorem exists_combineBounds (m : TestCorrection) (K : ℕ) {δ : ℝ} (hδ : 0 
       have hmax₁ : maxP P ≤ 1 - δ := maxP_le_iff.2 ⟨by linarith, hle'⟩
       have hmax₀ := maxP_nonneg P
       have h₁ := hB P hP hP01
-      have h₂ := hD _ (minP P) (maxP P) (1 - δ) hcard₁ hmin₀ (hminη.trans hτη) hmax₀ hmax₁
-        (by linarith)
-      have h₃ := hη _ (minP P) (1 / (4 * v) * τ) (1 - δ) hcard₁ hmin₀ hminη.le hτη (by linarith)
-        (by linarith)
+      have h₂ := hD _ (minP P) (maxP P) (1 - δ) hcard₁ hmin₀
+        ((minP_le_of_mem hx).trans (le_maxP_of_mem hx)) hmax₁ (by linarith)
+      have h₃ := hη _ (minP P) (1 / (4 * v) * τ) (1 - δ) hcard₁ hmin₀ hminη.le hτη.le (by linarith)
       have h₄ := hk _ (max K 1) (1 / (4 * v) * τ) (1 - δ) hcard₁ (hcard.trans hKK)
-        (mul_pos hc₀ hτpos).le hτη (by linarith) (by linarith)
+        (mul_pos hc₀ hτpos).le hτη.le (by linarith)
       rw [hηval] at hτB
       linarith
     cases m with

@@ -137,7 +137,8 @@ status:
     hypotheses. TINNiK Theorem 4 and ECToBlob Proposition 5.1 are conditional on them. All other numbered results of the
     three papers and the results they cite are proved. Theorem 8.2 of ECToBlob is proved under two corrections, for
     parameters meeting both directions of Assumption 1, and, for two variants of the algorithm, positive alternatives on
-    quartets strictly in the T1 null; the second correction has a counterexample and awaits the requester's agreement.
+    quartets strictly in the T1 null; the second correction, which has a counterexample under the continuous extension of
+    the Cauchy transform, awaits the requester's agreement.
     Not formalized: simulations, running times, neighbor joining as an exact tree builder, the T3 test, heuristic
     optimizers, and Remarks 8.3 and 8.4 of ECToBlob as theorems. See REPORT.md, Section 9.
   sorry_count: 0
@@ -171,16 +172,20 @@ automation:
 
 fidelity:
   divergences: >-
-    Statements corrected (REPORT.md, Section 4): ECToBlob Theorem 8.2 for parameters meeting Assumption 1, as agreed with
-    the user (E10); ECToBlob Theorem 8.2 with positive alternatives for the Cauchy and CBC variants, not yet agreed (E11);
-    ECToBlob equation (3.3) weighted by block sizes (E2); TINNiK's maximum likelihood estimate on the closed simplex
-    (E31); TOB-QMC's supplement Lemma 2, forward direction only (E23). Library statements omit hypotheses that the proofs
-    do not use (REPORT.md, Section 5); Challenge.lean keeps them. Readings: REPORT.md, Section 6. Departures from the papers'
-    proofs: ECToBlob Theorem 3.1 (E2), Corollary 3.6 (E3), Lemma 6.1 (E8), Theorem 8.2 (E12–E17), each repairing a gap;
-    TOB-QMC Lemma 3 (E18) and consistency (E21), repairing gaps; TOB-QMC Lemma 4's converse and cited results of Allman et al.
-    and Rhodes, because wedge paths and components have no counterpart in the representation; TINNiK Proposition 5, by a
-    direct central limit argument, because Lean lacks van der Vaart's Theorem 16.7; TINNiK Proposition 6, by Cartesian
-    coordinates and Fubini; TINNiK Theorem 4, without analyticity. REPORT.md, Section 7, gives each.
+    Statements corrected (REPORT.md, Sections 4 and 6): ECToBlob Theorem 8.2 for parameters meeting Assumption 1, as agreed
+    with the user (E10); ECToBlob Theorem 8.2 with positive alternatives for the Cauchy and CBC variants, under the continuous
+    extension of the Cauchy transform at p = 1, where the printed formula is undefined, not yet agreed (E11); ECToBlob
+    equation (3.3) weighted by block sizes (E2); the margin of TOB-QMC's supplement Lemma 4, vacuous as printed (E22);
+    its Lemma 2, forward direction only (E23); its Lemma 8 for nontrivial blobs (E26); TINNiK's maximum likelihood estimate on
+    the closed simplex (E31). Library statements omit hypotheses that the proofs do not use (REPORT.md, Section 5);
+    Challenge.lean keeps them. Readings: REPORT.md, Section 6. Departures from the papers' proofs (REPORT.md, Section 7).
+    Forced, repairing gaps: ECToBlob Theorem 3.1 (E2), Corollary 3.6 (E3), Theorem 8.2 (E11-E17), TOB-QMC supplement Lemma 4
+    (E22, E24), TINNiK Theorem 4 under the alternative (E33). Forced, because Lean lacks the mathematics: TINNiK Proposition 5,
+    by a direct central limit argument in place of van der Vaart's Theorem 16.7; TINNiK Theorem 4's exclusion of the centroid, without
+    analyticity; ECToBlob Proposition 5.1's generic clause, assumed. Not forced, and kept, as disclosed in the report: TOB-QMC Lemma 3's second
+    observation and Lemma 4's wedge paths, in favour of shorter arguments on the rooted subgraph; TOB-QMC's consistency claim,
+    by a finer argument than the citation (E21); TINNiK Proposition 6's integrals, in Cartesian coordinates with the paper's
+    intermediate formulas; TINNiK Theorem 4's null case; and the cited Lemma 3 of Allman et al. and Theorem 2 of Rhodes.
 
 review:
   status: "agent-reviewed"
@@ -222,7 +227,7 @@ alignment:
       lean: "Challenge.theorem2"
       module: "Challenge"
       status: "proved"
-      note: "Binary B is not needed; the Challenge keeps it unrequired, for any tree refinement, by the multipartition reading of Definition 2."
+      note: "As printed, B is any refinement; Definition 2's quadripartition is read as the multipartition at the edge."
     - source: "TOB-QMC v5, consistency claim of §4.3"
       lean: "Challenge.consistency"
       module: "Challenge"

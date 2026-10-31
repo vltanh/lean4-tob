@@ -49,4 +49,4 @@ The user approved requiring a nontrivial blob in supplied TOB-QMC supplement Lem
 
 The correction E11 of REPORT.md (positivity of alternatives on T1-strict quartets, for the Cauchy and CBC variants of ECToBlob's Theorem 8.2) was added on 2026-10-31 on the strength of a counterexample that an independent reader checked. The user has not yet agreed to it. Until they do, `ECToBlob.theorem8_2` and `Challenge.theorem8_2` carry it as a documented deviation.
 
-The tests are read as implemented in the sources: gene trees are binary in Theorem 8.2 (the models of ECToBlob §5 produce these), and the small-count procedures of MSCquartets are not modelled.
+The tests are read as implemented in the sources: gene trees are binary in Theorem 8.2, which covers the NMSC and the Displayed Tree model when all displayed trees are binary, and the small-count procedures of MSCquartets are not modelled.
