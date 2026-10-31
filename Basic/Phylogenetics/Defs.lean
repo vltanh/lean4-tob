@@ -31,6 +31,11 @@ Conventions, for a reader checking the statements against the three papers.
   law of the forests at the bottom and the top of every arc, summed over all such histories, so
   that it mentions no processing order. It uses one lineage per taxon and includes the
   inheritance correlation `ρ`: `ρ = 0` is independent and `ρ = 1` common inheritance.
+
+The sections of the block, in order: directed multigraphs; rooted phylogenetic networks; unrooted trees
+as split families; the tree of blobs and the quartets of a network; Kingman's coalescent and the network
+multispecies coalescent; sampling gene trees; hypothesis tests on quartet counts; combining p-values
+(ECToBlob §6); the ECToBlob algorithm (Algorithm 7.1); the TINNiK algorithm; the statements' hypotheses.
 -/
 
 @[expose] public noncomputable section
@@ -39,8 +44,6 @@ open Finset MeasureTheory ProbabilityTheory
 open scoped Classical
 
 -- BEGIN SHARED DEFINITIONS
-
-/-! ### Directed multigraphs -/
 
 /-- A directed multigraph on given vertex and arc types. Every element of the arc type is an actual
 arc; parallel arcs remain distinct. -/
@@ -75,8 +78,6 @@ end DirectedMultigraph
 
 namespace Phylogenetics
 
-/-! ### Rooted phylogenetic networks -/
-
 /-- A rooted network on taxa `X`: graph, root and taxon labels. -/
 structure RootedNetwork (V E X : Type*) where
   graph : DirectedMultigraph V E
@@ -90,7 +91,9 @@ variable {V E X : Type*} (N : RootedNetwork V E X)
 /-- The defining laws of a rooted phylogenetic network (ECToBlob §2, TOB-QMC §4.1, TINNiK
 §"Phylogenetic networks"): a finite directed acyclic graph in which the root, of indegree zero,
 reaches every vertex; sinks are exactly the taxon labels, bijectively, each of indegree one. Internal
-vertices of any degree are allowed, including tree vertices of outdegree one. -/
+vertices of any degree are allowed, including tree vertices of outdegree one. The root need not be the
+LSA of the taxa, unlike ECToBlob's standing convention: what lies above the LSA affects no split with
+taxa on both sides. -/
 structure IsPhylogenetic : Prop where
   finite_vertices : Finite V
   finite_arcs : Finite E
@@ -158,8 +161,6 @@ def HasCutSplitOn (Y A : Set X) : Prop :=
 
 end RootedNetwork
 
-/-! ### Unrooted trees as split families -/
-
 section Trees
 
 variable {X : Type*} [Fintype X] [DecidableEq X]
@@ -190,9 +191,8 @@ def IsBinaryTree (T : Finset (Finset X)) : Prop :=
   ∃ H : Finset (Finset X), IsHierarchy H ∧ unroot H = T ∧
     ∀ A ∈ H, 2 ≤ A.card → (childClusters H A).card = 2
 
-/-- The sides of a topological binary or nonbinary tree whose `T` is a resolution: `T' ⊆ T`. A
-resolution of `T'` is an unrooted tree `T` from which `T'` is obtained by contracting edges, that
-is, by removing splits. -/
+/-- `T` is a resolution of `T'`: an unrooted tree from which `T'` is obtained by contracting edges,
+that is, by removing splits. It may be nonbinary. -/
 def IsResolutionOf (T T' : Finset (Finset X)) : Prop := IsUnrootedTree T ∧ T' ⊆ T
 
 /-- A resolved quartet tree `ab|cd`: the unordered pair of its cherries `{a,b}`, `{c,d}`. -/
@@ -247,8 +247,6 @@ def multipartitionQuartets (T : Finset (Finset X)) (A : Finset X) : Finset (Quar
 
 end Trees
 
-/-! ### The tree of blobs and the quartets of a network -/
-
 section NetworkQuartets
 
 variable {V E X : Type*} [Fintype X] [DecidableEq X] (N : RootedNetwork V E X)
@@ -271,15 +269,12 @@ def IsTreelike (q : Finset X) : Prop :=
 
 /-- The network induced on `q` has a trivial 4-blob, a multifurcation: there is a vertex `v` with,
 for each taxon `x` of `q`, a cut edge of the induced subgraph at `v` separating exactly `x`
-from `v`. (ECToBlob §5.1.) -/
+from `v`. (ECToBlob §5.1.) Chains of 2-blobs may lead to the taxa, but `v` itself lies on no cycle: a
+vertex of a non-trivial blob is not a trivial 4-blob, as in ECToBlob §2. -/
 def HasTrivialFourBlob (q : Finset X) : Prop :=
   ∃ v : V, ∀ x ∈ q, ∃ e ∈ N.ancestralArcs (q : Set X), ∃ S : Set V,
     (∀ f ∈ N.ancestralArcs (q : Set X), N.graph.Crosses f S ↔ f = e) ∧
     (∀ y ∈ q, N.leaf y ∈ S ↔ y = x) ∧ v ∉ S ∧ (N.graph.source e = v ∨ N.graph.target e = v)
-
-/-- The taxa `q` form a B-quartet of the network (TINNiK Definition 4): the tree of blobs does not
-resolve them. -/
-def IsBQuartet (q : Finset X) : Prop := ∀ s ∈ treesOn q, ¬ Displays (treeOfBlobs N) s
 
 /-- Condition 2 of ECToBlob Theorem 3.1, in the form in which its proof uses it (see
 `ECToBlob.pendantChainInvariant_cutExchangeable` for the literal form): replacing a taxon `a` of a
@@ -292,8 +287,6 @@ def CutExchangeable (p : QuartetTree X → ℝ) : Prop :=
     p s = p s'
 
 end NetworkQuartets
-
-/-! ### Kingman's coalescent and the network multispecies coalescent -/
 
 section Coalescent
 
@@ -383,8 +376,6 @@ def nmscCF (s : QuartetTree X) : ℝ :=
 
 end NMSC
 
-/-! ### Sampling gene trees -/
-
 section Sampling
 
 variable {Γ : Type*} [Fintype Γ]
@@ -402,8 +393,6 @@ def quartetCount {n : ℕ} (sides : Γ → Finset (Finset X)) (ω : Fin n → Γ
   ((univ.filter fun i => Displays (sides (ω i)) s).card : ℝ)
 
 end Sampling
-
-/-! ### Hypothesis tests on quartet counts -/
 
 section Tests
 
@@ -428,8 +417,8 @@ def starStat (c : QuartetTree X → ℝ) (q : Finset X) : ℝ :=
 def pearsonStat (c : QuartetTree X → ℝ) (q : Finset X) : ℝ :=
   ∑ r ∈ treesOn q, (c r - (∑ t ∈ treesOn q, c t) / 3) ^ 2 / ((∑ t ∈ treesOn q, c t) / 3)
 
-/-- The likelihood ratio statistic of the T1 test (Mitchell, Allman, Rhodes 2019, §6; ECToBlob §5.2)
-with null hypothesis `p_s ≥ p_{s'} = p_{s''}`: the maximum on this null is on the line of `s` when the
+/-- The likelihood ratio statistic of the T1 test (Mitchell, Allman, Rhodes 2019, "Model T1"; ECToBlob
+§5.2) with null hypothesis `p_s ≥ p_{s'} = p_{s''}`: the maximum on this null is on the line of `s` when the
 data have `c s` at least the mean of the alternatives, and otherwise at the centroid. -/
 def t1Stat (c : QuartetTree X → ℝ) (s : QuartetTree X) : ℝ :=
   if (∑ r ∈ s.alternatives, c r) / 2 ≤ c s then lineStat c s else starStat c s.taxa
@@ -438,8 +427,8 @@ def t1Stat (c : QuartetTree X → ℝ) (s : QuartetTree X) : ℝ :=
 `(1 - 2φ/3, φ/3, φ/3)` and sample size `n`. -/
 def muZero (φ n : ℝ) : ℝ := Real.sqrt (2 * n) * (1 - φ) / Real.sqrt (φ * (3 - 2 * φ))
 
-/-- The upper tail at `t` of the T1 test distribution of Mitchell, Allman, Rhodes 2019,
-Proposition 6.1: that of `Z² + ½ (1 - sgn Z̄) Z̄²` for independent `Z ~ N(0,1)` and `Z̄ ~ N(μ,1)`. -/
+/-- The upper tail at `t` of the T1 test distribution of Mitchell, Allman, Rhodes 2019 ("Application to
+Model T1"): that of `Z² + ½ (1 - sgn Z̄) Z̄²` for independent `Z ~ N(0,1)` and `Z̄ ~ N(μ,1)`. -/
 def t1Tail (μ t : ℝ) : ℝ :=
   ((gaussianReal 0 1).prod (gaussianReal μ 1)).real
     {z | t < z.1 ^ 2 + if z.2 < 0 then z.2 ^ 2 else 0}
@@ -448,16 +437,14 @@ def t1Tail (μ t : ℝ) : ℝ :=
 def t1Phi (c : QuartetTree X → ℝ) (s : QuartetTree X) : ℝ :=
   min 1 (3 * (∑ r ∈ s.alternatives, c r) / (2 * (c s + ∑ r ∈ s.alternatives, c r)))
 
-/-- The p-value of the T1 test, with the estimated `φ` in the test distribution, as in the
-implementation in MSCquartets. -/
+/-- The p-value of the T1 test, with the estimated `φ` in the test distribution, as in Mitchell, Allman,
+Rhodes 2019. The separate procedures of those papers and of MSCquartets for small counts are not modelled:
+they do not arise in the limit, when the concordance factors are positive. -/
 def t1PValue (c : QuartetTree X → ℝ) (s : QuartetTree X) : ℝ :=
   t1Tail (muZero (t1Phi c s) (c s + ∑ r ∈ s.alternatives, c r)) (t1Stat c s)
 
 /-- The upper tail at `t` of the `χ²` distribution with 2 degrees of freedom. -/
 def chiSqTwoTail (t : ℝ) : ℝ := Real.exp (-t / 2)
-
-/-- The upper tail at `t` of the `χ²` distribution with 1 degree of freedom. -/
-def chiSqOneTail (t : ℝ) : ℝ := (gaussianReal 0 1).real {z | t < z ^ 2}
 
 /-- The star test used: likelihood ratio (the default) or Pearson. -/
 inductive StarTest
@@ -472,8 +459,6 @@ def starPValue (k : StarTest) (c : QuartetTree X → ℝ) (q : Finset X) : ℝ :
 
 end Tests
 
-/-! ### Combining p-values (ECToBlob §6) -/
-
 section Combining
 
 /-- The Cauchy transform `f(p) = tan(π(1/2 - p))`. -/
@@ -484,9 +469,6 @@ def cauchyInverse (y : ℝ) : ℝ := 1 / 2 - Real.arctan y / Real.pi
 
 /-- The minimum of a multiset of p-values, with the value `1` for the empty multiset. -/
 def minP (P : Multiset ℝ) : ℝ := P.fold min 1
-
-/-- The maximum of a multiset of p-values, with the value `0` for the empty multiset. -/
-def maxP (P : Multiset ℝ) : ℝ := P.fold max 0
 
 /-- `Bon(P) = min(1, k min(P))`. -/
 def bonP (P : Multiset ℝ) : ℝ := min 1 ((Multiset.card P : ℝ) * minP P)
@@ -523,8 +505,6 @@ def combineP (m : TestCorrection) (P : Multiset ℝ) : ℝ :=
   | .cbc => cbcP P
 
 end Combining
-
-/-! ### The ECToBlob algorithm (ECToBlob Algorithm 7.1) -/
 
 section ECToBlobAlgorithm
 
@@ -603,8 +583,6 @@ def ectoblob : Finset (Finset X) := treeSeq o β c T₀ (selectedIteration o α 
 
 end ECToBlobAlgorithm
 
-/-! ### The TINNiK algorithm (TINNiK §"The TINNiK algorithm") -/
-
 section TINNiKAlgorithm
 
 variable {X : Type*} [Fintype X] [DecidableEq X]
@@ -649,7 +627,9 @@ def cutTail (φ n t : ℝ) : ℝ :=
       ((Real.sin (alphaZero φ) * z.1 - Real.cos (alphaZero φ) * z.2) ^ 2))}
 
 /-- The p-value of the cut test, with `φ` estimated on the cut-model line of the quartet tree `s`, a
-maximum likelihood topology: TINNiK Appendix C.2. -/
+maximum likelihood topology: TINNiK Appendix C.2. At the edges `φ̂ = 0` or `3/2`, excluded in the paper's
+`φ₀ ∈ (0, 3/2)`, division by zero gives arbitrary values; TINNiK uses other procedures for small counts,
+and these counts have vanishing probability when the concordance factors are positive. -/
 def cutPValue (c : QuartetTree X → ℝ) (s : QuartetTree X) : ℝ :=
   cutTail (3 * (∑ r ∈ s.alternatives, c r) / (2 * (c s + ∑ r ∈ s.alternatives, c r)))
     (c s + ∑ r ∈ s.alternatives, c r) (cutStat c s.taxa)
@@ -689,22 +669,25 @@ def treeMetric (T : Finset (Finset X)) (w : Finset X → ℝ) (x y : X) : ℝ :=
 edge weights. -/
 abbrev TreeBuilder (X : Type*) := (X → X → ℝ) → Finset (Finset X) × (Finset X → ℝ)
 
-/-- The method returns the tree from an exact tree metric: `T`'s edge weights are positive and
-agree on the two sides of an edge. This is what TINNiK §"Statistical consistency" uses of NJ. -/
+/-- The method recovers the tree from an exact tree metric, whose edge weights are positive and agree
+on the two sides of an edge: it returns a tree resolving it with the same weights, and any further
+edges have weight at most zero. This is what TINNiK §"Statistical consistency" uses of NJ, which on the
+metric of a tree with a polytomy returns a binary tree with edges of length zero. -/
 def IsExactBuilder (M : TreeBuilder X) : Prop :=
   ∀ (T : Finset (Finset X)) (w : Finset X → ℝ), IsUnrootedTree T →
     (∀ A ∈ T, 0 < w A ∧ w Aᶜ = w A) →
-    (M (treeMetric T w)).1 = T ∧ ∀ A ∈ T, (M (treeMetric T w)).2 A = w A
+    IsUnrootedTree (M (treeMetric T w)).1 ∧ T ⊆ (M (treeMetric T w)).1 ∧
+      (∀ A ∈ T, (M (treeMetric T w)).2 A = w A) ∧
+      ∀ A ∈ (M (treeMetric T w)).1, A ∉ T → (M (treeMetric T w)).2 A ≤ 0
 
-/-- The output of the TINNiK algorithm on the quartet counts `c`, with cutoff `δ`: Steps 2 to 5. -/
+/-- The output of the TINNiK algorithm on the quartet counts `c`, with cutoff `δ`: Steps 2 to 5. An edge
+set to length zero is contracted, and so is one the method returned with length zero. -/
 def tinnik (α β δ : ℝ) (M : TreeBuilder X) (c : QuartetTree X → ℝ) : Finset (Finset X) :=
   let B := {q | BInferred (testedB ml α β c) (testedT ml α β c) q}
   let built := M (quartetDistance B {s | s ∈ testedT ml α β c ∧ s.taxa ∉ B})
-  built.1.filter fun A => A ∉ internalSides built.1 ∨ δ ≤ built.2 A
+  built.1.filter fun A => A ∉ internalSides built.1 ∨ (δ ≤ built.2 A ∧ 0 < built.2 A)
 
 end TINNiKAlgorithm
-
-/-! ### The statements' hypotheses -/
 
 section ECToBlobStatements
 
@@ -747,12 +730,6 @@ parameters. -/
 structure Assumption1Converse (p : QuartetTree X → ℝ) : Prop where
   star : ∀ q : Finset X, q.card = 4 → ¬ HasTrivialFourBlob N q → ¬ IsUniformOn p q
   t1 : ∀ s : QuartetTree X, ¬ InducedCutSplit N s → ¬ IsT1Strict p s
-
-/-- The sequence `α_n` of the proof of Theorem 8.2: the upper tail of `χ²₁` at `log n`. -/
-def alphaSeq (n : ℕ) : ℝ := chiSqOneTail (Real.log n)
-
-/-- The sequence `β_n` of the proof of Theorem 8.2: the upper tail of `χ²₂` at `log n`, `1/√n`. -/
-def betaSeq (n : ℕ) : ℝ := chiSqTwoTail (Real.log n)
 
 /-- Binary gene trees. -/
 abbrev BinaryGeneTree (X : Type*) [Fintype X] [DecidableEq X] :=
@@ -886,3 +863,32 @@ def Corollary1 (N : RootedNetwork V E X) : Prop :=
 end External.AllmanEtAl2023
 
 -- END SHARED DEFINITIONS
+
+/-! The definitions below are used in the library, and in no statement of the Challenge. -/
+
+namespace Phylogenetics
+
+/-- The taxa `q` form a B-quartet of the network (TINNiK Definition 4): the tree of blobs does not
+resolve them. -/
+def IsBQuartet {V E X : Type*} [Fintype X] [DecidableEq X] (N : RootedNetwork V E X)
+    (q : Finset X) : Prop := ∀ s ∈ treesOn q, ¬ Displays (treeOfBlobs N) s
+
+/-- The upper tail at `t` of the `χ²` distribution with 1 degree of freedom. -/
+def chiSqOneTail (t : ℝ) : ℝ := (gaussianReal 0 1).real {z | t < z ^ 2}
+
+/-- The maximum of a multiset of p-values, with the value `0` for the empty multiset. -/
+def maxP (P : Multiset ℝ) : ℝ := P.fold max 0
+
+end Phylogenetics
+
+namespace ECToBlob
+
+open Phylogenetics
+
+/-- The sequence `α_n` of the proof of Theorem 8.2: the upper tail of `χ²₁` at `log n`. -/
+def alphaSeq (n : ℕ) : ℝ := chiSqOneTail (Real.log n)
+
+/-- The sequence `β_n` of the proof of Theorem 8.2: the upper tail of `χ²₂` at `log n`, `1/√n`. -/
+def betaSeq (n : ℕ) : ℝ := chiSqTwoTail (Real.log n)
+
+end ECToBlob

@@ -17,7 +17,7 @@ namespace External.HuberEtAl2025
 
 variable {V E X : Type*} [Fintype X] [DecidableEq X] {N : RootedNetwork V E X}
 
-set_option linter.unusedSectionVars false in
+omit [Fintype X] in
 /-- **Theorem 5.1, forward direction.** If `A|B` is the split of a cut edge, then for all distinct
 `a₁, a₂ ∈ A` and `b₁, b₂ ∈ B`, `a₁a₂|b₁b₂` is the split of a cut edge of the network induced on
 these taxa. The source treats binary semi-directed networks; the binary condition is not needed. -/

@@ -204,7 +204,6 @@ theorem exists_quartetCutArc (hN : N.IsPhylogenetic) {a₁ a₂ b₁ b₂ : X}
   · exact ⟨e, Or.inl ⟨hd _ m₁, hd _ m₂, hn _ m₃, hn _ m₄⟩⟩
   · exact ⟨e, Or.inr ⟨hd _ m₃, hd _ m₄, hn _ m₁, hn _ m₂⟩⟩
 
-set_option linter.unusedVariables false in
 /-- **Theorem 4.1** (`ecto:thm4_1`). Let `N` be a rooted network on `X`, not necessarily binary, and
 `A|B` a split of `X`, with partitions `A = A₁ ⊔ A₂`, `B = B₁ ⊔ B₂` into nonempty sets. If for all
 `aᵢ ∈ Aᵢ`, `bᵢ ∈ Bᵢ` the split `a₁a₂|b₁b₂` is a cut-edge split of the induced 4-taxon network, then

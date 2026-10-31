@@ -408,10 +408,12 @@ theorem exists_isExactBuilder : ∃ M : TreeBuilder X, IsExactBuilder M := by
   obtain ⟨hT', hw', heq⟩ := hex.choose_spec
   by_cases hX : 2 ≤ Fintype.card X
   · obtain ⟨h1, h2⟩ := TreeMetric.eq_of_treeMetric_eq hX hT' hT hw' hw heq
-    exact ⟨h1, fun A hA => h2 A (by rw [h1]; exact hA)⟩
+    refine ⟨hT', h1.ge, fun A hA => h2 A (by rw [h1]; exact hA), fun A hA hnA => ?_⟩
+    exact absurd (h1 ▸ hA) hnA
   · have hT0 := TreeMetric.eq_empty_of_card_lt_two (by omega) hT
     have hT0' := TreeMetric.eq_empty_of_card_lt_two (by omega) hT'
-    refine ⟨hT0'.trans hT0.symm, fun A hA => ?_⟩
-    simp [hT0] at hA
+    refine ⟨hT', by simp [hT0], fun A hA => ?_, fun A hA => ?_⟩
+    · simp [hT0] at hA
+    · simp [hT0'] at hA
 
 end External.Rhodes2020

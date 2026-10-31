@@ -187,12 +187,38 @@ private theorem tinnik_eq_of_tests {V E : Type*} {N : RootedNetwork V E X} (hN :
         External.Rhodes2020.quartetWeight (treeOfBlobs N) A := fun A hA =>
     ⟨lt_of_lt_of_le two_pos (External.Rhodes2020.quartetWeight_ge_two hTB hX hA),
       External.Rhodes2020.quartetWeight_compl _ _⟩
-  obtain ⟨h1, h2⟩ := hM _ _ hTB hw
+  obtain ⟨h0, h1, h2, h3⟩ := hM _ _ hTB hw
   simp only [tinnik]
-  rw [hB, hT, hBset, hτ, hdist, h1]
-  refine Finset.filter_true_of_mem fun A hA => Or.inr ?_
-  rw [h2 A hA]
-  exact hδ₂.le.trans (External.Rhodes2020.quartetWeight_ge_two hTB hX hA)
+  rw [hB, hT, hBset, hτ, hdist]
+  have hX2 : 2 ≤ Fintype.card X := by omega
+  have hTfam := (isUnrootedTree_iff hX2 _).mp hTB
+  have hbuilt := (isUnrootedTree_iff hX2 _).mp h0
+  ext A
+  simp only [Finset.mem_filter]
+  constructor
+  · rintro ⟨hA, hor⟩
+    by_contra hnA
+    rcases hor with hor | ⟨-, hpos⟩
+    · -- a side of a tree that is not internal is a singleton or the complement of one
+      apply hnA
+      have hne := hbuilt.nonempty A hA
+      have hne' := hbuilt.compl_nonempty A hA
+      simp only [internalSides, Finset.mem_filter, not_and_or, not_le] at hor
+      rcases hor with hor | hor | hor
+      · exact absurd hA hor
+      · obtain ⟨x, rfl⟩ := Finset.card_eq_one.mp
+          (le_antisymm (by omega) (Finset.card_pos.mpr hne))
+        exact hTfam.singleton_mem x
+      · obtain ⟨x, hx⟩ := Finset.card_eq_one.mp
+          (le_antisymm (by omega) (Finset.card_pos.mpr hne'))
+        have := hTfam.compl_mem _ (hTfam.singleton_mem x)
+        rwa [← hx, compl_compl] at this
+    · exact absurd hpos (not_lt.mpr (h3 A hA hnA))
+  · intro hA
+    refine ⟨h1 hA, Or.inr ?_⟩
+    rw [h2 A hA]
+    have h2le := External.Rhodes2020.quartetWeight_ge_two hTB hX hA
+    exact ⟨hδ₂.le.trans h2le, lt_of_lt_of_le two_pos h2le⟩
 
 /-- The answers wanted on a set of four taxa: the star test rejects; a cut-edge split on the induced
 network is the maximum likelihood topology, and the cut test does not reject it; and without a
@@ -273,7 +299,7 @@ private theorem eventually_chiSqOneTail_le {α : ℕ → ℝ} (hα : ∀ m, 0 < 
   have hn' : (0 : ℝ) < n := by exact_mod_cast hn0
   have ht : (0 : ℝ) ≤ n * d := by positivity
   have h2 : chiSqOneTail (n * d) ≤ chiSqTwoTail (n * d) :=
-    (QuartetTests.chiSqOneTail_le_t1Tail le_rfl ht).trans (QuartetTests.t1Tail_le_chiSqTwoTail le_rfl ht)
+    (QuartetTests.chiSqOneTail_le_t1Tail 0 _).trans (QuartetTests.t1Tail_le_chiSqTwoTail le_rfl ht)
   refine h2.trans ?_
   rw [chiSqTwoTail, ← Real.le_log_iff_exp_le (hα n)]
   have := (lt_div_iff₀ hn').mp hn
@@ -345,7 +371,7 @@ private theorem tendsto_qGood {V E : Type*} [Fintype V] [Fintype E] {N : RootedN
       obtain ⟨r, hr, r', hr', hrr⟩ := Finset.one_lt_card.mp
         (by rw [card_treesOn hq]; norm_num : 1 < (treesOn q).card)
       exact hnc r hr r' hr' hrr ((hall r hr).trans (hall r' hr').symm)
-    obtain ⟨d, hd0, halt⟩ := QuartetTests.cutTest_alternative hd hs hq hnc
+    obtain ⟨d, hd0, halt⟩ := QuartetTests.cutTest_alternative hd hq hnc
     refine tendsto_iidProb_of_imp hd
       ((eventually_chiSqOneTail_le hα hαlog hd0).mono fun m hm ω hω => ?_)
       (tendsto_iidProb_and hd (tendsto_star hd hs hq hcentroid hβ) halt)
@@ -376,7 +402,6 @@ theorem tests_correct {V E : Type*} [Fintype V] [Fintype E] {N : RootedNetwork V
   refine tendsto_iidProb_of_imp hd (Eventually.of_forall fun m ω hω => ?_) hall
   exact tests_of_qGood fun q hq => hω ⟨q, hq⟩
 
-set_option linter.unusedVariables false in
 /-- **Theorem 4** at given parameters (`tinnik:theorem4`). If the NMSC's concordance factors at the
 parameters `θ` of a rooted binary network satisfy CF-detectability on all induced 4-taxon networks, then
 for levels `α_m → 0` of the cut test with `log(1/α_m) = o(m)`, for any `β > 0` and `0 ≤ δ < 2`, any exact

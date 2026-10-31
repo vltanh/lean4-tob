@@ -25,7 +25,6 @@ The graph facts behind TOB-QMC Lemma 4 (`TOBQMC/Level1.lean`), in the domination
 open Phylogenetics Phylogenetics.RootedNetwork Finset
 open scoped Classical
 
-set_option linter.unusedSectionVars false
 
 namespace TOBQMC.Level1
 
@@ -33,15 +32,18 @@ variable {V E X : Type*} [Fintype X] [DecidableEq X] {N : RootedNetwork V E X}
 
 /-! ### Reachability in a rooted network -/
 
+omit [Fintype X] [DecidableEq X] in
 theorem reaches_of_arc (N : RootedNetwork V E X) (e : E) :
     N.graph.Reaches (N.graph.source e) (N.graph.target e) :=
   Relation.ReflTransGen.single ⟨e, rfl, rfl⟩
 
+omit [Fintype X] [DecidableEq X] in
 /-- A step down an arc, then a path. -/
 theorem transGen_of_arc_reaches {e : E} {w : V} (h : N.graph.Reaches (N.graph.target e) w) :
     Relation.TransGen N.graph.Adj (N.graph.source e) w :=
   Relation.TransGen.head' ⟨e, rfl, rfl⟩ h
 
+omit [Fintype X] [DecidableEq X] in
 theorem not_reaches_source (hN : N.IsPhylogenetic) (e : E) :
     ¬ N.graph.Reaches (N.graph.target e) (N.graph.source e) :=
   fun h => hN.acyclic _ (transGen_of_arc_reaches h)
@@ -52,6 +54,7 @@ theorem target_ne_source (hN : N.IsPhylogenetic) (e : E) : N.graph.target e ≠ 
   rw [h]
   exact Relation.ReflTransGen.refl
 
+omit [Fintype X] [DecidableEq X] in
 /-- In a finite acyclic graph, a nonempty set of vertices has a sink-most member. -/
 theorem exists_sink (hN : N.IsPhylogenetic) {S : Set V} (hS : S.Nonempty) :
     ∃ u ∈ S, ∀ w ∈ S, ¬ Relation.TransGen N.graph.Adj u w := by
@@ -63,6 +66,7 @@ theorem exists_sink (hN : N.IsPhylogenetic) {S : Set V} (hS : S.Nonempty) :
   obtain ⟨u, hu, hmin⟩ := hwf.has_min S hS
   exact ⟨u, hu, fun w hw => hmin w hw⟩
 
+omit [Fintype X] [DecidableEq X] in
 /-- In a finite acyclic graph, a nonempty set of vertices has a source-most member. -/
 theorem exists_source (hN : N.IsPhylogenetic) {S : Set V} (hS : S.Nonempty) :
     ∃ u ∈ S, ∀ w ∈ S, ¬ Relation.TransGen N.graph.Adj w u := by
@@ -74,6 +78,7 @@ theorem exists_source (hN : N.IsPhylogenetic) {S : Set V} (hS : S.Nonempty) :
   obtain ⟨u, hu, hmin⟩ := hwf.has_min S hS
   exact ⟨u, hu, fun w hw => hmin w hw⟩
 
+omit [Fintype X] [DecidableEq X] in
 /-- Every vertex has a taxon below it. -/
 theorem exists_leaf_below (hN : N.IsPhylogenetic) (u : V) : ∃ x, N.graph.Reaches u (N.leaf x) := by
   have := hN.finite_arcs
@@ -91,11 +96,13 @@ theorem exists_leaf_below (hN : N.IsPhylogenetic) (u : V) : ∃ x, N.graph.Reach
 
 /-! ### Avoiding an arc -/
 
+omit [Fintype X] [DecidableEq X] in
 theorem reaches_of_avoidingReach {e : E} {a b : V} (h : N.AvoidingReach e a b) :
     N.graph.Reaches a b :=
   Relation.ReflTransGen.mono (r := fun a b => ∃ f, f ≠ e ∧ N.graph.source f = a ∧ N.graph.target f = b)
     (p := N.graph.Adj) (fun _ _ ⟨f, _, hs, ht⟩ => ⟨f, hs, ht⟩) _ _ h
 
+omit [Fintype X] [DecidableEq X] in
 /-- A path either avoids the arc `e` or passes through it. -/
 theorem avoidingReach_or_reaches (e : E) {a b : V} (h : N.graph.Reaches a b) :
     N.AvoidingReach e a b ∨ N.graph.Reaches (N.graph.target e) b := by
@@ -110,6 +117,7 @@ theorem avoidingReach_or_reaches (e : E) {a b : V} (h : N.graph.Reaches a b) :
       · exact Or.inl (ih.tail ⟨f, hf, rfl, rfl⟩)
     · exact Or.inr (ih.tail ⟨f, rfl, rfl⟩)
 
+omit [Fintype X] [DecidableEq X] in
 /-- A path starting below the source of `e`, at no ancestor of it, avoids `e`. -/
 theorem avoidingReach_of_not_reaches_source {e : E} {a b : V} (h : N.graph.Reaches a b)
     (ha : ¬ N.graph.Reaches a (N.graph.source e)) : N.AvoidingReach e a b := by
@@ -121,11 +129,13 @@ theorem avoidingReach_of_not_reaches_source {e : E} {a b : V} (h : N.graph.Reach
     rintro rfl
     exact ha hw
 
+omit [Fintype X] [DecidableEq X] in
 /-- A dominated taxon is below the arc. -/
 theorem isBelow_of_dominates (hN : N.IsPhylogenetic) {e : E} {x : X} (h : N.Dominates e x) :
     N.IsBelow e x :=
   (avoidingReach_or_reaches e (hN.root_reaches (N.leaf x))).resolve_left h
 
+omit [Fintype X] [DecidableEq X] in
 /-- A path avoiding `e` from outside the descendants of `c` into them has an entering arc other
 than `e`. -/
 theorem exists_entering_arc {e : E} {c a b : V} (h : N.AvoidingReach e a b)
@@ -142,6 +152,7 @@ theorem exists_entering_arc {e : E} {c a b : V} (h : N.AvoidingReach e a b)
 
 /-! ### Bridges through descendants -/
 
+omit [Fintype X] [DecidableEq X] in
 /-- Only `e` crosses `S`, entering it: descendants of a member of `S` are in `S`. -/
 theorem mem_of_reaches_of_cut {e : E} {S : Set V} (hS : ∀ f, N.graph.Crosses f S ↔ f = e)
     (hs : N.graph.source e ∉ S) {a b : V} (ha : a ∈ S) (hab : N.graph.Reaches a b) : b ∈ S := by
@@ -154,11 +165,13 @@ theorem mem_of_reaches_of_cut {e : E} {S : Set V} (hS : ∀ f, N.graph.Crosses f
     subst this
     exact hs ih
 
+omit [Fintype X] [DecidableEq X] in
 /-- Only `e` crosses `S`, entering it: the root is outside. -/
 theorem root_notMem_of_cut (hN : N.IsPhylogenetic) {e : E} {S : Set V}
     (hS : ∀ f, N.graph.Crosses f S ↔ f = e) (hs : N.graph.source e ∉ S) : N.root ∉ S :=
   fun hr => hs (mem_of_reaches_of_cut hS hs hr (hN.root_reaches _))
 
+omit [Fintype X] [DecidableEq X] in
 /-- Only `e` crosses `S`, entering it: every member of `S` is below the target of `e`. -/
 theorem reaches_of_mem_cut {e : E} {S : Set V} (hS : ∀ f, N.graph.Crosses f S ↔ f = e)
     {a b : V} (ha : a ∉ S) (hb : b ∈ S) (hab : N.graph.Reaches a b) :
@@ -173,10 +186,12 @@ theorem reaches_of_mem_cut {e : E} {S : Set V} (hS : ∀ f, N.graph.Crosses f S 
       subst this
       exact .refl
 
+omit [Fintype X] [DecidableEq X] in
 theorem crosses_compl_iff (f : E) (S : Set V) : N.graph.Crosses f Sᶜ ↔ N.graph.Crosses f S := by
   simp only [DirectedMultigraph.Crosses, Set.mem_compl_iff, not_not]
   tauto
 
+omit [Fintype X] [DecidableEq X] in
 /-- A singleton cut, oriented: its set contains the target of the arc and not its source. -/
 theorem exists_oriented_cut {e : E} (he : IsBridge N e) :
     ∃ S : Set V, (∀ f, N.graph.Crosses f S ↔ f = e) ∧ N.graph.target e ∈ S ∧
@@ -221,6 +236,7 @@ theorem isBridge_crosses_iff (hN : N.IsPhylogenetic) {e : E} (he : IsBridge N e)
 
 /-! ### Indegrees -/
 
+omit [Fintype X] [DecidableEq X] in
 theorem two_le_indegree_of_ne (hN : N.IsPhylogenetic) {e f : E} (hne : e ≠ f)
     (h : N.graph.target e = N.graph.target f) : 2 ≤ N.graph.indegree (N.graph.target e) := by
   have := hN.finite_arcs
@@ -230,12 +246,14 @@ theorem two_le_indegree_of_ne (hN : N.IsPhylogenetic) {e f : E} (hne : e ≠ f)
   · rfl
   · exact h.symm
 
+omit [Fintype X] [DecidableEq X] in
 theorem exists_ne_target_eq {e : E} (he : 2 ≤ N.graph.indegree (N.graph.target e)) (hN : N.IsPhylogenetic) :
     ∃ f, f ≠ e ∧ N.graph.target f = N.graph.target e := by
   have := hN.finite_arcs
   obtain ⟨f, hf, hfe⟩ := Set.exists_ne_of_one_lt_ncard (lt_of_lt_of_le one_lt_two he) e
   exact ⟨f, hfe, hf⟩
 
+omit [Fintype X] [DecidableEq X] in
 /-- An arc entering a vertex with at most one incoming arc is its only incoming arc. -/
 theorem eq_of_indegree_le_one (hN : N.IsPhylogenetic) {e f : E}
     (h : N.graph.indegree (N.graph.target e) ≤ 1) (hfe : N.graph.target f = N.graph.target e) :
@@ -271,6 +289,7 @@ theorem isBridge_of_indegree_le_one (hN : N.IsPhylogenetic) {f : E}
 
 /-! ### Blobs -/
 
+omit [Fintype X] [DecidableEq X] in
 theorem sameBlob_symm {u w : V} (h : SameBlob N u w) : SameBlob N w u := by
   induction h with
   | refl => exact .refl
@@ -278,13 +297,16 @@ theorem sameBlob_symm {u w : V} (h : SameBlob N u w) : SameBlob N w u := by
     obtain ⟨e, he, hl⟩ := hab
     exact Relation.ReflTransGen.head ⟨e, he, hl.symm⟩ ih
 
+omit [Fintype X] [DecidableEq X] in
 theorem sameBlob_trans {u w z : V} (h : SameBlob N u w) (h' : SameBlob N w z) : SameBlob N u z :=
   Relation.ReflTransGen.trans h h'
 
+omit [Fintype X] [DecidableEq X] in
 theorem sameBlob_of_not_isBridge {e : E} (he : ¬ IsBridge N e) :
     SameBlob N (N.graph.source e) (N.graph.target e) :=
   Relation.ReflTransGen.single ⟨e, he, Or.inl ⟨rfl, rfl⟩⟩
 
+omit [Fintype X] [DecidableEq X] in
 /-- Walks in a blob do not change the side of a singleton cut. -/
 theorem mem_iff_of_sameBlob {e : E} {S : Set V} (hS : ∀ f, N.graph.Crosses f S ↔ f = e)
     {u w : V} (h : SameBlob N u w) : u ∈ S ↔ w ∈ S := by
@@ -311,6 +333,7 @@ theorem reaches_of_sameBlob (hN : N.IsPhylogenetic) {e : E} (he : IsBridge N e)
     {u : V} (h : SameBlob N (N.graph.target e) u) : N.graph.Reaches (N.graph.target e) u :=
   (reaches_iff_of_sameBlob hN he h).mp .refl
 
+omit [Fintype X] [DecidableEq X] in
 /-- A vertex all of whose arcs are bridges is alone in its blob. -/
 theorem eq_of_sameBlob_of_forall_isBridge {u w : V}
     (hu : ∀ f, (N.graph.source f = u ∨ N.graph.target f = u) → IsBridge N f)
@@ -353,6 +376,7 @@ theorem exists_reticulation_or_forall_isBridge (hN : N.IsPhylogenetic) (v : V) :
   subst hvu
   exact hnb (huall f hf)
 
+omit [Fintype X] [DecidableEq X] in
 /-- No arc enters the root. -/
 theorem target_ne_root (hN : N.IsPhylogenetic) (g : E) : N.graph.target g ≠ N.root := by
   intro hg
@@ -361,6 +385,7 @@ theorem target_ne_root (hN : N.IsPhylogenetic) (g : E) : N.graph.target g ≠ N.
   rw [DirectedMultigraph.indegree, Set.ncard_eq_zero] at h0
   exact (Set.eq_empty_iff_forall_notMem.mp h0 g) hg
 
+omit [Fintype X] [DecidableEq X] in
 /-- Only the root reaches the root. -/
 theorem eq_root_of_reaches_root (hN : N.IsPhylogenetic) {u : V} (h : N.graph.Reaches u N.root) :
     u = N.root := by
@@ -388,6 +413,7 @@ theorem leaf_not_sameBlob (hN : N.IsPhylogenetic) {v h : V} (hh : SameBlob N v h
 
 /-! ### Binary networks -/
 
+omit [Fintype X] [DecidableEq X] in
 theorem outdegree_le_two (hN : N.IsPhylogenetic) (hBin : N.IsBinary) (u : V) :
     N.graph.outdegree u ≤ 2 := by
   by_cases hu : u = N.root
@@ -399,12 +425,14 @@ theorem outdegree_le_two (hN : N.IsPhylogenetic) (hBin : N.IsBinary) (u : V) :
       have := hN.nonroot_indegree u hu
       omega
 
+omit [Fintype X] [DecidableEq X] in
 theorem reticulation_ne_root (hN : N.IsPhylogenetic) {h : V} (hh : 2 ≤ N.graph.indegree h) :
     h ≠ N.root := by
   rintro rfl
   rw [hN.root_indegree] at hh
   omega
 
+omit [Fintype X] [DecidableEq X] in
 /-- A reticulation of a binary network has exactly one outgoing arc. -/
 theorem outdegree_eq_one_of_reticulation (hN : N.IsPhylogenetic) (hBin : N.IsBinary) {h : V}
     (hh : 2 ≤ N.graph.indegree h) : N.graph.outdegree h = 1 := by
@@ -617,6 +645,7 @@ def BlockStep (N : RootedNetwork V E X) (v a b : V) : Prop :=
 def BlockWalk (N : RootedNetwork V E X) (v : V) : V → V → Prop :=
   Relation.ReflTransGen (BlockStep N v)
 
+omit [Fintype X] [DecidableEq X] in
 theorem blockWalk_symm {v a b : V} (h : BlockWalk N v a b) : BlockWalk N v b a := by
   induction h with
   | refl => exact .refl
@@ -624,16 +653,19 @@ theorem blockWalk_symm {v a b : V} (h : BlockWalk N v a b) : BlockWalk N v b a :
     obtain ⟨h1, h2, e, he⟩ := hab
     exact Relation.ReflTransGen.head ⟨h2, h1, e, he.symm⟩ ih
 
+omit [Fintype X] [DecidableEq X] in
 theorem blockWalk_trans {v a b c : V} (h : BlockWalk N v a b) (h' : BlockWalk N v b c) :
     BlockWalk N v a c :=
   Relation.ReflTransGen.trans h h'
 
+omit [Fintype X] [DecidableEq X] in
 theorem not_sameBlob_of_blockWalk {v a b : V} (ha : ¬ SameBlob N v a) (h : BlockWalk N v a b) :
     ¬ SameBlob N v b := by
   rcases Relation.ReflTransGen.cases_tail h with heq | ⟨c, _, hc⟩
   · rwa [heq]
   · exact hc.2.1
 
+omit [Fintype X] [DecidableEq X] in
 /-- A nonempty walk has both ends outside the blob. -/
 theorem not_sameBlob_of_blockWalk_of_ne {v a b : V} (h : BlockWalk N v a b) (hab : a ≠ b) :
     ¬ SameBlob N v a := by
@@ -641,6 +673,7 @@ theorem not_sameBlob_of_blockWalk_of_ne {v a b : V} (h : BlockWalk N v a b) (hab
   · exact absurd heq hab
   · exact hc.1
 
+omit [Fintype X] [DecidableEq X] in
 /-- A directed path avoiding the blob is a walk outside it. -/
 theorem blockWalk_of_reaches {v a b : V} (h : N.graph.Reaches a b)
     (hav : ∀ w, N.graph.Reaches a w → N.graph.Reaches w b → ¬ SameBlob N v w) :
@@ -654,6 +687,7 @@ theorem blockWalk_of_reaches {v a b : V} (h : N.graph.Reaches a b)
     refine Relation.ReflTransGen.tail (ih fun w hw hwc => hav w hw (hwc.tail ⟨e, rfl, rfl⟩)) ?_
     exact ⟨hc, hd, e, Or.inl ⟨rfl, rfl⟩⟩
 
+omit [Fintype X] [DecidableEq X] in
 /-- **A component of the complement of a blob is the far side of a cut edge** (TOB-QMC, proof of
 Lemma 4: "any taxa drawn from the same block attach to B via the same cut edge"). -/
 theorem exists_blockWalk_cut (hN : N.IsPhylogenetic) {v a : V} (ha : ¬ SameBlob N v a) :
@@ -750,6 +784,7 @@ theorem reaches_of_blockWalk_of_exit (hN : N.IsPhylogenetic) {v a : V} {e : E} (
     fun hK => not_sameBlob_of_blockWalk ha hK hs
   exact reaches_of_mem_cut hS (root_notMem_of_cut hN hS hsK) hu (hN.root_reaches _)
 
+omit [Fintype X] [DecidableEq X] in
 /-- The far side of a cut edge from the blob, when the edge enters the blob: it contains the root
 and no vertex below the edge. -/
 theorem not_reaches_of_blockWalk_of_entry {v a : V} {e : E}
@@ -775,6 +810,7 @@ theorem blockWalk_root_of_entry {v a : V} {e : E} (hN : N.IsPhylogenetic)
 def below (N : RootedNetwork V E X) (Y : Finset X) (u : V) : Finset X :=
   Y.filter fun x => N.graph.Reaches u (N.leaf x)
 
+omit [Fintype X] [DecidableEq X] in
 theorem mem_below {Y : Finset X} {u : V} {x : X} :
     x ∈ below N Y u ↔ x ∈ Y ∧ N.graph.Reaches u (N.leaf x) := by
   simp [below]

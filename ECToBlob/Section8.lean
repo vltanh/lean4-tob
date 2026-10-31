@@ -16,7 +16,7 @@ Theorem 8.2. Lemma 8.1 is in `ECToBlob/Lemma81.lean`, the deterministic part of 
 
 Theorem 8.2 is stated for a network at numerical parameters where both directions of Assumption 1
 hold (E7 of the report: as printed, for all parameters, it fails). The correction was agreed with
-the user. `theorem8_2_generic` gives the statement for almost all parameters, from `Assumption1`.
+the user. `theorem8_2_generic` gives the conclusion for almost all parameters, from `Assumption1`.
 
 For the corrections `cauchy` and `cbc`, Theorem 8.2 also requires the alternatives of a quartet tree
 satisfying (5.2) to have positive probability: without this a p-value is exactly `1`, and the Cauchy
@@ -488,7 +488,7 @@ private theorem tendsto_ectoblob {V E X : Type u} [Fintype X] [DecidableEq X]
   · exact Eventually.of_forall fun n => (iidProb_le_one hd n _).trans_lt ha
 
 /-- **Theorem 8.2** (`ecto:thm8_2`), with the correction agreed with the user (E7 of the report) and
-the one required for the Cauchy combinations (E18). There are sequences `α_n`, `β_n`, independent of
+the one required for the Cauchy combinations (E18, which needs the user's agreement). There are sequences `α_n`, `β_n`, independent of
 the network, such that for every resolution `T₀` of the tree of blobs, every variant of the
 algorithm, and every distribution of binary gene trees whose quartet concordance factors satisfy
 both directions of Assumption 1 at the network's parameters, the output on `n` independent gene
@@ -522,6 +522,7 @@ Corollary 4.2, which the paper cites for the type `bi`, is not used: the witness
 `falseEdge_witness`, through Corollary 4.3, lies in the multipartition of `T₀`, which is contained
 in the quartets of all three types at every stage of the algorithm. -/
 theorem theorem8_2 : ∃ α β : ℕ → ℝ, Tendsto α atTop (𝓝 0) ∧ Tendsto β atTop (𝓝 0) ∧
+    (∀ᶠ n in atTop, 0 < α n ∧ α n < 1) ∧ (∀ᶠ n in atTop, 0 < β n ∧ β n < 1) ∧
     ∀ {V E X : Type u} [Fintype X] [DecidableEq X] (N : RootedNetwork V E X)
       (_ : N.IsPhylogenetic) (dist : BinaryGeneTree X → ℝ) (_ : IsDist dist)
       (_ : Assumption1Forward N (displayCF dist Subtype.val))
@@ -533,8 +534,12 @@ theorem theorem8_2 : ∃ α β : ℕ → ℝ, Tendsto α atTop (𝓝 0) ∧ Tend
           ∀ r ∈ s.alternatives, 0 < displayCF dist Subtype.val r),
       Tendsto (fun n => iidProb dist n fun ω =>
         ectoblob o (α n) (β n) (quartetCount Subtype.val ω) T₀ = treeOfBlobs N) atTop (𝓝 1) :=
-  ⟨alphaSeq, betaSeq, tendsto_alphaSeq, tendsto_betaSeq, fun N hN dist hd h₁ h₂ T₀ hT₀ o hpos =>
-    tendsto_ectoblob N hN dist hd h₁ h₂ T₀ hT₀ o hpos⟩
+  ⟨alphaSeq, betaSeq, tendsto_alphaSeq, tendsto_betaSeq,
+    (tendsto_alphaSeq.eventually (gt_mem_nhds zero_lt_one)).mono fun _ hn =>
+      ⟨chiSqOneTail_pos _, hn⟩,
+    (tendsto_betaSeq.eventually (gt_mem_nhds zero_lt_one)).mono fun _ hn =>
+      ⟨Real.exp_pos _, hn⟩,
+    fun N hN dist hd h₁ h₂ T₀ hT₀ o hpos => tendsto_ectoblob N hN dist hd h₁ h₂ T₀ hT₀ o hpos⟩
 
 /-- The sequences of `theorem8_2` are the explicit ones of the paper's proof. -/
 theorem theorem8_2_explicit {V E X : Type u} [Fintype X] [DecidableEq X] (N : RootedNetwork V E X)
@@ -550,21 +555,25 @@ theorem theorem8_2_explicit {V E X : Type u} [Fintype X] [DecidableEq X] (N : Ro
       atTop (𝓝 1) :=
   tendsto_ectoblob N hN dist hd h₁ h₂ T₀ hT₀ o hpos
 
-/-- Theorem 8.2 for a model meeting Assumption 1: it holds at all parameters outside the null set
-that Assumption 1 excludes. -/
+/-- Theorem 8.2 for a model meeting Assumption 1: the conclusion holds for all resolutions and all
+variants at all valid parameters outside a null set of the measure of §5.1, the one that Assumption 1
+excludes. -/
 theorem theorem8_2_generic {V E X : Type u} [Fintype V] [Fintype E] [Fintype X] [DecidableEq X]
     (N : RootedNetwork V E X) (hN : N.IsPhylogenetic)
     (dist : MetricData E → BinaryGeneTree X → ℝ) (hd : ∀ θ, N.IsMetric θ → IsDist (dist θ))
-    (hA : Assumption1 N fun θ => displayCF (dist θ) Subtype.val)
-    (θ : MetricData E) (hθ : N.IsMetric θ)
-    (hgen : Assumption1Converse N (displayCF (dist θ) Subtype.val))
-    (T₀ : Finset (Finset X)) (hT₀ : IsResolutionOf T₀ (treeOfBlobs N)) (o : ECToBlobOptions)
-    (hpos : (o.testCo = .cauchy ∨ o.testCo = .cbc) →
-      ∀ s, IsT1Strict (displayCF (dist θ) Subtype.val) s →
-        ∀ r ∈ s.alternatives, 0 < displayCF (dist θ) Subtype.val r) :
-    Tendsto (fun n => iidProb (dist θ) n fun ω =>
-      ectoblob o (alphaSeq n) (betaSeq n) (quartetCount Subtype.val ω) T₀ = treeOfBlobs N)
-      atTop (𝓝 1) :=
-  theorem8_2_explicit N hN (dist θ) (hd θ hθ) (hA.1 θ hθ) hgen T₀ hT₀ o hpos
+    (hA : Assumption1 N fun θ => displayCF (dist θ) Subtype.val) :
+    IsNullParams N {θ | N.IsMetric θ ∧ ¬ ∀ (T₀ : Finset (Finset X)) (o : ECToBlobOptions),
+      IsResolutionOf T₀ (treeOfBlobs N) →
+      ((o.testCo = .cauchy ∨ o.testCo = .cbc) →
+        ∀ s, IsT1Strict (displayCF (dist θ) Subtype.val) s →
+          ∀ r ∈ s.alternatives, 0 < displayCF (dist θ) Subtype.val r) →
+      Tendsto (fun n => iidProb (dist θ) n fun ω =>
+        ectoblob o (alphaSeq n) (betaSeq n) (quartetCount Subtype.val ω) T₀ = treeOfBlobs N)
+        atTop (𝓝 1)} := by
+  intro d hd'
+  refine MeasureTheory.measure_mono_null ?_ (hA.2 d hd')
+  rintro x ⟨hval, hθ, hnot⟩
+  refine ⟨hval, hval, fun hconv => hnot fun T₀ o hT₀ hpos => ?_⟩
+  exact theorem8_2_explicit N hN (dist _) (hd _ hval) (hA.1 _ hval) hconv T₀ hT₀ o hpos
 
 end ECToBlob

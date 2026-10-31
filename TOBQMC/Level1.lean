@@ -46,21 +46,24 @@ variable [Fintype V] [Fintype E]
 
 namespace Level1
 
-set_option linter.unusedSectionVars false
 
 /-! ### Blocks and cut sides -/
 
 variable {v : V} {x y : X}
 
+omit [Fintype V] [Fintype E] in
+omit [Fintype X] [DecidableEq X] in
 theorem sameBlock_symm (h : SameBlock N v x y) : SameBlock N v y x := blockWalk_symm h
 
 /-- The block of `x` at the blob of `v`. -/
 def block (N : RootedNetwork V E X) (v : V) (x : X) : Finset X :=
   univ.filter fun z => SameBlock N v x z
 
+omit [DecidableEq X] [Fintype V] [Fintype E] in
 theorem mem_block {z : X} : z ∈ block N v x ↔ SameBlock N v x z := by
   simp [block]
 
+omit [Fintype V] [Fintype E] in
 /-- A block at a blob is the side of a cut edge. -/
 theorem hasCutSplit_block (hN : N.IsPhylogenetic) (hx : ¬ SameBlob N v (N.leaf x)) :
     N.HasCutSplit (block N v x : Set X) := by
@@ -70,6 +73,7 @@ theorem hasCutSplit_block (hN : N.IsPhylogenetic) (hx : ¬ SameBlob N v (N.leaf 
   simp only [Set.mem_preimage, Set.mem_ofPred_eq, mem_coe, mem_block]
   rfl
 
+omit [Fintype X] [DecidableEq X] [Fintype V] [Fintype E] in
 /-- A singleton is the side of the pendant arc. -/
 theorem hasCutSplit_singleton (hN : N.IsPhylogenetic) (x : X) :
     N.HasCutSplit (({x} : Finset X) : Set X) := by
@@ -111,17 +115,20 @@ theorem nonempty_of_mem_isUnrootedTree {B : Finset (Finset X)} (hB : IsUnrootedT
     obtain ⟨h1, h2⟩ := key C hC
     exact ⟨h2, by rwa [compl_compl]⟩
 
+omit [Fintype V] [Fintype E] in
 theorem mem_treeOfBlobs_compl {A : Finset X} (hA : A ∈ treeOfBlobs N) : Aᶜ ∈ treeOfBlobs N := by
   simp only [treeOfBlobs, mem_filter, mem_univ, true_and] at hA ⊢
   refine ⟨hA.2.1, by rw [compl_compl]; exact hA.1, ?_⟩
   rw [coe_compl, hasCutSplit_compl]
   exact hA.2.2
 
+omit [Fintype V] [Fintype E] in
 theorem mem_treeOfBlobs_of_hasCutSplit {A : Finset X} (h₁ : A.Nonempty) (h₂ : Aᶜ.Nonempty)
     (h : N.HasCutSplit (A : Set X)) : A ∈ treeOfBlobs N := by
   simp only [treeOfBlobs, mem_filter, mem_univ, true_and]
   exact ⟨h₁, h₂, h⟩
 
+omit [Fintype V] [Fintype E] in
 theorem refinesBlob_compl {A : Finset X} (h : RefinesBlob N A v) : RefinesBlob N Aᶜ v := by
   intro a b hab
   simp only [mem_compl, not_iff_not]
@@ -129,6 +136,7 @@ theorem refinesBlob_compl {A : Finset X} (h : RefinesBlob N A v) : RefinesBlob N
 
 /-! ### Treelikeness -/
 
+omit [Fintype V] [Fintype E] in
 /-- A cut-edge split with two taxa on each side makes the taxa treelike. -/
 theorem isTreelike_of_hasCutSplitOn {Y P : Finset X} (hY : Y.card = 4) (hPY : P ⊆ Y)
     (hP : P.card = 2) (h : N.HasCutSplitOn (Y : Set X) (P : Set X)) : IsTreelike N Y := by
@@ -163,6 +171,7 @@ theorem isTreelike_of_hasCutSplitOn {Y P : Finset X} (hY : Y.card = 4) (hPY : P 
   rw [hs]
   exact h
 
+omit [Fintype V] [Fintype E] in
 /-- A taxon-set's treelikeness in the domination language: an arc dominating two of the taxa, with
 the other two not below it. -/
 theorem exists_separates_of_isTreelike (hN : N.IsPhylogenetic) {Y : Finset X} (hY : Y.card = 4)
@@ -197,6 +206,7 @@ theorem exists_separates_of_isTreelike (hN : N.IsPhylogenetic) {Y : Finset X} (h
     · exact fun a ha => hsep.1 a (mem_coe.mpr ha)
     · exact fun a ha => hsep.2 a (mem_coe.mpr ha)
 
+omit [Fintype V] [Fintype E] in
 /-- A cut side with two taxa of `Y` in it and the other two outside: by **Lemma 2**, `Y` is treelike. -/
 theorem isTreelike_of_cut_side (hN : N.IsPhylogenetic) {C P Y : Finset X}
     (hC : N.HasCutSplit (C : Set X)) (hY : Y.card = 4) (hPY : P ⊆ Y) (hP : P.card = 2)
@@ -356,6 +366,7 @@ theorem existsUnique_below (hN : N.IsPhylogenetic) (hBin : N.IsBinary) (hLevel :
 def Mixed (N : RootedNetwork V E X) (A : Finset X) (g : E) : Prop :=
   IsBridge N g ∧ (∃ a ∈ A, N.IsBelow g a) ∧ ∃ b, b ∉ A ∧ N.IsBelow g b
 
+omit [Fintype V] [Fintype E] in
 /-- Two taxa in the same block: the block's cut edge either leaves the blob, with the taxa below it, or
 enters the blob, with the taxa and the root on its far side. -/
 theorem exit_or_entry_of_sameBlock (hN : N.IsPhylogenetic) (hxy : SameBlock N v x y) (hne : x ≠ y) :
@@ -376,6 +387,7 @@ theorem exit_or_entry_of_sameBlock (hN : N.IsPhylogenetic) (hxy : SameBlock N v 
     · exact not_reaches_of_blockWalk_of_entry hS h2 ht hc .refl
     · exact not_reaches_of_blockWalk_of_entry hS h2 ht hc hxy
 
+omit [Fintype V] [Fintype E] in
 /-- Two bridges entering one blob coincide. -/
 theorem eq_of_isBridge_of_sameBlob (hN : N.IsPhylogenetic) {e g : E} (he : IsBridge N e)
     (hg : IsBridge N g) (h : SameBlob N (N.graph.target g) (N.graph.target e)) : e = g := by
@@ -385,6 +397,7 @@ theorem eq_of_isBridge_of_sameBlob (hN : N.IsPhylogenetic) {e g : E} (he : IsBri
     (reaches_of_sameBlob hN he (sameBlob_symm h))
   exact not_reaches_source hN e (h2.trans ((reaches_of_arc N g).trans h1))
 
+omit [Fintype V] in
 /-- **The blob refined by a false positive.** Take a lowest bridge with taxa of both sides of `A`
 below it, or the root if there is none: the blocks at its blob do not straddle `A`. -/
 theorem exists_refinesBlob (hN : N.IsPhylogenetic) {B : Finset (Finset X)} (hfam : IsSplitFamily B)
@@ -546,7 +559,6 @@ theorem exists_blob_of_false_positive (hN : N.IsPhylogenetic) (hBin : N.IsBinary
     have h2 := eq_of_sameBlob_of_forall_isBridge hall ht
     exact target_ne_source hN k (h2.trans h1.symm)
 
-set_option linter.unusedVariables false in
 /-- **Lemma 4** (`tob2025:lemma4`). Let `N` be binary and level-1, `B` a refinement of its tree of blobs,
 `A` the side of an edge of `B` not in the tree of blobs, refining the non-trivial blob of `v`, whose
 reticulation vertex is `h`. For a four-taxon set `Y` around the edge, the restriction of the network to
@@ -784,8 +796,7 @@ one. -/
 def threeFixOneAlter (P : Fin 4 → Finset X) (z : Fin 4 → X) : Finset (Finset X) :=
   univ.biUnion fun i => (P i).image fun x => (univ.image (Function.update z i x))
 
-/-- **The 3-fix-1-alter search tests a disjoint cover**, of `n - 3` four-taxon subsets
-(`tob2025:3f1a_correctness`), on a binary tree. -/
+/-- The 3-fix-1-alter search tests a disjoint cover, of `n - 3` four-taxon subsets, on a binary tree. -/
 theorem threeFixOneAlter_isDisjointCover {T : Finset (Finset X)} (hT : IsBinaryTree T) {A : Finset X}
     (hA : A ∈ internalSides T) (P : Fin 4 → Finset X)
     (hP : ∀ i j, i ≠ j → Disjoint (P i) (P j)) (hcover : univ.biUnion P = univ)
@@ -955,5 +966,27 @@ theorem threeFixOneAlter_isDisjointCover {T : Finset (Finset X)} (hT : IsBinaryT
     rw [hset, card_insert_of_notMem hnotmem, card_image_of_injOn hinj, card_compl, hZcard]
     have : Zs.card ≤ Fintype.card X := card_le_univ _
     omega
+
+/-- **The correctness of the 3-fix-1-alter search** (`tob2025:3f1a_correctness`, §4.3): on a binary
+refinement of the tree of blobs of a binary level-1 network, with the search at each internal edge on the
+blocks of its quadripartition, contracting the edges where the oracle answers non-treelike on a tested subset
+returns the tree of blobs. "It is easy to see that 3f1a tests a disjoint cover of four-taxon subsets and thus
+has a correctness guarantee". -/
+theorem threeFixOneAlter_correct (hN : N.IsPhylogenetic) (hBin : N.IsBinary) (hLevel : IsLevelOne N)
+    {B : Finset (Finset X)} (hB : IsBinaryTree B) (hTB : treeOfBlobs N ⊆ B)
+    (P : Finset X → Fin 4 → Finset X) (z : Finset X → Fin 4 → X)
+    (hP : ∀ A ∈ internalSides B, ∀ i j, i ≠ j → Disjoint (P A i) (P A j))
+    (hcover : ∀ A ∈ internalSides B, univ.biUnion (P A) = univ)
+    (hP₁ : ∀ A ∈ internalSides B, P A 0 ∪ P A 1 = A)
+    (hmem : ∀ A ∈ internalSides B, ∀ i, P A i ∈ B)
+    (hz : ∀ A ∈ internalSides B, ∀ i, z A i ∈ P A i) :
+    contractSides B ((internalSides B).filter fun A =>
+      ∃ Y ∈ threeFixOneAlter (P A) (z A), ¬ IsTreelike N Y) = treeOfBlobs N := by
+  have hBu : IsUnrootedTree B := by
+    obtain ⟨H, hH, hu, -⟩ := hB
+    exact ⟨H, hH, hu⟩
+  exact theorem2 hN hBin hLevel hBu hTB (fun A => threeFixOneAlter (P A) (z A)) fun A hA =>
+    (threeFixOneAlter_isDisjointCover hB hA (P A) (hP A hA) (hcover A hA) (hP₁ A hA) (hmem A hA)
+      (z A) (hz A hA)).1
 
 end TOBQMC

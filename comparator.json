@@ -1,0 +1,17 @@
+{
+  "challenge_module": "Challenge",
+  "solution_module": "Solution",
+  "theorem_names": [
+    "Challenge.theorem3_1",
+    "Challenge.theorem4_1",
+    "Challenge.theorem8_2",
+    "Challenge.theorem1",
+    "Challenge.theorem1_optimal",
+    "Challenge.theorem2",
+    "Challenge.consistency",
+    "Challenge.theorem4"
+  ],
+  "definition_names": [],
+  "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"],
+  "enable_nanoda": true
+}

@@ -31,8 +31,6 @@ namespace TOBQMC
 
 variable {V E X : Type*} [Fintype X] [DecidableEq X]
 
-set_option linter.unusedSectionVars false
-set_option linter.unusedVariables false
 
 /-- A choice of a parent at each vertex: the display trees of the network. -/
 def IsDisplayChoice (N : RootedNetwork V E X) (c : V → E) : Prop :=
@@ -73,8 +71,8 @@ def starPart (TN : Finset (Finset X)) (F : QuartetTree X → ℝ) (t : Finset (F
 def vertexPart (P : Finset (Finset X)) (F : QuartetTree X → ℝ) (t : Finset (Finset X)) : ℝ :=
   ∑ s, if InDistinctBlocks P s.taxa ∧ Displays t s then F s else 0
 
-/-- The part `QS^{v(x)}` of the quartet score of `t` from the 4-taxon sets around the vertex `P`
-containing the taxon `x`. -/
+/-- Equation (4) (`tob2025:equation4`): the part `QS^{v(x)}` of the quartet score of `t` from the 4-taxon
+sets around the vertex `P` containing the taxon `x`. -/
 def vertexTaxonPart (P : Finset (Finset X)) (x : X) (F : QuartetTree X → ℝ)
     (t : Finset (Finset X)) : ℝ :=
   ∑ s, if InDistinctBlocks P s.taxa ∧ x ∈ s.taxa ∧ Displays t s then F s else 0
@@ -179,13 +177,13 @@ theorem equation3 {TN : Finset (Finset X)} (hTN : IsUnrootedTree TN) (F : Quarte
       · simp only [e1, ↓reduceIte]
       · intro P hP
         refine ite_eq_right fun h => hS fun r hr hdr => ?_
-        exact not_displays_of_inDistinctBlocks hTN (mem_multifurcations.1 hP).1 (s := r)
+        exact not_displays_of_inDistinctBlocks (mem_multifurcations.1 hP).1 (s := r)
           ((mem_treesOn.1 hr) ▸ h.1) hdr
   · rw [sum_eq_zero fun P _ => ite_eq_right fun h => hD h.2]
     simp only [hD, and_false, ↓reduceIte]
 
-/-- **Equation (4)** (`tob2025:equation4`), the partial score: summing it over all taxa counts each
-4-taxon set four times. -/
+/-- The partial score of Equation (4), `vertexTaxonPart`: summing it over all taxa counts each 4-taxon set
+four times. -/
 theorem equation4 (P : Finset (Finset X)) (F : QuartetTree X → ℝ) (t : Finset (Finset X)) :
     ∑ x, vertexTaxonPart P x F t = 4 * vertexPart P F t := by
   simp only [vertexTaxonPart, vertexPart]
@@ -212,6 +210,7 @@ section DetachScore
 
 variable {P : Finset (Finset X)} {B₀ : Finset X} {a b : X}
 
+omit [Fintype X] in
 theorem swap_mem_block_iff (hd : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C) (hB₀ : B₀ ∈ P)
     (ha : a ∈ B₀) (hb : b ∈ B₀) {C : Finset X} (hC : C ∈ P) (x : X) :
     Equiv.swap a b x ∈ C ↔ x ∈ C := by
@@ -532,7 +531,8 @@ theorem isBlockFamily_filter {T' : Finset (Finset X)} (hT' : IsUnrootedTree T') 
 
 end DetachScore
 
-/-- **Lemma 3**, in the form its proof gives, for weights `F` with the properties that the proof uses:
+/-- **Lemma 3** (`tob2025:lemma3`), in the form its proof gives, for weights `F` with the properties that
+the proof uses:
 there is a binary refinement `B` of the tree of blobs that maximizes the star part and the tree part of
 the score over binary trees, and has a larger score than every binary tree not refining the tree of
 blobs. The compatibility supertree of the paper's lines 497-498 (Warnow, Chapters 3, 7: compatible
@@ -639,7 +639,7 @@ theorem supplementLemma4 {V E : Type*} {N : RootedNetwork V E X} (hN : N.IsPhylo
     by_contra hcon
     push Not at hcon
     exact hTN (subset_of_forall_displays hT' hTB hcon)
-  haveI : Nonempty (QuartetTree X) := ⟨r₀⟩
+  have : Nonempty (QuartetTree X) := ⟨r₀⟩
   -- the quartet trees that `B` and `T` display
   choose! sB hsB hdB using fun q (hq : q ∈ f4) => hB.exists_displays (hf4mem q hq)
   choose! sT hsT hdT using fun q (hq : q ∈ f4) => hT.exists_displays (hf4mem q hq)
@@ -783,8 +783,8 @@ theorem ae_tendsto_freq [Fintype V] [Fintype E] {N : RootedNetwork V E X} {θ : 
     {G : ℕ → Ω → Finset (Finset X)} (hG : IsGeneTreeSample P N θ ρ G) (Φ : Finset (Finset X) → Prop) :
     ∀ᵐ ω ∂P, Tendsto (fun k : ℕ => (((range k).filter fun i => Φ (G i ω)).card : ℝ) / k) atTop
       (𝓝 (∑ g, if Φ g then geneTreeDist N θ ρ g else 0)) := by
-  letI mS : MeasurableSpace (Finset (Finset X)) := ⊤
-  haveI : DiscreteMeasurableSpace (Finset (Finset X)) := ⟨fun _ => MeasurableSpace.measurableSet_top⟩
+  let mS : MeasurableSpace (Finset (Finset X)) := ⊤
+  have : DiscreteMeasurableSpace (Finset (Finset X)) := ⟨fun _ => MeasurableSpace.measurableSet_top⟩
   have hmeas : ∀ i, Measurable (G i) := fun i => measurable_to_countable' (hG.measurable i)
   have hsing : ∀ i (g : Finset (Finset X)), P (G i ⁻¹' {g}) = P (G 0 ⁻¹' {g}) := by
     intro i g
@@ -814,7 +814,7 @@ theorem ae_tendsto_freq [Fintype V] [Fintype E] {N : RootedNetwork V E X} {θ : 
     congr 1
     ext ω
     simp only [Set.mem_preimage, Set.mem_prod, Set.mem_singleton_iff, mem_insert, mem_singleton,
-      Set.mem_iInter, Prod.mk.injEq]
+      Set.mem_iInter]
     constructor
     · rintro ⟨h1, h2⟩ n (rfl | rfl)
       · simpa using h1
@@ -978,12 +978,6 @@ theorem astral_corollary [Fintype V] [Fintype E] {N : RootedNetwork V E X} {θ :
       treeOfBlobs N ⊆ B := by
   have hN := hStd.phylogenetic
   have hne' : Nonempty X := Fintype.card_pos_iff.1 (by omega)
-  obtain ⟨Bs, hBs, hBsT, hstar, -⟩ := lemma3_of_properties hN
-    (nmscCF_pos hN hStd.metric hStd.rho) hEx hNon hX
-  obtain ⟨π, hπ, hmargin⟩ := exists_margin hNon
-  have hC : (0 : ℝ) < ((Fintype.card X).choose 4 : ℝ) := by
-    exact_mod_cast Nat.choose_pos hX
-  have hδ : 0 < π / (2 * ((Fintype.card X).choose 4 : ℝ)) := by positivity
   -- every binary gene tree occurs almost surely, since it has positive probability
   have hocc : ∀ᵐ ω ∂P, ∀ H : Finset (Finset X), IsBinaryHierarchy H → ∃ i, G i ω = H := by
     refine ae_all_iff.2 fun H => ?_
@@ -1004,7 +998,7 @@ theorem astral_corollary [Fintype V] [Fintype E] {N : RootedNetwork V E X} {θ :
       push Not at hcon
       simp [hcon] at hk
     · exact ae_of_all _ fun _ h => absurd h hH
-  filter_upwards [ae_eventually_abs_lt hG hδ, hocc] with ω ⟨K₀, hK₀⟩ hω
+  filter_upwards [theorem1_optimal hStd hEx hNon hX P G hG, hocc] with ω ⟨K₀, hK₀⟩ hω
   -- from some point on, ASTRAL's search space contains all binary trees
   obtain ⟨K₁, hK₁⟩ : ∃ K₁, ∀ H : Finset (Finset X), IsBinaryHierarchy H → ∃ i < K₁, G i ω = H := by
     classical
@@ -1018,12 +1012,8 @@ theorem astral_corollary [Fintype V] [Fintype E] {N : RootedNetwork V E X} {θ :
     obtain ⟨H, hH, rfl, hbin⟩ := hT
     obtain ⟨i, hi, he⟩ := hK₁ H ⟨hH, hbin⟩
     exact ⟨i, lt_of_lt_of_le hi hk, he ▸ hA⟩
-  refine ⟨max (max K₀ K₁) 1, fun k hk B hB hopt => ?_⟩
-  by_contra hne
-  have hk0 : K₀ ≤ k := ((le_max_left _ _).trans (le_max_left _ _)).trans hk
-  have hk₁ : K₁ ≤ k := ((le_max_right _ _).trans (le_max_left _ _)).trans hk
-  have hk1 : 0 < k := lt_of_lt_of_le one_pos ((le_max_right _ _).trans hk)
-  exact absurd (hopt Bs (hspace k hk₁ Bs hBs)) (not_le.2 (geneCount_score_lt hN hπ hmargin hk1
-    (hK₀ k hk0) hBs hBsT (hstar B hB.1) hB.1 hne))
+  refine ⟨max K₀ K₁, fun k hk B hB hopt => ?_⟩
+  exact hK₀ k ((le_max_left _ _).trans hk) B hB.1 fun T hT =>
+    hopt T (hspace k ((le_max_right _ _).trans hk) T hT)
 
 end TOBQMC

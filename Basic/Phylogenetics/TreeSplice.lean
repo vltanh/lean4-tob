@@ -32,8 +32,6 @@ open scoped Classical
 
 variable {X : Type*} [Fintype X] [DecidableEq X]
 
-set_option linter.unusedSectionVars false
-set_option linter.unusedVariables false
 
 /-! ### Sides that are unions of blocks -/
 
@@ -165,7 +163,7 @@ theorem displays_splice_iff {T : Finset (Finset X)} (hT : IsUnrootedTree T)
   constructor
   · rintro ⟨A, hA, hAs⟩
     rcases mem_splice.1 hA with h | ⟨P', hP', h⟩
-    · exact absurd ⟨A, h, hAs⟩ (not_displays_of_inDistinctBlocks hT (mem_multifurcations.1 hP).1 hs)
+    · exact absurd ⟨A, h, hAs⟩ (not_displays_of_inDistinctBlocks (mem_multifurcations.1 hP).1 hs)
     · by_cases he : P = P'
       · subst he
         exact ⟨A, h, hAs⟩
@@ -204,6 +202,7 @@ theorem displays_splice_iff {T : Finset (Finset X)} (hT : IsUnrootedTree T)
 def liftBlocks (P : Finset (Finset X)) (A : Finset {B // B ∈ P}) : Finset X :=
   A.biUnion Subtype.val
 
+omit [Fintype X] in
 theorem mem_liftBlocks {P : Finset (Finset X)} {A : Finset {B // B ∈ P}} {x : X} :
     x ∈ liftBlocks P A ↔ ∃ b ∈ A, x ∈ b.val := by
   simp [liftBlocks, mem_biUnion]
@@ -214,11 +213,13 @@ variable {P : Finset (Finset X)} (hd : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Dis
 
 include hd
 
+omit [Fintype X] in
 /-- The block of a taxon is unique. -/
 theorem block_eq_of_mem {b c : {B // B ∈ P}} {x : X} (hb : x ∈ b.val) (hc : x ∈ c.val) : b = c := by
   by_contra hne
   exact disjoint_left.1 (hd b.val b.property c.val c.property fun e => hne (Subtype.ext e)) hb hc
 
+omit [Fintype X] in
 theorem mem_liftBlocks_of_mem {A : Finset {B // B ∈ P}} {b : {B // B ∈ P}} {x : X}
     (hx : x ∈ b.val) : x ∈ liftBlocks P A ↔ b ∈ A := by
   rw [mem_liftBlocks]
@@ -254,6 +255,7 @@ theorem liftBlocks_compl (A : Finset {B // B ∈ P}) :
   rw [mem_compl, mem_liftBlocks_of_mem hd hb, mem_liftBlocks_of_mem hd hb, mem_compl]
 
 include hne in
+omit [Fintype X] in
 theorem liftBlocks_nonempty {A : Finset {B // B ∈ P}} (hA : A.Nonempty) :
     (liftBlocks P A).Nonempty := by
   obtain ⟨b, hb⟩ := hA
@@ -318,9 +320,11 @@ def QuartetTree.map (hι : Function.Injective ι) (s : QuartetTree Y) : QuartetT
       rw [disjoint_image hι]
       exact hd B hB C hC fun e => hBC (e ▸ rfl)⟩
 
+omit [Fintype X] [Fintype Y] in
 @[simp] theorem QuartetTree.map_val (s : QuartetTree Y) :
     (s.map hι).val = s.val.image fun B => B.image ι := rfl
 
+omit [Fintype X] [Fintype Y] in
 @[simp] theorem QuartetTree.map_taxa (s : QuartetTree Y) : (s.map hι).taxa = s.taxa.image ι := by
   ext x
   simp only [QuartetTree.taxa, QuartetTree.map_val, mem_sup, id, mem_image]
@@ -331,6 +335,7 @@ def QuartetTree.map (hι : Function.Injective ι) (s : QuartetTree Y) : QuartetT
   · rintro ⟨y, ⟨B, hB, hy⟩, rfl⟩
     exact ⟨_, ⟨B, hB, rfl⟩, mem_image_of_mem _ hy⟩
 
+omit [Fintype X] [Fintype Y] in
 theorem QuartetTree.map_injective : Function.Injective (QuartetTree.map (X := X) hι) := by
   intro s s' h
   apply Subtype.ext
@@ -400,6 +405,7 @@ theorem sum_ite_taxa_subset_image (g : QuartetTree X → ℝ) :
 def pullTree (ι : Y → X) (T : Finset (Finset X)) : Finset (Finset Y) :=
   (T.image fun A => univ.filter fun y => ι y ∈ A).filter fun A => A.Nonempty ∧ Aᶜ.Nonempty
 
+omit [Fintype X] in
 theorem mem_pullTree {T : Finset (Finset X)} {A : Finset Y} :
     A ∈ pullTree ι T ↔ (∃ C ∈ T, (univ.filter fun y => ι y ∈ C) = A) ∧ A.Nonempty ∧ Aᶜ.Nonempty := by
   simp [pullTree, mem_filter, mem_image]
@@ -438,6 +444,7 @@ theorem pullTree_isUnrootedTree {T : Finset (Finset X)} (hT : IsUnrootedTree T)
       · exact mem_union_left _ (mem_filter.2 ⟨mem_univ y, h'⟩)
       · exact mem_union_right _ (mem_filter.2 ⟨mem_univ y, h'⟩)
 
+omit [Fintype X] in
 /-- The restriction of a tree along an injection displays what the tree does. -/
 theorem displays_pullTree_iff {T : Finset (Finset X)} (s₀ : QuartetTree Y) :
     Displays (pullTree ι T) s₀ ↔ Displays T (s₀.map hι) := by
@@ -483,6 +490,7 @@ variable {P : Finset (Finset X)}
 /-- A choice of a taxon in each block. -/
 def IsRepTuple (P : Finset (Finset X)) (x : {B // B ∈ P} → X) : Prop := ∀ b, x b ∈ b.val
 
+omit [Fintype X] [DecidableEq X] in
 theorem exists_isRepTuple (hne : ∀ B ∈ P, B.Nonempty) : ∃ x, IsRepTuple P x :=
   ⟨fun b => (hne b.val b.property).choose, fun b => (hne b.val b.property).choose_spec⟩
 
@@ -490,9 +498,11 @@ variable (hd : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C) {x : {B // B 
 
 include hd hx
 
+omit [Fintype X] in
 theorem IsRepTuple.injective : Function.Injective x := fun b c h =>
   block_eq_of_mem hd (hx b) (h ▸ hx c)
 
+omit [Fintype X] in
 /-- Taxa among the representatives of the blocks lie in distinct blocks. -/
 theorem IsRepTuple.inDistinctBlocks {q : Finset X} (hq : q ⊆ univ.image x) :
     InDistinctBlocks P q := by
@@ -655,7 +665,7 @@ theorem map_eq_of_cutExchangeable (h₂ : CutExchangeable N p)
         by_cases hcb : c = b
         · subst hcb
           simp [y₂]
-        · simp [y₂, Function.update_of_ne hcb, hcb]
+        · simp [y₂, hcb]
       rw [this, card_erase_of_mem hb, hcard]
       rfl
   exact key _ x hx rfl

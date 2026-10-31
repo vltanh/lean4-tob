@@ -26,6 +26,8 @@ used here (`urnStep_eq_concentration`).
 * `urnWeight`, `allocationWeight_eq_urn`, `allocationWeight_eq_urn_of_equiv`: the closed form of
   `allocationWeight` is the joint law of the urn, in any order of the lineages.
 * `allocationWeight_nonneg`, `sum_allocationWeight`: it is a probability distribution.
+* `sum_allocationWeight_marginal`, `sum_allocationWeight_mul_comp`: the urn is consistent, the law of
+  the assignment of a part of the lineages is `allocationWeight` on that part.
 * `allocationWeight_rho_zero`, `allocationWeight_rho_one`, `allocationWeight_rho_one_const`: the
   endpoints, independent and common inheritance.
 * `allocationWeight_const_pos`: an assignment of all lineages to a parent of positive inheritance
@@ -278,6 +280,114 @@ theorem sum_allocationWeight [DecidableEq R] (hρ : 0 ≤ ρ) (hγ : ∑ e, γ e
   rw [← sum_allocationWeight_fin hρ hγ (Fintype.card R)]
   refine Fintype.sum_equiv (Equiv.arrowCongr σ (Equiv.refl P)) _ _ fun a => ?_
   exact (allocationWeight_comp σ.symm a).symm
+
+/-! ### Consistency of the urn -/
+
+omit [Fintype P] [DecidableEq P] in
+private theorem append_snoc' {m k : ℕ} (g : Fin m → P) (h : Fin k → P) (x : P) :
+    Fin.append g (Fin.snoc h x : Fin (k + 1) → P) =
+      (Fin.snoc (Fin.append g h) x : Fin (m + k + 1) → P) := by
+  funext i
+  refine Fin.lastCases (n := m + k) ?_ (fun i => ?_) i
+  · change Fin.append g (Fin.snoc h x : Fin (k + 1) → P) (Fin.natAdd m (Fin.last k)) =
+      (Fin.snoc (Fin.append g h) x : Fin (m + k + 1) → P) (Fin.last (m + k))
+    rw [Fin.append_right, Fin.snoc_last, Fin.snoc_last]
+  · rw [Fin.snoc_castSucc]
+    refine Fin.addCases (fun l => ?_) (fun r => ?_) i
+    · change Fin.append g (Fin.snoc h x : Fin (k + 1) → P) (Fin.castAdd (k + 1) l) = _
+      rw [Fin.append_left, Fin.append_left]
+    · change Fin.append g (Fin.snoc h x : Fin (k + 1) → P) (Fin.natAdd m r.castSucc) = _
+      rw [Fin.append_right, Fin.append_right, Fin.snoc_castSucc]
+
+/-- The urn is consistent: the lineages after the first `m` sum out, since its conditional laws only
+look at earlier lineages. -/
+theorem sum_allocationWeight_append (hρ : 0 ≤ ρ) (hγ : ∑ e, γ e = 1) {m : ℕ} (g : Fin m → P)
+    (k : ℕ) : ∑ h : Fin k → P, allocationWeight ρ γ (Fin.append g h) = allocationWeight ρ γ g := by
+  induction k with
+  | zero =>
+    rw [Fintype.sum_unique, Subsingleton.elim (default : Fin 0 → P) Fin.elim0, Fin.append_elim0]
+    rfl
+  | succ k ih =>
+    rw [← (Fin.snocEquiv fun _ : Fin (k + 1) => P).sum_comp, Fintype.sum_prod_type_right, ← ih]
+    refine sum_congr rfl fun h _ => ?_
+    simp only [Fin.snocEquiv_apply, append_snoc']
+    have hs : ∀ x, allocationWeight ρ γ (Fin.snoc (Fin.append g h) x : Fin (m + k + 1) → P) =
+        allocationWeight ρ γ (Fin.append g h) * urnStep ρ γ (Fin.append g h) x := fun x => by
+      have := allocationWeight_snoc (ρ := ρ) (γ := γ)
+        (Fin.snoc (Fin.append g h) x : Fin (m + k + 1) → P) hρ
+      rwa [Fin.init_snoc, Fin.snoc_last] at this
+    simp only [hs]
+    rw [← mul_sum, sum_urnStep hρ hγ, mul_one]
+
+/-- The urn is consistent: in `R₁ ⊕ R₂`, the lineages of `R₂` sum out. -/
+theorem sum_allocationWeight_sum_elim {R₁ R₂ : Type*} [Fintype R₁] [Fintype R₂] [DecidableEq R₂]
+    (hρ : 0 ≤ ρ)
+    (hγ : ∑ e, γ e = 1) (a₁ : R₁ → P) :
+    ∑ a₂ : R₂ → P, allocationWeight ρ γ (Sum.elim a₁ a₂) = allocationWeight ρ γ a₁ := by
+  let σ₁ := Fintype.equivFin R₁
+  let σ₂ := Fintype.equivFin R₂
+  let σ := (Equiv.sumCongr σ₁ σ₂).trans finSumFinEquiv
+  have key : ∀ a₂ : R₂ → P, allocationWeight ρ γ (Sum.elim a₁ a₂) =
+      allocationWeight ρ γ (Fin.append (a₁ ∘ σ₁.symm) (a₂ ∘ σ₂.symm)) := by
+    intro a₂
+    rw [← allocationWeight_comp σ.symm]
+    congr 1
+    funext i
+    refine Fin.addCases (fun l => ?_) (fun r => ?_) i
+    · rw [Fin.append_left]
+      simp [σ]
+    · rw [Fin.append_right]
+      simp [σ]
+  simp only [key]
+  have h1 := sum_allocationWeight_append hρ hγ (a₁ ∘ σ₁.symm) (Fintype.card R₂)
+  rw [allocationWeight_comp σ₁.symm] at h1
+  rw [← h1]
+  exact Fintype.sum_equiv (Equiv.arrowCongr σ₂ (Equiv.refl P)) _ _ fun _ => rfl
+
+/-- **The urn is consistent.** The law of the assignment of a part of the lineages (the image of an
+injection `j`) is `allocationWeight` on that part. -/
+theorem sum_allocationWeight_marginal [DecidableEq R] {R' : Type*} [Fintype R'] (hρ : 0 ≤ ρ)
+    (hγ : ∑ e, γ e = 1) (j : R' → R) (hj : Function.Injective j) (a' : R' → P) :
+    ∑ a : R → P, (if a ∘ j = a' then allocationWeight ρ γ a else 0) = allocationWeight ρ γ a' := by
+  classical
+  let R₂ := {r : R // r ∉ Set.range j}
+  let σ : R' ⊕ R₂ ≃ R := (Equiv.sumCongr (Equiv.ofInjective j hj) (Equiv.refl _)).trans
+    (Equiv.sumCompl (· ∈ Set.range j))
+  have hσ : ∀ r', σ (Sum.inl r') = j r' := fun r' => rfl
+  let Ψ : (R' → P) × (R₂ → P) ≃ (R → P) :=
+    (Equiv.sumArrowEquivProdArrow R' R₂ P).symm.trans (Equiv.arrowCongr σ (Equiv.refl P))
+  have hΨ : ∀ p : (R' → P) × (R₂ → P), Ψ p = Sum.elim p.1 p.2 ∘ σ.symm := fun p => rfl
+  rw [← Ψ.sum_comp, Fintype.sum_prod_type]
+  have hcomp : ∀ (a₁ : R' → P) (a₂ : R₂ → P), (Sum.elim a₁ a₂ ∘ σ.symm) ∘ j = a₁ := by
+    intro a₁ a₂
+    funext r'
+    simp only [Function.comp, ← hσ, Equiv.symm_apply_apply, Sum.elim_inl]
+  simp only [hΨ, hcomp, allocationWeight_comp]
+  rw [sum_eq_single a']
+  · simp only [↓reduceIte]
+    exact sum_allocationWeight_sum_elim hρ hγ a'
+  · intro a₁ _ hne
+    simp [hne]
+  · exact fun h => absurd (mem_univ a') h
+
+/-- A sum against `allocationWeight` of a function of the assignment of a part of the lineages. -/
+theorem sum_allocationWeight_mul_comp [DecidableEq R] {R' : Type*} [Fintype R'] [DecidableEq R']
+    (hρ : 0 ≤ ρ)
+    (hγ : ∑ e, γ e = 1) (j : R' → R) (hj : Function.Injective j) (Λ : (R' → P) → ℝ) :
+    ∑ a : R → P, allocationWeight ρ γ a * Λ (a ∘ j) =
+      ∑ a' : R' → P, allocationWeight ρ γ a' * Λ a' := by
+  have h1 : ∀ a : R → P, allocationWeight ρ γ a * Λ (a ∘ j) =
+      ∑ a' : R' → P, (if a ∘ j = a' then allocationWeight ρ γ a else 0) * Λ a' := by
+    intro a
+    rw [sum_eq_single (a ∘ j)]
+    · simp
+    · intro a' _ hne
+      simp [Ne.symm hne]
+    · exact fun h => absurd (mem_univ (a ∘ j)) h
+  simp only [h1]
+  rw [sum_comm]
+  refine sum_congr rfl fun a' _ => ?_
+  rw [← sum_mul, sum_allocationWeight_marginal hρ hγ j hj a']
 
 /-! ### The endpoints -/
 

@@ -13,19 +13,25 @@ is the law of a Markov chain along any linear extension of the network, from the
 vertex needs only the forests at the top of its child arcs. This file proves what that gives, one
 vertex at a time.
 
-Going up from the taxa through a set `D` of vertices closed under children, with `vertexWeight` the
-factor of a vertex:
+We work with the process in which arbitrary forests are injected at the vertices (`arriving`,
+`injWeight`, `injDist`). `geneTreeDist` is the case of the singleton lineages of all taxa at their
+leaves (`taxaInj`, `geneTreeDist_eq_injDist`), and the injected forests also describe the part of the
+process above an arc (`Basic/Phylogenetics/NMSC/Factor.lean`).
+
+Going up through a set `D` of vertices closed under children, with `vertexWeight` the factor of a
+vertex:
 
 * `frontier_of_prod_ne_zero`: on a history of nonzero weight all forests are binary forests, and the
-  lineages at the top of the arcs leaving `D` partition the taxa of `D`.
+  lineages at the top of the arcs leaving `D` partition the lineages injected in `D`.
 * `sum_sum_prod_vertexWeight`: summing out the arcs entering the topmost vertex of `D` leaves the
-  same sum for one vertex fewer (`sum_step`, from `card_pow_mul_sum_mul_eq`).
+  same sum for one vertex fewer (`sum_step`, from `card_mul_sum_mul`).
 
 ## Main results
 
-* `sum_sum_historyWeight`: the weights of the histories sum to one.
-* `historyWeight_nonneg`, `good_arrivingForest_root`: the forest arriving at the root of a history
-  of nonzero weight is a binary forest on all the taxa.
+* `sum_sum_injWeight`, `sum_sum_historyWeight`: the weights of the histories sum to one.
+* `injWeight_nonneg`, `historyWeight_nonneg`, `good_arriving_root`, `good_arrivingForest_root`: the
+  forest arriving at the root of a history of nonzero weight is a binary forest on all the lineages.
+* `injDist_nonneg`, `sum_injDist`, `injDist_support`: the process with injected forests.
 * `exists_chain_history`: a history of positive weight in which no lineages coalesce.
 -/
 
@@ -55,22 +61,29 @@ omit [Fintype ι] [Fintype β] in
 theorem overwrite_of_notMem {S : Finset ι} {i : ι} (h : i ∉ S) (x y : ι → β) :
     overwrite S x y i = x i := ite_eq_right h
 
-/-- A sum over all functions of a product over the coordinates in `S`, whose factors sum to one over
-each coordinate: the other coordinates are free. -/
-theorem sum_prod_of_sum_eq_one (S : Finset ι) (φ : ι → β → ℝ) (h : ∀ i ∈ S, ∑ t, φ i t = 1) :
-    ∑ y : ι → β, ∏ i ∈ S, φ i (y i) = (Fintype.card β : ℝ) ^ #Sᶜ := by
+/-- A sum over all functions of a product over the coordinates in `S`: the other coordinates are
+free. -/
+theorem sum_prod_mem (S : Finset ι) (φ : ι → β → ℝ) :
+    ∑ y : ι → β, ∏ i ∈ S, φ i (y i) =
+      (∏ i ∈ S, ∑ t, φ i t) * (Fintype.card β : ℝ) ^ #Sᶜ := by
   have h1 : ∀ y : ι → β, ∏ i ∈ S, φ i (y i) = ∏ i, if i ∈ S then φ i (y i) else 1 := by
     intro y
     rw [prod_ite_mem, univ_inter]
   simp_rw [h1]
   rw [← Fintype.piFinset_univ,
     ← prod_univ_sum (fun _ => univ) (fun i t => if i ∈ S then φ i t else 1)]
-  rw [← prod_mul_prod_compl S, prod_eq_one (s := S), one_mul, ← prod_const]
+  rw [← prod_mul_prod_compl S, ← prod_const]
+  congr 1
+  · exact prod_congr rfl fun i hi => by simp only [hi, ↓reduceIte]
   · refine prod_congr rfl fun i hi => ?_
     have hi' : i ∉ S := mem_compl.1 hi
     simp [hi']
-  · intro i hi
-    simp only [hi, ↓reduceIte, h i hi]
+
+/-- A sum over all functions of a product over the coordinates in `S`, whose factors sum to one over
+each coordinate. -/
+theorem sum_prod_of_sum_eq_one (S : Finset ι) (φ : ι → β → ℝ) (h : ∀ i ∈ S, ∑ t, φ i t = 1) :
+    ∑ y : ι → β, ∏ i ∈ S, φ i (y i) = (Fintype.card β : ℝ) ^ #Sᶜ := by
+  rw [sum_prod_mem, prod_eq_one h, one_mul]
 
 /-- The number of functions with given values on `S`, times `w`. -/
 theorem sum_ite_forall_eq (S : Finset ι) (C : ι → β) (w : ℝ) :
@@ -83,41 +96,66 @@ theorem sum_ite_forall_eq (S : Finset ι) (C : ι → β) (w : ℝ) :
   simp only [prod_const_one]
   split_ifs <;> simp
 
-/-- **Summing out the coordinates in `S`.** If `g` does not depend on them, and `κ` has total mass
-`|β|^|Sᶜ|` over them where `g ≠ 0`, then the sum of `g κ` over all functions is the sum of `g` up to
-a factor `|β|^|S|`, the number of values of the coordinates in `S`. The proof applies to the sum over
-pairs of functions the involution `(x, y) ↦ (overwrite S x y, overwrite S y x)`. -/
+/-- The functions with given values on `S`, for a function `Θ` of those values only. -/
+theorem sum_ite_forall_mul (S : Finset ι) (C : ι → β) (Θ : (ι → β) → ℝ)
+    (hΘ : ∀ y y', (∀ i ∈ S, y i = y' i) → Θ y = Θ y') :
+    ∑ y : ι → β, (if ∀ i ∈ S, y i = C i then Θ y else 0) =
+      Θ C * (Fintype.card β : ℝ) ^ #Sᶜ := by
+  rw [← sum_ite_forall_eq S C (Θ C)]
+  refine sum_congr rfl fun y _ => ?_
+  split_ifs with h
+  · exact hΘ y C h
+  · rfl
+
+omit [Fintype ι] [Fintype β] in
+theorem overwrite_involutive (S : Finset ι) (x y : ι → β) :
+    overwrite S (overwrite S x y) (overwrite S y x) = x := by
+  funext i
+  by_cases hi : i ∈ S <;> simp [overwrite, hi]
+
+/-- **Summing out the coordinates in `S`.** A sum over all functions of `g h`, with `g` not depending
+on the coordinates in `S`: the factor `h` can be averaged over those coordinates. The proof applies to
+the sum over pairs of functions the involution `(x, y) ↦ (overwrite S x y, overwrite S y x)`. -/
+theorem card_mul_sum_mul (S : Finset ι) (g h : (ι → β) → ℝ)
+    (hg : ∀ x y, g (overwrite S x y) = g x) :
+    (Fintype.card (ι → β) : ℝ) * ∑ x, g x * h x = ∑ x, g x * ∑ y, h (overwrite S x y) := by
+  let Φ : (ι → β) × (ι → β) → (ι → β) × (ι → β) := fun p =>
+    (overwrite S p.1 p.2, overwrite S p.2 p.1)
+  have hΦ : Function.Involutive Φ := by
+    rintro ⟨x, y⟩
+    refine Prod.ext (overwrite_involutive S x y) (overwrite_involutive S y x)
+  have h1 : ∑ p : (ι → β) × (ι → β), g p.1 * h p.1 =
+      (Fintype.card (ι → β) : ℝ) * ∑ x, g x * h x := by
+    rw [Fintype.sum_prod_type]
+    simp only [sum_const, card_univ, nsmul_eq_mul, mul_sum]
+  have h2 : ∑ p : (ι → β) × (ι → β), g (Φ p).1 * h (Φ p).1 =
+      ∑ p : (ι → β) × (ι → β), g p.1 * h p.1 :=
+    Equiv.sum_comp hΦ.toPerm fun p => g p.1 * h p.1
+  rw [← h1, ← h2, Fintype.sum_prod_type]
+  refine sum_congr rfl fun x _ => ?_
+  simp only [Φ, hg, ← mul_sum]
+
+/-- If `g` does not depend on the coordinates in `S`, and `κ` has total mass `|β|^|Sᶜ|` over them
+where `g ≠ 0`, then the sum of `g κ` over all functions is the sum of `g` up to a factor `|β|^|S|`,
+the number of values of the coordinates in `S`. -/
 theorem card_pow_mul_sum_mul_eq [Nonempty β] (S : Finset ι) (g κ : (ι → β) → ℝ)
     (hg : ∀ x y, g (overwrite S x y) = g x)
     (hκ : ∀ x, g x ≠ 0 → ∑ y, κ (overwrite S x y) = (Fintype.card β : ℝ) ^ #Sᶜ) :
     (Fintype.card β : ℝ) ^ #S * ∑ x, g x * κ x = ∑ x, g x := by
   have hB : (0 : ℝ) < Fintype.card β := by exact_mod_cast Fintype.card_pos
-  let Φ : (ι → β) × (ι → β) → (ι → β) × (ι → β) := fun p =>
-    (overwrite S p.1 p.2, overwrite S p.2 p.1)
-  have hΦ : Function.Involutive Φ := by
-    rintro ⟨x, y⟩
-    refine Prod.ext (funext fun i => ?_) (funext fun i => ?_) <;> by_cases hi : i ∈ S <;>
-      simp [Φ, overwrite, hi]
   have hM : ((Fintype.card (ι → β) : ℕ) : ℝ) =
-      (Fintype.card β : ℝ) ^ #S * (Fintype.card β : ℝ) ^ #Sᶜ := by
-    rw [← pow_add, card_add_card_compl, Fintype.card_fun, Nat.cast_pow]
-  have h1 : ∑ p : (ι → β) × (ι → β), g p.1 * κ p.1 =
-      (Fintype.card (ι → β) : ℝ) * ∑ x, g x * κ x := by
-    rw [Fintype.sum_prod_type]
-    simp only [sum_const, card_univ, nsmul_eq_mul, mul_sum]
-  have h2 : ∑ p : (ι → β) × (ι → β), g (Φ p).1 * κ (Φ p).1 =
-      ∑ p : (ι → β) × (ι → β), g p.1 * κ p.1 :=
-    Equiv.sum_comp hΦ.toPerm fun p => g p.1 * κ p.1
-  have h3 : ∑ p : (ι → β) × (ι → β), g (Φ p).1 * κ (Φ p).1 =
+      (Fintype.card β : ℝ) ^ #Sᶜ * (Fintype.card β : ℝ) ^ #S := by
+    rw [← pow_add, add_comm, card_add_card_compl, Fintype.card_fun, Nat.cast_pow]
+  have h := card_mul_sum_mul S g κ hg
+  have h3 : ∑ x, g x * ∑ y, κ (overwrite S x y) =
       (Fintype.card β : ℝ) ^ #Sᶜ * ∑ x, g x := by
-    rw [Fintype.sum_prod_type, mul_sum]
+    rw [mul_sum]
     refine sum_congr rfl fun x _ => ?_
-    simp only [Φ, hg, ← mul_sum]
     by_cases hx : g x = 0
     · simp [hx]
     · rw [hκ x hx, mul_comm]
-  rw [h3, h1, hM, mul_assoc, mul_left_comm] at h2
-  exact mul_left_cancel₀ (pow_ne_zero _ hB.ne') h2.symm
+  rw [h3, hM, mul_assoc] at h
+  exact mul_left_cancel₀ (pow_ne_zero _ hB.ne') h
 
 end Elimination
 
@@ -254,29 +292,66 @@ section Weights
 variable {V E X : Type*} [Fintype V] [Fintype E] [Fintype X] [DecidableEq X]
 variable {N : RootedNetwork V E X} {θ : RootedNetwork.MetricData E} {ρ : ℝ}
 
+variable (N) in
+/-- The forest arriving at the vertex `v`: the forest injected at `v`, and the forests at the top of
+its child arcs. -/
+def arriving (inj : V → Finset (Finset X)) (top : E → Finset (Finset X)) (v : V) :
+    Finset (Finset X) :=
+  inj v ∪ (univ.filter fun e => N.graph.source e = v).biUnion top
+
+variable (N) in
+/-- The singleton lineages of the taxa `Y`, injected at their leaves. -/
+def taxaInj (Y : Finset X) (v : V) : Finset (Finset X) :=
+  (univ.filter fun x => x ∈ Y ∧ N.leaf x = v).image fun x => ({x} : Finset X)
+
+omit [Fintype V] in
+theorem arrivingForest_eq (top : E → Finset (Finset X)) (v : V) :
+    arrivingForest N top v = arriving N (taxaInj N univ) top v := by
+  simp [arrivingForest, arriving, taxaInj]
+
 variable (N θ ρ) in
 /-- The factor of a vertex in the weight of a history: its roots choose parents, and the lineages
 coalesce along the arcs entering it. -/
-def vertexWeight (v : V) (bot top : E → Finset (Finset X)) : ℝ :=
-  allocationFactor N θ ρ (arrivingForest N top v) v bot *
+def vertexWeight (inj : V → Finset (Finset X)) (v : V) (bot top : E → Finset (Finset X)) : ℝ :=
+  allocationFactor N θ ρ (arriving N inj top v) v bot *
     ∏ e ∈ arcsInto N v, kingmanTransition (θ.length e) (bot e) (top e)
 
+variable (N θ ρ) in
+/-- The joint probability of a history of the process with injected forests. -/
+def injWeight (inj : V → Finset (Finset X)) (bot top : E → Finset (Finset X)) : ℝ :=
+  ∏ v ∈ univ.erase N.root, vertexWeight N θ ρ inj v bot top
+
+variable (N θ ρ) in
+/-- The distribution of the forest above the root of the process with injected forests. -/
+def injDist (inj : V → Finset (Finset X)) (G : Finset (Finset X)) : ℝ :=
+  ∑ bot : E → Finset (Finset X), ∑ top : E → Finset (Finset X),
+    injWeight N θ ρ inj bot top * kingmanAbsorption (arriving N inj top N.root) G
+
 /-- The weight of a history is the product of the factors of the non-root vertices. -/
-theorem historyWeight_eq_prod (hN : N.IsPhylogenetic) (bot top : E → Finset (Finset X)) :
-    historyWeight N θ ρ bot top = ∏ v ∈ univ.erase N.root, vertexWeight N θ ρ v bot top := by
-  unfold historyWeight vertexWeight
+theorem historyWeight_eq_injWeight (hN : N.IsPhylogenetic) (bot top : E → Finset (Finset X)) :
+    historyWeight N θ ρ bot top = injWeight N θ ρ (taxaInj N univ) bot top := by
+  unfold historyWeight injWeight vertexWeight
+  simp only [arrivingForest_eq]
   rw [prod_mul_distrib]
   congr 1
   exact (prod_fiberwise_of_maps_to (g := N.graph.target)
     (fun e _ => mem_erase.2 ⟨target_ne_root hN e, mem_univ _⟩) _).symm
 
-omit [Fintype V] in
-theorem arrivingForest_congr {v : V} {top top' : E → Finset (Finset X)}
+/-- The gene tree distribution is the process with the singleton lineages of all taxa. -/
+theorem geneTreeDist_eq_injDist (hN : N.IsPhylogenetic) (G : Finset (Finset X)) :
+    geneTreeDist N θ ρ G = injDist N θ ρ (taxaInj N univ) G := by
+  unfold geneTreeDist injDist
+  simp only [arrivingForest_eq, historyWeight_eq_injWeight hN]
+
+omit [Fintype V] [Fintype X] in
+theorem arriving_congr {inj inj' : V → Finset (Finset X)} {v : V}
+    {top top' : E → Finset (Finset X)} (hi : inj v = inj' v)
     (h : ∀ e, N.graph.source e = v → top e = top' e) :
-    arrivingForest N top v = arrivingForest N top' v := by
-  unfold arrivingForest
+    arriving N inj top v = arriving N inj' top' v := by
+  unfold arriving
+  rw [hi]
   congr 1
-  refine biUnion_congr rfl fun e he => h e (mem_filter.1 he).2
+  exact biUnion_congr rfl fun e he => h e (mem_filter.1 he).2
 
 omit [Fintype V] in
 theorem allocationFactor_congr {F : Finset (Finset X)} {v : V} {bot bot' : E → Finset (Finset X)}
@@ -292,13 +367,14 @@ theorem allocationFactor_congr {F : Finset (Finset X)} {v : V} {bot bot' : E →
   simp only [hc]
 
 omit [Fintype V] in
-theorem vertexWeight_congr {u : V} {bot bot' top top' : E → Finset (Finset X)}
+theorem vertexWeight_congr {inj inj' : V → Finset (Finset X)} {u : V}
+    {bot bot' top top' : E → Finset (Finset X)} (hi : inj u = inj' u)
     (h1 : ∀ e, N.graph.target e = u → bot e = bot' e)
     (h2 : ∀ e, N.graph.target e = u → top e = top' e)
     (h3 : ∀ e, N.graph.source e = u → top e = top' e) :
-    vertexWeight N θ ρ u bot top = vertexWeight N θ ρ u bot' top' := by
+    vertexWeight N θ ρ inj u bot top = vertexWeight N θ ρ inj' u bot' top' := by
   unfold vertexWeight
-  rw [arrivingForest_congr h3, allocationFactor_congr h1]
+  rw [arriving_congr hi h3, allocationFactor_congr h1]
   congr 1
   refine prod_congr rfl fun e he => ?_
   rw [h1 e (mem_arcsInto.1 he), h2 e (mem_arcsInto.1 he)]
@@ -310,6 +386,11 @@ theorem allocationFactor_nonneg (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤
   split_ifs
   · exact allocationWeight_nonneg hρ.1 hρ.2 (fun e => (inheritance_pos hθ e.val).le) a
   · exact le_rfl
+
+theorem injWeight_nonneg (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1) (inj : V → Finset (Finset X))
+    (bot top : E → Finset (Finset X)) : 0 ≤ injWeight N θ ρ inj bot top :=
+  prod_nonneg fun _ _ => mul_nonneg (allocationFactor_nonneg hθ hρ _ _ _)
+    (prod_nonneg fun e _ => kingmanTransition_nonneg (length_nonneg hθ e) _ _)
 
 theorem historyWeight_nonneg (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
     (bot top : E → Finset (Finset X)) : 0 ≤ historyWeight N θ ρ bot top :=
@@ -327,43 +408,56 @@ theorem exists_assignment {F : Finset (Finset X)} {v : V} {bot : E → Finset (F
   by_contra hne
   exact ha (ite_eq_right hne)
 
+variable (N) in
+/-- The forests that the assignment `a` of the roots of `F` puts at the bottom of the arcs entering
+`v`, and the empty forest at the other arcs. -/
+def assignedForest (F : Finset (Finset X)) (v : V)
+    (a : {A // A ∈ roots F} → {e // N.graph.target e = v}) (e : E) : Finset (Finset X) :=
+  if h : N.graph.target e = v then
+    forestBelow F ((univ.filter fun r => a r = ⟨e, h⟩).image Subtype.val)
+  else ∅
+
+omit [Fintype V] in
+/-- A sum against the allocation, of a function of the bottoms of the arcs entering `v`. -/
+theorem sum_allocationFactor_mul (F : Finset (Finset X)) (v : V)
+    (Θ : (E → Finset (Finset X)) → ℝ)
+    (hΘ : ∀ y y', (∀ e ∈ arcsInto N v, y e = y' e) → Θ y = Θ y') :
+    ∑ y : E → Finset (Finset X), allocationFactor N θ ρ F v y * Θ y =
+      ∑ a, allocationWeight ρ (fun e : {e // N.graph.target e = v} => θ.inheritance e.val) a *
+        (Θ (assignedForest N F v a) *
+          (Fintype.card (Finset (Finset X)) : ℝ) ^ #(arcsInto N v)ᶜ) := by
+  unfold allocationFactor
+  simp only [sum_mul]
+  rw [sum_comm]
+  refine sum_congr rfl fun a _ => ?_
+  rw [← sum_ite_forall_mul (arcsInto N v) (assignedForest N F v a) Θ hΘ, mul_sum]
+  refine sum_congr rfl fun y _ => ?_
+  have hiff : (∀ e : {e // N.graph.target e = v},
+        y e.val = forestBelow F ((univ.filter fun r => a r = e).image Subtype.val)) ↔
+      ∀ e ∈ arcsInto N v, y e = assignedForest N F v a e := by
+    constructor
+    · intro h e he
+      have he' := mem_arcsInto.1 he
+      simp only [assignedForest, he', ↓reduceDIte]
+      exact h ⟨e, he'⟩
+    · intro h e
+      have := h e.val (mem_arcsInto.2 e.property)
+      simp only [assignedForest, e.property, ↓reduceDIte] at this
+      exact this
+  by_cases hc : ∀ e ∈ arcsInto N v, y e = assignedForest N F v a e
+  · rw [ite_eq_left (hiff.2 hc), ite_eq_left hc]
+  · rw [ite_eq_right (fun h => hc (hiff.1 h)), ite_eq_right hc]
+    simp
+
 omit [Fintype V] in
 /-- The allocations of the roots of `F` at `v` have total mass one over the arcs entering `v`. -/
 theorem sum_allocationFactor (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
     {v : V} (hv : v ≠ N.root) (F : Finset (Finset X)) :
     ∑ y : E → Finset (Finset X), allocationFactor N θ ρ F v y =
       (Fintype.card (Finset (Finset X)) : ℝ) ^ #(arcsInto N v)ᶜ := by
-  unfold allocationFactor
-  rw [sum_comm]
-  have hkey : ∀ a : {A // A ∈ roots F} → {e // N.graph.target e = v},
-      ∑ y : E → Finset (Finset X), (if ∀ e : {e // N.graph.target e = v},
-          y e.val = forestBelow F ((univ.filter fun r => a r = e).image Subtype.val) then
-        allocationWeight ρ (fun e : {e // N.graph.target e = v} => θ.inheritance e.val) a else 0) =
-        allocationWeight ρ (fun e : {e // N.graph.target e = v} => θ.inheritance e.val) a *
-          (Fintype.card (Finset (Finset X)) : ℝ) ^ #(arcsInto N v)ᶜ := by
-    intro a
-    let C : E → Finset (Finset X) := fun e =>
-      if h : N.graph.target e = v then
-        forestBelow F ((univ.filter fun r => a r = ⟨e, h⟩).image Subtype.val)
-      else ∅
-    rw [← sum_ite_forall_eq (arcsInto N v) C]
-    refine sum_congr rfl fun y _ => ?_
-    have hiff : (∀ e : {e // N.graph.target e = v},
-          y e.val = forestBelow F ((univ.filter fun r => a r = e).image Subtype.val)) ↔
-        ∀ e ∈ arcsInto N v, y e = C e := by
-      constructor
-      · intro h e he
-        have he' := mem_arcsInto.1 he
-        simp only [C, he', ↓reduceDIte]
-        exact h ⟨e, he'⟩
-      · intro h e
-        have := h e.val (mem_arcsInto.2 e.property)
-        simp only [C, e.property, ↓reduceDIte] at this
-        exact this
-    simp only [hiff]
-    congr
-  simp_rw [hkey]
-  rw [← sum_mul, sum_allocationWeight hρ.1 (sum_inheritance hN hθ hv), one_mul]
+  have h := sum_allocationFactor_mul (N := N) (θ := θ) (ρ := ρ) F v (fun _ => 1) (fun _ _ _ => rfl)
+  simp only [mul_one, one_mul] at h
+  rw [h, ← sum_mul, sum_allocationWeight hρ.1 (sum_inheritance hN hθ hv), one_mul]
 
 end Weights
 
@@ -374,24 +468,46 @@ section Frontier
 variable {V E X : Type*} [Fintype V] [Fintype E] [Fintype X] [DecidableEq X]
 variable {N : RootedNetwork V E X} {θ : RootedNetwork.MetricData E} {ρ : ℝ}
 
+/-- Injected forests that are binary, on pairwise disjoint sets of lineages. -/
+structure ValidInj (inj : V → Finset (Finset X)) : Prop where
+  good : ∀ v, IsGoodForest (inj v)
+  disj : ∀ u v, u ≠ v → Disjoint (lineages (inj u)) (lineages (inj v))
+
+omit [Fintype V] [Fintype E] in
+theorem mem_lineages_taxaInj {Y : Finset X} {v : V} {x : X} :
+    x ∈ lineages (taxaInj N Y v) ↔ x ∈ Y ∧ N.leaf x = v := by
+  unfold taxaInj
+  rw [lineages_image_singleton]
+  simp
+
+omit [Fintype V] [Fintype E] in
+/-- The singleton lineages of a set of taxa, at their leaves. -/
+theorem validInj_taxaInj (Y : Finset X) : ValidInj (taxaInj N Y) :=
+  ⟨fun _ => isGoodForest_singletons _, fun _ _ huv => disjoint_left.2 fun _ hxu hxv =>
+    huv ((mem_lineages_taxaInj.1 hxu).2.symm.trans (mem_lineages_taxaInj.1 hxv).2)⟩
+
 variable (N) in
-/-- The state of a history after the vertices of `D`: all forests so far are binary forests, and the
-lineages at the top of the arcs leaving `D` partition the taxa of `D`. -/
-structure Frontier (D : Finset V) (bot top : E → Finset (Finset X)) : Prop where
+/-- The state of a history after the vertices of `D`: all forests so far are binary forests, the
+lineages at the top of the arcs leaving `D` partition the lineages injected in `D`, and each lineage
+at the top of an arc was injected below it. -/
+structure Frontier (inj : V → Finset (Finset X)) (D : Finset V) (bot top : E → Finset (Finset X)) :
+    Prop where
   good_bot : ∀ e, N.graph.target e ∈ D → IsGoodForest (bot e)
   good_top : ∀ e, N.graph.target e ∈ D → IsGoodForest (top e)
   disj : ∀ e f, N.graph.target e ∈ D → N.graph.source e ∉ D → N.graph.target f ∈ D →
     N.graph.source f ∉ D → e ≠ f → Disjoint (lineages (top e)) (lineages (top f))
   mem : ∀ x, (∃ e, N.graph.target e ∈ D ∧ N.graph.source e ∉ D ∧ x ∈ lineages (top e)) ↔
-    N.leaf x ∈ D
+    ∃ u ∈ D, x ∈ lineages (inj u)
+  below : ∀ e, N.graph.target e ∈ D → ∀ x ∈ lineages (top e),
+    ∃ u, N.graph.Reaches (N.graph.target e) u ∧ x ∈ lineages (inj u)
 
-omit [Fintype V] in
-theorem mem_lineages_arrivingForest (top : E → Finset (Finset X)) (v : V) (x : X) :
-    x ∈ lineages (arrivingForest N top v) ↔
-      N.leaf x = v ∨ ∃ e, N.graph.source e = v ∧ x ∈ lineages (top e) := by
-  unfold arrivingForest
-  rw [lineages_union, mem_union, lineages_image_singleton, mem_filter]
-  simp only [mem_univ, true_and]
+omit [Fintype V] [Fintype X] in
+theorem mem_lineages_arriving (inj : V → Finset (Finset X)) (top : E → Finset (Finset X)) (v : V)
+    (x : X) :
+    x ∈ lineages (arriving N inj top v) ↔
+      x ∈ lineages (inj v) ∨ ∃ e, N.graph.source e = v ∧ x ∈ lineages (top e) := by
+  unfold arriving
+  rw [lineages_union, mem_union]
   refine or_congr Iff.rfl ?_
   rw [mem_lineages]
   constructor
@@ -402,39 +518,41 @@ theorem mem_lineages_arrivingForest (top : E → Finset (Finset X)) (v : V) (x :
     obtain ⟨A, hA, hxA⟩ := mem_lineages.1 hx
     exact ⟨A, mem_biUnion.2 ⟨e, mem_filter.2 ⟨mem_univ _, he⟩, hA⟩, hxA⟩
 
-omit [Fintype V] in
+omit [Fintype V] [Fintype X] in
 /-- The forest arriving at a vertex all of whose children have been processed is a binary forest. -/
-theorem Frontier.good_arrivingForest {D : Finset V} {bot top : E → Finset (Finset X)}
-    (hF : Frontier N D bot top) {v : V} (hv : v ∉ D)
+theorem Frontier.good_arriving {inj : V → Finset (Finset X)} (hinj : ValidInj inj) {D : Finset V}
+    {bot top : E → Finset (Finset X)} (hF : Frontier N inj D bot top) {v : V} (hv : v ∉ D)
     (hch : ∀ e, N.graph.source e = v → N.graph.target e ∈ D) :
-    IsGoodForest (arrivingForest N top v) := by
-  unfold arrivingForest
-  refine IsGoodForest.union (isGoodForest_singletons _) (IsGoodForest.biUnion _ _ ?_ ?_) ?_
+    IsGoodForest (arriving N inj top v) := by
+  unfold arriving
+  refine IsGoodForest.union (hinj.good v) (IsGoodForest.biUnion _ _ ?_ ?_) ?_
   · intro e he
     exact hF.good_top e (hch e (mem_filter.1 he).2)
   · intro e he f hf hef
     have he' := (mem_filter.1 he).2
     have hf' := (mem_filter.1 hf).2
     exact hF.disj e f (hch e he') (he' ▸ hv) (hch f hf') (hf' ▸ hv) hef
-  · rw [lineages_image_singleton, disjoint_left]
+  · rw [disjoint_left]
     intro x hx hx'
     obtain ⟨A, hA, hxA⟩ := mem_lineages.1 hx'
     obtain ⟨e, he, hAe⟩ := mem_biUnion.1 hA
     have he' := (mem_filter.1 he).2
-    have hxl := (hF.mem x).1 ⟨e, hch e he', he' ▸ hv, mem_lineages.2 ⟨A, hAe, hxA⟩⟩
-    exact hv ((mem_filter.1 hx).2 ▸ hxl)
+    obtain ⟨u, hu, hxu⟩ := (hF.mem x).1 ⟨e, hch e he', he' ▸ hv, mem_lineages.2 ⟨A, hAe, hxA⟩⟩
+    have huv : v ≠ u := fun h => hv (h ▸ hu)
+    exact disjoint_left.1 (hinj.disj v u huv) hx hxu
 
 omit [Fintype V] in
 /-- The forests at the bottom and at the top of the arcs entering a vertex of nonzero factor: binary
 forests; each lineage arriving at `v` is at the top of exactly one of them. -/
-theorem good_of_vertexWeight_ne_zero {v : V} {bot top : E → Finset (Finset X)}
-    (hg : IsGoodForest (arrivingForest N top v)) (hw : vertexWeight N θ ρ v bot top ≠ 0) :
+theorem good_of_vertexWeight_ne_zero {inj : V → Finset (Finset X)} {v : V}
+    {bot top : E → Finset (Finset X)}
+    (hg : IsGoodForest (arriving N inj top v)) (hw : vertexWeight N θ ρ inj v bot top ≠ 0) :
     (∀ e, N.graph.target e = v → IsGoodForest (bot e) ∧ IsGoodForest (top e)) ∧
     (∀ e f, N.graph.target e = v → N.graph.target f = v → e ≠ f →
       Disjoint (lineages (top e)) (lineages (top f))) ∧
     (∀ x, (∃ e, N.graph.target e = v ∧ x ∈ lineages (top e)) ↔
-      x ∈ lineages (arrivingForest N top v)) := by
-  set F := arrivingForest N top v with hFdef
+      x ∈ lineages (arriving N inj top v)) := by
+  set F := arriving N inj top v with hFdef
   have halloc := left_ne_zero_of_mul hw
   have hprod := right_ne_zero_of_mul hw
   obtain ⟨a, ha⟩ := exists_assignment halloc
@@ -479,11 +597,12 @@ theorem good_of_vertexWeight_ne_zero {v : V} {bot top : E → Finset (Finset X)}
 
 omit [Fintype V] in
 /-- One more vertex. -/
-theorem Frontier.insert (hN : N.IsPhylogenetic) {D : Finset V} {bot top : E → Finset (Finset X)}
-    (hF : Frontier N D bot top) (hD : DownClosed N D) {v : V} (hv : v ∉ D)
+theorem Frontier.insert (hN : N.IsPhylogenetic) {inj : V → Finset (Finset X)} (hinj : ValidInj inj)
+    {D : Finset V} {bot top : E → Finset (Finset X)}
+    (hF : Frontier N inj D bot top) (hD : DownClosed N D) {v : V} (hv : v ∉ D)
     (hch : ∀ e, N.graph.source e = v → N.graph.target e ∈ D)
-    (hw : vertexWeight N θ ρ v bot top ≠ 0) : Frontier N (insert v D) bot top := by
-  have hg := hF.good_arrivingForest hv hch
+    (hw : vertexWeight N θ ρ inj v bot top ≠ 0) : Frontier N inj (insert v D) bot top := by
+  have hg := hF.good_arriving hinj hv hch
   obtain ⟨hgood, hdisj, hmem⟩ := good_of_vertexWeight_ne_zero hg hw
   -- the arcs entering `v` leave the new set
   have hleave : ∀ e, N.graph.target e = v → N.graph.source e ∉ Insert.insert v D :=
@@ -491,15 +610,18 @@ theorem Frontier.insert (hN : N.IsPhylogenetic) {D : Finset V} {bot top : E → 
     rcases mem_insert.1 hs with h | h
     · exact source_ne_target hN e (h.trans he.symm)
     · exact hv (he ▸ hD e h)
-  -- a lineage arriving at `v` was at the top of a child arc of `v`, or labels `v`
+  -- a lineage arriving at `v` was at the top of a child arc of `v`, or was injected at `v`
   have harr : ∀ f x, N.graph.target f ∈ D → N.graph.source f ∉ D → N.graph.source f ≠ v →
-      x ∈ lineages (top f) → x ∉ lineages (arrivingForest N top v) := by
+      x ∈ lineages (top f) → x ∉ lineages (arriving N inj top v) := by
     intro f x hft hfs hfv hxf hx
-    rcases (mem_lineages_arrivingForest top v x).1 hx with h | ⟨g, hg1, hg2⟩
-    · exact hv (h ▸ (hF.mem x).1 ⟨f, hft, hfs, hxf⟩)
+    rcases (mem_lineages_arriving inj top v x).1 hx with h | ⟨g, hg1, hg2⟩
+    · obtain ⟨u, hu, hxu⟩ := (hF.mem x).1 ⟨f, hft, hfs, hxf⟩
+      have huv : v ≠ u := fun h => hv (h ▸ hu)
+      exact disjoint_left.1 (hinj.disj v u huv) h hxu
     · have hgf : g ≠ f := fun h => hfv (h ▸ hg1)
       exact disjoint_left.1 (hF.disj g f (hch g hg1) (hg1 ▸ hv) hft hfs hgf) hg2 hxf
-  refine ⟨fun e he => ?_, fun e he => ?_, fun e f he hes hf hfs hef => ?_, fun x => ⟨?_, ?_⟩⟩
+  refine ⟨fun e he => ?_, fun e he => ?_, fun e f he hes hf hfs hef => ?_, fun x => ⟨?_, ?_⟩,
+    fun e he x hx => ?_⟩
   · rcases mem_insert.1 he with h | h
     · exact (hgood e h).1
     · exact hF.good_bot e h
@@ -521,62 +643,123 @@ theorem Frontier.insert (hN : N.IsPhylogenetic) {D : Finset V} {bot top : E → 
     · exact hF.disj e f h hes' h' hfs' hef
   · rintro ⟨e, he, hes, hx⟩
     rcases mem_insert.1 he with h | h
-    · rcases (mem_lineages_arrivingForest top v x).1 ((hmem x).1 ⟨e, h, hx⟩) with h' | ⟨g, hg1, hg2⟩
-      · exact h' ▸ mem_insert_self _ _
-      · exact mem_insert_of_mem ((hF.mem x).1 ⟨g, hch g hg1, hg1 ▸ hv, hg2⟩)
-    · exact mem_insert_of_mem ((hF.mem x).1 ⟨e, h, fun hs => hes (mem_insert_of_mem hs), hx⟩)
-  · intro hx
-    have hfromArr : x ∈ lineages (arrivingForest N top v) →
+    · rcases (mem_lineages_arriving inj top v x).1 ((hmem x).1 ⟨e, h, hx⟩) with h' | ⟨g, hg1, hg2⟩
+      · exact ⟨v, mem_insert_self _ _, h'⟩
+      · obtain ⟨u, hu, hxu⟩ := (hF.mem x).1 ⟨g, hch g hg1, hg1 ▸ hv, hg2⟩
+        exact ⟨u, mem_insert_of_mem hu, hxu⟩
+    · obtain ⟨u, hu, hxu⟩ := (hF.mem x).1 ⟨e, h, fun hs => hes (mem_insert_of_mem hs), hx⟩
+      exact ⟨u, mem_insert_of_mem hu, hxu⟩
+  · rintro ⟨u, hu, hxu⟩
+    have hfromArr : x ∈ lineages (arriving N inj top v) →
         ∃ e, N.graph.target e ∈ Insert.insert v D ∧ N.graph.source e ∉ Insert.insert v D ∧
           x ∈ lineages (top e) := by
       intro hxa
       obtain ⟨e, he, hxe⟩ := (hmem x).2 hxa
       exact ⟨e, he ▸ mem_insert_self _ _, hleave e he, hxe⟩
-    rcases mem_insert.1 hx with h | h
-    · exact hfromArr ((mem_lineages_arrivingForest top v x).2 (Or.inl h))
-    · obtain ⟨e, het, hes, hxe⟩ := (hF.mem x).2 h
+    rcases mem_insert.1 hu with rfl | h
+    · exact hfromArr ((mem_lineages_arriving inj top u x).2 (Or.inl hxu))
+    · obtain ⟨e, het, hes, hxe⟩ := (hF.mem x).2 ⟨u, h, hxu⟩
       by_cases hev : N.graph.source e = v
-      · exact hfromArr ((mem_lineages_arrivingForest top v x).2 (Or.inr ⟨e, hev, hxe⟩))
+      · exact hfromArr ((mem_lineages_arriving inj top v x).2 (Or.inr ⟨e, hev, hxe⟩))
       · refine ⟨e, mem_insert_of_mem het, fun hs => ?_, hxe⟩
         rcases mem_insert.1 hs with h' | h'
         · exact hev h'
         · exact hes h'
+  · rcases mem_insert.1 he with h | h
+    · rcases (mem_lineages_arriving inj top v x).1 ((hmem x).1 ⟨e, h, hx⟩) with h' | ⟨g, hg1, hg2⟩
+      · exact ⟨v, h ▸ Relation.ReflTransGen.refl, h'⟩
+      · obtain ⟨u, hu, hxu⟩ := hF.below g (hch g hg1) x hg2
+        refine ⟨u, ?_, hxu⟩
+        have : N.graph.Reaches (N.graph.target e) (N.graph.target g) :=
+          Relation.ReflTransGen.single ⟨g, by rw [hg1, h], rfl⟩
+        exact this.trans hu
+    · exact hF.below e h x hx
 
 omit [Fintype V] [Fintype E] [Fintype X] in
-theorem frontier_empty (bot top : E → Finset (Finset X)) : Frontier N ∅ bot top :=
+theorem frontier_empty (inj : V → Finset (Finset X)) (bot top : E → Finset (Finset X)) :
+    Frontier N inj ∅ bot top :=
   ⟨fun e he => absurd he (notMem_empty _), fun e he => absurd he (notMem_empty _),
-    fun e _ he => absurd he (notMem_empty _), fun x => by simp⟩
+    fun e _ he => absurd he (notMem_empty _), fun x => by simp,
+    fun e he => absurd he (notMem_empty _)⟩
 
 /-- A history of nonzero weight on `D` is in the state `Frontier`. -/
-theorem frontier_of_prod_ne_zero (hN : N.IsPhylogenetic) {D : Finset V} (hD : DownClosed N D)
-    {bot top : E → Finset (Finset X)} (h : ∏ v ∈ D, vertexWeight N θ ρ v bot top ≠ 0) :
-    Frontier N D bot top := by
+theorem frontier_of_prod_ne_zero (hN : N.IsPhylogenetic) {inj : V → Finset (Finset X)}
+    (hinj : ValidInj inj) {D : Finset V} (hD : DownClosed N D)
+    {bot top : E → Finset (Finset X)} (h : ∏ v ∈ D, vertexWeight N θ ρ inj v bot top ≠ 0) :
+    Frontier N inj D bot top := by
   induction D using Finset.strongInduction with
   | H D ih =>
     rcases D.eq_empty_or_nonempty with rfl | hne
-    · exact frontier_empty bot top
+    · exact frontier_empty inj bot top
     · obtain ⟨v, hv, hD', hch⟩ := exists_top_vertex hN hD hne
       rw [← mul_prod_erase D _ hv] at h
       have hF := ih (D.erase v) (erase_ssubset hv) hD' (right_ne_zero_of_mul h)
-      have := hF.insert hN hD' (notMem_erase v D) hch (left_ne_zero_of_mul h)
+      have := hF.insert hN hinj hD' (notMem_erase v D) hch (left_ne_zero_of_mul h)
       rwa [insert_erase hv] at this
 
+omit [Fintype V] [DecidableEq X] [Fintype X] in
+theorem downClosed_erase_root (hN : N.IsPhylogenetic) [Fintype V] :
+    DownClosed N (univ.erase N.root) := fun e _ =>
+  mem_erase.2 ⟨target_ne_root hN e, mem_univ _⟩
+
 /-- The forest arriving at the root of a history of nonzero weight is a binary forest on all the
-taxa. -/
-theorem good_arrivingForest_root (hN : N.IsPhylogenetic) {bot top : E → Finset (Finset X)}
-    (h : historyWeight N θ ρ bot top ≠ 0) :
-    IsGoodForest (arrivingForest N top N.root) ∧ lineages (arrivingForest N top N.root) = univ := by
-  rw [historyWeight_eq_prod hN] at h
-  have hD : DownClosed N (univ.erase N.root) := fun e _ =>
-    mem_erase.2 ⟨target_ne_root hN e, mem_univ _⟩
-  have hF := frontier_of_prod_ne_zero hN hD h
-  refine ⟨hF.good_arrivingForest (notMem_erase _ _) fun e _ =>
-    mem_erase.2 ⟨target_ne_root hN e, mem_univ _⟩, eq_univ_of_forall fun x => ?_⟩
-  obtain ⟨e, -, hes, hx⟩ := (hF.mem x).2 (mem_erase.2 ⟨N.leaf_ne_root hN x, mem_univ _⟩)
-  have hs : N.graph.source e = N.root := by
-    by_contra hne
-    exact hes (mem_erase.2 ⟨hne, mem_univ _⟩)
-  exact (mem_lineages_arrivingForest top _ x).2 (Or.inr ⟨e, hs, hx⟩)
+lineages. -/
+theorem good_arriving_root (hN : N.IsPhylogenetic) {inj : V → Finset (Finset X)}
+    (hinj : ValidInj inj) {bot top : E → Finset (Finset X)}
+    (h : injWeight N θ ρ inj bot top ≠ 0) :
+    IsGoodForest (arriving N inj top N.root) ∧
+      ∀ x, x ∈ lineages (arriving N inj top N.root) ↔ ∃ u, x ∈ lineages (inj u) := by
+  have hD := downClosed_erase_root (N := N) hN
+  have hF := frontier_of_prod_ne_zero hN hinj hD h
+  refine ⟨hF.good_arriving hinj (notMem_erase _ _) fun e _ =>
+    mem_erase.2 ⟨target_ne_root hN e, mem_univ _⟩, fun x => ⟨fun hx => ?_, ?_⟩⟩
+  · rcases (mem_lineages_arriving inj top _ x).1 hx with h' | ⟨e, -, hxe⟩
+    · exact ⟨_, h'⟩
+    · obtain ⟨u, -, hxu⟩ := hF.below e (mem_erase.2 ⟨target_ne_root hN e, mem_univ _⟩) x hxe
+      exact ⟨u, hxu⟩
+  · rintro ⟨u, hxu⟩
+    by_cases hu : u = N.root
+    · exact (mem_lineages_arriving inj top _ x).2 (Or.inl (hu ▸ hxu))
+    · obtain ⟨e, -, hes, hx⟩ := (hF.mem x).2 ⟨u, mem_erase.2 ⟨hu, mem_univ _⟩, hxu⟩
+      have hs : N.graph.source e = N.root := by
+        by_contra hne
+        exact hes (mem_erase.2 ⟨hne, mem_univ _⟩)
+      exact (mem_lineages_arriving inj top _ x).2 (Or.inr ⟨e, hs, hx⟩)
+
+/-- A cluster arriving at a vertex of a history of nonzero weight arrives at the root. -/
+theorem mem_arriving_root (hN : N.IsPhylogenetic) {inj : V → Finset (Finset X)}
+    (hinj : ValidInj inj) {bot top : E → Finset (Finset X)}
+    (h : injWeight N θ ρ inj bot top ≠ 0) {C : Finset X} (v : V)
+    (hC : C ∈ arriving N inj top v) : C ∈ arriving N inj top N.root := by
+  have hD := downClosed_erase_root (N := N) hN
+  have hF := frontier_of_prod_ne_zero hN hinj hD h
+  have : IsTrans V (Relation.TransGen N.graph.Adj) := ⟨fun _ _ _ => Relation.TransGen.trans⟩
+  have : Std.Irrefl (Relation.TransGen N.graph.Adj) := ⟨hN.acyclic⟩
+  have hwf : WellFounded (Relation.TransGen N.graph.Adj) :=
+    Finite.wellFounded_of_trans_of_irrefl _
+  induction v using hwf.induction with
+  | _ v ih =>
+    by_cases hv : v = N.root
+    · exact hv ▸ hC
+    · have hw : vertexWeight N θ ρ inj v bot top ≠ 0 :=
+        prod_ne_zero_iff.1 h v (mem_erase.2 ⟨hv, mem_univ _⟩)
+      obtain ⟨a, ha⟩ := exists_assignment (left_ne_zero_of_mul hw)
+      obtain ⟨R, hR, hCR⟩ := exists_mem_roots_subset hC
+      let r : {A // A ∈ roots (arriving N inj top v)} := ⟨R, hR⟩
+      set f := (a r).val with hf
+      have hft : N.graph.target f = v := (a r).property
+      have hCb : C ∈ bot f := by
+        rw [hf, ha (a r), mem_forestBelow]
+        exact ⟨hC, R, mem_image.2 ⟨r, mem_filter.2 ⟨mem_univ _, rfl⟩, rfl⟩, hCR⟩
+      have hK : kingmanTransition (θ.length f) (bot f) (top f) ≠ 0 :=
+        prod_ne_zero_iff.1 (right_ne_zero_of_mul hw) f (mem_arcsInto.2 hft)
+      have hCt : C ∈ top f :=
+        (kingmanTransition_support_good (hF.good_bot f
+          (mem_erase.2 ⟨target_ne_root hN f, mem_univ _⟩)) hK).2.1 hCb
+      have hCs : C ∈ arriving N inj top (N.graph.source f) := by
+        unfold arriving
+        exact mem_union_right _ (mem_biUnion.2 ⟨f, mem_filter.2 ⟨mem_univ _, rfl⟩, hCt⟩)
+      exact ih _ (Relation.TransGen.single ⟨f, rfl, hft⟩) hCs
 
 end Frontier
 
@@ -587,57 +770,70 @@ section Mass
 variable {V E X : Type*} [Fintype V] [Fintype E] [Fintype X] [DecidableEq X]
 variable {N : RootedNetwork V E X} {θ : RootedNetwork.MetricData E} {ρ : ℝ}
 
+omit [Fintype V] [DecidableEq X] [Fintype X] in
+theorem notMem_arcsInto_of_mem {D : Finset V} {v : V} {e : E} (he : N.graph.target e ∈ D)
+    (hvD : v ∉ D) : e ∉ arcsInto N v := fun hes =>
+  hvD (mem_arcsInto.1 hes ▸ he)
+
+omit [Fintype V] in
+/-- The factors of `D` do not see the bottoms of the arcs entering a vertex outside `D`. -/
+theorem prod_vertexWeight_overwrite_bot {inj : V → Finset (Finset X)} {D : Finset V} {v : V}
+    (hvD : v ∉ D) (top bot y : E → Finset (Finset X)) :
+    ∏ u ∈ D, vertexWeight N θ ρ inj u (overwrite (arcsInto N v) bot y) top =
+      ∏ u ∈ D, vertexWeight N θ ρ inj u bot top := by
+  refine prod_congr rfl fun u hu => vertexWeight_congr rfl (fun e he => ?_) (fun _ _ => rfl)
+    (fun _ _ => rfl)
+  exact overwrite_of_notMem (notMem_arcsInto_of_mem (he ▸ hu) hvD) _ _
+
+omit [Fintype V] in
+/-- The factors of `D` do not see the tops of the arcs entering a vertex outside `D`. -/
+theorem prod_vertexWeight_overwrite_top {inj : V → Finset (Finset X)} {D : Finset V} {v : V}
+    (hD : DownClosed N D) (hvD : v ∉ D) (bot top y : E → Finset (Finset X)) :
+    ∏ u ∈ D, vertexWeight N θ ρ inj u bot (overwrite (arcsInto N v) top y) =
+      ∏ u ∈ D, vertexWeight N θ ρ inj u bot top := by
+  refine prod_congr rfl fun u hu => vertexWeight_congr rfl (fun _ _ => rfl) (fun e he => ?_)
+    (fun e he => ?_)
+  · exact overwrite_of_notMem (notMem_arcsInto_of_mem (he ▸ hu) hvD) _ _
+  · exact overwrite_of_notMem (notMem_arcsInto_of_mem (hD e (he ▸ hu)) hvD) _ _
+
+omit [Fintype V] [Fintype X] in
+/-- The forest arriving at `v` does not see the tops of the arcs entering `v`. -/
+theorem arriving_overwrite {inj : V → Finset (Finset X)} {D : Finset V} {v : V} (hvD : v ∉ D)
+    (hch : ∀ e, N.graph.source e = v → N.graph.target e ∈ D) (top y : E → Finset (Finset X)) :
+    arriving N inj (overwrite (arcsInto N v) top y) v = arriving N inj top v :=
+  arriving_congr rfl fun e he =>
+    overwrite_of_notMem (notMem_arcsInto_of_mem (hch e he) hvD) _ _
+
 /-- The sum over the histories of the factors of `insert v D`, with the arcs entering `v` summed
 out: the sum for `D`, up to the number of values of these arcs. -/
-theorem sum_step (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1) {D : Finset V}
+theorem sum_step (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+    {inj : V → Finset (Finset X)} (hinj : ValidInj inj) {D : Finset V}
     (hD : DownClosed N D) {v : V} (hvD : v ∉ D) (hv : v ≠ N.root)
     (hch : ∀ e, N.graph.source e = v → N.graph.target e ∈ D) :
     ((Fintype.card (Finset (Finset X)) : ℝ) ^ #(arcsInto N v)) ^ 2 *
         ∑ bot : E → Finset (Finset X), ∑ top : E → Finset (Finset X),
-          ∏ u ∈ insert v D, vertexWeight N θ ρ u bot top =
+          ∏ u ∈ insert v D, vertexWeight N θ ρ inj u bot top =
       ∑ bot : E → Finset (Finset X), ∑ top : E → Finset (Finset X),
-        ∏ u ∈ D, vertexWeight N θ ρ u bot top := by
+        ∏ u ∈ D, vertexWeight N θ ρ inj u bot top := by
   set S := arcsInto N v with hS
   set B : ℝ := (Fintype.card (Finset (Finset X)) : ℝ) with hB
-  -- the factors of `D` do not see the arcs entering `v`
-  have hnot : ∀ e, N.graph.target e ∈ D → e ∉ S := fun e he hes =>
-    hvD (mem_arcsInto.1 hes ▸ he)
-  have hgbot : ∀ (top bot y : E → Finset (Finset X)),
-      ∏ u ∈ D, vertexWeight N θ ρ u (overwrite S bot y) top =
-        ∏ u ∈ D, vertexWeight N θ ρ u bot top := by
-    intro top bot y
-    refine prod_congr rfl fun u hu => vertexWeight_congr (fun e he => ?_) (fun _ _ => rfl)
-      (fun _ _ => rfl)
-    exact overwrite_of_notMem (hnot e (he ▸ hu)) _ _
-  have hgtop : ∀ (bot top y : E → Finset (Finset X)),
-      ∏ u ∈ D, vertexWeight N θ ρ u bot (overwrite S top y) =
-        ∏ u ∈ D, vertexWeight N θ ρ u bot top := by
-    intro bot top y
-    refine prod_congr rfl fun u hu => vertexWeight_congr (fun _ _ => rfl) (fun e he => ?_)
-      (fun e he => ?_)
-    · exact overwrite_of_notMem (hnot e (he ▸ hu)) _ _
-    · exact overwrite_of_notMem (hnot e (hD e (he ▸ hu))) _ _
-  have harr : ∀ (top y : E → Finset (Finset X)),
-      arrivingForest N (overwrite S top y) v = arrivingForest N top v := by
-    intro top y
-    refine arrivingForest_congr fun e he => ?_
-    exact overwrite_of_notMem (hnot e (hch e he)) _ _
   -- summing out the tops of the arcs entering `v`
   have htop : ∀ bot : E → Finset (Finset X),
-      B ^ #S * ∑ top : E → Finset (Finset X), ∏ u ∈ insert v D, vertexWeight N θ ρ u bot top =
-        ∑ top : E → Finset (Finset X), (∏ u ∈ D, vertexWeight N θ ρ u bot top) *
-          allocationFactor N θ ρ (arrivingForest N top v) v bot := by
+      B ^ #S * ∑ top : E → Finset (Finset X), ∏ u ∈ insert v D, vertexWeight N θ ρ inj u bot top =
+        ∑ top : E → Finset (Finset X), (∏ u ∈ D, vertexWeight N θ ρ inj u bot top) *
+          allocationFactor N θ ρ (arriving N inj top v) v bot := by
     intro bot
     have := card_pow_mul_sum_mul_eq S
-      (fun top : E → Finset (Finset X) => (∏ u ∈ D, vertexWeight N θ ρ u bot top) *
-        allocationFactor N θ ρ (arrivingForest N top v) v bot)
+      (fun top : E → Finset (Finset X) => (∏ u ∈ D, vertexWeight N θ ρ inj u bot top) *
+        allocationFactor N θ ρ (arriving N inj top v) v bot)
       (fun top => ∏ e ∈ S, kingmanTransition (θ.length e) (bot e) (top e))
-      (fun top y => by simp only [hgtop, harr])
+      (fun top y => by
+        simp only [hS, prod_vertexWeight_overwrite_top hD hvD, arriving_overwrite hvD hch])
       (fun top htop => by
         have hprod := left_ne_zero_of_mul htop
         have hall := right_ne_zero_of_mul htop
-        have hF := frontier_of_prod_ne_zero hN hD hprod
-        have hg := hF.good_arrivingForest hvD hch
+        have hF := frontier_of_prod_ne_zero hN hinj hD hprod
+        have hg := hF.good_arriving hinj hvD hch
         obtain ⟨a, ha⟩ := exists_assignment hall
         have hsimp : ∀ y : E → Finset (Finset X),
             ∏ e ∈ S, kingmanTransition (θ.length e) (bot e) (overwrite S top y e) =
@@ -656,29 +852,30 @@ theorem sum_step (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ �
     ring
   -- summing out the bottoms of the arcs entering `v`
   have hbot : ∀ top : E → Finset (Finset X),
-      B ^ #S * ∑ bot : E → Finset (Finset X), (∏ u ∈ D, vertexWeight N θ ρ u bot top) *
-          allocationFactor N θ ρ (arrivingForest N top v) v bot =
-        ∑ bot : E → Finset (Finset X), ∏ u ∈ D, vertexWeight N θ ρ u bot top := by
+      B ^ #S * ∑ bot : E → Finset (Finset X), (∏ u ∈ D, vertexWeight N θ ρ inj u bot top) *
+          allocationFactor N θ ρ (arriving N inj top v) v bot =
+        ∑ bot : E → Finset (Finset X), ∏ u ∈ D, vertexWeight N θ ρ inj u bot top := by
     intro top
-    refine card_pow_mul_sum_mul_eq S _ _ (fun bot y => hgbot top bot y) fun bot _ => ?_
+    refine card_pow_mul_sum_mul_eq S _ _ (fun bot y => prod_vertexWeight_overwrite_bot hvD top bot y)
+      fun bot _ => ?_
     have hsimp : ∀ y : E → Finset (Finset X),
-        allocationFactor N θ ρ (arrivingForest N top v) v (overwrite S bot y) =
-          allocationFactor N θ ρ (arrivingForest N top v) v y := fun y =>
+        allocationFactor N θ ρ (arriving N inj top v) v (overwrite S bot y) =
+          allocationFactor N θ ρ (arriving N inj top v) v y := fun y =>
       allocationFactor_congr fun e he => overwrite_of_mem (mem_arcsInto.2 he) _ _
     simp only [hsimp]
     exact sum_allocationFactor hN hθ hρ hv _
   calc (B ^ #S) ^ 2 * ∑ bot : E → Finset (Finset X), ∑ top : E → Finset (Finset X),
-          ∏ u ∈ insert v D, vertexWeight N θ ρ u bot top
+          ∏ u ∈ insert v D, vertexWeight N θ ρ inj u bot top
       = B ^ #S * ∑ bot : E → Finset (Finset X), (B ^ #S *
-          ∑ top : E → Finset (Finset X), ∏ u ∈ insert v D, vertexWeight N θ ρ u bot top) := by
+          ∑ top : E → Finset (Finset X), ∏ u ∈ insert v D, vertexWeight N θ ρ inj u bot top) := by
         rw [← mul_sum, ← mul_assoc, sq]
     _ = B ^ #S * ∑ top : E → Finset (Finset X), ∑ bot : E → Finset (Finset X),
-          (∏ u ∈ D, vertexWeight N θ ρ u bot top) *
-            allocationFactor N θ ρ (arrivingForest N top v) v bot := by
+          (∏ u ∈ D, vertexWeight N θ ρ inj u bot top) *
+            allocationFactor N θ ρ (arriving N inj top v) v bot := by
         simp only [htop]
         rw [sum_comm]
     _ = ∑ top : E → Finset (Finset X), ∑ bot : E → Finset (Finset X),
-          ∏ u ∈ D, vertexWeight N θ ρ u bot top := by
+          ∏ u ∈ D, vertexWeight N θ ρ inj u bot top := by
         rw [mul_sum]
         exact sum_congr rfl fun top _ => hbot top
     _ = _ := sum_comm
@@ -686,10 +883,11 @@ theorem sum_step (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ �
 /-- The sum over the histories of the factors of a set `D` closed under children, up to the number
 of values of the arcs not entering `D`. -/
 theorem sum_sum_prod_vertexWeight (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ)
-    (hρ : 0 ≤ ρ ∧ ρ ≤ 1) {D : Finset V} (hD : DownClosed N D) (hroot : N.root ∉ D) :
+    (hρ : 0 ≤ ρ ∧ ρ ≤ 1) {inj : V → Finset (Finset X)} (hinj : ValidInj inj) {D : Finset V}
+    (hD : DownClosed N D) (hroot : N.root ∉ D) :
     ((Fintype.card (Finset (Finset X)) : ℝ) ^ #(univ.filter fun e => N.graph.target e ∈ D)) ^ 2 *
         ∑ bot : E → Finset (Finset X), ∑ top : E → Finset (Finset X),
-          ∏ u ∈ D, vertexWeight N θ ρ u bot top =
+          ∏ u ∈ D, vertexWeight N θ ρ inj u bot top =
       ((Fintype.card (Finset (Finset X)) : ℝ) ^ Fintype.card E) ^ 2 := by
   induction D using Finset.strongInduction with
   | H D ih =>
@@ -697,7 +895,7 @@ theorem sum_sum_prod_vertexWeight (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ)
     · simp [sum_const, sq]
     · obtain ⟨v, hv, hD', hch⟩ := exists_top_vertex hN hD hne
       have hvr : v ≠ N.root := fun h => hroot (h ▸ hv)
-      have hstep := sum_step hN hθ hρ hD' (notMem_erase v D) hvr hch
+      have hstep := sum_step hN hθ hρ hinj hD' (notMem_erase v D) hvr hch
       rw [insert_erase hv] at hstep
       have hih := ih (D.erase v) (erase_ssubset hv) hD' fun h => hroot (mem_of_mem_erase h)
       rw [← hih, ← hstep, ← mul_assoc, ← mul_pow, ← pow_add]
@@ -718,22 +916,86 @@ theorem sum_sum_prod_vertexWeight (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ)
         · exact he
         · exact he ▸ hv
 
-/-- **The histories of the network multispecies coalescent have total mass one.** -/
-theorem sum_sum_historyWeight (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1) :
+/-- **The histories of the process with injected forests have total mass one.** -/
+theorem sum_sum_injWeight (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+    {inj : V → Finset (Finset X)} (hinj : ValidInj inj) :
     ∑ bot : E → Finset (Finset X), ∑ top : E → Finset (Finset X),
-      historyWeight N θ ρ bot top = 1 := by
-  have hD : DownClosed N (univ.erase N.root) := fun e _ =>
-    mem_erase.2 ⟨target_ne_root hN e, mem_univ _⟩
-  have h := sum_sum_prod_vertexWeight (θ := θ) (ρ := ρ) hN hθ hρ hD (notMem_erase _ _)
+      injWeight N θ ρ inj bot top = 1 := by
+  have hD := downClosed_erase_root (N := N) hN
+  have h := sum_sum_prod_vertexWeight (θ := θ) (ρ := ρ) hN hθ hρ hinj hD (notMem_erase _ _)
   have hall : (univ.filter fun e => N.graph.target e ∈ univ.erase N.root) = univ :=
     filter_true_of_mem fun e _ => mem_erase.2 ⟨target_ne_root hN e, mem_univ _⟩
   rw [hall, card_univ] at h
   have hB : (0 : ℝ) < Fintype.card (Finset (Finset X)) := by exact_mod_cast Fintype.card_pos
-  have h' := mul_left_cancel₀ (pow_ne_zero 2 (pow_ne_zero _ hB.ne')) (h.trans (mul_one _).symm)
-  simp only [historyWeight_eq_prod hN]
-  exact h'
+  exact mul_left_cancel₀ (pow_ne_zero 2 (pow_ne_zero _ hB.ne')) (h.trans (mul_one _).symm)
+
+/-- **The histories of the network multispecies coalescent have total mass one.** -/
+theorem sum_sum_historyWeight (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1) :
+    ∑ bot : E → Finset (Finset X), ∑ top : E → Finset (Finset X),
+      historyWeight N θ ρ bot top = 1 := by
+  simp only [historyWeight_eq_injWeight hN]
+  exact sum_sum_injWeight hN hθ hρ (validInj_taxaInj univ)
+
+/-- The forest arriving at the root of a history of nonzero weight is a binary forest on all the
+taxa. -/
+theorem good_arrivingForest_root (hN : N.IsPhylogenetic) {bot top : E → Finset (Finset X)}
+    (h : historyWeight N θ ρ bot top ≠ 0) :
+    IsGoodForest (arrivingForest N top N.root) ∧ lineages (arrivingForest N top N.root) = univ := by
+  rw [historyWeight_eq_injWeight hN] at h
+  obtain ⟨h1, h2⟩ := good_arriving_root hN (validInj_taxaInj univ) h
+  rw [arrivingForest_eq]
+  refine ⟨h1, eq_univ_of_forall fun x => (h2 x).2 ⟨N.leaf x, ?_⟩⟩
+  exact mem_lineages_taxaInj.2 ⟨mem_univ _, rfl⟩
+
+/-! ### The process with injected forests -/
+
+theorem injDist_term_nonneg (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+    {inj : V → Finset (Finset X)} (hinj : ValidInj inj) (bot top : E → Finset (Finset X))
+    (G : Finset (Finset X)) :
+    0 ≤ injWeight N θ ρ inj bot top * kingmanAbsorption (arriving N inj top N.root) G := by
+  by_cases h : injWeight N θ ρ inj bot top = 0
+  · simp [h]
+  · exact mul_nonneg (injWeight_nonneg hθ hρ inj bot top)
+      (kingmanAbsorption_nonneg (good_arriving_root hN hinj h).1.1 G)
+
+theorem injDist_nonneg (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+    {inj : V → Finset (Finset X)} (hinj : ValidInj inj) (G : Finset (Finset X)) :
+    0 ≤ injDist N θ ρ inj G :=
+  sum_nonneg fun _ _ => sum_nonneg fun _ _ => injDist_term_nonneg hN hθ hρ hinj _ _ G
+
+/-- The process with injected forests has total mass one. -/
+theorem sum_injDist (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+    {inj : V → Finset (Finset X)} (hinj : ValidInj inj) : ∑ G, injDist N θ ρ inj G = 1 := by
+  unfold injDist
+  rw [sum_comm, ← sum_sum_injWeight (θ := θ) (ρ := ρ) hN hθ hρ hinj]
+  refine sum_congr rfl fun bot _ => ?_
+  rw [sum_comm]
+  refine sum_congr rfl fun top _ => ?_
+  rw [← mul_sum]
+  by_cases h : injWeight N θ ρ inj bot top = 0
+  · simp [h]
+  · rw [kingmanAbsorption_sum (good_arriving_root hN hinj h).1.1, mul_one]
+
+/-- The support of the process with injected forests: binary forests, with the injected clusters,
+on all the injected lineages, with one root when there are lineages. -/
+theorem injDist_support (hN : N.IsPhylogenetic) {inj : V → Finset (Finset X)}
+    (hinj : ValidInj inj) {G : Finset (Finset X)} (hG : injDist N θ ρ inj G ≠ 0) :
+    IsGoodForest G ∧ (∀ v, inj v ⊆ G) ∧ (∀ x, x ∈ lineages G ↔ ∃ u, x ∈ lineages (inj u)) ∧
+      ((∃ u, (inj u).Nonempty) → #(roots G) = 1) := by
+  obtain ⟨bot, -, hbot⟩ := exists_ne_zero_of_sum_ne_zero hG
+  obtain ⟨top, -, htop⟩ := exists_ne_zero_of_sum_ne_zero hbot
+  have hw := left_ne_zero_of_mul htop
+  obtain ⟨hgood, hlin⟩ := good_arriving_root hN hinj hw
+  obtain ⟨h1, h2, h3, h4⟩ := kingmanAbsorption_support_good hgood (right_ne_zero_of_mul htop)
+  refine ⟨h1, fun v C hC => h2 (mem_arriving_root hN hinj hw v ?_), fun x => ?_, ?_⟩
+  · exact mem_union_left _ hC
+  · rw [h3]
+    exact hlin x
+  · rintro ⟨u, C, hC⟩
+    exact h4 ⟨C, mem_arriving_root hN hinj hw u (mem_union_left _ hC)⟩
 
 end Mass
+
 
 /-! ### A history of positive weight -/
 

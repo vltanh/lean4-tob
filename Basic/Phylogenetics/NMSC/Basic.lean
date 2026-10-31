@@ -60,7 +60,6 @@ theorem sum_geneTreeDist (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 
   · simp [h]
   · rw [kingmanAbsorption_sum (good_arrivingForest_root hN h).1.1, mul_one]
 
-set_option linter.unusedVariables false in
 /-- Gene trees are binary rooted trees on all the taxa. -/
 theorem geneTreeDist_support (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
     [Nonempty X] {G : Finset (Finset X)} (hG : geneTreeDist N θ ρ G ≠ 0) : IsBinaryHierarchy G := by

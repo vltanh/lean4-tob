@@ -337,7 +337,7 @@ theorem t1PValue_degenerate (hd : IsDist dist) (hs : DisplaysOne dist sides) {s 
   rw [t1PValue_eq_t1PValueR _ hne hr, h₁, h₂]
   have hc : 0 ≤ quartetCount sides ω s := quartetCount_nonneg ω s
   refine le_antisymm (t1Tail_le_one _ _) ?_
-  have hle := chiSqOneTail_le_t1Tail'
+  have hle := chiSqOneTail_le_t1Tail
     (muZero (min 1 (3 * (0 + 0) / (2 * (quartetCount sides ω s + 0 + 0))))
       (quartetCount sides ω s + 0 + 0))
     (if (0 + 0) / 2 ≤ quartetCount sides ω s then lineS 0 0 else starS (quartetCount sides ω s) 0 0)

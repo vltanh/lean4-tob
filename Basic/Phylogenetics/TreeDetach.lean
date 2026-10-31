@@ -27,8 +27,6 @@ open scoped Classical
 
 variable {X : Type*} [Fintype X] [DecidableEq X]
 
-set_option linter.unusedSectionVars false
-set_option linter.unusedVariables false
 
 /-! ### Refining a tree at a multifurcation -/
 
@@ -128,7 +126,7 @@ theorem isBinaryTree_of_forall_not_mem_multifurcations {T : Finset (Finset X)}
   · have hSF := hT.isSplitFamily hX
     obtain ⟨r⟩ : Nonempty X := Fintype.card_pos_iff.1 (by omega)
     have hH := rootedAt_isHierarchy hSF r
-    have hun := unroot_rootedAt hX hSF r
+    have hun := unroot_rootedAt hSF r
     refine ⟨rootedAt T r, hH, hun, fun A hA hA2 => ?_⟩
     apply le_antisymm _ (hH.two_le_card_childClusters hA2)
     by_cases hAu : A = univ
@@ -177,7 +175,7 @@ theorem isBinaryTree_of_forall_displays {T : Finset (Finset X)} (hT : IsUnrooted
     rw [card_univ, Fintype.card_coe]; exact h4)
   obtain ⟨s, hs, hd⟩ := h (D.image x) (by rw [card_image_of_injective _ hinj, hDc])
   have hst := mem_treesOn.1 hs
-  exact not_displays_of_inDistinctBlocks hT hV (s := s)
+  exact not_displays_of_inDistinctBlocks hV (s := s)
     (hx.inDistinctBlocks hV.pairwiseDisjoint (by rw [hst]; exact image_subset_image (subset_univ _))) hd
 
 theorem IsBinaryTree.isUnrootedTree {T : Finset (Finset X)} (hT : IsBinaryTree T) :
@@ -190,8 +188,10 @@ theorem IsBinaryTree.isUnrootedTree {T : Finset (Finset X)} (hT : IsBinaryTree T
 /-- The retraction `b ↦ a`. -/
 def retract (a b : X) : X → X := fun x => if x = b then a else x
 
+omit [Fintype X] in
 @[simp] theorem retract_right (a b : X) : retract a b b = a := by simp [retract]
 
+omit [Fintype X] in
 theorem retract_of_ne {a b x : X} (h : x ≠ b) : retract a b x = x := by simp [retract, h]
 
 /-- The tree `T` with the taxon `b` detached and reattached as sister to `a`: the restriction of `T`
@@ -284,7 +284,7 @@ theorem detachReattach_isUnrootedTree {a b : X} {T : Finset (Finset X)} (hT : Is
     simp only [mem_filter, mem_univ, true_and, mem_singleton]
     by_cases hyb : y = b
     · subst hyb
-      simp [hxb, Ne.symm hxa]
+      simp [Ne.symm hxa]
       exact fun h => hxb h.symm
     · rw [retract_of_ne hyb]
   · intro A hA B hB
@@ -307,6 +307,7 @@ theorem detachReattach_isUnrootedTree {a b : X} {T : Finset (Finset X)} (hT : Is
     · exact compat_singleton x _
     · exact compat_compl_singleton x _
 
+omit [Fintype X] in
 private theorem singleton_inter_not_mem (x : X) (s : QuartetTree X) : {x} ∩ s.taxa ∉ s.val := by
   intro h
   have := s.card_of_mem h

@@ -51,8 +51,8 @@ private lemma chiSqOneTail_eq_prod (ν : Measure ℝ) [IsProbabilityMeasure ν] 
   rw [measureReal_prod_prod]
   simp [chiSqOneTail]
 
-/-- The T1 test distribution is between `χ²₁` and `χ²₂`, for `μ ≥ 0`. -/
-theorem chiSqOneTail_le_t1Tail {μ t : ℝ} (hμ : 0 ≤ μ) (ht : 0 ≤ t) : chiSqOneTail t ≤ t1Tail μ t := by
+/-- The lower bound of the T1 test distribution: `Z²` is at most its variable. -/
+theorem chiSqOneTail_le_t1Tail (μ t : ℝ) : chiSqOneTail t ≤ t1Tail μ t := by
   rw [chiSqOneTail_eq_prod (gaussianReal μ 1)]
   refine measureReal_mono ?_
   rintro ⟨x, y⟩ ⟨hx, -⟩
@@ -92,7 +92,7 @@ theorem chiSqOneTail_le_one (t : ℝ) : chiSqOneTail t ≤ 1 := by
     _ = 1 := probReal_univ
 
 theorem chiSqOneTail_le_chiSqTwoTail {t : ℝ} (ht : 0 ≤ t) : chiSqOneTail t ≤ chiSqTwoTail t :=
-  (chiSqOneTail_le_t1Tail le_rfl ht).trans (t1Tail_le_chiSqTwoTail le_rfl ht)
+  (chiSqOneTail_le_t1Tail 0 t).trans (t1Tail_le_chiSqTwoTail le_rfl ht)
 
 /-- The tail of `χ²₁` is strictly decreasing on `[0, ∞)`. -/
 theorem chiSqOneTail_lt_of_lt {t t' : ℝ} (ht : 0 ≤ t) (htt : t < t') :
@@ -278,7 +278,7 @@ theorem t1Stat_nonneg (c : QuartetTree X → ℝ) (hc : ∀ r, 0 ≤ c r) (s : Q
   · exact lineStat_nonneg c hc s
   · exact starStat_nonneg c hc s.card_taxa
 
-theorem muZero_t1Phi_nonneg (c : QuartetTree X → ℝ) (hc : ∀ r, 0 ≤ c r) (s : QuartetTree X) :
+theorem muZero_t1Phi_nonneg (c : QuartetTree X → ℝ) (s : QuartetTree X) :
     0 ≤ muZero (t1Phi c s) (c s + ∑ r ∈ s.alternatives, c r) := by
   unfold muZero
   refine div_nonneg (mul_nonneg (Real.sqrt_nonneg _) ?_) (Real.sqrt_nonneg _)
@@ -581,7 +581,7 @@ theorem t1PValue_growth (hd : IsDist dist) (hs : DisplaysOne dist sides) {s : Qu
     (tendsto_iidProb_stat_gt hd (fun c => t1Stat c s) (fun a ha c => t1Stat_const_mul ha c s) hF
       (eventually_le_mul hb hd0))
   have hc := quartetCount_nonneg (sides := sides) ω
-  have hmu := muZero_t1Phi_nonneg (quartetCount sides ω) hc s
+  have hmu := muZero_t1Phi_nonneg (quartetCount sides ω) s
   have hstat := t1Stat_nonneg (quartetCount sides ω) hc s
   calc t1PValue (quartetCount sides ω) s ≤ chiSqTwoTail (t1Stat (quartetCount sides ω) s) :=
         t1Tail_le_chiSqTwoTail hmu hstat
@@ -652,7 +652,7 @@ theorem chiSqTwoTail_log (n : ℕ) (hn : 0 < n) :
 /-- The cut test on a non-cut, positive concordance factor: for each `b_n = o(n)`, whatever the fitted
 line, the p-value is eventually below the `χ²₁` tail at `b_n`, by the domination of the test
 distribution by `Z²`. (TINNiK's proof of Theorem 4, repaired: E10 of the report.) -/
-theorem cutTest_alternative (hd : IsDist dist) (hs : DisplaysOne dist sides) {q : Finset X}
+theorem cutTest_alternative (hd : IsDist dist) {q : Finset X}
     (hq : q.card = 4) (hnc : ∀ r ∈ treesOn q, ∀ r' ∈ treesOn q, r ≠ r' →
       displayCF dist sides r ≠ displayCF dist sides r') :
     ∃ d : ℝ, 0 < d ∧ Tendsto (fun n : ℕ => iidProb dist n fun ω =>

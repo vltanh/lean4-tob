@@ -24,8 +24,6 @@ namespace ECToBlob
 
 variable {V E X : Type*} [Fintype X] [DecidableEq X] {N : RootedNetwork V E X}
 
-set_option linter.unusedSectionVars false
-set_option linter.unusedVariables false
 
 /-- **Lemma 3.5** (`ecto:lem3_5`). If `x₀` simultaneously maximizes each of the `fᵢ`, it maximizes
 their sum, and every maximizer of the sum maximizes each of the `fᵢ`. -/
@@ -64,7 +62,7 @@ theorem equation3_2 {TB : Finset (Finset X)} (hTB : IsUnrootedTree TB) (w : Quar
         refine ite_eq_right fun h => ?_
         obtain ⟨r, hr, hdr⟩ := hR
         have hr' := mem_treesOn.1 hr
-        exact not_displays_of_inDistinctBlocks hTB (mem_multifurcations.1 hP).1
+        exact not_displays_of_inDistinctBlocks (mem_multifurcations.1 hP).1
           (s := r) (hr' ▸ h.1) hdr
       rw [sum_eq_zero hzero]
       simp only [hD, hR, and_self, ↓reduceIte, add_zero]
@@ -83,7 +81,7 @@ def blockWeight (P : Finset (Finset X)) (s : QuartetTree X) : ℝ :=
 
 /-- Counting the representative tuples containing the taxa of a quartet tree in distinct blocks. -/
 theorem card_rep_mul_blockWeight {P : Finset (Finset X)}
-    (hdisj : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C) (hne : ∀ B ∈ P, B.Nonempty)
+    (hdisj : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C)
     (hcover : P.sup id = univ) {s : QuartetTree X} (hI : InDistinctBlocks P s.taxa) :
     (((univ : Finset ({B // B ∈ P} → X)).filter
         (fun x => (∀ B, x B ∈ B.val) ∧ s.taxa ⊆ univ.image x)).card : ℝ) * blockWeight P s =
@@ -160,7 +158,7 @@ theorem equation3_3 {P : Finset (Finset X)} (hdisj : ∀ B ∈ P, ∀ C ∈ P, B
       · rw [ite_eq_right fun h => hc h.2.2, ite_eq_right hc]
     simp only [hstep]
     rw [← sum_filter, filter_filter, sum_const, nsmul_eq_mul, ← mul_assoc,
-      card_rep_mul_blockWeight hdisj hne hcover hID.1]
+      card_rep_mul_blockWeight hdisj hcover hID.1]
   · rw [ite_eq_right hID, mul_zero]
     exact (sum_eq_zero fun x _ => ite_eq_right fun h => hID ⟨h.1, h.2.1⟩).symm
 
@@ -524,7 +522,7 @@ theorem remark3_2 (p : QuartetTree X → ℝ) (hp : ∀ s, 0 ≤ p s)
         have : C₀ ∩ r₀.taxa = C₀ := inter_eq_left.2 (r₀.subset_taxa hC₀)
         rw [this]
         exact mem_image_of_mem _ hC₀
-    have hnot := not_displays_of_inDistinctBlocks hT hV hdist
+    have hnot := not_displays_of_inDistinctBlocks hV hdist
     -- all displayed quartets stay displayed, and `p ≥ 0`: the score increases
     have hlt : quartetScore p T < quartetScore p (splice T L) := by
       refine sum_lt_sum (fun s _ => ?_) ⟨r₀.map hinj, mem_univ _, ?_⟩
@@ -542,7 +540,7 @@ theorem remark3_2 (p : QuartetTree X → ℝ) (hp : ∀ s, 0 ≤ p s)
   · have hSF := hT.isSplitFamily hX
     obtain ⟨r⟩ : Nonempty X := Fintype.card_pos_iff.1 (by omega)
     have hH := rootedAt_isHierarchy hSF r
-    have hun := unroot_rootedAt hX hSF r
+    have hun := unroot_rootedAt hSF r
     refine ⟨rootedAt T r, hH, hun, fun A hA hA2 => ?_⟩
     apply le_antisymm _ (hH.two_le_card_childClusters hA2)
     by_cases hAu : A = univ
@@ -630,6 +628,7 @@ def inducedVertices (N : RootedNetwork V E X) (Y : Set X) : Set V :=
   {t | (∃ v, N.IsLeastStableAncestor Y v ∧ N.graph.Reaches v t) ∧
     ∃ y ∈ Y, N.graph.Reaches t (N.leaf y)}
 
+omit [Fintype X] [DecidableEq X] in
 theorem mem_inducedArcs_iff {Y : Set X} {e : E} :
     e ∈ inducedArcs N Y ↔
       N.graph.source e ∈ inducedVertices N Y ∧ N.graph.target e ∈ inducedVertices N Y := by
@@ -641,15 +640,18 @@ theorem mem_inducedArcs_iff {Y : Set X} {e : E} :
   · rintro ⟨⟨⟨v, hv, hs⟩, -⟩, -, y, hy, hr⟩
     exact ⟨⟨y, hy, hr⟩, v, hv, hs⟩
 
+omit [Fintype X] [DecidableEq X] in
 theorem crosses_compl {f : E} {S : Set V} : N.graph.Crosses f Sᶜ ↔ N.graph.Crosses f S := by
   simp only [DirectedMultigraph.Crosses, Set.mem_compl_iff, not_not]
   tauto
 
+omit [Fintype X] [DecidableEq X] in
 theorem mem_iff_of_not_crosses {f : E} {S : Set V} (h : ¬ N.graph.Crosses f S) :
     N.graph.source f ∈ S ↔ N.graph.target f ∈ S := by
   simp only [DirectedMultigraph.Crosses, not_or, not_and, not_not] at h
   exact ⟨h.1, h.2⟩
 
+omit [Fintype X] [DecidableEq X] in
 theorem crosses_congr {f : E} {S S' : Set V} (h₁ : N.graph.source f ∈ S ↔ N.graph.source f ∈ S')
     (h₂ : N.graph.target f ∈ S ↔ N.graph.target f ∈ S') :
     N.graph.Crosses f S ↔ N.graph.Crosses f S' := by
@@ -659,6 +661,7 @@ section Cut
 
 variable {W : Set V} {g : E}
 
+omit [Fintype X] [DecidableEq X] in
 /-- A cut edge whose side `W` avoids the root enters `W`. -/
 theorem cut_enter (hN : N.IsPhylogenetic) (hW : ∀ f, N.graph.Crosses f W ↔ f = g)
     (hroot : N.root ∉ W) {t : V} (ht : t ∈ W) :
@@ -678,6 +681,7 @@ theorem cut_enter (hN : N.IsPhylogenetic) (hW : ∀ f, N.graph.Crosses f W ↔ f
         exact ⟨hs ▸ hb, ht' ▸ hc⟩
   exact key t (hN.root_reaches t) ht
 
+omit [Fintype X] [DecidableEq X] in
 /-- The side of a cut edge avoiding the root is closed under descent. -/
 theorem cut_closed (hN : N.IsPhylogenetic) (hW : ∀ f, N.graph.Crosses f W ↔ f = g)
     (hroot : N.root ∉ W) {p q : V} (hp : p ∈ W) (h : N.graph.Reaches p q) : q ∈ W := by
@@ -690,8 +694,9 @@ theorem cut_closed (hN : N.IsPhylogenetic) (hW : ∀ f, N.graph.Crosses f W ↔ 
     subst hf
     exact (cut_enter hN hW hroot ih).1 (hs ▸ ih)
 
+omit [Fintype X] [DecidableEq X] in
 /-- A path entering the side avoiding the root uses the cut edge. -/
-theorem cut_entry (hN : N.IsPhylogenetic) (hW : ∀ f, N.graph.Crosses f W ↔ f = g)
+theorem cut_entry (hW : ∀ f, N.graph.Crosses f W ↔ f = g)
     {p t : V} (hp : p ∉ W) (h : N.graph.Reaches p t) (ht : t ∈ W) :
     N.graph.Reaches p (N.graph.source g) ∧ N.graph.Reaches (N.graph.target g) t := by
   induction h with
@@ -704,6 +709,7 @@ theorem cut_entry (hN : N.IsPhylogenetic) (hW : ∀ f, N.graph.Crosses f W ↔ f
       subst hf
       exact ⟨hs ▸ hab, ht' ▸ Relation.ReflTransGen.refl⟩
 
+omit [Fintype X] [DecidableEq X] in
 /-- A path of `R`, avoiding `v`, into the side `W` has a prefix to the cut edge. -/
 theorem avoid_prefix {v : V} (hW : ∀ f, N.graph.Crosses f W ↔ f = g) (hroot : N.root ∉ W) {t : V}
     (h : Relation.ReflTransGen (fun a b => N.graph.Adj a b ∧ a ≠ v ∧ b ≠ v) N.root t) (ht : t ∈ W) :
@@ -732,6 +738,7 @@ theorem avoid_in_cut (hN : N.IsPhylogenetic) (hW : ∀ f, N.graph.Crosses f W �
 
 end Cut
 
+omit [Fintype X] [DecidableEq X] in
 /-- A path into a vertex that `v` does not reach avoids `v`. -/
 theorem avoid_of_not_reaches {v t u : V} (hnot : ¬ N.graph.Reaches v t) (h : N.graph.Reaches u t) :
     Relation.ReflTransGen (fun a b => N.graph.Adj a b ∧ a ≠ v ∧ b ≠ v) u t := by
@@ -740,6 +747,7 @@ theorem avoid_of_not_reaches {v t u : V} (hnot : ¬ N.graph.Reaches v t) (h : N.
   | @head a b hab hbt ih =>
     exact ih.head ⟨hab, fun e => hnot (e ▸ Relation.ReflTransGen.head hab hbt), fun e => hnot (e ▸ hbt)⟩
 
+omit [Fintype X] [DecidableEq X] in
 /-- A path from a vertex that does not reach `v` avoids `v`. -/
 theorem avoid_of_not_reaches_forward {v t u : V} (hnot : ¬ N.graph.Reaches u v)
     (h : N.graph.Reaches u t) :
@@ -749,6 +757,7 @@ theorem avoid_of_not_reaches_forward {v t u : V} (hnot : ¬ N.graph.Reaches u v)
   | @tail b c hab hbc ih =>
     exact ih.tail ⟨hbc, fun e => hnot (e ▸ hab), fun e => hnot (e ▸ hab.tail hbc)⟩
 
+omit [Fintype X] [DecidableEq X] in
 /-- A stable ancestor reaches the taxa. -/
 theorem stable_reaches (hN : N.IsPhylogenetic) {Y : Set X} {v : V} (hv : N.IsStableAncestor Y v)
     {y : X} (hy : y ∈ Y) : N.graph.Reaches v (N.leaf y) := by
@@ -771,8 +780,8 @@ theorem exists_leastStableAncestor (hN : N.IsPhylogenetic) {Y : Set X} (hY : Y.N
     exact (avoid_of_not_reaches h1 (hN.root_reaches v)).trans
       (avoid_of_not_reaches_forward h2 (stable_reaches hN hv hy))
   let r : V → V → Prop := fun x a => Relation.TransGen N.graph.Adj a x
-  haveI : IsTrans V r := ⟨fun a b c hab hbc => hbc.trans hab⟩
-  haveI : Std.Irrefl r := ⟨fun a h => hN.acyclic a h⟩
+  have : IsTrans V r := ⟨fun a b c hab hbc => hbc.trans hab⟩
+  have : Std.Irrefl r := ⟨fun a h => hN.acyclic a h⟩
   have hwf : WellFounded r := Finite.wellFounded_of_trans_of_irrefl r
   obtain ⟨v, hv, hmin⟩ := hwf.has_min {v | N.IsStableAncestor Y v} ⟨N.root, N.root_isStableAncestor Y⟩
   refine ⟨v, hv, fun w hw => ?_⟩
@@ -782,6 +791,7 @@ theorem exists_leastStableAncestor (hN : N.IsPhylogenetic) {Y : Set X} (hY : Y.N
     · exact Relation.ReflTransGen.refl
     · exact absurd h' (hmin w hw)
 
+omit [Fintype X] [DecidableEq X] in
 theorem leastStableAncestor_unique (hN : N.IsPhylogenetic) {Y : Set X} {v w : V}
     (hv : N.IsLeastStableAncestor Y v) (hw : N.IsLeastStableAncestor Y w) : v = w := by
   have h1 := hw.2 v hv.1
@@ -802,6 +812,7 @@ structure SideFacts (N : RootedNetwork V E X) (Y : Set X) (Z : Set V) (g : E) : 
       ¬ N.graph.Crosses f S) → ∀ t ∈ inducedVertices N Y, ∀ t' ∈ inducedVertices N Y, t ∉ Z → t' ∉ Z →
       (t ∈ S ↔ t' ∈ S)
 
+omit [Fintype X] [DecidableEq X] in
 theorem SideFacts.compl {Y : Set X} {Z : Set V} {g : E} (h : SideFacts N Y Z g) :
     SideFacts N Y Zᶜ g where
   source_mem := h.source_mem
@@ -820,7 +831,7 @@ theorem stable_reaches_source (hN : N.IsPhylogenetic) {W : Set V} {g : E}
     N.graph.Reaches v (N.graph.source g) := by
   by_contra hnot
   have h1 := avoid_of_not_reaches hnot (hN.root_reaches (N.graph.source g))
-  have h2 := (cut_entry hN hW hroot (hN.root_reaches (N.leaf y)) hyW).2
+  have h2 := (cut_entry hW hroot (hN.root_reaches (N.leaf y)) hyW).2
   have hgW := cut_enter hN hW hroot hyW
   have h3 := avoid_in_cut hN hW hroot hvW hgW.2 h2
   refine hv y hy ⟨fun e => hnot (e ▸ hN.root_reaches _), fun e => hvW (e ▸ hyW), h1.trans
@@ -838,7 +849,7 @@ theorem sideFacts_of_cut (hN : N.IsPhylogenetic) {W : Set V} {g : E}
     Relation.ReflTransGen.single ⟨g, rfl, rfl⟩
   have hLs := stable_reaches_source hN hW hroot hL.1 hy₁ hy₁W hLW
   have hLt := hLs.trans hstep
-  have hty := (cut_entry hN hW hroot (hN.root_reaches _) hy₁W).2
+  have hty := (cut_entry hW hroot (hN.root_reaches _) hy₁W).2
   have hgW := cut_enter hN hW hroot hy₁W
   have hmemV : ∀ t, N.graph.Reaches L t → (∃ y ∈ Y, N.graph.Reaches t (N.leaf y)) →
       t ∈ inducedVertices N Y := fun t h1 h2 => ⟨⟨L, hL, h1⟩, h2⟩
@@ -868,8 +879,8 @@ theorem sideFacts_of_cut (hN : N.IsPhylogenetic) {W : Set V} {g : E}
         rw [hs, ht] at hiff
         exact hiff.symm.trans hb'
     intro t ht t' ht' h1 h2
-    exact (key t (cut_entry hN hW hroot (hN.root_reaches t) h1).2 (hVL t ht).2).trans
-      (key t' (cut_entry hN hW hroot (hN.root_reaches t') h2).2 (hVL t' ht').2).symm
+    exact (key t (cut_entry hW hroot (hN.root_reaches t) h1).2 (hVL t ht).2).trans
+      (key t' (cut_entry hW hroot (hN.root_reaches t') h2).2 (hVL t' ht').2).symm
   · intro S hS
     have key : ∀ u, N.graph.Reaches L u → u ∉ W →
         (∃ y ∈ Y, N.graph.Reaches u (N.leaf y)) → (u ∈ S ↔ L ∈ S) := by
@@ -906,7 +917,7 @@ theorem stable_insert_of_low (hN : N.IsPhylogenetic) (hW : ∀ f, N.graph.Crosse
       hbW (cut_closed hN hW hroot h (stable_reaches hN hv (Set.mem_insert_of_mem _ hb)))
     have hpre := avoid_prefix hW hroot h3 ha'W
     have hg := cut_enter hN hW hroot haW
-    have htarget := (cut_entry hN hW hroot (hN.root_reaches (N.leaf a)) haW).2
+    have htarget := (cut_entry hW hroot (hN.root_reaches (N.leaf a)) haW).2
     exact hv a (Set.mem_insert _ _) ⟨h1, fun e => hvW (e ▸ haW), hpre.1.trans
       (Relation.ReflTransGen.head ⟨⟨g, rfl, rfl⟩, hpre.2, fun e => hvW (e ▸ hg.2)⟩
         (avoid_in_cut hN hW hroot hvW hg.2 htarget))⟩
@@ -923,8 +934,8 @@ theorem inducedVertices_of_low (hN : N.IsPhylogenetic) (hW : ∀ f, N.graph.Cros
   refine ⟨⟨v, hLSA, hr⟩, ?_⟩
   rcases Set.mem_insert_iff.1 hy with rfl | hy
   · refine ⟨a', Set.mem_insert _ _, ?_⟩
-    exact ((cut_entry hN hW ht hty haW).1.tail ⟨g, rfl, rfl⟩).trans
-      (cut_entry hN hW hroot (hN.root_reaches _) ha'W).2
+    exact ((cut_entry hW ht hty haW).1.tail ⟨g, rfl, rfl⟩).trans
+      (cut_entry hW hroot (hN.root_reaches _) ha'W).2
   · exact ⟨y, Set.mem_insert_of_mem _ hy, hty⟩
 
 theorem inducedVertices_of_high (hN : N.IsPhylogenetic) (hW : ∀ f, N.graph.Crosses f W ↔ f = g)
@@ -941,7 +952,7 @@ theorem inducedVertices_of_high (hN : N.IsPhylogenetic) (hW : ∀ f, N.graph.Cro
   have hLW : L ∉ W := fun h' =>
     ha'W (cut_closed hN hW hroot h' (stable_reaches hN hL.1 (Set.mem_insert _ _)))
   have hLs := stable_reaches_source hN hW hroot hL.1 (Set.mem_insert_of_mem _ hb) (hQ b hb) hLW
-  have hgt := (cut_entry hN hW hroot (hN.root_reaches t) ht).2
+  have hgt := (cut_entry hW hroot (hN.root_reaches t) ht).2
   exact ⟨⟨L, hL, (hLs.tail ⟨g, rfl, rfl⟩).trans hgt⟩, y, Set.mem_insert_of_mem _ hyQ, hty⟩
 
 /-- The induced networks on `insert a Q` and on `insert a' Q`, where the cut edge `g` of side `Z`
@@ -957,6 +968,7 @@ structure PendantSetting (N : RootedNetwork V E X) (Z : Set V) (g : E) (a a' : X
   facts' : SideFacts N (insert a' Q) Z g
   hV : ∀ t, t ∉ Z → (t ∈ inducedVertices N (insert a Q) ↔ t ∈ inducedVertices N (insert a' Q))
 
+omit [Fintype X] [DecidableEq X] in
 theorem PendantSetting.symm {Z : Set V} (h : PendantSetting N Z g a a' Q) :
     PendantSetting N Z g a' a Q :=
   ⟨h.hZ, h.ha', h.ha, h.hQ, h.two, h.facts', h.facts, fun t ht => (h.hV t ht).symm⟩
@@ -986,6 +998,7 @@ theorem pendantSetting_of_cut (hN : N.IsPhylogenetic) {Z : Set V}
       fun t ht => ⟨inducedVertices_of_low hN hZ hroot ha ha' hb (hQ b hb) ht,
         inducedVertices_of_low hN hZ hroot ha' ha hb (hQ b hb) ht⟩⟩
 
+omit [Fintype X] [DecidableEq X] in
 theorem arc_cases {Z : Set V} (hZ : ∀ f, N.graph.Crosses f Z ↔ f = g) (f : E) :
     f = g ∨ (N.graph.source f ∈ Z ∧ N.graph.target f ∈ Z) ∨
       (N.graph.source f ∉ Z ∧ N.graph.target f ∉ Z) := by
@@ -997,9 +1010,11 @@ theorem arc_cases {Z : Set V} (hZ : ∀ f, N.graph.Crosses f Z ↔ f = g) (f : E
 
 variable {Z : Set V}
 
+omit [Fintype X] [DecidableEq X] in
 theorem PendantSetting.g_mem (hs : PendantSetting N Z g a a' Q) : g ∈ inducedArcs N (insert a Q) :=
   mem_inducedArcs_iff.2 ⟨hs.facts.source_mem, hs.facts.target_mem⟩
 
+omit [Fintype X] [DecidableEq X] in
 /-- An arc of the induced network off `Z` is in the other induced network. -/
 theorem PendantSetting.mem_arcs_of_off (hs : PendantSetting N Z g a a' Q) {f : E}
     (hf : f ∈ inducedArcs N (insert a Q)) (h₁ : N.graph.source f ∉ Z) (h₂ : N.graph.target f ∉ Z) :

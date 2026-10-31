@@ -15,11 +15,11 @@ ecto:thm4_1	theorem	1
 ecto:cor4_2	corollary	1	ecto:thm4_1
 ecto:cor4_3	corollary	1	ecto:thm4_1
 ecto:assumption1	assumption	0
-ecto:prop5_1	proposition	1	ecto:assumption1
+ecto:prop5_1	proposition	1
 ecto:eq6_1	equation	0
-ecto:lem6_1	lemma	1	ecto:eq6_1
+ecto:lem6_1	lemma	1
 ecto:lem8_1	lemma	1
-ecto:thm8_2	theorem	1	ecto:lem6_1,ecto:lem8_1,ecto:cor4_2,ecto:cor4_3,ecto:assumption1
+ecto:thm8_2	theorem	1	ecto:lem6_1,ecto:lem8_1,ecto:cor4_2,ecto:cor4_3
 #
 # TOB-QMC (bioRxiv v5). Unnumbered results proved in running text are rows with labels assigned here.
 tob2025:lemma2	lemma	0
@@ -27,8 +27,8 @@ tob2025:definition1	definition	0
 tob2025:equation1	equation	1
 tob2025:equation2	equation	1
 tob2025:equation3	equation	1
-tob2025:equation4	equation	1
-tob2025:lemma3	lemma	1	tob2025:equation1,tob2025:equation2,tob2025:equation3,tob2025:equation4
+tob2025:equation4	definition	0
+tob2025:lemma3	lemma	1	tob2025:equation1,tob2025:equation2,tob2025:equation3
 tob2025:supplement_lemma4	lemma	1	tob2025:lemma3
 tob2025:theorem1	theorem	1	tob2025:lemma3,tob2025:supplement_lemma4
 tob2025:astral_corollary	corollary	1	tob2025:theorem1
@@ -41,8 +41,8 @@ tob2025:consistency	claim	1	tob2025:theorem1,tob2025:theorem2,tinnik:theorem4
 #
 # TINNiK (Algorithms Mol. Biol. 2024). Labels of unnumbered statements of Appendix C are assigned here.
 tinnik:cut_line_mle	claim	1
-tinnik:cut_log_likelihood	claim	1	tinnik:cut_line_mle
+tinnik:cut_log_likelihood	claim	1
 tinnik:full_log_likelihood	claim	1
 tinnik:proposition5	proposition	1
-tinnik:proposition6	proposition	1	tinnik:proposition5
+tinnik:proposition6	proposition	1
 tinnik:theorem4	theorem	1	tinnik:proposition5,tinnik:proposition6

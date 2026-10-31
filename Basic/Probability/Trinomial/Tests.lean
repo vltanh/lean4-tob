@@ -33,19 +33,6 @@ theorem t1Tail_anti (μ : ℝ) {s t : ℝ} (hst : s ≤ t) : t1Tail μ t ≤ t1T
 theorem cutTail_anti (φ n : ℝ) {s t : ℝ} (hst : s ≤ t) : cutTail φ n t ≤ cutTail φ n s :=
   measureReal_mono fun _ hz ↦ lt_of_le_of_lt hst hz
 
-/-- `Z²` is at most the variable of the T1 test distribution. -/
-theorem chiSqOneTail_le_t1Tail' (μ t : ℝ) : chiSqOneTail t ≤ t1Tail μ t := by
-  have h : chiSqOneTail t =
-      ((gaussianReal 0 1).prod (gaussianReal μ 1)).real ({z : ℝ | t < z ^ 2} ×ˢ univ) := by
-    rw [measureReal_prod_prod]
-    simp [chiSqOneTail]
-  rw [h]
-  refine measureReal_mono ?_
-  rintro ⟨x, y⟩ ⟨hx, -⟩
-  have hx' : t < x ^ 2 := hx
-  change t < x ^ 2 + if y < 0 then y ^ 2 else 0
-  split_ifs <;> nlinarith [sq_nonneg y]
-
 /-- The T1 test distribution exceeds `Z²` only when `Z̄ < 0`. -/
 theorem t1Tail_le_add (μ t : ℝ) :
     t1Tail μ t ≤ chiSqOneTail t + (gaussianReal μ 1).real (Iio 0) := by
@@ -368,7 +355,7 @@ theorem tendsto_star_pearson {x : ℝ} (h0 : 0 ≤ x) (h1 : x ≤ 1) :
   simpa [sampleW] using hε
 
 theorem t1PValueR_pos (a b c : ℝ) : 0 < t1PValueR a b c :=
-  (chiSqOneTail_pos _).trans_le (chiSqOneTail_le_t1Tail' _ _)
+  (chiSqOneTail_pos _).trans_le (chiSqOneTail_le_t1Tail _ _)
 
 /-- The T1 p-value is close to the `χ²₁` tail, off the boundary. -/
 theorem eventually_t1PValueR_le (hφ : 0 < φ ∧ φ < 3 / 2) (hφ1 : φ < 1) {err : ℝ} (herr : 0 < err) :
@@ -437,7 +424,7 @@ theorem tendsto_t1 (hφ : 0 < φ ∧ φ < 3 / 2) (hφ1 : φ < 1) {x : ℝ} (h0 :
       have h₇ : chiSqOneTail t < chiSqOneTail (t - δ / 2) :=
         chiSqOneTail_lt_of_lt h₆ (by linarith)
       have h₈ := chiSqOneTail_anti h₅
-      have h₉ := chiSqOneTail_le_t1Tail'
+      have h₉ := chiSqOneTail_le_t1Tail
         (muZero (3 * (count η 1 + count η 2) / (2 * (count η 0 + count η 1 + count η 2)))
           (count η 0 + count η 1 + count η 2)) (lineS (count η 1) (count η 2))
       rw [h₃] at hle
@@ -507,7 +494,7 @@ theorem centroid_tight {ε : ℝ} (hε : 0 < ε) :
     have hμ0 : 0 ≤ μ := muZero_nonneg_of_le_one (min_le_left _ _)
     rw [hG]
     constructor
-    · exact hδ₁.trans ((chiSqOneTail_anti hSb.2).trans (chiSqOneTail_le_t1Tail' _ _))
+    · exact hδ₁.trans ((chiSqOneTail_anti hSb.2).trans (chiSqOneTail_le_t1Tail _ _))
     · have := t1Tail_anti μ hSb.1
       have := t1Tail_le_one_sub (κ := κ) hμ0
       linarith

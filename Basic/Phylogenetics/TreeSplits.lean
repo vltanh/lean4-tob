@@ -30,8 +30,6 @@ open scoped Classical
 
 variable {X : Type*} [Fintype X] [DecidableEq X]
 
-set_option linter.unusedSectionVars false
-set_option linter.unusedVariables false
 
 /-- The laws of a family of sides of splits: the sides are nonempty and proper, closed under
 complement, include the singletons, and are pairwise compatible. -/
@@ -120,7 +118,7 @@ theorem rootedAt_isHierarchy {T : Finset (Finset X)} (hT : IsSplitFamily T) (r :
           · exact absurd h' hrA
           · exact absurd h' hrB
 
-theorem unroot_rootedAt {T : Finset (Finset X)} (hX : 2 ≤ Fintype.card X) (hT : IsSplitFamily T)
+theorem unroot_rootedAt {T : Finset (Finset X)} (hT : IsSplitFamily T)
     (r : X) : unroot (rootedAt T r) = T := by
   ext A
   rw [mem_unroot]
@@ -151,7 +149,7 @@ theorem isUnrootedTree_iff (hX : 2 ≤ Fintype.card X) (T : Finset (Finset X)) :
   refine ⟨fun h => h.isSplitFamily hX, fun h => ?_⟩
   have : Nonempty X := Fintype.card_pos_iff.1 (by omega)
   obtain ⟨r⟩ := this
-  exact ⟨rootedAt T r, rootedAt_isHierarchy h r, unroot_rootedAt hX h r⟩
+  exact ⟨rootedAt T r, rootedAt_isHierarchy h r, unroot_rootedAt h r⟩
 
 /-- The tree of blobs is an unrooted tree. -/
 theorem treeOfBlobs_isUnrootedTree {V E : Type*} {N : RootedNetwork V E X} (hN : N.IsPhylogenetic)
@@ -164,6 +162,7 @@ theorem treeOfBlobs_isUnrootedTree {V E : Type*} {N : RootedNetwork V E X} (hN :
 
 /-! ### Quartet trees -/
 
+omit [Fintype X] in
 theorem QuartetTree.exists_eq_pair (s : QuartetTree X) :
     ∃ B C, s.val = {B, C} ∧ B.card = 2 ∧ C.card = 2 ∧ Disjoint B C ∧ s.taxa = B ∪ C := by
   obtain ⟨hc, h2, hd⟩ := s.property
@@ -173,14 +172,17 @@ theorem QuartetTree.exists_eq_pair (s : QuartetTree X) :
   refine ⟨B, C, hs, h2 B hB, h2 C hC, hd B hB C hC hBC, ?_⟩
   simp [QuartetTree.taxa, hs]
 
+omit [Fintype X] in
 /-- A quartet tree has four taxa. -/
 theorem QuartetTree.card_taxa (s : QuartetTree X) : s.taxa.card = 4 := by
   obtain ⟨B, C, -, hB, hC, hd, ht⟩ := s.exists_eq_pair
   rw [ht, card_union_of_disjoint hd, hB, hC]
 
+omit [Fintype X] in
 theorem QuartetTree.card_of_mem (s : QuartetTree X) {B : Finset X} (hB : B ∈ s.val) : B.card = 2 :=
   s.property.2.1 B hB
 
+omit [Fintype X] in
 theorem QuartetTree.subset_taxa (s : QuartetTree X) {B : Finset X} (hB : B ∈ s.val) : B ⊆ s.taxa := by
   obtain ⟨C, D, hs, -, -, -, ht⟩ := s.exists_eq_pair
   rw [ht]
@@ -191,6 +193,7 @@ theorem QuartetTree.subset_taxa (s : QuartetTree X) {B : Finset X} (hB : B ∈ s
     subst h
     exact subset_union_right
 
+omit [Fintype X] in
 /-- The cherry of a quartet tree other than `B` is the rest of its taxa. -/
 theorem QuartetTree.sdiff_mem (s : QuartetTree X) {B : Finset X} (hB : B ∈ s.val) :
     s.taxa \ B ∈ s.val := by
@@ -203,6 +206,7 @@ theorem QuartetTree.sdiff_mem (s : QuartetTree X) {B : Finset X} (hB : B ∈ s.v
     subst h
     rw [union_sdiff_cancel_right hd]; simp
 
+omit [Fintype X] in
 /-- A quartet tree is its two cherries. -/
 theorem QuartetTree.eq_pair_of_mem (s : QuartetTree X) {B : Finset X} (hB : B ∈ s.val) :
     s.val = {B, s.taxa \ B} := by
@@ -249,6 +253,7 @@ def quartetOfCherry (q B : Finset X) (hq : q.card = 4) (hB : B ⊆ q) (h2 : B.ca
       · rw [mem_singleton] at hC hD
         exact absurd (hC.trans hD.symm) hCD⟩
 
+omit [Fintype X] in
 @[simp] theorem quartetOfCherry_val (q B : Finset X) (hq : q.card = 4) (hB : B ⊆ q) (h2 : B.card = 2) :
     (quartetOfCherry q B hq hB h2).val = {B, q \ B} := rfl
 
@@ -324,9 +329,11 @@ def quartetTree (a b c d : X) (h : ({a, b, c, d} : Finset X).card = 4) : Quartet
       · rw [mem_singleton] at hC hD
         exact absurd (hC.trans hD.symm) hCD⟩
 
+omit [Fintype X] in
 @[simp] theorem quartetTree_val (a b c d : X) (h : ({a, b, c, d} : Finset X).card = 4) :
     (quartetTree a b c d h).val = {{a, b}, {c, d}} := rfl
 
+omit [Fintype X] in
 @[simp] theorem quartetTree_taxa (a b c d : X) (h : ({a, b, c, d} : Finset X).card = 4) :
     (quartetTree a b c d h).taxa = {a, b, c, d} := by
   ext x
@@ -451,6 +458,7 @@ theorem IsUnrootedTree.displays_unique {T : Finset (Finset X)} (hT : IsUnrootedT
       · rw [card_sdiff_of_subset inter_subset_right]; omega
     exact QuartetTree.eq_of_taxa_eq_of_mem h hAs (this ▸ hsd)
 
+omit [Fintype X] in
 theorem Displays.mono {T T' : Finset (Finset X)} (h : T ⊆ T') {s : QuartetTree X}
     (hs : Displays T s) : Displays T' s := by
   obtain ⟨A, hA, hAs⟩ := hs
@@ -807,7 +815,7 @@ theorem existsUnique_center {T : Finset (Finset X)} (hT : IsUnrootedTree T) {q :
   have hSF := hT.isSplitFamily hX
   obtain ⟨r, hr⟩ := card_pos.1 (show 0 < q.card by omega)
   have hH := rootedAt_isHierarchy hSF r
-  have hun := unroot_rootedAt hX hSF r
+  have hun := unroot_rootedAt hSF r
   have hq'c : (q.erase r).card = 3 := by rw [card_erase_of_mem hr]; omega
   obtain ⟨K, hK, hqK, hleast⟩ := hH.exists_least (A := q.erase r)
     (card_pos.1 (by omega))
@@ -869,7 +877,7 @@ theorem existsUnique_center {T : Finset (Finset X)} (hT : IsUnrootedTree T) {q :
   · exact mem_multifurcations.2 ⟨hVP, hq ▸ card_le_of_inDistinctBlocks hVP.cover hdist⟩
 
 /-- Taxa in distinct blocks of a vertex partition are not resolved by the tree. -/
-theorem not_displays_of_inDistinctBlocks {T P : Finset (Finset X)} (hT : IsUnrootedTree T)
+theorem not_displays_of_inDistinctBlocks {T P : Finset (Finset X)}
     (hP : IsVertexPartition T P) {s : QuartetTree X} (h : InDistinctBlocks P s.taxa) :
     ¬ Displays T s := by
   rintro ⟨A, hA, hAs⟩
