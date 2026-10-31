@@ -20,40 +20,9 @@ separate constructions and representation theorems.
 
 namespace Phylogenetics
 
-structure RootedNetwork (V E X : Type*) where
-  graph : DirectedMultigraph V E
-  root : V
-  leaf : X → V
-
 namespace RootedNetwork
 
 variable {V E X : Type*} (N : RootedNetwork V E X)
-
-/-- Defining laws of a finite rooted network. A leaf has precisely one incoming
-arc and no outgoing arc. Internal vertices of degree two are allowed. -/
-structure IsPhylogenetic : Prop where
-  finite_vertices : Finite V
-  finite_arcs : Finite E
-  finite_taxa : Finite X
-  acyclic : N.graph.IsAcyclic
-  root_reaches : ∀ v, N.graph.Reaches N.root v
-  root_indegree : N.graph.indegree N.root = 0
-  nonroot_indegree : ∀ v, v ≠ N.root → 1 ≤ N.graph.indegree v
-  leaf_injective : Function.Injective N.leaf
-  leaf_indegree : ∀ x, N.graph.indegree (N.leaf x) = 1
-  leaves : ∀ v, N.graph.outdegree v = 0 ↔ ∃ x, N.leaf x = v
-
-/-- A tree arc enters a vertex with one incoming arc. -/
-def IsTreeArc (e : E) : Prop := N.graph.indegree (N.graph.target e) = 1
-
-/-- A hybrid arc enters a vertex with at least two incoming arcs. -/
-def IsHybridArc (e : E) : Prop := 2 ≤ N.graph.indegree (N.graph.target e)
-
-/-- Binary is a degree condition, separate from network validity. -/
-def IsBinary : Prop :=
-  N.graph.outdegree N.root = 2 ∧
-    ∀ v, v ≠ N.root → N.graph.outdegree v ≠ 0 →
-      N.graph.indegree v + N.graph.outdegree v = 3
 
 /-- A directed path avoiding a vertex, including at its endpoints. -/
 def HasPathAvoiding (u v w : V) : Prop :=
@@ -71,12 +40,6 @@ def IsLeastStableAncestor (Y : Set X) (v : V) : Prop :=
 
 /-- The root is the least stable ancestor of all labelled taxa. -/
 def IsLSANetwork : Prop := N.IsLeastStableAncestor Set.univ N.root
-
-/-- A taxon bipartition realized by a singleton graph cut. Orientation of the
-split is immaterial, as `hasCutSplit_compl` verifies. -/
-def HasCutSplit (A : Set X) : Prop :=
-  ∃ (e : E) (S : Set V),
-    (∀ f, N.graph.Crosses f S ↔ f = e) ∧ N.leaf ⁻¹' S = A
 
 theorem root_isStableAncestor (Y : Set X) : N.IsStableAncestor Y N.root := by
   intro x _ h
@@ -125,24 +88,6 @@ def bridgeQuotientData : RootedNetwork N.graph.BlobVertex N.graph.BridgeArc X wh
 theorem hasCutSplit_iff_bridgeQuotient (A : Set X) :
     N.HasCutSplit A ↔ N.bridgeQuotientData.HasCutSplit A :=
   N.graph.labelled_cut_iff_quotient N.leaf A
-
-/-- Numerical data; their ranges and normalizations are separate laws. -/
-structure MetricData where
-  length : E → ℝ
-  inheritance : E → ℝ
-
-/-- Nonnegative hybrid lengths are allowed, including zero. Inheritance weights
-are positive on hybrid arcs and sum to one at each hybrid vertex. Tree-arc
-weights are canonically one; those entries are not additional parameters. -/
-def IsMetric [Fintype E] (m : MetricData (E := E)) : Prop := by
-  classical
-  exact
-  (∀ e, N.IsTreeArc e → 0 < m.length e) ∧
-  (∀ e, N.IsHybridArc e → 0 ≤ m.length e) ∧
-  (∀ e, N.IsTreeArc e → m.inheritance e = 1) ∧
-  (∀ e, N.IsHybridArc e → 0 < m.inheritance e) ∧
-  ∀ v, 2 ≤ N.graph.indegree v →
-    ∑ e, (if N.graph.target e = v then m.inheritance e else 0) = 1
 
 end RootedNetwork
 end Phylogenetics

@@ -25,8 +25,7 @@ abbrev RootedTopology (X : Type*) [Fintype X] [DecidableEq X] :=
   {H : Finset (Finset X) // IsHierarchy H}
 
 /-- A valid unrooted split family is obtained from a valid rooted hierarchy. -/
-def IsUnrootedTopology (T : Finset (Finset X)) : Prop :=
-  ∃ H : Finset (Finset X), IsHierarchy H ∧ unroot H = T
+abbrev IsUnrootedTopology (T : Finset (Finset X)) : Prop := IsUnrootedTree T
 
 /-- An unrooted topology represented by both sides of each split, including trivial splits. -/
 abbrev UnrootedTopology (X : Type*) [Fintype X] [DecidableEq X] :=

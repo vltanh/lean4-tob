@@ -7,6 +7,7 @@ Source regions and adaptations are recorded in docs/ADAPTED_SOURCES.md.
 -/
 module
 
+public import Basic.Phylogenetics.Defs
 public import Mathlib.Data.Finset.Max
 public import Mathlib.Data.Finset.BooleanAlgebra
 public import Mathlib.Data.Fintype.Powerset
@@ -31,23 +32,6 @@ open Finset
 
 variable {X : Type*} [Fintype X] [DecidableEq X]
 
-
-/-- A hierarchy of clusters on `X`. -/
-def IsHierarchy (H : Finset (Finset X)) : Prop :=
-  univ ∈ H ∧ (∀ x : X, {x} ∈ H) ∧ (∀ A ∈ H, A.Nonempty) ∧
-    ∀ A ∈ H, ∀ B ∈ H, A ⊆ B ∨ B ⊆ A ∨ Disjoint A B
-
-/-- The children of a cluster `A` in a family `H` of clusters: the maximal members of `H`
-strictly contained in `A`. -/
-def childClusters (H : Finset (Finset X)) (A : Finset X) : Finset (Finset X) :=
-  H.filter fun B => B ⊂ A ∧ ∀ C ∈ H, B ⊂ C → ¬ C ⊂ A
-
-
-/-- The unrooted tree of a rooted tree (or of a rooted forest) `G`: the sides of the splits
-induced by its non-root clusters. -/
-def unroot {L : Type*} [Fintype L] [DecidableEq L]
-    (G : Finset (Finset L)) : Finset (Finset L) :=
-  G.erase univ ∪ (G.erase univ).image compl
 
 /-- The clusters of `H` that meet `S`, restricted to `S`, as clusters on the subtype `S`. -/
 def restrictClusters (S : Finset X) (H : Finset (Finset X)) : Finset (Finset S) :=

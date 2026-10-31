@@ -1,5 +1,6 @@
 module
 
+public import Basic.Phylogenetics.Defs
 public import Basic.Analysis.FiniteOptimization
 public import Basic.Analysis.SpecialFunctions.Erf
 public import Basic.Combinatorics.BridgeCutLaminar
@@ -18,10 +19,15 @@ public import Basic.Phylogenetics.Hierarchy
 public import Basic.Phylogenetics.HierarchyGraph
 public import Basic.Phylogenetics.HierarchyParents
 public import Basic.Phylogenetics.Network
+public import Basic.Phylogenetics.NetworkCuts
+public import Basic.Phylogenetics.NMSC.Basic
 public import Basic.Phylogenetics.PendantCuts
 public import Basic.Phylogenetics.Quartet
 public import Basic.Phylogenetics.QuartetScore
 public import Basic.Phylogenetics.Star
+public import Basic.Phylogenetics.TreeSplits
 public import Basic.Phylogenetics.TreeTopology
+public import Basic.Probability.IID
+public import Basic.Probability.QuartetTests
 
 /-! Shared mathematical foundations; no numbered paper result is claimed here. -/

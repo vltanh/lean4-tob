@@ -4,6 +4,7 @@ public import Mathlib.Probability.Distributions.Gaussian.Real
 public import Mathlib.Probability.ProbabilityMassFunction.Constructions
 public import Mathlib.MeasureTheory.Constructions.Pi
 public import Basic.Analysis.SpecialFunctions.Erf
+public import Basic.Phylogenetics.Defs
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Arctan
 public import Mathlib.Tactic.Linarith
 public import Mathlib.Tactic.FinCases
@@ -188,11 +189,9 @@ noncomputable def thetaCF (φ : ℝ) (hφ : 0 < φ ∧ φ < 3 / 2) : ClosedCF wh
   sum_eq_one := (theta_open φ hφ).2
 
 /-- The source's mean displacement; it is negative when `φ>1`. -/
-noncomputable def mu0 (φ : ℝ) (n : ℕ) : ℝ :=
-  Real.sqrt (2 * (n : ℝ)) * (1 - φ) / Real.sqrt (φ * (3 - 2 * φ))
+noncomputable def mu0 (φ : ℝ) (n : ℕ) : ℝ := Phylogenetics.muZero φ n
 
-noncomputable def alpha0 (φ : ℝ) : ℝ :=
-  Real.arctan (1 / Real.sqrt (3 * (3 - 2 * φ)))
+noncomputable def alpha0 (φ : ℝ) : ℝ := Phylogenetics.alphaZero φ
 
 noncomputable def beta0 (φ : ℝ) : ℝ := (Real.pi / 2 - alpha0 φ) / 2
 

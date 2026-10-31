@@ -21,14 +21,6 @@ namespace Phylogenetics.RootedNetwork
 
 variable {V E X : Type*} (N : RootedNetwork V E X)
 
-/-- A vertex is retained exactly when it is ancestral to a selected taxon. -/
-def ancestralVertices (Y : Set X) : Set V :=
-  {v | ∃ x ∈ Y, N.graph.Reaches v (N.leaf x)}
-
-/-- An arc is retained exactly when its target is ancestral to a selected taxon. -/
-def ancestralArcs (Y : Set X) : Set E :=
-  {e | N.graph.target e ∈ N.ancestralVertices Y}
-
 /-- Vertices of the unsuppressed ancestral graph. -/
 abbrev AncestralVertex (Y : Set X) := N.ancestralVertices Y
 

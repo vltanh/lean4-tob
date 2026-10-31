@@ -1,5 +1,6 @@
 module
 
-public import TINNiK.Statistics.Definitions
+public import TINNiK.Basic
+public import TINNiK.Statistics.AppendixC
 
-/-! TINNiK definitions and representation bridges. Numbered results remain pending. -/
+/-! TINNiK: the paper's results. -/

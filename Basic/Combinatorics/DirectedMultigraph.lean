@@ -1,9 +1,8 @@
 module
 
+public import Basic.Phylogenetics.Defs
 public import Mathlib.Combinatorics.Graph.Connected.EdgeCut
 import all Mathlib.Combinatorics.Graph.Connected.EdgeCut
-public import Mathlib.Logic.Relation
-public import Mathlib.Data.Set.Card
 
 /-!
 # Directed multigraphs with individually identified arcs
@@ -17,23 +16,8 @@ built into the data.
 
 @[expose] public section
 
-/-- A directed multigraph on given vertex and arc types. Every element of the arc
- type is an actual arc; parallel arcs remain distinct. -/
-structure DirectedMultigraph (V E : Type*) where
-  source : E → V
-  target : E → V
-
 namespace DirectedMultigraph
 variable {V E X : Type*} (G : DirectedMultigraph V E)
-
-/-- Directed adjacency; reachability may forget multiplicity, cuts do not. -/
-def Adj (u v : V) : Prop := ∃ e, G.source e = u ∧ G.target e = v
-
-/-- Reachability permits the empty directed path. -/
-def Reaches : V → V → Prop := Relation.ReflTransGen G.Adj
-
-/-- No nonempty directed closed path. -/
-def IsAcyclic : Prop := ∀ v, ¬ Relation.TransGen G.Adj v v
 
 /-- The undirected multigraph keeps the same vertices and individually named arcs. -/
 def underlying : Graph V E where
@@ -58,17 +42,6 @@ def underlying : Graph V E where
     exact ⟨fun _ => ⟨G.source e, G.target e, Or.inl ⟨rfl, rfl⟩⟩,
       fun _ => Set.mem_univ e⟩
   left_mem_of_isLink := by intro e u v _; exact Set.mem_univ u
-
-/-- Arc incidence degree, counting parallel arcs separately. -/
-noncomputable def indegree (v : V) : ℕ := {e | G.target e = v}.ncard
-
-/-- Arc incidence degree, counting parallel arcs separately. -/
-noncomputable def outdegree (v : V) : ℕ := {e | G.source e = v}.ncard
-
-/-- An arc crosses a vertex bipartition, in either orientation. -/
-def Crosses (e : E) (S : Set V) : Prop :=
-  (G.source e ∈ S ∧ G.target e ∉ S) ∨
-    (G.target e ∈ S ∧ G.source e ∉ S)
 
 /-- Bridge to Mathlib's multigraph edge-cut convention. -/
 theorem mem_edgeCut_iff (e : E) (S : Set V) :

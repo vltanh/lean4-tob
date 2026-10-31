@@ -7,8 +7,7 @@ Exact source regions and adaptations: docs/COALESCENT_SOURCES.md.
 -/
 module
 
-public import Mathlib.Analysis.Normed.Algebra.Exponential
-public import Mathlib.Topology.Instances.Matrix
+public import Basic.Phylogenetics.Defs
 
 /-!
 # Finite Kingman coalescent data
@@ -28,29 +27,6 @@ open Finset
 
 
 variable {L : Type*} [Fintype L] [DecidableEq L]
-
-/-- The roots of a forest `F`: its maximal clusters. -/
-def roots (F : Finset (Finset L)) : Finset (Finset L) :=
-  F.filter fun A => ∀ B ∈ F, A ⊆ B → B = A
-
-/-- The generator of Kingman's coalescent on forests. From a forest `F` with `k` roots, each of
-the `k.choose 2` pairs of distinct roots `A, B` merges at rate `1`; the merge adds the cluster
-`A ∪ B` to `F`. -/
-noncomputable def kingmanGenerator : Matrix (Finset (Finset L)) (Finset (Finset L)) ℝ :=
-  fun F G =>
-    if G = F then -((#(roots F)).choose 2 : ℝ)
-    else if ∃ A ∈ roots F, ∃ B ∈ roots F, A ≠ B ∧ G = insert (A ∪ B) F then 1 else 0
-
-/-- The transition probabilities of Kingman's coalescent on forests over a time `t`, in
-coalescent units: the matrix exponential `exp (t • Q)` of the generator. -/
-noncomputable def kingmanTransition (t : ℝ) : Matrix (Finset (Finset L)) (Finset (Finset L)) ℝ :=
-  NormedSpace.exp (t • kingmanGenerator)
-
-/-- The transition probabilities of Kingman's coalescent on forests over an infinite time: the
-entrywise limits of `kingmanTransition t` as `t → ∞`. -/
-noncomputable def kingmanAbsorption : Matrix (Finset (Finset L)) (Finset (Finset L)) ℝ :=
-  fun F G => Filter.limUnder Filter.atTop fun t : ℝ => kingmanTransition t F G
-
 
 variable {X : Type*} [DecidableEq X]
 
