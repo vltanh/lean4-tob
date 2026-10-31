@@ -61,7 +61,11 @@ meta def externalResults : List (String × Name) :=
    ("Mitchell et al. 2019, Theorem 3.1, for the cut model", ``External.MitchellAllmanRhodes2019.cutModel_theorem31),
    ("Rhodes 2020, Theorem 2", ``External.Rhodes2020.theorem2),
    ("Rhodes 2020, internal edge weights", ``External.Rhodes2020.quartetWeight_ge_two),
-   ("Buneman 1971: exact tree builders exist", ``External.Rhodes2020.exists_isExactBuilder)]
+   ("Buneman 1971: exact tree builders exist", ``External.Rhodes2020.exists_isExactBuilder),
+   ("Saitou, Nei 1987; Studier, Keppler 1988: neighbor joining is exact", ``Phylogenetics.NJ.isExactBuilder_nj),
+   ("Mirarab et al. 2014: ASTRAL's dynamic program is optimal on its space", ``Phylogenetics.IsTraceback.isAstralOptimal),
+   ("NANUQ, Proposition 9", ``External.AllmanBanosRhodes2019.proposition9),
+   ("NANUQ, Theorem 36, corrected", ``External.AllmanBanosRhodes2019.theorem36)]
 
 /-- The numbered results of the paper, in the order of the paper. -/
 meta def paperResults : List (String × Name) :=
@@ -101,7 +105,27 @@ meta def paperResults : List (String × Name) :=
    ("TINNiK Proposition 6", ``TINNiK.proposition6),
    ("TINNiK Theorem 4, at given parameters", ``TINNiK.theorem4_of_rejects),
    ("TINNiK Theorem 4, one sequence of levels", ``TINNiK.theorem4_explicit),
-   ("TINNiK Theorem 4", ``TINNiK.theorem4)]
+   ("TINNiK Theorem 4", ``TINNiK.theorem4),
+   ("ECToBlob Remark 3.3, NMSC", ``ECToBlob.remark3_3_nmsc),
+   ("ECToBlob Remark 3.3, common inheritance", ``ECToBlob.remark3_3_common),
+   ("ECToBlob Remark 3.3, displayed tree model", ``ECToBlob.remark3_3_displayed),
+   ("ECToBlob Remark 3.3, the counterexample to its non-strict reading", ``ECToBlob.Remark33Counterexample.remark3_3_strict),
+   ("ECToBlob Remark 5.2", ``ECToBlob.Remark52.remark5_2),
+   ("ECToBlob Remark 8.3, NANUQ", ``ECToBlob.remark83_nanuq),
+   ("ECToBlob Remark 8.3, TINNiK", ``ECToBlob.remark83_tinnik),
+   ("ECToBlob Remark 8.4, binary networks", ``ECToBlob.Coarsening.remark8_4),
+   ("ECToBlob Remark 8.4, the counterexample", ``ECToBlob.Coarsening.Counterexample.not_remark8_4),
+   ("ECToBlob §10, the line test", ``ECToBlob.Remarks.consistency_line_nmsc),
+   ("ECToBlob §10, a random T₀", ``ECToBlob.Remarks.consistency_random_tree),
+   ("ECToBlob §10, data splitting", ``ECToBlob.Remarks.consistency_data_splitting),
+   ("ECToBlob §10, combining edge p-values", ``ECToBlob.Remarks.consistency_edge_combination),
+   ("TOB-QMC Lemma 1", ``TOBQMC.lemma1),
+   ("TOB-QMC supplement Lemma 8", ``TOBQMC.supplement_lemma8),
+   ("TOB-QMC, the bipartition search with 3f1a", ``TOBQMC.consistency_search),
+   ("TOB-QMC consistency, T3 option", ``TOBQMC.consistencyT3_of_noAnomalous),
+   ("TOB-QMC ASTRAL's output", ``TOBQMC.astral_refines_treeOfBlobs),
+   ("TINNiK Theorem 4, T3 option", ``TINNiK.theorem4T3),
+   ("TINNiK Theorem 4, neighbor joining", ``TINNiK.theorem4_nj)]
 
 /-- The theorems that Palomar's comparator checks (`theorem_names` of `comparator.json`). -/
 meta def solutionResults : List Name :=

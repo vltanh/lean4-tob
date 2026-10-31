@@ -891,7 +891,7 @@ structure CFDetectable (N : RootedNetwork V E X) (p : QuartetTree X → ℝ) : P
 
 variable [Fintype V] [Fintype E]
 
-/-- Corollary 1 of the source, from its Theorem 1 (TINNiK Theorem 1), as a statement about a network; `corollary1` in `External/AllmanEtAl2023/Theorem1.lean` proves it. For a rooted
+/-- Corollary 1 of the source, from its Theorem 1 (TINNiK Theorem 1), as a statement about a network; `corollary1` in `External/AllmanEtAl2023/Corollary1.lean` proves it. For a rooted
 binary phylogenetic network, the numerical parameters at which the NMSC with independent inheritance
 fails CF-detectability on some induced 4-taxon network form a null set. -/
 def Corollary1 (N : RootedNetwork V E X) : Prop :=

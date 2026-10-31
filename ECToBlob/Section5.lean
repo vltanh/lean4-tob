@@ -20,9 +20,9 @@ Proposition 5.1 says that Assumption 1 holds under the NMSC, on networks whose v
 have degree two or three, for parameters with no anomalous quartets. The paper's proof is a reduction to an
 adaptation of Theorem 1 of Allman et al. 2023, whose content it sketches ("checking the argument ... shows
 that generically, no two gene quartet probabilities are equal"). `adaptedAllmanTheorem1` proves that adaptation: the
-source's argument runs on the face where all hybrid lengths are `0`, where the measure has its atom, since
-under the degree condition the cut arcs of the reduction can be chosen as tree arcs
-(`External.AllmanEtAl2023.exists_reduction_of_blobDegree`).
+source's argument, with its choice of generic parameters and then of `γ`, runs on the face where all hybrid lengths are
+`0`, where the measure has its atom, since under the degree condition the cut arcs of the reduction can be chosen as
+tree arcs (`External.AllmanEtAl2023.exists_reduction_of_blobDegree`).
 -/
 
 @[expose] public noncomputable section
@@ -113,27 +113,20 @@ theorem isNullParams_nmscCF_eq {r r' : QuartetTree X} {θ₀ : MetricData E} (h�
     (s := Ici 0) (t := Ioi 0) (u := Ioo 0 1) hf ⟨(θ₀.length, θ₀.inheritance), hface, hw⟩
   exact measure_mono_null (fun x hx => sub_eq_zero.2 hx.2) hnull
 
-/-- The source's point on the face where all hybrid lengths are `0`, under the degree condition: lengths `3`
-on the tree arcs, inheritance `0` on the arcs of the reduction, and `(1/3, 2/3)` on its two parents. -/
+/-- The source's parameters on the face where all hybrid lengths are `0`, under the degree condition: the reduction,
+with cut arcs that are tree arcs, and `External.AllmanEtAl2023.exists_isNonCut_of_reduction` with the hybrid arcs at
+length `0`. So the argument is that of the source: generic parameters off the two deletions, on this face, make the two
+CFs differ from their alternatives, and then `γ` is picked. -/
 theorem exists_face_isNonCut (hN : N.IsPhylogenetic) (hdeg : BlobDegreeAtMostThree N) {q : Finset X}
     (hq : q.card = 4) (hnt : ¬ IsTreelike N q) (htr : ¬ HasTrivialFourBlob N q) :
     ∃ θ, N.IsNormalized θ ∧ (∀ e, N.IsHybridArc e → θ.length e = 0) ∧
       External.AllmanEtAl2023.IsNonCut (nmscCF N θ 0) q := by
   obtain ⟨D, k₁, k₂, a, s₁, s₂, e₁, e₂, hD, hk, ht, hk₁, hk₂, hpar, -, -, hnot, hs₁, hs₂, hss, hsp₁,
     hsp₂, he₁, he₂⟩ := External.AllmanEtAl2023.exists_reduction_of_blobDegree hN hdeg hq hnt htr
-  let ℓ : E → ℝ := fun e => if N.IsHybridArc e then 0 else 3
-  have hℓ : ∀ e, 0 ≤ ℓ e := fun e => by
-    simp only [ℓ]
-    split_ifs <;> norm_num
-  have hℓt : ∀ {e}, N.IsTreeArc e → ℓ e = 3 := fun he =>
-    ite_eq_right (not_isHybridArc_of_isTreeArc he)
-  have hw := External.AllmanEtAl2023.isWeakMetric_deletionMetric hN hD hℓ
-  refine ⟨(External.AllmanEtAl2023.deletionMetric N D ℓ).withPair k₁ k₂ (1 / 3),
-    NMSC.isNormalized_withPair hw.isNormalized hk ht.symm
-      (fun f hf h₁ h₂ => ite_eq_left (by_contra fun hfD => (hpar f hf hfD).elim h₁ h₂)) _,
-    fun e he => ite_eq_left he,
-    fun r hr r' hr' hne => External.AllmanEtAl2023.nmscCF_ne_of_reduction hN hD hk ht hk₁ hk₂ hpar hq
-      hnot hs₁ hs₂ hss hsp₁ hsp₂ hℓ (hℓt he₁) (hℓt he₂) hr hr' hne⟩
+  obtain ⟨θ, hθ, hface, hnc⟩ := External.AllmanEtAl2023.exists_isNonCut_of_reduction
+    (Z := {e | N.IsHybridArc e}) hN hD hk ht hk₁ hk₂ hpar hq hnot hs₁ hs₂ hss hsp₁ hsp₂
+    (not_isHybridArc_of_isTreeArc he₁) (not_isHybridArc_of_isTreeArc he₂)
+  exact ⟨θ, hθ.isNormalized, hface, hnc⟩
 
 /-- **The adaptation of Theorem 1 of Allman et al. 2023 in ECToBlob's proof of Proposition 5.1**, for a network
 whose vertices in non-trivial blobs have degree two or three, under the NMSC with independent inheritance: for
@@ -143,10 +136,18 @@ quartet probabilities are equal"). The paper's other two facts for this proof ar
 and `NMSC.trivial_uniform`.
 
 The measure has atoms at length `0` on hybrid arcs, so the witness must be on the face where all hybrid
-lengths are `0` (`exists_face_isNonCut`). The source's witness is there, since the two cut arcs of its
+lengths are `0` (`exists_face_isNonCut`). The source's parameters can be taken there, since the two cut arcs of its
 reduction can be moved down to tree arcs when reticulations have degree three
-(`External.AllmanEtAl2023.exists_reduction_of_blobDegree`). So the proof is the source's, and the paper's
-sentence holds as written, for this measure. -/
+(`External.AllmanEtAl2023.exists_reduction_of_blobDegree`). So the proof is the source's as formalized in
+`External/AllmanEtAl2023/Theorem1.lean` and `External/AllmanEtAl2023/Reduction.lean`, with the departures from the source
+listed in their headers, and the paper's sentence holds as written, for this measure.
+
+Departure from the paper: its text goes quarnet by quarnet: "for a quarnet induced from `N⁺`", "for one with a non-trivial
+4-blob, checking the argument of [4, Theorem 1]". Here the argument runs on `N` directly, for each set `q` of four taxa,
+with domination off a deletion seeing the four taxa alone. Applying it on an induced quarnet would need the map from
+the parameters of `N` to those of the quarnet, and that preimages under it of null sets of this measure are null, with its
+atoms at hybrid length `0`, which the paper does not discuss. On `N` the same steps need no comparison of parameter
+spaces. This is not forced: it avoids that comparison. -/
 theorem adaptedAllmanTheorem1 (hN : N.IsPhylogenetic) (hdeg : BlobDegreeAtMostThree N) :
     IsNullParams N {θ | N.IsMetric θ ∧ ∃ q : Finset X, q.card = 4 ∧
       ¬ IsTreelike N q ∧ ¬ HasTrivialFourBlob N q ∧
@@ -164,7 +165,13 @@ theorem adaptedAllmanTheorem1 (hN : N.IsPhylogenetic) (hdeg : BlobDegreeAtMostTh
   exact Set.mem_iUnion.2 ⟨⟨(r, r'), θ₀, hθ₀, hface, hnc r hr r' hr' hne⟩, heq⟩
 
 /-- No anomalous quartets (ECToBlob §3, TINNiK §"The T3 model and testing"): on an induced network with a
-cut-edge split, the quartet tree of the split is more probable than its alternatives. -/
+cut-edge split, the quartet tree of the split is more probable than its alternatives.
+
+Departure from the paper: this reads "no anomalous quartets" strictly. The definition the paper cites (Definition 2 of
+[8], Ané et al. 2024, `notes/sources/ane2024.txt`, lines 295-297) calls a network anomalous when `p_ab|cd < 1/3`, so its
+absence is only `1/3 ≤ p_ab|cd`. That does not give the strict inequality of (5.2) at lines 403, 716 and 722: by Example 1
+of [8] there are valid parameters with a cut edge and all three concordance factors `1/3`. This is forced, and the example
+is worked out at `remark3_3_nmsc` (`ECToBlob/Remark33.lean`). -/
 def NoAnomalousQuartets (N : RootedNetwork V E X) (p : QuartetTree X → ℝ) : Prop :=
   ∀ s, InducedCutSplit N s → ∀ r ∈ s.alternatives, p r < p s
 
@@ -179,8 +186,12 @@ private theorem mem_treesOn_taxa (s : QuartetTree X) : s ∈ treesOn s.taxa := b
 
 /-- **Proposition 5.1** (`ecto:prop5_1`). Let `N` be a rooted network whose vertices in non-trivial blobs have
 degree two or three. Then Assumption 1 holds under the NMSC, for the numerical parameters with no anomalous
-quartets. The forward direction holds for every network; the degree condition is used only for the generic
-clause, in `adaptedAllmanTheorem1`. -/
+quartets, in the strict sense of `NoAnomalousQuartets`. The forward direction holds for every network; the degree
+condition is used only for the generic clause, in `adaptedAllmanTheorem1`.
+
+The paper's "for a quarnet induced from `N⁺` which has a non-trivial cut-edge split, there can be no multifurcations outside of
+blobs" (lines 720-721) is `Coarsening.not_hasTrivialFourBlob_of_inducedCutSplit` (`ECToBlob/Remark84.lean`), which needs no
+degree condition. This proof does not use it, since `NMSC.cut_alternatives` holds on every network, multifurcations or not. -/
 theorem proposition5_1 {N : RootedNetwork V E X} (hN : N.IsPhylogenetic) (hdeg : BlobDegreeAtMostThree N) :
     (∀ θ, N.IsMetric θ → NoAnomalousQuartets N (nmscCF N θ 0) →
       Assumption1Forward N (nmscCF N θ 0)) ∧

@@ -546,6 +546,15 @@ two attachments (`wedgePath_unique`), and the order along the path gives the spl
 (`isTreelike_of_not_below`). The paper does not treat two or more taxa below `h`, which distinct blocks
 exclude (`existsUnique_below`).
 
+Departure from the paper, in two places. The paper reads the 4-blob on `N⁻|Y`, the subnetwork with its
+degree-two vertices, parallel edges and degree-two blobs suppressed (lines 544-545). The proof here stops at
+the subnetwork: it reads "contains a 4-blob" as "no cut edge of the subnetwork induces a `2|2` split". In a
+binary network, suppressing these changes no split of a cut edge (the header of `TOBQMC/Wedge.lean`), which is
+not formalized and not needed. Also, in `⇐`, the paper stops at the cycle with the four taxa attached at
+distinct vertices (lines 541-546), without saying why that excludes a `2|2` cut edge (E19). The proof shows
+that such an edge would leave two taxa attaching through it, against distinct blocks, so it does not use the
+distinctness of the attachments, which is `IsAttachment.blockWalk_of_eq` in `⇒`.
+
 Of the hypotheses on the refinement, only `RefinesBlob` is used. -/
 theorem lemma4 (hN : N.IsPhylogenetic) (hBin : N.IsBinary) (hLevel : IsLevelOne N) {A : Finset X}
     {v h : V} (hv : RefinesBlob N A v) (hh : SameBlob N v h) (hh₂ : 2 ≤ N.graph.indegree h)
@@ -571,10 +580,13 @@ theorem lemma4 (hN : N.IsPhylogenetic) (hBin : N.IsBinary) (hLevel : IsLevelOne 
 its tree of blobs, an edge of `B` is in the tree of blobs exactly when the oracle answers treelike on
 all four-taxon subsets around it. The false positive case follows the paper's observations: (1) the
 descendants of the reticulation are in one block (`existsUnique_below`), and (3) each side contains at
-least two blocks, which gives (2), at least four blocks. The paper derives (3) from `B` being binary; it
-follows from the edge not being in the tree of blobs (`exists_not_sameBlock`). A taxon below the
-reticulation and these blocks give a four-taxon subset meeting the conditions of **Lemma 4**
-(`exists_quartet_through`). -/
+least two blocks, which gives (2), at least four blocks. A taxon below the reticulation and these blocks
+give a four-taxon subset meeting the conditions of **Lemma 4** (`exists_quartet_through`).
+
+Departure from the paper: the paper derives (3) from `B` being binary, which is the wrong reason (E20). A
+side with one block is a cut side, so (3) follows from the edge not being in the tree of blobs
+(`exists_not_sameBlock`). The premise that a false positive refines a non-trivial blob, "by the setting" in the
+paper, is proved (`exists_blob_of_false_positive`). -/
 theorem corollary1 (hN : N.IsPhylogenetic) (hBin : N.IsBinary) (hLevel : IsLevelOne N)
     {B : Finset (Finset X)} (hB : IsBinaryTree B) (hTB : treeOfBlobs N ⊆ B) {A : Finset X}
     (hA : A ∈ internalSides B) :

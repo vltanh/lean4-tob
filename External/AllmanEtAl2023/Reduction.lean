@@ -2,6 +2,7 @@ module
 
 public import Basic.Phylogenetics.DeletedArcs
 public import Basic.Phylogenetics.TreeMetric
+public import External.AllmanEtAl2023.SubgraphBlobs
 
 /-!
 # Allman, Baños, Mitchell, Rhodes 2023, Theorem 1(b): the graph side
@@ -20,59 +21,250 @@ The steps, in the source's order (`notes/sources/allman2023.txt`, lines 145-149)
    (`isTreelikeOff_or_starOff`).
 3. Otherwise take a lowest reticulation `h`, with parents `k₁`, `k₂`; while deleting one leaves `q`
    non-treelike, delete it (the source's "set `γᵢ = 0`"; `exists_reduction_aux`, by induction).
-4. If both deletions give cut splits, the vertices ancestral to `q` below `h` form a tree. If it had
-   two taxa of `q`, some arc in it would separate `2|2` off `D`, so exactly one taxon `a` is below `h`
-   (`isTreelikeOff_or_starOff` again).
-5. The two splits differ, the source's contradiction argument (`IsLowPair.exists_splitOffAt`).
+4. If both deletions give cut splits, "the subnetwork below `v` must be a tree"
+   (`hasUniqueParentsBelow_of_lowest`), and it "can only have one leaf" (`card_taxaBelowOff_le_one`).
+5. The two splits differ, by the source's contradiction with the subnetwork `N₃` on the taxa other than
+   `a`, its blob determined by them, and the cut edge of `N₃` at that blob towards `b`
+   (`IsLowPair.exists_splitOffAt`). Here the language changes from domination to blobs of a set of arcs
+   (`External/AllmanEtAl2023/SubgraphBlobs.lean`), and back (`exists_onlyCrosses_of_splitOffAt`,
+   `splitOffAt_of_onlyCrosses`).
 
 The non-binary variant that ECToBlob's adaptation needs is `exists_reduction_of_blobDegree`: only the
 two uses of the degrees differ, and they are the hypotheses of `exists_reduction_aux`.
+
+## Departures from the source
+
+The first three are recorded at `exists_reduction_aux` and `card_taxaBelowOff_le_one`, and are not forced. The last is
+recorded at `IsLowPair.exists_splitOffAt`, and is forced by a gap in the source.
+
+* The source removes the 2-blobs first, by setting lengths to `0`. Here a reticulation of a 2-blob goes through the
+  same test as any other: it is deleted when the 4-set stays non-treelike.
+* The source's Lemma 1 (exactly one 4-blob or exactly two 3-blobs), which it does not prove, is not stated. Its
+  three uses are replaced by `IsTreelikeOff`, `isTreelikeOff_or_starOff`, and `exists_determines_arcsAbove`.
+* The source's "only a single edge below `v`" is one taxon of the 4-set below `h`, since vertices of degree two are
+  not suppressed here.
+* The source says, with no reason, that the cut edge `e` of `N₃` is a cut edge of `N₁` and `N₂`, and deduces where the
+  arcs above `a` only attach. Here the attachment is proved first, from the cut edges given on `N₁`, `N₂`, and that `e` is
+  a cut edge is deduced from it.
 -/
 
 @[expose] public noncomputable section
 
-open Phylogenetics Phylogenetics.RootedNetwork Finset
+open DirectedMultigraph Phylogenetics Phylogenetics.RootedNetwork Finset
 open scoped Classical
 
 namespace External.AllmanEtAl2023
 
 variable {V E X : Type*} {N : RootedNetwork V E X} {D : Set E}
 
-/-! ### The source's contradiction, in one network -/
+/-! ### The subnetworks in the source's contradiction -/
 
-/-- If `e'` dominates `a` and `e`, above `e'`, dominates a taxon `b` below `e'`, then `e` dominates
-`a`: a path to `a` avoiding `e` would reach `e'`, and continue to `b`. -/
-theorem dominatesOff_of_above (hN : N.IsPhylogenetic) {e e' : E} {a b : X}
-    (he'a : N.DominatesOff D e' a) (heb : N.DominatesOff D e b) (he'b : N.IsBelowOff D e' b)
-    (hord : N.ReachesOff D (N.graph.target e) (N.graph.source e')) : N.DominatesOff D e a := by
-  intro hr
-  rcases hr.split e' with hl | ⟨hp, he', -⟩
-  · exact he'a (hl.mono (Set.insert_subset_insert (Set.subset_insert _ _)))
-  · have h₁ : N.ReachesOff (insert e D) N.root (N.graph.target e') :=
-      (hp.mono (Set.subset_insert _ _)).tail_arc he'
-    have h₂ : N.ReachesOff (insert e D) (N.graph.target e') (N.leaf b) :=
-      ReachesOff.insert_of_target_reaches hN.acyclic (hord.tail_arc he'b.1) he'b.2
-    exact heb (h₁.trans h₂)
+/-- The arcs off `D` above a taxon of `Y`, with their orientations forgotten: the subnetwork of the
+network off `D` on the taxa `Y`, before vertices of degree two are suppressed. The source's `N₁`, `N₂`
+and `N₃` (`notes/sources/allman2023.txt`, lines 148-149) are `arcsAbove N (insert k₂ D) q`,
+`arcsAbove N (insert k₁ D) q` and `arcsAbove N D (q.erase a)`. -/
+def arcsAbove (N : RootedNetwork V E X) (D : Set E) (Y : Set X) : Set E :=
+  {f | f ∉ D ∧ ∃ x ∈ Y, N.ReachesOff D (N.graph.target f) (N.leaf x)}
 
-/-- The case of the source's contradiction with the two cut edges of opposite directions. Let `e'`
-dominate `a` and `b`, with `c` not below it, and let `c` be below `e`, with `b` not below it. Then `a`
-is not below `e`: a path from `e` to `a` either avoids `e'`, and then `e'` is above `e` and so above
-`c`, or it passes `e'`, and then `b` is below `e`. -/
-theorem not_isBelowOff_of_opposite (hN : N.IsPhylogenetic) (hD : N.IsDeletion D) {e e' : E}
-    {a b c : X} (he'a : N.DominatesOff D e' a) (he'c : ¬ N.IsBelowOff D e' c)
-    (he'b : N.IsBelowOff D e' b) (hec : N.IsBelowOff D e c) (heb : ¬ N.IsBelowOff D e b) :
-    ¬ N.IsBelowOff D e a := by
-  rintro ⟨he, hr⟩
-  rcases hr.split e' with hl | ⟨hp, he', -⟩
-  · have hne : e ≠ e' := by
-      rintro rfl
-      exact he'c hec
-    rcases (hD.root_reachesOff hN (N.graph.source e)).split e' with hp' | ⟨-, he'', hr'⟩
-    · exact he'a ((hp'.tail_arc (by simp [hne, he])).trans hl)
-    · exact he'c ⟨he'', (hr'.tail_arc he).trans hec.2⟩
-  · exact heb ⟨he, ((hp.mono (Set.subset_insert _ _)).tail_arc he').trans he'b.2⟩
+/-- A path off `D` that ends above a taxon of `Y` is a walk in `arcsAbove`. -/
+theorem walks_arcsAbove_of_reachesOff {Y : Set X} {u w : V} (h : N.ReachesOff D u w)
+    (hw : ∃ x ∈ Y, N.ReachesOff D w (N.leaf x)) : N.graph.Walks (arcsAbove N D Y) u w := by
+  induction h with
+  | refl => exact .refl
+  | @tail b c _ hbc ih =>
+    obtain ⟨f, hf, rfl, rfl⟩ := hbc
+    obtain ⟨x, hx, hr⟩ := hw
+    exact (ih ⟨x, hx, ReachesOff.head_arc hf hr⟩).tail ⟨f, ⟨hf, x, hx, hr⟩, Or.inl ⟨rfl, rfl⟩⟩
 
-/-! ### The source's contradiction, over both deletions -/
+/-- A path off `D` avoiding `e` that ends above a taxon of `Y` is a walk in `arcsAbove` avoiding `e`. -/
+theorem walks_sdiff_of_reachesOff_insert {Y : Set X} {e : E} {u w : V}
+    (h : N.ReachesOff (insert e D) u w) (hw : ∃ x ∈ Y, N.ReachesOff D w (N.leaf x)) :
+    N.graph.Walks (arcsAbove N D Y \ {e}) u w := by
+  induction h with
+  | refl => exact .refl
+  | @tail b c _ hbc ih =>
+    obtain ⟨f, hf, rfl, rfl⟩ := hbc
+    have hfe : f ≠ e := fun h => hf (Or.inl h)
+    have hfD : f ∉ D := fun h => hf (Or.inr h)
+    obtain ⟨x, hx, hr⟩ := hw
+    exact (ih ⟨x, hx, ReachesOff.head_arc hfD hr⟩).tail
+      ⟨f, ⟨⟨hfD, x, hx, hr⟩, hfe⟩, Or.inl ⟨rfl, rfl⟩⟩
+
+/-- The subnetwork `arcsAbove` is connected, through the root. -/
+theorem walks_arcsAbove (hN : N.IsPhylogenetic) (hD : N.IsDeletion D) {Y : Set X} {u w : V}
+    (hu : ∃ x ∈ Y, N.ReachesOff D u (N.leaf x)) (hw : ∃ x ∈ Y, N.ReachesOff D w (N.leaf x)) :
+    N.graph.Walks (arcsAbove N D Y) u w :=
+  (N.graph.walks_symm (walks_arcsAbove_of_reachesOff (hD.root_reachesOff hN u) hu)).trans
+    (walks_arcsAbove_of_reachesOff (hD.root_reachesOff hN w) hw)
+
+/-- A taxon is a node of degree one of `arcsAbove`: its parent arc is the only arc at it. -/
+theorem exists_parentArc_leaf (hN : N.IsPhylogenetic) {F : Set E} (x : X) :
+    ∃ g, N.graph.target g = N.leaf x ∧ N.graph.source g ≠ N.leaf x ∧
+      ∀ f ∈ F, (N.graph.source f = N.leaf x ∨ N.graph.target f = N.leaf x) → f = g := by
+  have : Finite E := hN.finite_arcs
+  obtain ⟨g, hg⟩ := (N.graph.indegree_eq_one_iff _).mp (hN.leaf_indegree x)
+  have hout := (N.graph.outdegree_eq_zero_iff _).mp ((hN.leaves _).mpr ⟨x, rfl⟩)
+  refine ⟨g, (hg g).mpr rfl, fun h => hout g h, fun f _ hf => ?_⟩
+  rcases hf with hf | hf
+  · exact absurd hf (hout f)
+  · exact (hg f).mp hf
+
+/-- A taxon is a node of degree one of `arcsAbove`, in the sense of `SubgraphBlobs.lean`. -/
+theorem isPendantIn_arcsAbove (hN : N.IsPhylogenetic) {F : Set E} (x : X) :
+    IsPendantIn N.graph F (N.leaf x) := by
+  obtain ⟨g, ht, hs, hg⟩ := exists_parentArc_leaf (F := F) hN x
+  exact ⟨g, fun h => hs (h.trans ht), hg⟩
+
+/-- **A blob of `N₃` determined by three taxa** (the source's "a blob `ℬ` determined by the 3 taxa
+`b, c, d`", `notes/sources/allman2023.txt`, line 149; the source states its existence after
+Definition 8): by `exists_median` and `determines_of_median`, since no cut edge has two of three taxa
+on each side. -/
+theorem exists_determines_arcsAbove [DecidableEq X] (hN : N.IsPhylogenetic) (hD : N.IsDeletion D)
+    {S : Finset X} (h3 : S.card = 3) :
+    ∃ v, (∀ x ∈ S, N.graph.Walks (arcsAbove N D (S : Set X)) v (N.leaf x)) ∧
+      Determines N.graph (arcsAbove N D (S : Set X)) v N.leaf S := by
+  have : Finite V := hN.finite_vertices
+  have hSU : ∀ x ∈ S, ∃ y ∈ (S : Set X), N.ReachesOff D (N.leaf x) (N.leaf y) := fun x hx =>
+    ⟨x, Finset.mem_coe.mpr hx, .refl⟩
+  have hstart : ∃ e T, e ∈ arcsAbove N D (S : Set X) ∧
+      OnlyCrosses N.graph (arcsAbove N D (S : Set X)) e T ∧ N.graph.Crosses e T ∧
+        TwoIn N.leaf S T := by
+    obtain ⟨x, hx⟩ := Finset.card_pos.mp (by omega : 0 < S.card)
+    obtain ⟨t₁, ht₁, t₂, ht₂, hne⟩ := Finset.one_lt_card.mp
+      (by rw [Finset.card_erase_of_mem hx]; omega : 1 < (S.erase x).card)
+    obtain ⟨g, ht, hs, hg⟩ := exists_parentArc_leaf (F := arcsAbove N D (S : Set X)) hN x
+    have hgD : g ∉ D := by
+      obtain ⟨f, hf, hfx⟩ := hD.parent (N.leaf x) fun h => by
+        have := hN.leaf_indegree x
+        rw [h, hN.root_indegree] at this
+        omega
+      have : Finite E := hN.finite_arcs
+      obtain ⟨g', hg'⟩ := (N.graph.indegree_eq_one_iff _).mp (hN.leaf_indegree x)
+      rwa [show g = f from ((hg' g).mp ht).trans ((hg' f).mp hfx).symm]
+    obtain ⟨hx₁, hs₁⟩ := Finset.mem_erase.mp ht₁
+    obtain ⟨hx₂, hs₂⟩ := Finset.mem_erase.mp ht₂
+    have hlne : ∀ {t : X}, t ≠ x → N.leaf t ≠ N.leaf x := fun h h' => h (hN.leaf_injective h')
+    refine ⟨g, ({N.leaf x}ᶜ : Set V), ⟨hgD, x, Finset.mem_coe.mpr hx, ht ▸ .refl⟩,
+      fun f hf hc => hg f hf ?_, Or.inl ⟨by simpa using hs, by simp [ht]⟩,
+      t₁, hs₁, t₂, hs₂, hne, by simpa using hlne hx₁, by simpa using hlne hx₂⟩
+    rcases hc with ⟨-, h1⟩ | ⟨-, h1⟩
+    · exact Or.inr (by simpa using h1)
+    · exact Or.inl (by simpa using h1)
+  have hsplit : ∀ e T, OnlyCrosses N.graph (arcsAbove N D (S : Set X)) e T → TwoIn N.leaf S T →
+      TwoIn N.leaf S Tᶜ → False := by
+    rintro _ T - ⟨s, hs, t, ht, hne, hsT, htT⟩ ⟨s', hs', t', ht', hne', hsT', htT'⟩
+    have h₁ : 1 < (S.filter fun x => N.leaf x ∈ T).card := Finset.one_lt_card.mpr
+      ⟨s, Finset.mem_filter.mpr ⟨hs, hsT⟩, t, Finset.mem_filter.mpr ⟨ht, htT⟩, hne⟩
+    have h₂ : 1 < (S.filter fun x => ¬ N.leaf x ∈ T).card := Finset.one_lt_card.mpr
+      ⟨s', Finset.mem_filter.mpr ⟨hs', hsT'⟩, t', Finset.mem_filter.mpr ⟨ht', htT'⟩, hne'⟩
+    have := Finset.card_filter_add_card_filter_not (s := S) fun x => N.leaf x ∈ T
+    omega
+  obtain ⟨v, hv, hmed⟩ := exists_median (G := N.graph) (F := arcsAbove N D (S : Set X)) (S := S)
+    (ℓ := N.leaf) (U := {u | ∃ y ∈ (S : Set X), N.ReachesOff D u (N.leaf y)})
+    (fun _ hx _ hy => walks_arcsAbove hN hD hx hy)
+    (fun f ⟨hf, x, hx, hr⟩ => ⟨⟨x, hx, ReachesOff.head_arc hf hr⟩, ⟨x, hx, hr⟩⟩) hSU hstart hsplit
+  have hc : ∀ x ∈ S, N.graph.Walks (arcsAbove N D (S : Set X)) v (N.leaf x) := fun x hx =>
+    walks_arcsAbove hN hD hv (hSU x hx)
+  exact ⟨v, hc, determines_of_median (by omega) hN.leaf_injective.injOn
+    (fun x _ => isPendantIn_arcsAbove hN x) hc hmed⟩
+
+/-! ### Cut edges off a deletion: from domination to sides, and back -/
+
+/-- If every taxon of `Y` is dominated by `e` or not below it, off `D`, then `e` is the only arc of
+`arcsAbove` crossing the set of vertices all of whose root paths off `D` use `e`. -/
+theorem onlyCrosses_domSetOff (hN : N.IsPhylogenetic) (hD : N.IsDeletion D) {Y : Set X} {e : E}
+    (hY : ∀ y ∈ Y, N.DominatesOff D e y ∨ ¬ N.IsBelowOff D e y) :
+    OnlyCrosses N.graph (arcsAbove N D Y) e {v | ¬ N.ReachesOff (insert e D) N.root v} := by
+  have hA := hN.acyclic
+  rintro f ⟨hfD, y, hy, hr⟩ (⟨hsf, htf⟩ | ⟨htf, hsf⟩)
+  · exfalso
+    rcases (hD.root_reachesOff hN (N.graph.source f)).split e with hl | ⟨-, he, hr'⟩
+    · exact hsf hl
+    · have hbt := hr'.tail_arc hfD
+      rcases hY y hy with hdy | hny
+      · exact hdy ((not_not.mp htf).trans (ReachesOff.insert_of_target_reaches hA hbt hr))
+      · exact hny ⟨he, hbt.trans hr⟩
+  · by_contra hfe
+    exact htf ((not_not.mp hsf).tail_arc (by simp [hfe, hfD]))
+
+/-- If `e` is the only arc of `arcsAbove` crossing `T`, with its target in `T` and its source not, then
+it dominates the taxa of `Y` in `T`, and the taxa of `Y` not in `T` are not below it. -/
+theorem separatesOff_of_onlyCrosses (hN : N.IsPhylogenetic) (hD : N.IsDeletion D) {Y : Set X} {e : E}
+    {T : Set V} (he : e ∈ arcsAbove N D Y) (hT : OnlyCrosses N.graph (arcsAbove N D Y) e T)
+    (ht : N.graph.target e ∈ T) (hs : N.graph.source e ∉ T) :
+    (∀ x ∈ Y, N.leaf x ∈ T → N.DominatesOff D e x) ∧
+      ∀ x ∈ Y, N.leaf x ∉ T → ¬ N.IsBelowOff D e x := by
+  have hA := hN.acyclic
+  obtain ⟨heD, y₀, hy₀, hr₀⟩ := he
+  have hroot : N.root ∉ T := fun h => hs ((hT.mem_iff_of_walks_diff
+    (walks_sdiff_of_reachesOff_insert ((hD.root_reachesOff hN _).insert_of_not_reaches fun h' =>
+      not_reaches_target_source hA e h'.reaches) ⟨y₀, hy₀, ReachesOff.head_arc heD hr₀⟩)).mp h)
+  refine ⟨fun x hx hxT hav => hroot ((hT.mem_iff_of_walks_diff
+    (walks_sdiff_of_reachesOff_insert hav ⟨x, hx, .refl⟩)).mpr hxT), fun x hx hxT hb => hxT ?_⟩
+  exact (hT.mem_iff_of_walks_diff (walks_sdiff_of_reachesOff_insert
+    (ReachesOff.insert_of_target_reaches hA .refl hb.2) ⟨x, hx, .refl⟩)).mp ht
+
+section Quartet
+
+variable [DecidableEq X]
+
+/-- A split off `D` is a cut edge of `arcsAbove`, with the cherry `B` on one side. -/
+theorem exists_onlyCrosses_of_splitOffAt [Fintype X] (hN : N.IsPhylogenetic) (hD : N.IsDeletion D)
+    {e : E} {s : QuartetTree X} (h : N.SplitOffAt D e s) {B : Finset X} (hB : B ∈ s.val) :
+    ∃ T : Set V, OnlyCrosses N.graph (arcsAbove N D (s.taxa : Set X)) e T ∧
+      ∀ x ∈ s.taxa, N.leaf x ∈ T ↔ x ∈ B := by
+  obtain ⟨P, hP, hdom, hnb⟩ := h
+  have hO := onlyCrosses_domSetOff hN hD (Y := (s.taxa : Set X)) (e := e) fun y hy => by
+    by_cases hyP : y ∈ P
+    · exact Or.inl (hdom y (Finset.mem_coe.mpr hyP))
+    · exact Or.inr (hnb y (by simpa [hyP] using hy))
+  have hmem : ∀ x ∈ s.taxa, N.leaf x ∈ {v | ¬ N.ReachesOff (insert e D) N.root v} ↔ x ∈ P := by
+    intro x hx
+    refine ⟨fun hn => ?_, fun hxP => hdom x (Finset.mem_coe.mpr hxP)⟩
+    by_contra hxP
+    rcases (hD.root_reachesOff hN (N.leaf x)).split e with hl | ⟨-, he, hr⟩
+    · exact hn hl
+    · exact hnb x (by simpa [hxP] using hx) ⟨he, hr⟩
+  have hB' := hB
+  rw [s.eq_pair_of_mem hP] at hB'
+  simp only [Finset.mem_insert, Finset.mem_singleton] at hB'
+  rcases hB' with rfl | rfl
+  · exact ⟨_, hO, hmem⟩
+  · refine ⟨_, hO.compl, fun x hx => ?_⟩
+    rw [Set.mem_compl_iff, hmem x hx]
+    simp [hx]
+
+/-- A cut edge of `arcsAbove` that has the cherry `B` on one side and the other cherry on the other is a
+split off `D`. -/
+theorem splitOffAt_of_onlyCrosses [Fintype X] (hN : N.IsPhylogenetic) (hD : N.IsDeletion D)
+    {s : QuartetTree X} {B : Finset X} (hB : B ∈ s.val) {e : E} {T : Set V}
+    (hT : OnlyCrosses N.graph (arcsAbove N D (s.taxa : Set X)) e T)
+    (hleaf : ∀ x ∈ s.taxa, N.leaf x ∈ T ↔ x ∈ B) : N.SplitOffAt D e s := by
+  have hsB : ∀ x ∈ B, x ∈ s.taxa := fun x hx => s.subset_taxa hB hx
+  obtain ⟨x₀, hx₀⟩ : B.Nonempty := Finset.card_pos.mp (by rw [s.card_of_mem hB]; norm_num)
+  obtain ⟨y₀, hy₀⟩ : (s.taxa \ B).Nonempty :=
+    Finset.card_pos.mp (by rw [s.card_of_mem (s.sdiff_mem hB)]; norm_num)
+  obtain ⟨hy₀t, hy₀B⟩ := Finset.mem_sdiff.mp hy₀
+  have hanc : ∀ x ∈ s.taxa, ∃ y ∈ (s.taxa : Set X), N.ReachesOff D (N.leaf x) (N.leaf y) :=
+    fun x hx => ⟨x, Finset.mem_coe.mpr hx, .refl⟩
+  obtain ⟨he, p, r, hl, hp, hr⟩ := exists_links_of_walks hT
+    (fun h => hy₀B ((hleaf y₀ hy₀t).mp h))
+    (walks_arcsAbove hN hD (hanc y₀ hy₀t) (hanc x₀ (hsB x₀ hx₀))) ((hleaf x₀ (hsB x₀ hx₀)).mpr hx₀)
+  rcases hl with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+  · obtain ⟨hd, hn⟩ := separatesOff_of_onlyCrosses hN hD he hT hr hp
+    refine ⟨B, hB, fun x hx => hd x (Finset.mem_coe.mpr (hsB x (Finset.mem_coe.mp hx)))
+      ((hleaf x (hsB x (Finset.mem_coe.mp hx))).mpr (Finset.mem_coe.mp hx)), fun x hx => ?_⟩
+    obtain ⟨hxt, hxB⟩ := Finset.mem_sdiff.mp (Finset.mem_coe.mp hx)
+    exact hn x (Finset.mem_coe.mpr hxt) fun h => hxB ((hleaf x hxt).mp h)
+  · obtain ⟨hd, hn⟩ := separatesOff_of_onlyCrosses hN hD he hT.compl hp (not_not.mpr hr)
+    refine ⟨s.taxa \ B, s.sdiff_mem hB, fun x hx => ?_, fun x hx => ?_⟩
+    · obtain ⟨hxt, hxB⟩ := Finset.mem_sdiff.mp (Finset.mem_coe.mp hx)
+      exact hd x (Finset.mem_coe.mpr hxt) fun h => hxB ((hleaf x hxt).mp h)
+    · rw [Finset.sdiff_sdiff_eq_self (s.subset_taxa hB)] at hx
+      have hxB := Finset.mem_coe.mp hx
+      exact hn x (Finset.mem_coe.mpr (hsB x hxB)) (not_not.mpr ((hleaf x (hsB x hxB)).mpr hxB))
+
+/-! ### The source's contradiction -/
 
 /-- The situation of the source's last step: two parents `k₁ ≠ k₂` off the deletion `D` of a vertex
 below which, of the taxa `Y`, at most `a` lies. -/
@@ -87,8 +279,9 @@ structure IsLowPair (N : RootedNetwork V E X) (D : Set E) (k₁ k₂ : E) (a : X
 
 namespace IsLowPair
 
-variable {k₁ k₂ e e' : E} {a b c x : X} {Y P Q : Set X}
+variable {k₁ k₂ e e' f : E} {a b c d : X} {Y : Set X} {q : Finset X} {v : V} {T : Set V}
 
+omit [DecidableEq X] in
 theorem symm (hL : IsLowPair N D k₁ k₂ a Y) : IsLowPair N D k₂ k₁ a Y where
   phylogenetic := hL.phylogenetic
   deletion := hL.deletion
@@ -98,243 +291,222 @@ theorem symm (hL : IsLowPair N D k₁ k₂ a Y) : IsLowPair N D k₂ k₁ a Y wh
   notMem₂ := hL.notMem₁
   not_reaches x hx hxa := hL.target_eq ▸ hL.not_reaches x hx hxa
 
-theorem isDeletion_insert_left (hL : IsLowPair N D k₁ k₂ a Y) : N.IsDeletion (insert k₁ D) :=
-  hL.deletion.insert hL.phylogenetic hL.ne hL.target_eq hL.notMem₂
+/-- "`N₃` is a subnetwork of both `N₁` and `N₂`" (`notes/sources/allman2023.txt`, line 149): a path to
+a taxon other than `a` does not pass the reticulation. -/
+theorem arcsAbove_erase_subset (hL : IsLowPair N D k₁ k₂ a (q : Set X)) :
+    arcsAbove N D (q.erase a : Finset X) ⊆ arcsAbove N (insert k₁ D) (q : Set X) := by
+  rintro f ⟨hfD, x, hx, hr⟩
+  obtain ⟨hxa, hxq⟩ := Finset.mem_erase.mp (Finset.mem_coe.mp hx)
+  have hb := (isBelowOff_insert_iff (hL.not_reaches x (Finset.mem_coe.mpr hxq) hxa)).mpr ⟨hfD, hr⟩
+  exact ⟨hb.1, x, Finset.mem_coe.mpr hxq, hb.2⟩
 
-theorem dominatesOff_left_iff (hL : IsLowPair N D k₁ k₂ a Y) (hx : x ∈ Y) (hxa : x ≠ a) :
-    N.DominatesOff (insert k₁ D) e x ↔ N.DominatesOff D e x :=
-  dominatesOff_insert_iff (hL.not_reaches x hx hxa)
+omit [DecidableEq X] in
+/-- Every arc of the network off `D` is in one of the two deleted networks, since a path uses at most
+one of `k₁`, `k₂`. -/
+theorem arcsAbove_subset_union (hL : IsLowPair N D k₁ k₂ a Y) :
+    arcsAbove N D Y ⊆ arcsAbove N (insert k₁ D) Y ∪ arcsAbove N (insert k₂ D) Y := by
+  have hA := hL.phylogenetic.acyclic
+  rintro f ⟨hfD, x, hx, hr⟩
+  by_cases h₁ : f = k₁
+  · subst h₁
+    exact Or.inr ⟨by simp [hL.ne, hfD], x, hx,
+      ReachesOff.insert_of_target_reaches hA (hL.target_eq ▸ .refl) hr⟩
+  by_cases h₂ : f = k₂
+  · subst h₂
+    exact Or.inl ⟨by simp [hL.ne.symm, hfD], x, hx,
+      ReachesOff.insert_of_target_reaches hA (hL.target_eq ▸ .refl) hr⟩
+  rcases reachesOff_insert_or hA hL.ne hL.target_eq hr with h | h
+  · exact Or.inl ⟨by simp [h₁, hfD], x, hx, h⟩
+  · exact Or.inr ⟨by simp [h₂, hfD], x, hx, h⟩
 
-theorem isBelowOff_left_iff (hL : IsLowPair N D k₁ k₂ a Y) (hx : x ∈ Y) (hxa : x ≠ a) :
-    N.IsBelowOff (insert k₁ D) e x ↔ N.IsBelowOff D e x :=
-  isBelowOff_insert_iff (hL.not_reaches x hx hxa)
+/-- **The attachment of the part above `a` only** (the source's "every edge in `𝒩+` which is incident
+to `N₃` and ancestral to only the taxon `a` must be attached to `N₃` in the `b`-component of
+`N₃ \ {e}`", `notes/sources/allman2023.txt`, line 149). Let `e'` be a cut edge of the network with `k₁`
+deleted, with the side `T` containing `a, b` and not `c, d`. Then `e'` lies in `N₃`, and has the blob
+`ℬ` on the side of `c, d`. An arc `f` above `a` only is joined to `a` off `e'`, so its ends are in `T`.
+The vertices of `N₃` in `T` are joined to `b` inside `T`, which `e`, having an end in `ℬ`, is not in.
+So were an end of `f` in the component of `ℬ` in `N₃ \ {e}`, so would `b` be, and this is against the
+choice of `e`. The source deduces this from `onlyCrosses_far_insert`, for which it gives no reason; here the order
+is the reverse (see `exists_splitOffAt`). -/
+theorem ends_mem_far (hL : IsLowPair N D k₁ k₂ a (q : Set X)) (ha : a ∈ q)
+    (hdet : Determines N.graph (arcsAbove N D (q.erase a : Finset X)) v N.leaf (q.erase a))
+    (hw : ∀ x ∈ q.erase a, N.graph.Walks (arcsAbove N D (q.erase a : Finset X)) v (N.leaf x))
+    (hlead : LeadsTo N.graph (arcsAbove N D (q.erase a : Finset X)) v e (N.leaf b))
+    (hb : b ∈ q.erase a) (hc : c ∈ q.erase a) (hd : d ∈ q.erase a) (hcd : c ≠ d)
+    (hT : OnlyCrosses N.graph (arcsAbove N (insert k₁ D) (q : Set X)) e' T)
+    (haT : N.leaf a ∈ T) (hbT : N.leaf b ∈ T) (hcT : N.leaf c ∉ T) (hdT : N.leaf d ∉ T)
+    (hf : f ∈ arcsAbove N (insert k₁ D) (q : Set X))
+    (hf₃ : f ∉ arcsAbove N D (q.erase a : Finset X)) :
+    N.graph.source f ∈ far N.graph (arcsAbove N D (q.erase a : Finset X)) e v ∧
+      N.graph.target f ∈ far N.graph (arcsAbove N D (q.erase a : Finset X)) e v := by
+  have hT₃ := hT.mono hL.arcsAbove_erase_subset
+  -- `ℬ` is on the side of `c, d`
+  have hvT : v ∉ T := fun hv => hcd (hdet.eq_of_mem_side hT₃.compl (not_not.mpr hv) hc hd (hw c hc)
+    (hw d hd) hcT hdT)
+  -- `e'` is in `N₃`
+  have he'₃ := (exists_links_of_walks hT₃ hcT
+    ((N.graph.walks_symm (hw c hc)).trans (hw b hb)) hbT).1
+  -- the path down to `a` from an arc above `a` only avoids `e'`
+  have hdown : ∀ u, (∀ x ∈ q.erase a, ¬ N.ReachesOff D u (N.leaf x)) →
+      N.ReachesOff (insert k₁ D) u (N.leaf a) →
+      N.graph.Walks (arcsAbove N (insert k₁ D) (q : Set X) \ {e'}) u (N.leaf a) := by
+    intro u hu hr
+    induction hr using Relation.ReflTransGen.head_induction_on with
+    | refl => exact .refl
+    | @head p r hpr hra ih =>
+      obtain ⟨g, hg, rfl, rfl⟩ := hpr
+      have hgD : g ∉ D := fun h => hg (Or.inr h)
+      have hu' : ∀ x ∈ q.erase a, ¬ N.ReachesOff D (N.graph.target g) (N.leaf x) := fun x hx h =>
+        hu x hx (ReachesOff.head_arc hgD h)
+      have hne : g ≠ e' := by
+        rintro rfl
+        obtain ⟨-, x, hx, hrx⟩ := he'₃
+        exact hu' x (Finset.mem_coe.mp hx) hrx
+      exact Relation.ReflTransGen.head ⟨g, ⟨⟨hg, a, Finset.mem_coe.mpr ha, hra⟩, hne⟩,
+        Or.inl ⟨rfl, rfl⟩⟩ (ih hu')
+  -- a vertex in `T` joined to `ℬ` off `e` would join `b` to `ℬ` off `e`
+  have key : ∀ u, N.graph.Walks (arcsAbove N (insert k₁ D) (q : Set X) \ {e'}) u (N.leaf a) →
+      u ∈ far N.graph (arcsAbove N D (q.erase a : Finset X)) e v := fun u hu hwu => by
+    have huT : u ∈ T := (hT.mem_iff_of_walks_diff hu).mpr haT
+    have hin := walks_insideArcs_of_mem hT₃ hvT (walks_mono Set.sdiff_subset hwu) (hw b hb) huT hbT
+    have hsub := (insideArcs_subset_diff_incidentCuts hT₃ hvT).trans
+      (Set.sdiff_subset_sdiff_right (Set.singleton_subset_iff.mpr hlead.1))
+    exact hlead.2 (Relation.ReflTransGen.trans hwu (walks_mono hsub hin))
+  obtain ⟨hfi, x, hxq, hrx⟩ := hf
+  have hfD : f ∉ D := fun h => hfi (Or.inr h)
+  have hnr : ∀ y ∈ q.erase a, ¬ N.ReachesOff D (N.graph.target f) (N.leaf y) := fun y hy h =>
+    hf₃ ⟨hfD, y, Finset.mem_coe.mpr hy, h⟩
+  have hxa : x = a := by
+    by_contra hne
+    exact hnr x (Finset.mem_erase.mpr ⟨hne, Finset.mem_coe.mp hxq⟩) (hrx.mono (Set.subset_insert _ _))
+  subst hxa
+  have h₁ := hdown _ hnr hrx
+  have hfe' : f ≠ e' := fun h => hf₃ (h ▸ he'₃)
+  exact ⟨key _ (Relation.ReflTransGen.head ⟨f, ⟨⟨hfi, x, hxq, hrx⟩, hfe'⟩, Or.inl ⟨rfl, rfl⟩⟩ h₁),
+    key _ h₁⟩
 
-theorem ne_of_isBelowOff (hL : IsLowPair N D k₁ k₂ a Y) (hb : N.IsBelowOff D e x) (hx : x ∈ Y)
-    (hxa : x ≠ a) : e ≠ k₁ ∧ e ≠ k₂ := by
-  constructor
-  · rintro rfl
-    exact hL.not_reaches x hx hxa hb.2
-  · rintro rfl
-    exact hL.symm.not_reaches x hx hxa hb.2
+/-- **"Now `e` must be a cut edge in both `N₁` and `N₂`"** (`notes/sources/allman2023.txt`, line 149):
+with the notation of `ends_mem_far`, `e` is the only arc of the deleted network crossing the side of
+`e` in `N₃` away from `ℬ`. The source gives no reason for this. Here it is deduced from `ends_mem_far` (see
+`exists_splitOffAt`). -/
+theorem onlyCrosses_far_insert (hL : IsLowPair N D k₁ k₂ a (q : Set X)) (ha : a ∈ q)
+    (hdet : Determines N.graph (arcsAbove N D (q.erase a : Finset X)) v N.leaf (q.erase a))
+    (hw : ∀ x ∈ q.erase a, N.graph.Walks (arcsAbove N D (q.erase a : Finset X)) v (N.leaf x))
+    (hlead : LeadsTo N.graph (arcsAbove N D (q.erase a : Finset X)) v e (N.leaf b))
+    (hb : b ∈ q.erase a) (hc : c ∈ q.erase a) (hd : d ∈ q.erase a) (hcd : c ≠ d)
+    (hT : OnlyCrosses N.graph (arcsAbove N (insert k₁ D) (q : Set X)) e' T)
+    (haT : N.leaf a ∈ T) (hbT : N.leaf b ∈ T) (hcT : N.leaf c ∉ T) (hdT : N.leaf d ∉ T) :
+    OnlyCrosses N.graph (arcsAbove N (insert k₁ D) (q : Set X)) e
+      (far N.graph (arcsAbove N D (q.erase a : Finset X)) e v) := by
+  intro f hf hcr
+  by_cases hf₃ : f ∈ arcsAbove N D (q.erase a : Finset X)
+  · exact onlyCrosses_far f hf₃ hcr
+  · obtain ⟨h₁, h₂⟩ := hL.ends_mem_far ha hdet hw hlead hb hc hd hcd hT haT hbT hcT hdT hf hf₃
+    rcases hcr with ⟨-, h⟩ | ⟨-, h⟩
+    · exact absurd h₂ h
+    · exact absurd h₁ h
 
-/-- A taxon other than `a` does not see which of `k₁`, `k₂` is deleted. -/
-theorem dominatesOff_swap (hL : IsLowPair N D k₁ k₂ a Y) (hx : x ∈ Y) (hxa : x ≠ a)
-    (h : N.DominatesOff (insert k₁ D) e x) : N.DominatesOff (insert k₂ D) e x :=
-  (hL.symm.dominatesOff_left_iff hx hxa).mpr ((hL.dominatesOff_left_iff hx hxa).mp h)
+variable [Fintype X] {e₁ e₂ : E} {s : QuartetTree X}
 
-/-- A taxon other than `a` does not see which of `k₁`, `k₂` is deleted. -/
-theorem not_isBelowOff_swap (hL : IsLowPair N D k₁ k₂ a Y) (hx : x ∈ Y) (hxa : x ≠ a)
-    (h : ¬ N.IsBelowOff (insert k₁ D) e x) : ¬ N.IsBelowOff (insert k₂ D) e x := fun h' =>
-  h ((hL.isBelowOff_left_iff hx hxa).mpr ((hL.symm.isBelowOff_left_iff hx hxa).mp h'))
+/-- **The source's contradiction** (`notes/sources/allman2023.txt`, line 149): if the deleted networks
+`N₁` and `N₂` have cut edges `e₁`, `e₂` of the same quartet tree `ab|cd`, then the network has one.
 
-/-- The end of the source's contradiction: an arc that induces a split both when `k₁` and when `k₂` is
-deleted induces it in the network itself. Every path uses at most one of `k₁`, `k₂`. -/
-theorem separatesOff_of_both (hL : IsLowPair N D k₁ k₂ a Y) (he : e ≠ k₁ ∧ e ≠ k₂)
-    (h₁ : N.SeparatesOff (insert k₁ D) e P Q) (h₂ : N.SeparatesOff (insert k₂ D) e P Q) :
-    N.SeparatesOff D e P Q := by
-  refine ⟨fun x hx => ?_, fun x hx => ?_⟩
-  · exact dominatesOff_of_insert_of_insert hL.phylogenetic.acyclic hL.ne hL.target_eq
-      (h₁.1 x hx) (h₂.1 x hx)
-  · exact not_isBelowOff_of_insert_of_insert hL.phylogenetic.acyclic hL.ne hL.target_eq he.1 he.2
-      (h₁.2 x hx) (h₂.2 x hx)
+Consider `N₃`, the subnetwork on `b, c, d` (`arcsAbove N D (s.taxa.erase a)`), which is a subnetwork of
+both `N₁` and `N₂` (`arcsAbove_erase_subset`), with the blob `ℬ` determined by `b, c, d`
+(`exists_determines_arcsAbove`). Let `e` be the cut edge of `N₃` incident to `ℬ` through which paths to `b`
+pass (`exists_leadsTo`). Every edge above `a` only is attached to `N₃` in the `b`-component of `N₃ \ {e}`
+(`ends_mem_far`), by means of the given cut edges `e₁`, `e₂`. So `e` is a cut edge of both `N₁` and `N₂`
+(`onlyCrosses_far_insert`), and hence of the network, with `a, b` on one side and `c, d` on the other
+(`arcsAbove_subset_union`).
 
-/-- A path off `D` that ends above a taxon other than `a` does not use `k₁`. -/
-theorem reachesOff_insert (hL : IsLowPair N D k₁ k₂ a Y) (hx : x ∈ Y) (hxa : x ≠ a) {u w : V}
-    (h : N.ReachesOff D u w) (hw : N.ReachesOff D w (N.leaf x)) : N.ReachesOff (insert k₁ D) u w :=
-  h.insert_of_not_reaches fun h' => hL.not_reaches x hx hxa (h'.trans hw)
-
-/-- Both cut edges dominate the side of `a`, and `e` is the one above: `e` is the nearer of the two to
-the blob of `b` and the other side. -/
-theorem separatesOff_upper (hL : IsLowPair N D k₁ k₂ a Y) (hP : P ⊆ Y) (hQ : Q ⊆ Y) (hb : b ∈ P)
-    (hba : b ≠ a) (hQa : a ∉ Q) (hs : N.SeparatesOff (insert k₂ D) e P Q)
-    (hs' : N.SeparatesOff (insert k₁ D) e' P Q)
-    (hord : N.ReachesOff D (N.graph.target e) (N.graph.source e')) : N.SeparatesOff D e P Q := by
-  have hN := hL.phylogenetic
-  have heb : N.DominatesOff (insert k₁ D) e b := hL.symm.dominatesOff_swap (hP hb) hba (hs.1 b hb)
-  have he'b : N.IsBelowOff (insert k₁ D) e' b := (hs'.1 b hb).isBelowOff hN hL.isDeletion_insert_left
-  have hne := hL.ne_of_isBelowOff ((hL.dominatesOff_left_iff (hP hb) hba).mp heb |>.isBelowOff hN
-    hL.deletion) (hP hb) hba
-  refine hL.separatesOff_of_both hne ⟨fun x hx => ?_, fun x hx => ?_⟩ hs
-  · by_cases hxa : x = a
-    · subst hxa
-      refine dominatesOff_of_above hN (hs'.1 x hx) heb he'b ?_
-      refine hL.reachesOff_insert (hP hb) hba hord ?_
-      have he' : e' ∉ D := fun h => he'b.1 (Set.mem_insert_of_mem _ h)
-      exact ReachesOff.head_arc he' (he'b.2.mono (Set.subset_insert _ _))
-    · exact hL.symm.dominatesOff_swap (hP hx) hxa (hs.1 x hx)
-  · have hxa : x ≠ a := fun h => hQa (h ▸ hx)
-    exact hL.symm.not_isBelowOff_swap (hQ hx) hxa (hs.2 x hx)
-
-/-- Both cut edges dominate the side away from `a`, and `e` is the one below: again `e` is the nearer
-of the two to the blob. -/
-theorem separatesOff_lower (hL : IsLowPair N D k₁ k₂ a Y) (hP : P ⊆ Y) (hQ : Q ⊆ Y) (hc : c ∈ P)
-    (hPa : a ∉ P) (hs : N.SeparatesOff (insert k₁ D) e P Q)
-    (hs' : N.SeparatesOff (insert k₂ D) e' P Q)
-    (hord : N.ReachesOff D (N.graph.target e') (N.graph.source e)) : N.SeparatesOff D e P Q := by
-  have hN := hL.phylogenetic
-  have hca : c ≠ a := fun h => hPa (h ▸ hc)
-  have hec : N.IsBelowOff D e c :=
-    ((hL.dominatesOff_left_iff (hP hc) hca).mp (hs.1 c hc)).isBelowOff hN hL.deletion
-  have he'c : N.IsBelowOff (insert k₂ D) e' c :=
-    (hs'.1 c hc).isBelowOff hN hL.symm.isDeletion_insert_left
-  have hne := hL.ne_of_isBelowOff hec (hP hc) hca
-  refine hL.separatesOff_of_both hne hs ⟨fun x hx => ?_, fun x hx => ?_⟩
-  · exact hL.dominatesOff_swap (hP hx) (fun h => hPa (h ▸ hx)) (hs.1 x hx)
-  · by_cases hxa : x = a
-    · subst hxa
-      rintro ⟨he, hr⟩
-      refine hs'.2 x hx ⟨he'c.1, ?_⟩
-      have h₁ : N.ReachesOff (insert k₂ D) (N.graph.target e') (N.graph.source e) :=
-        hL.symm.reachesOff_insert (hP hc) hca hord
-          (ReachesOff.head_arc hec.1 hec.2)
-      exact (h₁.tail_arc he).trans hr
-    · exact hL.not_isBelowOff_swap (hQ hx) hxa (hs.2 x hx)
-
-/-- The cut edge `e`, when `k₁` is deleted, dominates the side away from `a`, and the cut edge `e'`,
-when `k₂` is deleted, dominates the side of `a`. Then `e` is the one nearer the blob. -/
-theorem separatesOff_opposite (hL : IsLowPair N D k₁ k₂ a Y) (hP : P ⊆ Y) (hQ : Q ⊆ Y) (ha : a ∈ Q)
-    (hb : b ∈ Q) (hba : b ≠ a) (hc : c ∈ P) (hPa : a ∉ P)
-    (hs : N.SeparatesOff (insert k₁ D) e P Q) (hs' : N.SeparatesOff (insert k₂ D) e' Q P) :
-    N.SeparatesOff D e P Q := by
-  have hN := hL.phylogenetic
-  have hca : c ≠ a := fun h => hPa (h ▸ hc)
-  have hne := hL.ne_of_isBelowOff
-    (((hL.dominatesOff_left_iff (hP hc) hca).mp (hs.1 c hc)).isBelowOff hN hL.deletion) (hP hc) hca
-  have hdel₂ := hL.symm.isDeletion_insert_left
-  refine hL.separatesOff_of_both hne hs ⟨fun x hx => ?_, fun x hx => ?_⟩
-  · exact hL.dominatesOff_swap (hP hx) (fun h => hPa (h ▸ hx)) (hs.1 x hx)
-  · by_cases hxa : x = a
-    · subst hxa
-      exact not_isBelowOff_of_opposite hN hdel₂ (hs'.1 x ha) (hs'.2 c hc)
-        ((hs'.1 b hb).isBelowOff hN hdel₂)
-        ((hL.dominatesOff_swap (hP hc) hca (hs.1 c hc)).isBelowOff hN hdel₂)
-        (hL.not_isBelowOff_swap (hQ hb) hba (hs.2 b hb))
-    · exact hL.not_isBelowOff_swap (hQ hx) hxa (hs.2 x hx)
-
-variable [DecidableEq X] {e₁ e₂ : E} {s : QuartetTree X}
-
-/-- **The source's contradiction** (`notes/sources/allman2023.txt`, line 149), in domination language:
-if deleting `k₂` and deleting `k₁` give cut arcs `e₁`, `e₂` of the same quartet tree, then an arc induces
-it in the network itself.
-
-Of the four taxa `a, b, c, d`, with `a` the taxon below `k₁`, `k₂` and `ab|cd` the split, the
-subnetwork `N₃` on `b, c, d` is the part of the network that does not see which arc is deleted
-(`dominatesOff_swap`, `not_isBelowOff_swap`). Each `eᵢ` is a cut edge of `N₃` with `b` on one side and
-`c, d` on the other, so they lie on the chain of such cut edges, and `a` is attached on the `b`-side of
-each. An arc of this chain nearest the blob of `b, c, d` therefore has `a` on the `b`-side in both
-deletions (`separatesOff_upper`, `separatesOff_lower`, `separatesOff_opposite`, by the directions of
-the two arcs), and every path to `a` uses at most one of `k₁`, `k₂`, so this arc is a cut edge of the
-network with the split `ab|cd` (`separatesOff_of_both`).
-
-Departure from the paper: the source takes `e` to be the cut edge of `N₃` incident to the blob on
-`b, c, d`. Here `e` is the nearer of `e₁`, `e₂` to that blob. This needs no description of the blob, and
-the steps after the choice of `e` are the source's. -/
+Departure from the paper: the first two of these steps are in the reverse of the source's order. The source says "Now `e`
+must be a cut edge in both `N1` and `N2`, inducing the split `ab|cd` in both", with no reason, and "Thus every edge in `𝒩+`
+which is incident to `N3` and ancestral to only the taxon `a` must be attached to `N3` in the `b`-component". The first
+sentence is a gap. The arcs of `Nᵢ` outside `N₃` are those above `a` only, so that `e` is a cut edge of `Nᵢ` says the same as
+the attachment, and neither has been shown. The reason has to come from the hypothesis of the contradiction, that `Nᵢ` has a
+cut edge `eᵢ` inducing `ab|cd`, which the source's sentence doesn't use. From it the repair proves the attachment
+(`ends_mem_far`), and the first sentence follows in two lines (`onlyCrosses_far_insert`). Proving the first sentence first
+would put the proof of `ends_mem_far` inside it, so the order is left as it is. The gap forces the repair. All the source's
+claims are here, and its last step is as it is there. -/
 theorem exists_splitOffAt (hL : IsLowPair N D k₁ k₂ a (s.taxa : Set X)) (ha : a ∈ s.taxa)
     (h₁ : N.SplitOffAt (insert k₂ D) e₁ s) (h₂ : N.SplitOffAt (insert k₁ D) e₂ s) :
     ∃ e, N.SplitOffAt D e s := by
   have hN := hL.phylogenetic
-  obtain ⟨P₁, hP₁, hs₁⟩ := h₁
-  obtain ⟨P₂, hP₂, hs₂⟩ := h₂
-  have hsub : ∀ P ∈ s.val, (P : Set X) ⊆ s.taxa := fun P hP =>
-    Finset.coe_subset.mpr (s.subset_taxa hP)
-  have hsub' : ∀ P : Finset X, ((s.taxa \ P : Finset X) : Set X) ⊆ s.taxa := fun P =>
-    Finset.coe_subset.mpr Finset.sdiff_subset
-  have h12 : P₂ = P₁ ∨ P₂ = s.taxa \ P₁ := by
-    have := hP₂
-    rw [s.eq_pair_of_mem hP₁] at this
-    simpa using this
-  have hcard : ∀ P ∈ s.val, 1 < P.card := fun P hP => by
-    rw [s.card_of_mem hP]
-    norm_num
-  by_cases ha₁ : a ∈ P₁
-  · by_cases ha₂ : a ∈ P₂
-    · -- Both cut edges dominate the side of `a`.
-      have hP : P₂ = P₁ := by
-        rcases h12 with h | h
-        · exact h
-        · rw [h] at ha₂
-          exact absurd ha₁ (Finset.mem_sdiff.mp ha₂).2
-      subst hP
-      obtain ⟨b, hb, hba⟩ := Finset.exists_mem_ne (hcard _ hP₁) a
-      have hb' : b ∈ (P₂ : Set X) := Finset.mem_coe.mpr hb
-      have hQa : a ∉ ((s.taxa \ P₂ : Finset X) : Set X) := by simp [ha₁]
-      have hbY := hsub _ hP₁ hb'
-      have hd₁ : N.DominatesOff D e₁ b :=
-        (hL.symm.dominatesOff_left_iff hbY hba).mp (hs₁.1 b hb')
-      have hd₂ : N.DominatesOff D e₂ b := (hL.dominatesOff_left_iff hbY hba).mp (hs₂.1 b hb')
-      by_cases hne : e₁ = e₂
-      · subst hne
-        exact ⟨e₁, P₂, hP₁, hL.separatesOff_of_both
-          (hL.ne_of_isBelowOff (hd₁.isBelowOff hN hL.deletion) hbY hba) hs₂ hs₁⟩
-      · rcases hd₁.reaches_or_reaches hN hL.deletion hd₂ hne with hord | hord
-        · exact ⟨e₁, P₂, hP₁,
-            hL.separatesOff_upper (hsub _ hP₁) (hsub' _) hb' hba hQa hs₁ hs₂ hord⟩
-        · exact ⟨e₂, P₂, hP₁,
-            hL.symm.separatesOff_upper (hsub _ hP₁) (hsub' _) hb' hba hQa hs₂ hs₁ hord⟩
-    · -- The cut edge of `k₂` deleted dominates the side of `a`, that of `k₁` deleted the other.
-      have hP : P₂ = s.taxa \ P₁ := by
-        rcases h12 with h | h
-        · rw [h] at ha₂
-          exact absurd ha₁ ha₂
-        · exact h
-      have hQ : s.taxa \ P₂ = P₁ := by
-        rw [hP, Finset.sdiff_sdiff_eq_self (s.subset_taxa hP₁)]
-      obtain ⟨b, hb, hba⟩ := Finset.exists_mem_ne (hcard _ hP₁) a
-      obtain ⟨c, hc⟩ := Finset.card_pos.mp (Nat.zero_lt_of_lt (hcard _ hP₂))
-      rw [hQ] at hs₂
-      have hs₁' : N.SeparatesOff (insert k₂ D) e₁ ((s.taxa \ P₂ : Finset X) : Set X) (P₂ : Set X) := by
-        rw [hQ, hP]
-        exact hs₁
-      refine ⟨e₂, P₂, hP₂, ?_⟩
-      rw [hQ]
-      exact hL.separatesOff_opposite (hsub _ hP₂) (hsub _ hP₁) (Finset.mem_coe.mpr ha₁)
-        (Finset.mem_coe.mpr hb) hba (Finset.mem_coe.mpr hc) (by simpa using ha₂) hs₂
-        (by rwa [hQ] at hs₁')
-  · by_cases ha₂ : a ∈ P₂
-    · -- The cut edge of `k₁` deleted dominates the side of `a`, that of `k₂` deleted the other.
-      have hP : P₂ = s.taxa \ P₁ := by
-        rcases h12 with h | h
-        · rw [h] at ha₂
-          exact absurd ha₂ ha₁
-        · exact h
-      have hQ : s.taxa \ P₁ = P₂ := hP.symm
-      have hQ' : s.taxa \ P₂ = P₁ := by
-        rw [hP, Finset.sdiff_sdiff_eq_self (s.subset_taxa hP₁)]
-      obtain ⟨b, hb, hba⟩ := Finset.exists_mem_ne (hcard _ hP₂) a
-      obtain ⟨c, hc⟩ := Finset.card_pos.mp (Nat.zero_lt_of_lt (hcard _ hP₁))
-      rw [hQ] at hs₁
-      rw [hQ'] at hs₂
-      refine ⟨e₁, P₁, hP₁, ?_⟩
-      rw [hQ]
-      exact hL.symm.separatesOff_opposite (hsub _ hP₁) (hsub _ hP₂) (Finset.mem_coe.mpr ha₂)
-        (Finset.mem_coe.mpr hb) hba (Finset.mem_coe.mpr hc) (by simpa using ha₁) hs₁ hs₂
-    · -- Both cut edges dominate the side away from `a`.
-      have hP : P₂ = P₁ := by
-        rcases h12 with h | h
-        · exact h
-        · refine absurd ?_ ha₂
-          rw [h]
-          exact Finset.mem_sdiff.mpr ⟨ha, ha₁⟩
-      subst hP
-      obtain ⟨c, hc⟩ := Finset.card_pos.mp (Nat.zero_lt_of_lt (hcard _ hP₁))
-      have hc' : c ∈ (P₂ : Set X) := Finset.mem_coe.mpr hc
-      have hPa : a ∉ (P₂ : Set X) := by simpa using ha₁
-      have hcY := hsub _ hP₁ hc'
-      have hca : c ≠ a := fun h => ha₁ (h ▸ hc)
-      have hd₁ : N.DominatesOff D e₁ c :=
-        (hL.symm.dominatesOff_left_iff hcY hca).mp (hs₁.1 c hc')
-      have hd₂ : N.DominatesOff D e₂ c := (hL.dominatesOff_left_iff hcY hca).mp (hs₂.1 c hc')
-      by_cases hne : e₁ = e₂
-      · subst hne
-        exact ⟨e₁, P₂, hP₁, hL.separatesOff_of_both
-          (hL.ne_of_isBelowOff (hd₁.isBelowOff hN hL.deletion) hcY hca) hs₂ hs₁⟩
-      · rcases hd₁.reaches_or_reaches hN hL.deletion hd₂ hne with hord | hord
-        · exact ⟨e₂, P₂, hP₁,
-            hL.separatesOff_lower (hsub _ hP₁) (hsub' _) hc' hPa hs₂ hs₁ hord⟩
-        · exact ⟨e₁, P₂, hP₁,
-            hL.symm.separatesOff_lower (hsub _ hP₁) (hsub' _) hc' hPa hs₁ hs₂ hord⟩
+  have hD := hL.deletion
+  -- the names of the taxa: `B = {a, b}` and `{c, d}`
+  obtain ⟨B, hB, haB⟩ : ∃ B ∈ s.val, a ∈ B := by simpa [QuartetTree.taxa, Finset.mem_sup] using ha
+  have hsB : ∀ x ∈ B, x ∈ s.taxa := fun x hx => s.subset_taxa hB hx
+  obtain ⟨b, hbB, hba⟩ := Finset.exists_mem_ne (by rw [s.card_of_mem hB]; norm_num : 1 < B.card) a
+  obtain ⟨c, d, hcd, hQ⟩ := Finset.card_eq_two.mp (s.card_of_mem (s.sdiff_mem hB))
+  have hcQ : c ∈ s.taxa \ B := by simp [hQ]
+  have hdQ : d ∈ s.taxa \ B := by simp [hQ]
+  obtain ⟨hct, hcB⟩ := Finset.mem_sdiff.mp hcQ
+  obtain ⟨hdt, hdB⟩ := Finset.mem_sdiff.mp hdQ
+  have hmem : ∀ {x}, x ∈ s.taxa → x ∉ B → x ≠ a := fun _ hxB h => hxB (h ▸ haB)
+  have hb₃ : b ∈ s.taxa.erase a := Finset.mem_erase.mpr ⟨hba, hsB b hbB⟩
+  have hc₃ : c ∈ s.taxa.erase a := Finset.mem_erase.mpr ⟨hmem hct hcB, hct⟩
+  have hd₃ : d ∈ s.taxa.erase a := Finset.mem_erase.mpr ⟨hmem hdt hdB, hdt⟩
+  have h3 : (s.taxa.erase a).card = 3 := by rw [Finset.card_erase_of_mem ha, s.card_taxa]
+  -- the blob `ℬ` of `N₃` determined by `b, c, d`, and the cut edge `e`
+  obtain ⟨v, hw, hdet⟩ := exists_determines_arcsAbove hN hD h3
+  have hbb : ¬ SameBlobIn N.graph (arcsAbove N D (s.taxa.erase a : Finset X)) v (N.leaf b) := fun h =>
+    hdet.ne_of_isPendantIn h3.ge (isPendantIn_arcsAbove hN b) hw
+      ((isPendantIn_arcsAbove hN b).eq_of_sameBlobIn h)
+  obtain ⟨e, hlead⟩ := (exists_leadsTo (hw b hb₃)).resolve_left hbb
+  -- `e` is a cut edge of both `N₁` and `N₂`
+  obtain ⟨T₁, hT₁, hl₁⟩ := exists_onlyCrosses_of_splitOffAt hN
+    (hD.insert hN hL.ne.symm hL.target_eq.symm hL.notMem₁) h₁ hB
+  obtain ⟨T₂, hT₂, hl₂⟩ := exists_onlyCrosses_of_splitOffAt hN
+    (hD.insert hN hL.ne hL.target_eq hL.notMem₂) h₂ hB
+  have hsides : ∀ {T : Set V}, (∀ x ∈ s.taxa, N.leaf x ∈ T ↔ x ∈ B) →
+      N.leaf a ∈ T ∧ N.leaf b ∈ T ∧ N.leaf c ∉ T ∧ N.leaf d ∉ T := fun hl =>
+    ⟨(hl a ha).mpr haB, (hl b (hsB b hbB)).mpr hbB, fun h => hcB ((hl c hct).mp h),
+      fun h => hdB ((hl d hdt).mp h)⟩
+  obtain ⟨ha₁, hb₁, hc₁, hd₁⟩ := hsides hl₁
+  obtain ⟨ha₂, hb₂, hc₂, hd₂⟩ := hsides hl₂
+  have hend₁ := fun {f} => hL.symm.ends_mem_far (f := f) ha hdet hw hlead hb₃ hc₃ hd₃ hcd hT₁ ha₁ hb₁
+    hc₁ hd₁
+  have hend₂ := fun {f} => hL.ends_mem_far (f := f) ha hdet hw hlead hb₃ hc₃ hd₃ hcd hT₂ ha₂ hb₂
+    hc₂ hd₂
+  -- so `e` is a cut edge of the network
+  have hO₁ := hL.symm.onlyCrosses_far_insert ha hdet hw hlead hb₃ hc₃ hd₃ hcd hT₁ ha₁ hb₁ hc₁ hd₁
+  have hO₂ := hL.onlyCrosses_far_insert ha hdet hw hlead hb₃ hc₃ hd₃ hcd hT₂ ha₂ hb₂ hc₂ hd₂
+  have hO : OnlyCrosses N.graph (arcsAbove N D (s.taxa : Set X)) e
+      (far N.graph (arcsAbove N D (s.taxa.erase a : Finset X)) e v) := fun f hf hcr =>
+    (hL.arcsAbove_subset_union hf).elim (fun h => hO₂ f h hcr) fun h => hO₁ f h hcr
+  -- with `a, b` on one side and `c, d` on the other
+  refine ⟨e, splitOffAt_of_onlyCrosses hN hD hB hO fun x hx => ⟨fun hxR => ?_, fun hxB => ?_⟩⟩
+  · by_contra hxB
+    have hx₃ : x ∈ s.taxa.erase a := Finset.mem_erase.mpr ⟨hmem hx hxB, hx⟩
+    have := hdet.eq_of_mem_side onlyCrosses_far not_mem_far_self hb₃ hx₃ (hw b hb₃) (hw x hx₃)
+      hlead.2 hxR
+    exact hxB (this ▸ hbB)
+  · by_cases hxa : x = a
+    · rw [hxa]
+      -- the parent arc of `a` is above `a` only
+      obtain ⟨f, hf, hfx⟩ := hD.parent (N.leaf a) fun h => by
+        have := hN.leaf_indegree a
+        rw [h, hN.root_indegree] at this
+        omega
+      have hfF : f ∈ arcsAbove N D (s.taxa : Set X) :=
+        ⟨hf, a, Finset.mem_coe.mpr ha, hfx ▸ .refl⟩
+      have hf₃ : f ∉ arcsAbove N D (s.taxa.erase a : Finset X) := by
+        rintro ⟨-, y, hy, hr⟩
+        rw [hfx] at hr
+        have hyx := eq_of_leaf_reachesOff_leaf hN hr
+        exact (Finset.mem_erase.mp (Finset.mem_coe.mp hy)).1 hyx
+      rcases hL.arcsAbove_subset_union hfF with h | h
+      · exact hfx ▸ (hend₂ h hf₃).2
+      · exact hfx ▸ (hend₁ h hf₃).2
+    · have hxb : x = b := by
+        obtain ⟨u, w, -, hBeq⟩ := Finset.card_eq_two.mp (s.card_of_mem hB)
+        simp only [hBeq, Finset.mem_insert, Finset.mem_singleton] at haB hbB hxB
+        grind
+      exact hxb ▸ hlead.2
 
 end IsLowPair
+
+end Quartet
 
 /-! ### Below a lowest reticulation the network is a tree -/
 
@@ -398,12 +570,11 @@ def StarOff (N : RootedNetwork V E X) (D : Set E) (q : Finset X) (w : V) : Prop 
 
 variable [Fintype X] [DecidableEq X]
 
-/-- **The tree below a vertex** (the source's "the subnetwork below `v` must be a tree"). Take two
-or more taxa of `q` below `v`, with one parent at each vertex ancestral to `q` below `v`. The lowest
-vertex `w` with at least two taxa of `q` below it has at most one below each child. If it has exactly
-two, the arc entering `w` separates `2|2`, so `q` is treelike off `D`. Otherwise `w` is a
-multifurcation. A binary tree has none, so this is the source's "a binary tree on 4 taxa has a
-`2|2` arc", and its "this tree can only have one leaf". -/
+/-- **A tree with two taxa has a `2|2` arc** (what the source's "since `𝒩−` has no 3-blobs, this tree can only
+have one leaf", `notes/sources/allman2023.txt`, line 148, uses). Take two or more taxa of `q` below `v`, with one
+parent at each vertex ancestral to `q` below `v`. The lowest vertex `w` with at least two taxa of `q` below it has
+at most one below each child. If it has exactly two, the arc entering `w` separates `2|2`, so `q` is treelike off
+`D`. Otherwise `w` is a multifurcation, which does not arise in a binary network. -/
 theorem isTreelikeOff_or_starOff (hN : N.IsPhylogenetic) (hD : N.IsDeletion D) {q : Finset X}
     (hq : q.card = 4) {v : V} (hT : HasUniqueParentsBelow N D q v)
     (h2 : 2 ≤ (taxaBelowOff N D q v).card)
@@ -508,16 +679,61 @@ theorem isTreelikeOff_empty_iff (hN : N.IsPhylogenetic) {q : Finset X} :
 
 /-! ### The reduction -/
 
+omit [Fintype X] [DecidableEq X] in
+/-- **"The subnetwork below `v` must be a tree"** (`notes/sources/allman2023.txt`, line 148): if `h` is a lowest
+reticulation ancestral to `q` off `D`, each vertex ancestral to `q` below it has one parent off `D`. The source
+takes `v` lowest in a total order extending the order of the network. This takes it minimal in that order, which is
+all that is used. -/
+theorem hasUniqueParentsBelow_of_lowest {q : Finset X} {h : V}
+    (hlow : ∀ w, (taxaBelowOff N D q w).Nonempty → (∃ k₁ k₂, k₁ ≠ k₂ ∧ k₁ ∉ D ∧ k₂ ∉ D ∧
+      N.graph.target k₁ = w ∧ N.graph.target k₂ = w) → N.graph.Reaches h w → w = h) :
+    HasUniqueParentsBelow N D q h := by
+  intro w hw hwh hnon f g hf hg hfw hgw
+  by_contra hfg
+  exact hwh (hlow w hnon ⟨f, g, hfg, hf, hg, hfw, hgw⟩ hw.reaches)
+
+/-- **"This tree can only have one leaf, and hence there is only a single edge below `v`"**
+(`notes/sources/allman2023.txt`, line 148): below a reticulation `h` with one child and a tree below it, at most
+one taxon of `q` lies, if `q` is not treelike off `D` (the source's "`𝒩−` has no 3-blobs") and no multifurcation arises
+off `D`.
+
+Departure from the paper: the source concludes that there is a single edge below `v`, in a network on four taxa with
+vertices of degree two suppressed. Here the deleted arcs stay in the network, vertices of degree two are not suppressed,
+and taxa outside `q` may be below `h`. So the single edge is stated as one taxon of `q` below `h`, which is all that the
+rest of the proof uses. This is not forced: it goes with reading the network off `D`, recorded at
+`exists_reduction_aux`. -/
+theorem card_taxaBelowOff_le_one (hN : N.IsPhylogenetic) (hD : N.IsDeletion D) {q : Finset X}
+    (hq : q.card = 4) {h : V} (hT : HasUniqueParentsBelow N D q h) (hout : N.graph.outdegree h = 1)
+    (hnt : ¬ N.IsTreelikeOff D q) (hStar : ∀ w, ¬ StarOff N D q w) :
+    (taxaBelowOff N D q h).card ≤ 1 := by
+  by_contra hc
+  obtain ⟨e, he⟩ := (N.graph.outdegree_eq_one_iff h).mp hout
+  rcases isTreelikeOff_or_starOff hN hD hq hT (by omega) (fun _ f g hf hg => by
+    rw [(he f).mp hf, (he g).mp hg]) with hl | ⟨w, hw⟩
+  · exact hnt hl
+  · exact hStar w hw
+
 /-- **The reduction**, under the two uses of the degrees: a reticulation has two parents and one
 child (`hRet`), and no multifurcation arises off a deletion (`hStar`). By induction on `D`, as in the
-source: take a lowest reticulation ancestral to `q`, and delete a parent while `q` stays non-treelike.
+source: take a lowest reticulation ancestral to `q`, and delete a parent while `q` stays non-treelike. The
+recursion runs on the set `D`, which grows at each deletion, rather than on the number of reticulations; the
+deletions are the source's.
 
-Departure from the paper: the source first sets the lengths of the arcs of 2-blobs to zero, and repeats
-this after each deletion, so that the lowest reticulation is in the 4-blob and the only non-leaf blob is
-the 4-blob. Domination sees through 2-blobs, so this step is not needed: a reticulation in a 2-blob
-is deleted like any other (the 4-set stays non-treelike), and steps 4 and 5 use only domination. The
-recursion runs on the set `D`, which grows at each deletion, rather than on the number of
-reticulations; the deletions are the source's. -/
+Departure from the paper: the source first sets the lengths of the arcs of 2-blobs to zero, and repeats this after each
+deletion, so that the lowest reticulation is in the 4-blob and the only non-leaf blob is the 4-blob ("If there are any
+2-blobs on `𝒩−`, set all edge lengths in `𝒩+` that give rise to them equal to 0", line 146). This is not forced, and it
+is not done. Domination sees through 2-blobs, so a reticulation in a 2-blob goes through the same test as any other: a
+parent is deleted when the 4-set stays non-treelike without it. Nothing here asks whether a reticulation is in a 2-blob,
+and steps 4 and 5 hold as they are for a lowest reticulation at which the test fails for both parents. Following the
+source would need the CF at length `0` on a 2-blob to be that of a network without it, and a definition of the 2-blobs of
+a network off a deletion, for a step whose result is the same reduction.
+
+Departure from the paper: the source's Lemma 1 (a 4-taxon network has "exactly one 4-blob, or exactly two 3-blobs", lines
+118-123, stated without proof) is not stated. It is used for three things, and each has a substitute that the argument
+needs anyway, so this is not forced either. "The only non-leaf blob in `𝒩−` is a 4-blob" (line 146) and "`𝒩−` has no
+3-blobs" (line 148) are the hypothesis that `q` is not treelike off `D`, with `isTreelikeOff_or_starOff`. That the
+two deleted networks "each have exactly two 3-blobs" (line 148) is `IsTreelikeOff` for each. The blob of `N₃` (line 149)
+is `exists_determines_arcsAbove`. -/
 theorem exists_reduction_aux (hN : N.IsPhylogenetic)
     (hRet : ∀ v, 2 ≤ N.graph.indegree v → N.graph.indegree v = 2 ∧ N.graph.outdegree v = 1)
     {q : Finset X} (hq : q.card = 4)
@@ -549,20 +765,10 @@ theorem exists_reduction_aux (hN : N.IsPhylogenetic)
           have hdeg := hRet h (by
             have hfin : {e | N.graph.target e = h}.Finite := Set.toFinite _
             exact (Set.one_lt_ncard_iff hfin).mpr ⟨k₁, k₂, ht₁, ht₂, hk⟩)
-          have hcard : (taxaBelowOff N D q h).card ≤ 1 := by
-            by_contra hc
-            have hT : HasUniqueParentsBelow N D q h := by
-              intro w hw hwh hnon f g hf hg hfw hgw
-              by_contra hfg
-              exact hwh (hlow w ⟨hnon, f, g, hfg, hf, hg, hfw, hgw⟩ hw.reaches)
-            have hv : (taxaBelowOff N D q h).card = 2 →
-                ∀ f g, N.graph.source f = h → N.graph.source g = h → f = g := by
-              intro _ f g hf hg
-              obtain ⟨e, he⟩ := (N.graph.outdegree_eq_one_iff h).mp hdeg.2
-              rw [(he f).mp hf, (he g).mp hg]
-            rcases isTreelikeOff_or_starOff hN hD hq hT (by omega) hv with hl | ⟨w, hw⟩
-            · exact hnt hl
-            · exact hStar D w hD hw
+          have hcard : (taxaBelowOff N D q h).card ≤ 1 :=
+            card_taxaBelowOff_le_one hN hD hq
+              (hasUniqueParentsBelow_of_lowest fun w hnon hw hr => hlow w ⟨hnon, hw⟩ hr) hdeg.2 hnt
+              fun w hw => hStar D w hD hw
           obtain ⟨a, ha⟩ := Finset.card_eq_one.mp
             (le_antisymm hcard (Finset.card_pos.mpr hhT))
           have hamem : a ∈ taxaBelowOff N D q h := by simp [ha]
@@ -583,7 +789,7 @@ theorem exists_reduction_aux (hN : N.IsPhylogenetic)
               (Set.two_lt_ncard_iff (Set.toFinite _)).mpr
                 ⟨k₁, k₂, f, ht₁, ht₂, hf.trans ht₁, hk, hne.1.symm, hne.2.symm⟩
             omega
-          · -- Step 5: the two splits differ.
+          · -- Step 5: the two splits differ, "for the sake of contradiction".
             rintro rfl
             have hta : s₁.taxa = q := mem_treesOn.mp hs₁
             have hL : IsLowPair N D k₁ k₂ a (s₁.taxa : Set X) :=

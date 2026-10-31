@@ -3,6 +3,7 @@ module
 public import Basic.Phylogenetics.NMSC.Basic
 public import Basic.Probability.QuartetLimits
 public import External.AllmanEtAl2023.Basic
+public import External.AllmanEtAl2023.Corollary1
 public import External.AllmanEtAl2023.Theorem1
 public import External.Rhodes2020.Theorem2
 public import TINNiK.Statistics.AppendixC
@@ -12,7 +13,7 @@ public import TINNiK.Statistics.AppendixC
 
 The count of Step 3(a)(i) (E29 of the report), and Theorem 4. Theorem 4 takes the CF-detectability of 4-blobs from
 `External.AllmanEtAl2023.corollary1` (TINNiK's Theorem 1 on the induced 4-taxon networks, proved in
-`External/AllmanEtAl2023/Theorem1.lean`), and excludes the centroid by the analytic argument of the paper
+`External/AllmanEtAl2023/Corollary1.lean`), and excludes the centroid by the analytic argument of the paper
 (`isGenericNull_centroid`). Theorem 2 and the combinatorial part of Theorem 3 are proved in
 `External/AllmanEtAl2023/Basic.lean`.
 -/

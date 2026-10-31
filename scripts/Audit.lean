@@ -17,7 +17,9 @@ import all Basic.Combinatorics.MultigraphConnectivity
 import all Basic.Combinatorics.MultigraphCutUniqueness
 import all Basic.Combinatorics.MultigraphDegree
 import all Basic.Combinatorics.MultigraphTree
+import all Basic.MeasureTheory.HaarPreimage
 import all Basic.Phylogenetics.AncestralRestriction
+import all Basic.Phylogenetics.AstralDP
 import all Basic.Phylogenetics.Coalescent.Absorption
 import all Basic.Phylogenetics.Coalescent.BinaryForest
 import all Basic.Phylogenetics.Coalescent.Defs
@@ -31,20 +33,29 @@ import all Basic.Phylogenetics.Coalescent.Trace
 import all Basic.Phylogenetics.CutHierarchy
 import all Basic.Phylogenetics.Defs
 import all Basic.Phylogenetics.DeletedArcs
+import all Basic.Phylogenetics.DisplayedTreeModel
+import all Basic.Phylogenetics.FourPoint
 import all Basic.Phylogenetics.Hierarchy
 import all Basic.Phylogenetics.HierarchyGraph
 import all Basic.Phylogenetics.HierarchyParents
+import all Basic.Phylogenetics.InducedMetric
 import all Basic.Phylogenetics.InducedNetwork
 import all Basic.Phylogenetics.NMSC.Analytic
 import all Basic.Phylogenetics.NMSC.Basic
 import all Basic.Phylogenetics.NMSC.Exchangeability
 import all Basic.Phylogenetics.NMSC.Factor
 import all Basic.Phylogenetics.NMSC.History
+import all Basic.Phylogenetics.NMSC.Induced
+import all Basic.Phylogenetics.NMSC.InducedAbove
+import all Basic.Phylogenetics.NMSC.InducedParams
+import all Basic.Phylogenetics.NMSC.InducedRestrict
+import all Basic.Phylogenetics.NMSC.InducedSuppress
 import all Basic.Phylogenetics.NMSC.Inheritance
 import all Basic.Phylogenetics.NMSC.Marginal
 import all Basic.Phylogenetics.NMSC.Symmetry
 import all Basic.Phylogenetics.NMSC.TreeCF
 import all Basic.Phylogenetics.NMSC.Witness
+import all Basic.Phylogenetics.NeighborJoining
 import all Basic.Phylogenetics.Network
 import all Basic.Phylogenetics.NetworkCuts
 import all Basic.Phylogenetics.PendantCuts
@@ -59,6 +70,7 @@ import all Basic.Probability.GaussianTail
 import all Basic.Probability.IID
 import all Basic.Probability.QuartetLimits
 import all Basic.Probability.QuartetTails
+import all Basic.Probability.T3Test
 import all Basic.Probability.Trinomial.Bridge
 import all Basic.Probability.Trinomial.CLT
 import all Basic.Probability.Trinomial.Gaussian
@@ -66,7 +78,12 @@ import all Basic.Probability.Trinomial.Statistics
 import all Basic.Probability.Trinomial.Tests
 import all Basic.Probability.Trinomial.Transfer
 import all Basic.Probability.Trinomial.Whiten
+import all External.AllmanBanosRhodes2019.NANUQ
+import all External.AllmanBanosRhodes2019.Placement
+import all External.AllmanBanosRhodes2019.Proposition9
+import all External.AllmanBanosRhodes2019.ThreeTwoCycle
 import all External.AllmanEtAl2023.Basic
+import all External.AllmanEtAl2023.Corollary1
 import all External.AllmanEtAl2023.CutOrder
 import all External.AllmanEtAl2023.CycleLemma
 import all External.AllmanEtAl2023.Reduction
@@ -79,21 +96,38 @@ import all External.Rhodes2020.Theorem2
 import all ECToBlob.Deterministic
 import all ECToBlob.FalseEdge
 import all ECToBlob.Lemma81
+import all ECToBlob.Remark33
+import all ECToBlob.Remark33Counterexample
+import all ECToBlob.Remark52
+import all ECToBlob.Remark52Networks
+import all ECToBlob.Remark83
+import all ECToBlob.Remark84
+import all ECToBlob.Remarks
 import all ECToBlob.Section3
 import all ECToBlob.Section4
+import all ECToBlob.Section4Funnels
 import all ECToBlob.Section5
 import all ECToBlob.Section6
 import all ECToBlob.Section8
+import all TOBQMC.Astral
+import all TOBQMC.BipartitionSearch
 import all TOBQMC.Consistency
+import all TOBQMC.ConsistencyT3
+import all TOBQMC.Counts
+import all TOBQMC.Lemma1
 import all TOBQMC.Level1
 import all TOBQMC.Level1Blobs
 import all TOBQMC.Level1CF
+import all TOBQMC.SupplementLemma8
 import all TOBQMC.WQC
 import all TOBQMC.Wedge
 import all TINNiK.Basic
+import all TINNiK.Counts
+import all TINNiK.NJ
 import all TINNiK.Statistics.AppendixC
 import all TINNiK.Statistics.Definitions
 import all TINNiK.Statistics.Proposition6
+import all TINNiK.T3
 import all Solution
 
 /-!
@@ -151,7 +185,11 @@ meta def externalResults : List (String × Name) :=
    ("Mitchell et al. 2019, Theorem 3.1, for the cut model", ``External.MitchellAllmanRhodes2019.cutModel_theorem31),
    ("Rhodes 2020, Theorem 2", ``External.Rhodes2020.theorem2),
    ("Rhodes 2020, internal edge weights", ``External.Rhodes2020.quartetWeight_ge_two),
-   ("Buneman 1971: exact tree builders exist", ``External.Rhodes2020.exists_isExactBuilder)]
+   ("Buneman 1971: exact tree builders exist", ``External.Rhodes2020.exists_isExactBuilder),
+   ("Saitou, Nei 1987; Studier, Keppler 1988: neighbor joining is exact", ``Phylogenetics.NJ.isExactBuilder_nj),
+   ("Mirarab et al. 2014: ASTRAL's dynamic program is optimal on its space", ``Phylogenetics.IsTraceback.isAstralOptimal),
+   ("NANUQ, Proposition 9", ``External.AllmanBanosRhodes2019.proposition9),
+   ("NANUQ, Theorem 36, corrected", ``External.AllmanBanosRhodes2019.theorem36)]
 
 /-- The numbered results of the paper, in the order of the paper. -/
 meta def paperResults : List (String × Name) :=
@@ -191,7 +229,27 @@ meta def paperResults : List (String × Name) :=
    ("TINNiK Proposition 6", ``TINNiK.proposition6),
    ("TINNiK Theorem 4, at given parameters", ``TINNiK.theorem4_of_rejects),
    ("TINNiK Theorem 4, one sequence of levels", ``TINNiK.theorem4_explicit),
-   ("TINNiK Theorem 4", ``TINNiK.theorem4)]
+   ("TINNiK Theorem 4", ``TINNiK.theorem4),
+   ("ECToBlob Remark 3.3, NMSC", ``ECToBlob.remark3_3_nmsc),
+   ("ECToBlob Remark 3.3, common inheritance", ``ECToBlob.remark3_3_common),
+   ("ECToBlob Remark 3.3, displayed tree model", ``ECToBlob.remark3_3_displayed),
+   ("ECToBlob Remark 3.3, the counterexample to its non-strict reading", ``ECToBlob.Remark33Counterexample.remark3_3_strict),
+   ("ECToBlob Remark 5.2", ``ECToBlob.Remark52.remark5_2),
+   ("ECToBlob Remark 8.3, NANUQ", ``ECToBlob.remark83_nanuq),
+   ("ECToBlob Remark 8.3, TINNiK", ``ECToBlob.remark83_tinnik),
+   ("ECToBlob Remark 8.4, binary networks", ``ECToBlob.Coarsening.remark8_4),
+   ("ECToBlob Remark 8.4, the counterexample", ``ECToBlob.Coarsening.Counterexample.not_remark8_4),
+   ("ECToBlob §10, the line test", ``ECToBlob.Remarks.consistency_line_nmsc),
+   ("ECToBlob §10, a random T₀", ``ECToBlob.Remarks.consistency_random_tree),
+   ("ECToBlob §10, data splitting", ``ECToBlob.Remarks.consistency_data_splitting),
+   ("ECToBlob §10, combining edge p-values", ``ECToBlob.Remarks.consistency_edge_combination),
+   ("TOB-QMC Lemma 1", ``TOBQMC.lemma1),
+   ("TOB-QMC supplement Lemma 8", ``TOBQMC.supplement_lemma8),
+   ("TOB-QMC, the bipartition search with 3f1a", ``TOBQMC.consistency_search),
+   ("TOB-QMC consistency, T3 option", ``TOBQMC.consistencyT3_of_noAnomalous),
+   ("TOB-QMC ASTRAL's output", ``TOBQMC.astral_refines_treeOfBlobs),
+   ("TINNiK Theorem 4, T3 option", ``TINNiK.theorem4T3),
+   ("TINNiK Theorem 4, neighbor joining", ``TINNiK.theorem4_nj)]
 
 /-- The theorems that Palomar's comparator checks (`theorem_names` of `comparator.json`). -/
 meta def solutionResults : List Name :=

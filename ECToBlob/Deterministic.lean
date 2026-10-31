@@ -8,23 +8,29 @@ public import ECToBlob.Section6
 /-!
 # ECToBlob §8: the deterministic core of the proof of Theorem 8.2
 
-If the combined tests behave as the proof of Theorem 8.2 says they do on a table `c` of quartet
-counts, then the algorithm outputs the tree of blobs. The conditions on the table (`Run`) are per
-quartet, not per run of the algorithm, so one event covers all the possible intermediate trees.
+The paper's proof of Theorem 8.2 shows that, with high probability, "all the various combination
+tests computed by the algorithm correctly indicate whether edges of `T₀` should be contracted or
+not" (`notes/paper2026/paper.txt`, line 1056). Here is what it does with that: if all these tests
+come out right on a table `c` of quartet counts (`Run`, with one test per edge, `TestCorrect`), then
+the algorithm outputs the tree of blobs. `ECToBlob/Section8.lean` proves that this holds with high
+probability, test by test.
 
-The steps are those of the paper's proof, with the corrections listed at `ECToBlob.theorem8_2`:
+The steps are those of the end of the paper's proof (lines 1123-1158), with the corrections listed
+at `ECToBlob.theorem8_2`:
 
 * Step 3 keeps the edges of the tree of blobs, and each edge it keeps has a nonuniform quartet
   (`Run.treeOfBlobs_subset_afterStar`, `Run.exists_not_uniform`);
-* a false edge that Step 3 keeps has a quartet off the T1 null, in the multipartition of `T₀`, so in
-  the quartets of all types (`Run.exists_not_t1Null`), and is rejected (`Run.edgeT1P_lt`), while an
-  edge of the tree of blobs is not rejected (`Run.edgeT1P_gt`). Hence Step 7 contracts only false
-  edges as long as there are any (`Run.treeOfBlobs_subset_contractStep`);
+* "by Corollaries 4.2 and 4.3, `S^a(e)` is empty exactly when `e` is a cut-edge" (lines 1126-1127):
+  the quartets of a cut edge are under the T1 null (`Run.t1Null_of_mem`), and a false edge that Step
+  3 keeps has a quartet off the T1 null (`Run.exists_not_t1Null`). So it is rejected
+  (`Run.edgeT1P_lt`), while an edge of the tree of blobs is not (`Run.edgeT1P_gt`). Hence Step 7
+  contracts only false edges as long as there are any (`Run.treeOfBlobs_subset_contractStep`);
 * the overall p-value rejects exactly the trees with a false edge (`Run.treeT1P_lt`,
   `Run.treeT1P_gt`), so both selection rules select the first tree without one, which is the tree of
   blobs.
 
-API: `CombineBounds`, `T1Null`, `Run`, `ectoblob_eq_treeOfBlobs`, `exists_combineBounds`.
+API: `CombineBounds`, `T1Null`, `TestCorrect`, `Run`, `ectoblob_eq_treeOfBlobs`,
+`exists_combineBounds`.
 -/
 
 @[expose] public noncomputable section
@@ -67,41 +73,46 @@ theorem CombineBounds.gt_map {m : TestCorrection} {K : ℕ} {δ τ η : ℝ}
     exact hle hm s hs
 
 theorem CombineBounds.lt_map {m : TestCorrection} {K : ℕ} {δ τ η : ℝ}
-    (h : CombineBounds m K δ τ η) {ι : Type*} [Fintype ι] (hK : Fintype.card ι ≤ K) (Q : Finset ι)
-    (f : ι → ℝ) (h01 : ∀ s ∈ Q, 0 ≤ f s ∧ f s ≤ 1) (hlt : ∃ s ∈ Q, f s < η)
+    (h : CombineBounds m K δ τ η) {ι : Type*} (Q : Finset ι) (hK : Q.card ≤ K) (f : ι → ℝ)
+    (h01 : ∀ s ∈ Q, 0 ≤ f s ∧ f s ≤ 1) (hlt : ∃ s ∈ Q, f s < η)
     (hle : (m = .cauchy ∨ m = .cbc) → ∀ s ∈ Q, f s ≤ 1 - δ) : combineP m (Q.val.map f) < τ := by
   refine h.lt _ ?_ ?_ ?_ ?_
   · intro x hx
     obtain ⟨s, hs, rfl⟩ := Multiset.mem_map.1 hx
     exact h01 s hs
   · rw [Multiset.card_map]
-    exact (Finset.card_le_univ Q).trans hK
+    exact hK
   · obtain ⟨s, hs, hsη⟩ := hlt
     exact ⟨f s, Multiset.mem_map_of_mem _ hs, hsη⟩
   · intro hm x hx
     obtain ⟨s, hs, rfl⟩ := Multiset.mem_map.1 hx
     exact hle hm s hs
 
-/-- A run of the algorithm on a table `c` on which every test behaves as it should. -/
+/-- A combined test comes out right on a table of counts ("correctly indicate", line 1056). Here `Q`
+is its set of quartets, `Null` the null hypothesis on a quartet, `x` the combined p-value and `τ`
+the level: the test does not reject if the null holds on all of `Q`, and it rejects if `S^a = {s ∈ Q
+| ¬ Null s}` is not empty. -/
+def TestCorrect (Null : QuartetTree X → Prop) (Q : Finset (QuartetTree X)) (τ x : ℝ) : Prop :=
+  ((∀ s ∈ Q, Null s) → τ < x) ∧ ((∃ s ∈ Q, ¬ Null s) → x < τ)
+
+/-- A run of the algorithm on a table `c` on which every test comes out right, for a network and
+concordance factors `p` meeting Assumption 1: each star test of Step 3, one per edge of `T₀`; each
+T1 test of Step 6, one per pair of a possible current tree `T` and an edge of `T`; and each overall
+test of Steps 4 and 8, one per possible current tree. For the type `mul` the quartets of an edge
+depend on the current tree, which is random (E16), so the T1 tests are indexed by all subsets of
+`T₀`, which include its contractions. -/
 structure Run (N : RootedNetwork V E X) (p : QuartetTree X → ℝ) (T₀ : Finset (Finset X))
-    (o : ECToBlobOptions) (α β δ ηα ηβ : ℝ) (c : QuartetTree X → ℝ) : Prop where
+    (o : ECToBlobOptions) (α β : ℝ) (c : QuartetTree X → ℝ) : Prop where
   phylo : N.IsPhylogenetic
   forward : Assumption1Forward N p
   converse : Assumption1Converse N p
   sum : ∀ s : QuartetTree X, ∑ r ∈ treesOn s.taxa, p r = 1
   resolution : IsResolutionOf T₀ (treeOfBlobs N)
-  comb_α : CombineBounds o.testCo (Fintype.card (QuartetTree X)) δ α ηα
-  comb_β : CombineBounds o.testCo (Fintype.card (QuartetTree X)) δ β ηβ
-  star_mem : ∀ q : Finset X, q.card = 4 →
-    0 ≤ starPValue o.starTest c q ∧ starPValue o.starTest c q ≤ 1
-  t1_mem : ∀ s : QuartetTree X, 0 ≤ t1PValue c s ∧ t1PValue c s ≤ 1
-  star_null : ∀ q : Finset X, q.card = 4 → IsUniformOn p q → β < starPValue o.starTest c q
-  star_alt : ∀ q : Finset X, q.card = 4 → ¬ IsUniformOn p q → starPValue o.starTest c q < ηβ
-  t1_null : ∀ s : QuartetTree X, T1Null p s → α < t1PValue c s
-  t1_alt : ∀ s : QuartetTree X, ¬ T1Null p s → t1PValue c s < ηα
-  star_le : (o.testCo = .cauchy ∨ o.testCo = .cbc) → ∀ q : Finset X, q.card = 4 →
-    starPValue o.starTest c q ≤ 1 - δ
-  t1_le : (o.testCo = .cauchy ∨ o.testCo = .cbc) → ∀ s : QuartetTree X, t1PValue c s ≤ 1 - δ
+  star : ∀ A ∈ internalSides T₀, TestCorrect (fun s => IsUniformOn p s.taxa)
+    (multipartitionQuartets T₀ A) β (edgeStarP o c T₀ A)
+  t1 : ∀ T ⊆ T₀, ∀ A ∈ internalSides T, TestCorrect (T1Null p) (edgeQuartets o T₀ T A) α
+    (edgeT1P o c T₀ T A)
+  tree : ∀ T ⊆ T₀, TestCorrect (T1Null p) (univ.filter fun s => Displays T s) α (treeT1P o c T)
 
 /-! ### Trees and sides -/
 
@@ -238,29 +249,26 @@ theorem not_t1Null {p : QuartetTree X → ℝ} {s : QuartetTree X}
 section Run
 
 variable {N : RootedNetwork V E X} {p : QuartetTree X → ℝ} {T₀ : Finset (Finset X)}
-  {o : ECToBlobOptions} {α β δ ηα ηβ : ℝ} {c : QuartetTree X → ℝ}
+  {o : ECToBlobOptions} {α β : ℝ} {c : QuartetTree X → ℝ}
 
-theorem Run.nonempty_of_mem (R : Run N p T₀ o α β δ ηα ηβ c) {T : Finset (Finset X)} (hT : T ⊆ T₀)
+theorem Run.nonempty_of_mem (R : Run N p T₀ o α β c) {T : Finset (Finset X)} (hT : T ⊆ T₀)
     {A : Finset X} (hA : A ∈ T) : A.Nonempty ∧ Aᶜ.Nonempty :=
   nonempty_of_mem_tree R.resolution.1 (hT hA)
 
 /-- A quartet of a cut side is under the T1 null. -/
-theorem Run.t1Null_of_mem (R : Run N p T₀ o α β δ ηα ηβ c) {A : Finset X}
+theorem Run.t1Null_of_mem (R : Run N p T₀ o α β c) {A : Finset X}
     (hA : A ∈ treeOfBlobs N) {s : QuartetTree X} (hs : A ∩ s.taxa ∈ s.val) : T1Null p s :=
   T1Null_of_strict (R.forward.t1 s (inducedCutSplit_of_mem R.phylo hA hs))
 
-/-- Combined star p-value: all quartets uniform. -/
-theorem Run.edgeStarP_gt (R : Run N p T₀ o α β δ ηα ηβ c) {A : Finset X}
+/-- Combined star p-value: all quartets uniform (lines 1064-1082). -/
+theorem Run.edgeStarP_gt (R : Run N p T₀ o α β c) {A : Finset X} (hA : A ∈ internalSides T₀)
     (h : ∀ s ∈ multipartitionQuartets T₀ A, IsUniformOn p s.taxa) : β < edgeStarP o c T₀ A :=
-  R.comb_β.gt_map _ _ (fun s _ => R.star_mem _ s.card_taxa)
-    (fun s hs => R.star_null _ s.card_taxa (h s hs)) (fun hm s _ => R.star_le hm _ s.card_taxa)
+  (R.star A hA).1 h
 
-/-- Combined star p-value: some quartet not uniform. -/
-theorem Run.edgeStarP_lt (R : Run N p T₀ o α β δ ηα ηβ c) {A : Finset X}
-    (h : ∃ s ∈ multipartitionQuartets T₀ A, ¬ IsUniformOn p s.taxa) : edgeStarP o c T₀ A < β := by
-  obtain ⟨s, hs, hu⟩ := h
-  exact R.comb_β.lt_map le_rfl _ _ (fun s _ => R.star_mem _ s.card_taxa)
-    ⟨s, hs, R.star_alt _ s.card_taxa hu⟩ (fun hm s _ => R.star_le hm _ s.card_taxa)
+/-- Combined star p-value: some quartet not uniform (lines 1083-1116). -/
+theorem Run.edgeStarP_lt (R : Run N p T₀ o α β c) {A : Finset X} (hA : A ∈ internalSides T₀)
+    (h : ∃ s ∈ multipartitionQuartets T₀ A, ¬ IsUniformOn p s.taxa) : edgeStarP o c T₀ A < β :=
+  (R.star A hA).2 h
 
 theorem mem_contractSides {T C : Finset (Finset X)} {A : Finset X} :
     A ∈ contractSides T C ↔ A ∈ T ∧ A ∉ C ∧ Aᶜ ∉ C := by
@@ -270,14 +278,14 @@ theorem mem_internalSides {T : Finset (Finset X)} {A : Finset X} :
     A ∈ internalSides T ↔ A ∈ T ∧ 2 ≤ A.card ∧ 2 ≤ Aᶜ.card := by
   simp [internalSides]
 
-theorem Run.split_family (R : Run N p T₀ o α β δ ηα ηβ c) {A : Finset X}
+theorem Run.split_family (R : Run N p T₀ o α β c) {A : Finset X}
     (hA : A ∈ internalSides T₀) :
     IsSplitFamily T₀ := by
   obtain ⟨_, h, _⟩ := mem_internalSides.1 hA
   exact (isUnrootedTree_iff (h.trans (Finset.card_le_univ A)) T₀).1 R.resolution.1
 
 /-- Step 3 does not contract an edge of the tree of blobs: its quartets are nonuniform. -/
-theorem Run.treeOfBlobs_subset_afterStar (R : Run N p T₀ o α β δ ηα ηβ c) :
+theorem Run.treeOfBlobs_subset_afterStar (R : Run N p T₀ o α β c) :
     treeOfBlobs N ⊆ afterStar o β c T₀ := by
   have key : ∀ A ∈ treeOfBlobs N,
       A ∉ (internalSides T₀).filter fun A => β < edgeStarP o c T₀ A := by
@@ -287,35 +295,123 @@ theorem Run.treeOfBlobs_subset_afterStar (R : Run N p T₀ o α β δ ηα ηβ 
     obtain ⟨s, hs⟩ := exists_mem_multipartitionQuartets (R.split_family hint) h₂ h₂'
     have hA' : A ∩ s.taxa ∈ s.val := (mem_filter.1 (mem_filter.1 hs).1).2
     have hstrict := R.forward.t1 s (inducedCutSplit_of_mem R.phylo hA hA')
-    exact absurd hβ (not_lt_of_gt (R.edgeStarP_lt ⟨s, hs, not_uniform_of_strict hstrict⟩))
+    exact absurd hβ (not_lt_of_gt (R.edgeStarP_lt hint ⟨s, hs, not_uniform_of_strict hstrict⟩))
   intro A hA
   exact mem_contractSides.2 ⟨R.resolution.2 hA, key A hA, key _ (compl_mem_treeOfBlobs hA)⟩
 
 theorem afterStar_subset : afterStar o β c T₀ ⊆ T₀ := Finset.filter_subset _ _
 
 /-- An edge that Step 3 keeps has a nonuniform quartet. -/
-theorem Run.exists_not_uniform (R : Run N p T₀ o α β δ ηα ηβ c) {T : Finset (Finset X)}
+theorem Run.exists_not_uniform (R : Run N p T₀ o α β c) {T : Finset (Finset X)}
     (hT : T ⊆ afterStar o β c T₀) {A : Finset X} (hA : A ∈ internalSides T) :
     ∃ s ∈ multipartitionQuartets T₀ A, ¬ IsUniformOn p s.taxa := by
   obtain ⟨hAT, h₂, h₂'⟩ := mem_internalSides.1 hA
   obtain ⟨hAT₀, hnot, _⟩ := mem_contractSides.1 (hT hAT)
   by_contra hcon
   push Not at hcon
-  exact hnot (mem_filter.2 ⟨mem_internalSides.2 ⟨hAT₀, h₂, h₂'⟩, R.edgeStarP_gt hcon⟩)
+  have hint := mem_internalSides.2 ⟨hAT₀, h₂, h₂'⟩
+  exact hnot (mem_filter.2 ⟨hint, R.edgeStarP_gt hint hcon⟩)
 
-/-- A false edge that Step 3 keeps has a quartet off the T1 null: `falseEdge_witness`, which gives
-one neither a cut split nor a trivial 4-blob, so by the converse of Assumption 1 neither (5.2) nor
-(5.1). -/
-theorem Run.exists_not_t1Null (R : Run N p T₀ o α β δ ηα ηβ c) {T : Finset (Finset X)}
+/-- Step 7 contracts within a tree: contracting internal edges of a tree leaves a tree. -/
+theorem isSplitFamily_contractSides {T C : Finset (Finset X)} (hT : IsSplitFamily T)
+    (hC : C ⊆ internalSides T) : IsSplitFamily (contractSides T C) := by
+  have hint : ∀ {A : Finset X}, A ∈ C → 2 ≤ A.card ∧ 2 ≤ Aᶜ.card := fun hA =>
+    (mem_internalSides.1 (hC hA)).2
+  refine ⟨fun A hA => hT.nonempty A (mem_contractSides.1 hA).1,
+    fun A hA => hT.compl_nonempty A (mem_contractSides.1 hA).1, fun A hA => ?_, fun x => ?_,
+    fun A hA B hB => hT.compatible A (mem_contractSides.1 hA).1 B (mem_contractSides.1 hB).1⟩
+  · obtain ⟨h₁, h₂, h₃⟩ := mem_contractSides.1 hA
+    exact mem_contractSides.2 ⟨hT.compl_mem A h₁, h₃, by rwa [compl_compl]⟩
+  · refine mem_contractSides.2 ⟨hT.singleton_mem x, fun h => ?_, fun h => ?_⟩
+    · have := (hint h).1
+      simp at this
+    · have := (hint h).2
+      simp at this
+
+theorem isSplitFamily_afterStar (hT₀ : IsSplitFamily T₀) : IsSplitFamily (afterStar o β c T₀) :=
+  isSplitFamily_contractSides hT₀ (Finset.filter_subset _ _)
+
+theorem isSplitFamily_contractStep {T : Finset (Finset X)} (hT : IsSplitFamily T) :
+    IsSplitFamily (contractStep o c T₀ T) :=
+  isSplitFamily_contractSides hT (Finset.filter_subset _ _)
+
+/-- Corollary 4.2 for the quartets `S_bi(e)` of a false edge: one of them is not a cut split of its
+induced network. -/
+theorem exists_not_inducedCutSplit_bipartition (hN : N.IsPhylogenetic) {A : Finset X}
+    (hA : 2 ≤ A.card) (hA' : 2 ≤ Aᶜ.card) (hcut : ¬ N.HasCutSplit (A : Set X)) :
+    ∃ s ∈ bipartitionQuartets A, ¬ InducedCutSplit N s := by
+  obtain ⟨a₁, ha₁⟩ : A.Nonempty := Finset.card_pos.1 (by omega)
+  obtain ⟨b₁, hb₁⟩ : Aᶜ.Nonempty := Finset.card_pos.1 (by omega)
+  rcases corollary4_2 hN A hA hA' with h | h
+  · exact absurd h hcut
+  obtain ⟨a₂, ha₂, b₂, hb₂, hane, hbne, hbad⟩ := h a₁ ha₁ b₁ hb₁
+  have hb₁' := mem_compl.1 hb₁
+  have hb₂' := mem_compl.1 hb₂
+  have hc : ({a₁, a₂, b₁, b₂} : Finset X).card = 4 :=
+    card_four_of_ne hane.symm (fun h => hb₁' (h ▸ ha₁)) (fun h => hb₂' (h ▸ ha₁))
+      (fun h => hb₁' (h ▸ ha₂)) (fun h => hb₂' (h ▸ ha₂)) hbne.symm
+  refine ⟨quartetTree a₁ a₂ b₁ b₂ hc, mem_filter.2 ⟨mem_univ _, ?_⟩,
+    fun hr => hbad (hasCutSplitOn_of_inducedCutSplit hc hr)⟩
+  rw [taxa_quartetTree, inter_four ha₁ ha₂ hb₁' hb₂']
+  simp [quartetTree]
+
+/-- Corollary 4.3 for the quartets `S_mul(e)` of a false edge of a tree: one of them is not a cut
+split of its induced network. -/
+theorem exists_not_inducedCutSplit_multipartition (hN : N.IsPhylogenetic) {T : Finset (Finset X)}
+    (hT : IsSplitFamily T) {A : Finset X} (hA : 2 ≤ A.card) (hA' : 2 ≤ Aᶜ.card)
+    (hcut : ¬ N.HasCutSplit (A : Set X)) :
+    ∃ s ∈ multipartitionQuartets T A, ¬ InducedCutSplit N s := by
+  obtain ⟨a, ha, b, hb, c, hc, d, hd, hab, hcd, hbad⟩ := exists_cut_witness hN hT hA hA' hcut
+  have hc' := mem_compl.1 hc
+  have hd' := mem_compl.1 hd
+  have hcard : ({a, b, c, d} : Finset X).card = 4 :=
+    card_four_of_ne hab.1 (fun h => hc' (h ▸ ha)) (fun h => hd' (h ▸ ha))
+      (fun h => hc' (h ▸ hb)) (fun h => hd' (h ▸ hb)) hcd.1
+  exact ⟨_, quartetTree_mem hcard ha hb hc' hd' hab hcd,
+    fun hr => hbad (hasCutSplitOn_of_inducedCutSplit hcard hr)⟩
+
+/-- "By Corollaries 4.2 and 4.3" (line 1126): at a false edge, the quartets of the chosen type, at
+any stage, include one that is not a cut split of its induced network. Corollary 4.2 for the type
+`bi`, Corollary 4.3 at the current tree for `mul`, and at `T₀` for `quad`. -/
+theorem exists_not_inducedCutSplit_edgeQuartets (hN : N.IsPhylogenetic) {T : Finset (Finset X)}
+    (hT₀ : IsSplitFamily T₀) (hT : IsSplitFamily T) {A : Finset X} (hA : 2 ≤ A.card)
+    (hA' : 2 ≤ Aᶜ.card) (hcut : ¬ N.HasCutSplit (A : Set X)) :
+    ∃ s ∈ edgeQuartets o T₀ T A, ¬ InducedCutSplit N s := by
+  unfold edgeQuartets
+  cases o.qType with
+  | bi => exact exists_not_inducedCutSplit_bipartition hN hA hA' hcut
+  | mul => exact exists_not_inducedCutSplit_multipartition hN hT hA hA' hcut
+  | quad => exact exists_not_inducedCutSplit_multipartition hN hT₀ hA hA' hcut
+
+/-- An internal edge of a tree that is not in the tree of blobs is not a cut edge. -/
+theorem not_hasCutSplit_of_notMem {A : Finset X} (hA : 2 ≤ A.card)
+    (hA' : 2 ≤ Aᶜ.card) (hAB : A ∉ treeOfBlobs N) : ¬ N.HasCutSplit (A : Set X) := fun h =>
+  hAB (mem_filter.2 ⟨mem_univ _, Finset.card_pos.1 (by omega), Finset.card_pos.1 (by omega), h⟩)
+
+/-- A set `Q` of quartets of a false edge that Step 3 keeps, containing a quartet `s` that is not a
+cut split (the paper's witness, from Corollaries 4.2 and 4.3), and containing the multipartition of
+`T₀`, has a quartet off the T1 null.
+
+If `s` has no trivial 4-blob, this is `s`, by the converse of Assumption 1: this is the paper's
+argument. If `s` has a trivial 4-blob, then the T1 null holds on it, at the centroid, and it does
+not witness anything: this is the gap of the paper's proof (E12). In that case the witness comes
+from `falseEdge_witness`, which applies since Step 3 kept the edge. -/
+theorem Run.exists_not_t1Null_of_witness (R : Run N p T₀ o α β c) {T : Finset (Finset X)}
     (hT : T ⊆ afterStar o β c T₀) {A : Finset X} (hA : A ∈ internalSides T)
-    (hAB : A ∉ treeOfBlobs N) : ∃ s ∈ multipartitionQuartets T₀ A, ¬ T1Null p s := by
-  obtain ⟨hAT, h₂, h₂'⟩ := mem_internalSides.1 hA
-  have hAT₀ := afterStar_subset (hT hAT)
-  obtain ⟨s₀, hs₀, hu₀⟩ := R.exists_not_uniform hT hA
-  obtain ⟨s, hs, hR, hTr⟩ := falseEdge_witness R.phylo R.resolution
-    (mem_internalSides.2 ⟨hAT₀, h₂, h₂'⟩) hAB
-    ⟨s₀, hs₀, fun htr => hu₀ (R.forward.star _ s₀.card_taxa htr)⟩
-  exact ⟨s, hs, not_t1Null (R.sum s) (R.converse.t1 s hR) (R.converse.star _ s.card_taxa hTr)⟩
+    (hAB : A ∉ treeOfBlobs N) {Q : Finset (QuartetTree X)} (hQ : multipartitionQuartets T₀ A ⊆ Q)
+    (hw : ∃ s ∈ Q, ¬ InducedCutSplit N s) : ∃ s ∈ Q, ¬ T1Null p s := by
+  obtain ⟨s, hs, hR⟩ := hw
+  by_cases htr : HasTrivialFourBlob N s.taxa
+  · -- the gap: the paper's witness is on the T1 null
+    obtain ⟨hAT, h₂, h₂'⟩ := mem_internalSides.1 hA
+    obtain ⟨s₀, hs₀, hu₀⟩ := R.exists_not_uniform hT hA
+    obtain ⟨s', hs', hR', hTr'⟩ := falseEdge_witness R.phylo R.resolution
+      (mem_internalSides.2 ⟨afterStar_subset (hT hAT), h₂, h₂'⟩) hAB
+      ⟨s₀, hs₀, fun htr => hu₀ (R.forward.star _ s₀.card_taxa htr)⟩
+    exact ⟨s', hQ hs', not_t1Null (R.sum s') (R.converse.t1 s' hR')
+      (R.converse.star _ s'.card_taxa hTr')⟩
+  · -- the paper's argument: the witness is off the T1 null
+    exact ⟨s, hs, not_t1Null (R.sum s) (R.converse.t1 s hR) (R.converse.star _ s.card_taxa htr)⟩
 
 theorem multipartitionQuartets_subset_edgeQuartets {T : Finset (Finset X)} (hT : T ⊆ T₀)
     (A : Finset X) : multipartitionQuartets T₀ A ⊆ edgeQuartets o T₀ T A := by
@@ -341,55 +437,90 @@ theorem mem_of_mem_edgeQuartets {T : Finset (Finset X)} {A : Finset X} {s : Quar
   | mul => exact fun hs => (mem_filter.1 (mem_filter.1 hs).1).2
   | quad => exact fun hs => (mem_filter.1 (mem_filter.1 hs).1).2
 
-/-- Edges of the tree of blobs are not rejected. -/
-theorem Run.edgeT1P_gt (R : Run N p T₀ o α β δ ηα ηβ c) (T : Finset (Finset X)) {A : Finset X}
-    (hA : A ∈ treeOfBlobs N) : α < edgeT1P o c T₀ T A :=
-  R.comb_α.gt_map _ _ (fun s _ => R.t1_mem s)
-    (fun s hs => R.t1_null s (R.t1Null_of_mem hA (mem_of_mem_edgeQuartets hs)))
-    (fun hm s _ => R.t1_le hm s)
+/-- A set of quartets displayed by a tree has at most `C(s,4)` elements, one for each set of four
+taxa, for `s` the number of taxa: the paper's bound (lines 1107 and 1154-1155). -/
+theorem card_le_choose_of_displays {T : Finset (Finset X)} (hT : IsUnrootedTree T)
+    {Q : Finset (QuartetTree X)} (hQ : ∀ s ∈ Q, Displays T s) :
+    Q.card ≤ (Fintype.card X).choose 4 := by
+  rw [← Finset.card_univ, ← Finset.card_powersetCard]
+  refine Finset.card_le_card_of_injOn (fun s => s.taxa) (fun s _ => ?_) fun s hs s' hs' h => ?_
+  · exact Finset.mem_coe.2 (Finset.mem_powersetCard.2 ⟨Finset.subset_univ _, s.card_taxa⟩)
+  · exact hT.displays_unique (hQ s hs) (hQ s' hs') h
 
-/-- False edges are rejected. -/
-theorem Run.edgeT1P_lt (R : Run N p T₀ o α β δ ηα ηβ c) {T : Finset (Finset X)}
-    (hT : T ⊆ afterStar o β c T₀) {A : Finset X} (hA : A ∈ internalSides T)
-    (hAB : A ∉ treeOfBlobs N) : edgeT1P o c T₀ T A < α := by
-  obtain ⟨s, hs, hn⟩ := R.exists_not_t1Null hT hA hAB
-  exact R.comb_α.lt_map le_rfl _ _ (fun s _ => R.t1_mem s)
-    ⟨s, multipartitionQuartets_subset_edgeQuartets (hT.trans afterStar_subset) A hs, R.t1_alt s hn⟩
-    (fun hm s _ => R.t1_le hm s)
+/-- The size of the quartets of an edge of `T₀`, for the star test. -/
+theorem card_multipartitionQuartets_le (hT₀ : IsUnrootedTree T₀) {A : Finset X} (hA : A ∈ T₀) :
+    (multipartitionQuartets T₀ A).card ≤ (Fintype.card X).choose 4 :=
+  card_le_choose_of_displays hT₀ fun _ hs => ⟨A, hA, (mem_filter.1 (mem_filter.1 hs).1).2⟩
 
-/-- A tree with a false edge is rejected. -/
-theorem Run.treeT1P_lt (R : Run N p T₀ o α β δ ηα ηβ c) {T : Finset (Finset X)}
+/-- The size of the quartets of an edge of a contraction of `T₀`, for the T1 test. -/
+theorem card_edgeQuartets_le (hT₀ : IsUnrootedTree T₀) {T : Finset (Finset X)} (hT : T ⊆ T₀)
+    {A : Finset X} (hA : A ∈ T) : (edgeQuartets o T₀ T A).card ≤ (Fintype.card X).choose 4 :=
+  card_le_choose_of_displays hT₀ fun _ hs => ⟨A, hT hA, mem_of_mem_edgeQuartets hs⟩
+
+/-- The size of the quartets of a contraction of `T₀`, for the overall p-value. -/
+theorem card_displays_le (hT₀ : IsUnrootedTree T₀) {T : Finset (Finset X)} (hT : T ⊆ T₀) :
+    (univ.filter fun s => Displays T s).card ≤ (Fintype.card X).choose 4 :=
+  card_le_choose_of_displays hT₀ fun _ hs => by
+    obtain ⟨A, hA, hAs⟩ := (mem_filter.1 hs).2
+    exact ⟨A, hT hA, hAs⟩
+
+/-- A false edge that Step 3 keeps has a quartet of the chosen type off the T1 null: `S^a(e)` is not
+empty (lines 1125-1127). -/
+theorem Run.exists_not_t1Null (R : Run N p T₀ o α β c) {T : Finset (Finset X)}
+    (hT : T ⊆ afterStar o β c T₀) (hTs : IsSplitFamily T) {A : Finset X} (hA : A ∈ internalSides T)
+    (hAB : A ∉ treeOfBlobs N) : ∃ s ∈ edgeQuartets o T₀ T A, ¬ T1Null p s := by
+  obtain ⟨hAT, h₂, h₂'⟩ := mem_internalSides.1 hA
+  refine R.exists_not_t1Null_of_witness hT hA hAB
+    (multipartitionQuartets_subset_edgeQuartets (hT.trans afterStar_subset) A) ?_
+  exact exists_not_inducedCutSplit_edgeQuartets R.phylo
+    (R.split_family (mem_internalSides.2 ⟨afterStar_subset (hT hAT), h₂, h₂'⟩)) hTs h₂ h₂'
+    (not_hasCutSplit_of_notMem h₂ h₂' hAB)
+
+/-- Edges of the tree of blobs are not rejected: `S^a(e)` is empty. -/
+theorem Run.edgeT1P_gt (R : Run N p T₀ o α β c) {T : Finset (Finset X)} (hT : T ⊆ T₀) {A : Finset X}
+    (hAi : A ∈ internalSides T) (hA : A ∈ treeOfBlobs N) : α < edgeT1P o c T₀ T A :=
+  (R.t1 T hT A hAi).1 fun _ hs => R.t1Null_of_mem hA (mem_of_mem_edgeQuartets hs)
+
+/-- False edges are rejected: `S^a(e)` is not empty. -/
+theorem Run.edgeT1P_lt (R : Run N p T₀ o α β c) {T : Finset (Finset X)}
+    (hT : T ⊆ afterStar o β c T₀) (hTs : IsSplitFamily T) {A : Finset X} (hA : A ∈ internalSides T)
+    (hAB : A ∉ treeOfBlobs N) : edgeT1P o c T₀ T A < α :=
+  (R.t1 T (hT.trans afterStar_subset) A hA).2 (R.exists_not_t1Null hT hTs hA hAB)
+
+/-- A tree with a false edge is rejected (lines 1151-1158). The overall p-value combines the T1
+tests on `∪_{e ∈ T_k} S_bi(e)`, so the paper's witness at the false edge comes from Corollary 4.2.
+-/
+theorem Run.treeT1P_lt (R : Run N p T₀ o α β c) {T : Finset (Finset X)}
     (hT : T ⊆ afterStar o β c T₀) {A : Finset X} (hA : A ∈ internalSides T)
     (hAB : A ∉ treeOfBlobs N) : treeT1P o c T < α := by
-  obtain ⟨s, hs, hn⟩ := R.exists_not_t1Null hT hA hAB
-  refine R.comb_α.lt_map le_rfl _ _ (fun s _ => R.t1_mem s) ⟨s, ?_, R.t1_alt s hn⟩
-    (fun hm s _ => R.t1_le hm s)
-  exact mem_filter.2
-    ⟨mem_univ _, A, (mem_internalSides.1 hA).1, (mem_filter.1 (mem_filter.1 hs).1).2⟩
+  obtain ⟨hAT, h₂, h₂'⟩ := mem_internalSides.1 hA
+  obtain ⟨s, hs, hn⟩ := R.exists_not_t1Null_of_witness hT hA hAB (Finset.filter_subset _ _)
+    (exists_not_inducedCutSplit_bipartition R.phylo h₂ h₂' (not_hasCutSplit_of_notMem h₂ h₂' hAB))
+  exact (R.tree T (hT.trans afterStar_subset)).2
+    ⟨s, mem_filter.2 ⟨mem_univ _, A, hAT, (mem_filter.1 hs).2⟩, hn⟩
 
 /-- A tree without false edges is not rejected. -/
-theorem Run.treeT1P_gt (R : Run N p T₀ o α β δ ηα ηβ c) {T : Finset (Finset X)}
+theorem Run.treeT1P_gt (R : Run N p T₀ o α β c) {T : Finset (Finset X)}
     (hT : T ⊆ treeOfBlobs N) : α < treeT1P o c T := by
-  refine R.comb_α.gt_map _ _ (fun s _ => R.t1_mem s) ?_ (fun hm s _ => R.t1_le hm s)
-  intro s hs
+  refine (R.tree T (hT.trans R.resolution.2)).1 fun s hs => ?_
   obtain ⟨A, hA, hAs⟩ := (mem_filter.1 hs).2
-  exact R.t1_null s (R.t1Null_of_mem (hT hA) hAs)
+  exact R.t1Null_of_mem (hT hA) hAs
 
 theorem contractStep_subset (T : Finset (Finset X)) : contractStep o c T₀ T ⊆ T :=
   Finset.filter_subset _ _
 
 /-- Step 7 keeps the edges of the tree of blobs as long as there is a false edge. -/
-theorem Run.treeOfBlobs_subset_contractStep (R : Run N p T₀ o α β δ ηα ηβ c)
-    {T : Finset (Finset X)} (hT : T ⊆ afterStar o β c T₀) (hB : treeOfBlobs N ⊆ T) {F : Finset X}
-    (hF : F ∈ internalSides T) (hFB : F ∉ treeOfBlobs N) :
+theorem Run.treeOfBlobs_subset_contractStep (R : Run N p T₀ o α β c)
+    {T : Finset (Finset X)} (hT : T ⊆ afterStar o β c T₀) (hTs : IsSplitFamily T)
+    (hB : treeOfBlobs N ⊆ T) {F : Finset X} (hF : F ∈ internalSides T) (hFB : F ∉ treeOfBlobs N) :
     treeOfBlobs N ⊆ contractStep o c T₀ T := by
   have key : ∀ A ∈ treeOfBlobs N, A ∉ (internalSides T).filter fun A =>
       ∀ B ∈ internalSides T, edgeT1P o c T₀ T A ≤ edgeT1P o c T₀ T B := by
     intro A hA hmem
-    have h₀ := (mem_filter.1 hmem).2 F hF
-    have h₁ := R.edgeT1P_gt T hA
-    have h₂ := R.edgeT1P_lt hT hF hFB
-    linarith
+    obtain ⟨hAi, h₀⟩ := mem_filter.1 hmem
+    have h₁ := R.edgeT1P_gt (hT.trans afterStar_subset) hAi hA
+    have h₂ := R.edgeT1P_lt hT hTs hF hFB
+    linarith [h₀ F hF]
   intro A hA
   exact mem_contractSides.2 ⟨hB hA, key A hA, key _ (compl_mem_treeOfBlobs hA)⟩
 
@@ -415,6 +546,14 @@ theorem treeSeq_anti {i j : ℕ} (h : i ≤ j) : treeSeq o β c T₀ j ⊆ treeS
 theorem treeSeq_subset_afterStar (i : ℕ) : treeSeq o β c T₀ i ⊆ afterStar o β c T₀ :=
   treeSeq_anti (Nat.zero_le i)
 
+theorem isSplitFamily_treeSeq (hT₀ : IsSplitFamily T₀) (i : ℕ) :
+    IsSplitFamily (treeSeq o β c T₀ i) := by
+  induction i with
+  | zero => exact isSplitFamily_afterStar hT₀
+  | succ i ih =>
+    rw [treeSeq_succ]
+    exact isSplitFamily_contractStep ih
+
 /-- The sequence of trees reaches a star tree. -/
 theorem exists_internalSides_eq_empty : ∃ i, internalSides (treeSeq o β c T₀ i) = ∅ := by
   by_contra hcon
@@ -431,9 +570,9 @@ theorem exists_internalSides_eq_empty : ∃ i, internalSides (treeSeq o β c T�
   have := hcard ((treeSeq o β c T₀ 0).card + 1)
   omega
 
-/-- **The deterministic core of Theorem 8.2.** On a table on which every test behaves as it should,
-the algorithm outputs the tree of blobs. -/
-theorem ectoblob_eq_treeOfBlobs (R : Run N p T₀ o α β δ ηα ηβ c) :
+/-- **The deterministic core of Theorem 8.2.** On a table on which every test comes out right, the
+algorithm outputs the tree of blobs (the end of the paper's proof, lines 1133-1158). -/
+theorem ectoblob_eq_treeOfBlobs (R : Run N p T₀ o α β c) :
     ectoblob o α β c T₀ = treeOfBlobs N := by
   have hex : ∃ i, ¬ ∃ A ∈ internalSides (treeSeq o β c T₀ i), A ∉ treeOfBlobs N := by
     obtain ⟨i, hi⟩ := exists_internalSides_eq_empty (o := o) (β := β) (c := c) (T₀ := T₀)
@@ -449,8 +588,12 @@ theorem ectoblob_eq_treeOfBlobs (R : Run N p T₀ o α β δ ηα ηβ c) :
     | succ i ih =>
       intro hi
       obtain ⟨F, hF, hFB⟩ := hbefore i (by omega)
+      have hF₀ : F ∈ internalSides T₀ := by
+        obtain ⟨h₁, h₂⟩ := mem_internalSides.1 hF
+        exact mem_internalSides.2 ⟨afterStar_subset (treeSeq_subset_afterStar i h₁), h₂⟩
       rw [treeSeq_succ]
-      exact R.treeOfBlobs_subset_contractStep (treeSeq_subset_afterStar i) (ih (by omega)) hF hFB
+      exact R.treeOfBlobs_subset_contractStep (treeSeq_subset_afterStar i)
+        (isSplitFamily_treeSeq (R.split_family hF₀) i) (ih (by omega)) hF hFB
   have hsub₀ : treeSeq o β c T₀ i₀ ⊆ T₀ := (treeSeq_subset_afterStar i₀).trans afterStar_subset
   have heq : treeSeq o β c T₀ i₀ = treeOfBlobs N := by
     refine Finset.Subset.antisymm ?_ (hsub i₀ le_rfl)

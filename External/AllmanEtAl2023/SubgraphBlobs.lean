@@ -22,6 +22,8 @@ rooted networks; `External/AllmanEtAl2023/CycleLemma.lean` applies it to induced
 * `IsCycleThrough`: a cycle through an arc, obtained from a walk by the source's "removing edges to
   eliminate any self-intersections" (`exists_isCycleThrough`). It lies in one blob
   (`IsCycleThrough.isBridgelessSubgraph`, `sameBlobIn_of_isBridgelessSubgraph`).
+* `IsPathIn`, `IsDirectedPath`: the paths combined into such a cycle, as sets of arcs; `exists_last_mem`:
+  the last vertex of a walk on a set.
 -/
 
 @[expose] public section
@@ -729,6 +731,119 @@ theorem sameBlobIn_of_isBridgelessSubgraph {U : Set V} {C : Set E} (h : G.IsBrid
     (Set.sdiff_subset_sdiff_left hC) (h.no_cut_edge g hg _ (h.endpoints g hg).1 _ (h.endpoints g hg).2))⟩
   exact walks_mono hsub (h.connected u hu v hv)
 
+/-! ### Paths -/
+
+/-- `P` is a path in `F` from `p` to `q`: a set of arcs of `F` joining `p` and `q`, no fewer of which
+do. As for `IsCycleThrough`, a minimal set of arcs joining two vertices is a path without
+self-intersections. -/
+structure IsPathIn (G : DirectedMultigraph V E) (F P : Set E) (p q : V) : Prop where
+  subset : P ⊆ F
+  joins : G.Walks P p q
+  minimal : ∀ P', P' ⊂ P → ¬ G.Walks P' p q
+
+/-- A walk in `F` contains a path in `F`. -/
+theorem exists_isPathIn [Finite E] (h : G.Walks F p q) : ∃ P, IsPathIn G F P p q := by
+  obtain ⟨P, ⟨hsub, hjoin⟩, hmin⟩ := (Set.toFinite
+    {P : Set E | P ⊆ F ∧ G.Walks P p q}).exists_minimal ⟨_, subset_rfl, h⟩
+  exact ⟨P, hsub, hjoin, fun P' hP' hw => hP'.2 (hmin ⟨hP'.1.trans hsub, hw⟩ hP'.1)⟩
+
+/-- `P` is the set of arcs of a directed path from `p`, followed along the orientations of its arcs.
+In an acyclic graph, a directed walk has no self-intersections. -/
+inductive IsDirectedPath (G : DirectedMultigraph V E) (p : V) : Set E → V → Prop
+  | refl : IsDirectedPath G p ∅ p
+  | tail {P : Set E} (f : E) :
+      IsDirectedPath G p P (G.source f) → IsDirectedPath G p (insert f P) (G.target f)
+
+section DirectedPath
+
+variable {P P' : Set E} {f : E} {r : V}
+
+theorem exists_isDirectedPath (h : G.Reaches p q) : ∃ P, IsDirectedPath G p P q := by
+  induction h with
+  | refl => exact ⟨∅, .refl⟩
+  | tail _ hstep ih =>
+    obtain ⟨P, hP⟩ := ih
+    obtain ⟨f, rfl, rfl⟩ := hstep
+    exact ⟨_, .tail f hP⟩
+
+theorem IsDirectedPath.reaches (h : IsDirectedPath G p P q) : G.Reaches p q := by
+  induction h with
+  | refl => exact .refl
+  | tail f _ ih => exact ih.tail ⟨f, rfl, rfl⟩
+
+/-- An arc of a directed path lies between its ends. -/
+theorem IsDirectedPath.reaches_of_mem (h : IsDirectedPath G p P q) (hf : f ∈ P) :
+    G.Reaches p (G.source f) ∧ G.Reaches (G.target f) q := by
+  induction h with
+  | refl => exact absurd hf (Set.notMem_empty f)
+  | tail g hg ih =>
+    rcases hf with rfl | hf
+    · exact ⟨hg.reaches, .refl⟩
+    · exact ⟨(ih hf).1, (ih hf).2.tail ⟨g, rfl, rfl⟩⟩
+
+theorem IsDirectedPath.walks (h : IsDirectedPath G p P q) : G.Walks P p q := by
+  induction h with
+  | refl => exact .refl
+  | tail g _ ih => exact (walks_mono (Set.subset_insert g _) ih).tail ⟨g, Set.mem_insert g _, links_self g⟩
+
+/-- The ends of the arcs of a directed path are joined to its start along it. -/
+theorem IsDirectedPath.walks_of_mem (h : IsDirectedPath G p P q) (hf : f ∈ P) :
+    G.Walks P p (G.source f) ∧ G.Walks P p (G.target f) := by
+  induction h with
+  | refl => exact absurd hf (Set.notMem_empty f)
+  | tail g hg ih =>
+    have hs : G.Walks (insert g _) p (G.source g) := walks_mono (Set.subset_insert g _) hg.walks
+    rcases hf with rfl | hf
+    · exact ⟨hs, hs.tail ⟨f, Set.mem_insert f _, links_self f⟩⟩
+    · exact ⟨walks_mono (Set.subset_insert g _) (ih hf).1, walks_mono (Set.subset_insert g _) (ih hf).2⟩
+
+/-- Two directed paths, one ending where the other starts, combine into a directed path. -/
+theorem IsDirectedPath.trans (h : IsDirectedPath G p P q) (h' : IsDirectedPath G q P' r) :
+    IsDirectedPath G p (P ∪ P') r := by
+  induction h' with
+  | refl => rwa [Set.union_empty]
+  | tail g _ ih =>
+    rw [Set.union_insert]
+    exact .tail g ih
+
+end DirectedPath
+
+/-- The arcs of `P` meeting `S` at most at `m`. -/
+def arcsAway (G : DirectedMultigraph V E) (P : Set E) (S : Set V) (m : V) : Set E :=
+  {f | f ∈ P ∧ (G.source f ∈ S → G.source f = m) ∧ (G.target f ∈ S → G.target f = m)}
+
+theorem arcsAway_subset {P : Set E} {S : Set V} {m : V} : arcsAway G P S m ⊆ P := fun _ h => h.1
+
+/-- **The last vertex of a walk on a set `S`**: a walk from `S` splits at a vertex `m` of `S`, after
+which it no longer meets `S`. -/
+theorem exists_last_mem {P : Set E} {S : Set V} (h : G.Walks P p q) (hp : p ∈ S) :
+    ∃ m ∈ S, G.Walks P p m ∧ G.Walks (arcsAway G P S m) m q ∧ (q ∈ S → q = m) := by
+  induction h with
+  | refl => exact ⟨p, hp, .refl, .refl, fun _ => rfl⟩
+  | @tail a c hpa hstep ih =>
+    by_cases hc : c ∈ S
+    · exact ⟨c, hc, hpa.tail hstep, .refl, fun _ => rfl⟩
+    · obtain ⟨m, hm, h1, h2, h3⟩ := ih
+      obtain ⟨g, hg, hl⟩ := hstep
+      refine ⟨m, hm, h1, h2.tail ⟨g, ⟨hg, ?_, ?_⟩, hl⟩, fun h => absurd h hc⟩
+      · rcases hl with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+        · exact h3
+        · exact fun h => absurd h hc
+      · rcases hl with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+        · exact fun h => absurd h hc
+        · exact h3
+
+/-- A walk from `T` to outside it passes through `m`, if the only arcs of the walk crossing `T` are
+at `m`. -/
+theorem mem_arcVertices_of_walks {C : Set E} {m : V} (hw : G.Walks C p q) (hp : p ∈ T) (hq : q ∉ T)
+    (hT : ∀ f ∈ C, G.Crosses f T → G.source f = m ∨ G.target f = m) : m ∈ arcVertices G C := by
+  by_contra hm
+  exact hq ((G.mem_iff_mem_of_walks (fun f hf hc => hm ⟨f, hf, hT f hf hc⟩) hw).mp hp)
+
+theorem arcVertices_mono {C C' : Set E} (h : C ⊆ C') : arcVertices G C ⊆ arcVertices G C' := by
+  rintro x ⟨f, hf, hx⟩
+  exact ⟨f, h hf, hx⟩
+
 /-! ### These are the blobs of `DirectedMultigraph` -/
 
 /-- The subgraph with arcs `F`, on all the vertices. -/
@@ -818,5 +933,163 @@ theorem isBridgelessSubgraph_blob [Finite E] (v : V) :
     rw [walks_restrict_iff, Set.image_sdiff Subtype.val_injective, image_blobArcs,
       Set.image_singleton] at this
     exact this
+
+/-! ### The cut edges between two vertices form a chain -/
+
+/-- Two vertices on a side of `e` away from `v` are joined without `e`. -/
+theorem walks_diff_of_mem_side (hT : OnlyCrosses G F e T) (hv : v ∉ T) (hs : G.Walks F v u)
+    (ht : G.Walks F v w) (hu : u ∈ T) (hw : w ∈ T) : G.Walks (F \ {e}) u w := by
+  obtain ⟨-, p, q, hl, hp, -⟩ := exists_links_of_walks hT hv hs hu
+  exact walks_mono (insideArcs_subset_diff hl hp) (walks_insideArcs_of_mem hT hv hs ht hu hw)
+
+/-- When `e` separates `v` from `w` in a connected graph, every vertex lies in one of the two
+components of `v` and `w`. -/
+theorem mem_compOff_or_mem_compOff (hu : G.Walks F v u) (hw : G.Walks F v w)
+    (hsep : ¬ G.Walks (F \ {e}) v w) : u ∈ compOff G F e v ∨ u ∈ compOff G F e w := by
+  by_cases h : u ∈ compOff G F e v
+  · exact Or.inl h
+  · exact Or.inr (G.walks_symm (walks_diff_of_mem_side onlyCrosses_far not_mem_far_self hu hw h hsep))
+
+/-- **The arcs separating two vertices form a chain**, ordered by their sides containing `u`. An arc
+`e'` other than `e` lies on one side of `e`. If it is on the side of `w`, a walk from `u` avoiding `e`
+never meets it. If it is on the side of `u`, the side of `w` is connected without `e'`, so a walk from
+`u` avoiding `e'` can't reach that side. -/
+theorem compOff_subset_or_subset (hw : G.Walks F u w) (he : ¬ G.Walks (F \ {e}) u w)
+    (he' : ¬ G.Walks (F \ {e'}) u w) :
+    compOff G F e u ⊆ compOff G F e' u ∨ compOff G F e' u ⊆ compOff G F e u := by
+  by_cases hee : e = e'
+  · subst hee
+    exact Or.inl subset_rfl
+  have he'F : e' ∈ F := by
+    by_contra hn
+    have hsub : F ⊆ F \ {e'} := fun f hf => ⟨hf, fun h => hn (h ▸ hf)⟩
+    exact he' (walks_mono hsub hw)
+  have hnc : ¬ G.Crosses e' (compOff G F e u) := fun hc =>
+    hee (onlyCrosses_compOff (G := G) (F := F) (e := e) (v := u) e' he'F hc).symm
+  simp only [Crosses] at hnc
+  by_cases hs : G.source e' ∈ compOff G F e u
+  · -- `e'` is on the side of `u`
+    have ht : G.target e' ∈ compOff G F e u := by tauto
+    refine Or.inr fun x hx => ?_
+    by_contra hxT
+    have hsub : insideArcs G F (far G F e u) ⊆ F \ {e'} := by
+      rintro g ⟨hg, hgs, -⟩
+      refine ⟨hg, ?_⟩
+      rintro rfl
+      exact hgs hs
+    exact he' (Relation.ReflTransGen.trans hx (walks_mono hsub
+      (walks_insideArcs_of_mem onlyCrosses_far not_mem_far_self
+        (walks_mono Set.sdiff_subset hx) hw hxT he)))
+  · -- `e'` is on the side of `w`
+    have ht : G.target e' ∉ compOff G F e u := by tauto
+    refine Or.inl fun x hx => ?_
+    have hx' : G.Walks (F \ {e}) u x := hx
+    induction hx' with
+    | refl => exact .refl
+    | @tail a c hac hstep ih =>
+      obtain ⟨g, hg, hl⟩ := hstep
+      refine (ih hac).tail ⟨g, ⟨hg.1, ?_⟩, hl⟩
+      rintro rfl
+      rcases hl with ⟨rfl, -⟩ | ⟨-, rfl⟩
+      · exact hs hac
+      · exact ht hac
+
+/-- **The component of `u` when all the arcs of `C` are deleted**, for a finite nonempty set `C` of
+arcs separating `u` from `w`: it is the component of `u` off the arc of `C` nearest to `u`. -/
+theorem exists_compOff_eq {C : Set E} (hC : C.Finite) (hne : C.Nonempty) (hw : G.Walks F u w)
+    (hsep : ∀ e ∈ C, ¬ G.Walks (F \ {e}) u w) :
+    ∃ e₀ ∈ C, {x | G.Walks (F \ C) u x} = compOff G F e₀ u := by
+  obtain ⟨e₀, he₀, hmin⟩ := Set.Finite.exists_minimalFor (fun e => compOff G F e u) C hC hne
+  have hle : ∀ g ∈ C, compOff G F e₀ u ⊆ compOff G F g u := fun g hg =>
+    (compOff_subset_or_subset hw (hsep e₀ he₀) (hsep g hg)).elim id (hmin hg)
+  refine ⟨e₀, he₀, Set.Subset.antisymm ?_ fun x hx => ?_⟩
+  · exact fun x hx => walks_mono (Set.sdiff_subset_sdiff_right (Set.singleton_subset_iff.mpr he₀)) hx
+  · have hx' : G.Walks (F \ {e₀}) u x := hx
+    induction hx' with
+    | refl => exact .refl
+    | @tail a c hac hstep ih =>
+      obtain ⟨g, hg, hl⟩ := hstep
+      refine (ih hac).tail ⟨g, ⟨hg.1, fun hgC => ?_⟩, hl⟩
+      -- both ends of `g` would be in the component of `u` off `g`
+      have hac' : G.Walks (F \ {g}) a c :=
+        (G.walks_symm (hle g hgC hac)).trans (hle g hgC (hac.tail ⟨g, hg, hl⟩))
+      refine hsep g hgC (walks_diff_of_detour ?_ hw)
+      rcases hl with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+      · exact hac'
+      · exact G.walks_symm hac'
+
+/-- **Two cut edges do not cross**: the vertices `w₁, w₂` on one side of `e` and `w₃, w₄` on the other
+are not split two and two by `g`. An arc has its ends on one side of `e`, so `g` leaves one of the two
+sides of `e` connected. -/
+theorem OnlyCrosses.not_crossing {S : Set V} {g : E} {w₁ w₂ w₃ w₄ : V} (hS : OnlyCrosses G F e S)
+    (hT : OnlyCrosses G F g T) (h₂ : G.Walks F w₁ w₂) (h₃ : G.Walks F w₁ w₃) (h₄ : G.Walks F w₁ w₄)
+    (h₁S : w₁ ∈ S) (h₂S : w₂ ∈ S) (h₃S : w₃ ∉ S) (h₄S : w₄ ∉ S) (h₁T : w₁ ∈ T) (h₂T : w₂ ∉ T)
+    (h₃T : w₃ ∈ T) (h₄T : w₄ ∉ T) : False := by
+  by_cases hg : g ∈ insideArcs G F S
+  · have hsub : insideArcs G F Sᶜ ⊆ F \ {g} := by
+      rintro f ⟨hf, hfs, -⟩
+      refine ⟨hf, ?_⟩
+      rintro rfl
+      exact hfs hg.2.1
+    have hw := walks_insideArcs_of_mem hS.compl (not_not.mpr h₁S) h₃ h₄ h₃S h₄S
+    exact h₄T ((hT.mem_iff_of_walks_diff (walks_mono hsub hw)).mp h₃T)
+  · have hsub : insideArcs G F S ⊆ F \ {g} := by
+      intro f hf
+      refine ⟨hf.1, ?_⟩
+      rintro rfl
+      exact hg hf
+    have hw := walks_insideArcs_of_mem hS h₃S ((G.walks_symm h₃).trans (Relation.ReflTransGen.refl))
+      ((G.walks_symm h₃).trans h₂) h₁S h₂S
+    exact h₂T ((hT.mem_iff_of_walks_diff (walks_mono hsub hw)).mp h₁T)
+
+/-! ### The blob determined by a set of labels is unique -/
+
+section DeterminesUnique
+
+variable {ι : Type*} {ℓ : ι → V} {S S' : Finset ι}
+
+theorem Determines.mono (h : Determines G F v ℓ S) (hS : S' ⊆ S) : Determines G F v ℓ S' :=
+  fun s hs t ht hne => h s (hS hs) t (hS ht) hne
+
+/-- Two vertices of a blob have the same incident cut edges. -/
+theorem incidentCuts_congr (h : SameBlobIn G F v w) : incidentCuts G F v = incidentCuts G F w := by
+  ext g
+  refine and_congr_right fun _ => or_congr ?_ ?_
+  · exact ⟨h.symm.trans, h.trans⟩
+  · exact ⟨h.symm.trans, h.trans⟩
+
+/-- What determines a blob does not depend on the vertex naming it. -/
+theorem Determines.of_sameBlobIn (hdet : Determines G F v ℓ S) (h : SameBlobIn G F v w) :
+    Determines G F w ℓ S := by
+  unfold Determines
+  rwa [← incidentCuts_congr h]
+
+/-- **The blob determined by at least three labels is unique.** A cut edge between two such blobs
+would have at most one label on each side. -/
+theorem Determines.sameBlobIn (hdet : Determines G F v ℓ S) (hdet' : Determines G F w ℓ S)
+    (h3 : 2 < S.card) (hc : ∀ s ∈ S, G.Walks F v (ℓ s)) (hvw : G.Walks F v w) :
+    SameBlobIn G F v w := by
+  by_contra hb
+  obtain ⟨g, hg⟩ := (exists_leadsTo hvw).resolve_left hb
+  have hc' : ∀ s ∈ S, G.Walks F w (ℓ s) := fun s hs => (G.walks_symm hvw).trans (hc s hs)
+  have key : ∀ s ∈ S, ∀ t ∈ S, s ≠ t → (ℓ s ∉ far G F g v ∨ ℓ t ∉ far G F g v) ∧
+      (ℓ s ∈ far G F g v ∨ ℓ t ∈ far G F g v) := by
+    intro s hs t ht hne
+    constructor
+    · by_contra hcon
+      push Not at hcon
+      exact hne (hdet.eq_of_mem_side onlyCrosses_far not_mem_far_self hs ht (hc s hs) (hc t ht)
+        hcon.1 hcon.2)
+    · by_contra hcon
+      push Not at hcon
+      exact hne (hdet'.eq_of_mem_side onlyCrosses_far.compl (not_not.mpr hg.2) hs ht (hc' s hs)
+        (hc' t ht) hcon.1 hcon.2)
+  obtain ⟨r, hr, t, ht, t', ht', h1, h2, h3'⟩ := Finset.two_lt_card.mp h3
+  have k1 := key r hr t ht h1
+  have k2 := key r hr t' ht' h2
+  have k3 := key t ht t' ht' h3'
+  tauto
+
+end DeterminesUnique
 
 end External.AllmanEtAl2023

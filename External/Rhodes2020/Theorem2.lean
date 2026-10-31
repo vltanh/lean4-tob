@@ -16,6 +16,13 @@ or `xyzw`. Internal edges have weight at least `2`.
 The proof of Theorem 2 is the source's. A node `v ≠ x, y` on the path between `x` and `y` is a member
 `P` of `TreeMetric.pathNodes T x y`, a vertex partition of the tree (`IsVertexPartition`), with
 `A_v = blockOf P x`, `B_v = blockOf P y`, and blocks `C_v^i` the members of `otherBlocks P x y`.
+
+The quartets `xu|yz` and `xyuz` at a node are `nodeQuartets P x y`. A quartet determines a node
+(`exists_node_of_displays`, `exists_node_of_unresolved`), and at a node `z ∈ B_v \ {y}` gives `xu|yz`
+(`displays_of_joinsAt_of_mem_block`) and distinct `C`'s give `xyuz` (`not_displays_of_joinsAt_of_ne`); so
+`Q_{x,y}` is the disjoint union of these sets (`qSet_eq_biUnion`, `nodeQuartets_disjoint`). A quartet
+containing `x, y` is given by its other two taxa (`quartetOfPair`), so these sets are counted as pairs
+(`nodePairs`, `card_nodePairs`, `card_nodeQuartets`).
 -/
 
 @[expose] public noncomputable section
@@ -159,12 +166,22 @@ private theorem card_pairsAcross {F : Finset (Finset X)}
 
 /-! ### The quartets at a node -/
 
-/-- The quartets `xu|yz` and `xyuz` that determine the node `P`, each given by its taxa `u, z` other
-than `x, y`: these avoid `y` and the block `A_v` of `x`, and lie in distinct blocks of `P`. So at least
-one of them is in `C_v`, and the other in `C_v` or `B_v`. -/
-private def nodePairs (P : Finset (Finset X)) (x y : X) : Finset (Finset X) :=
+/-- The two taxa other than `x, y` of the quartets `xu|yz` and `xyuz` that determine the node `P`: they
+avoid `y` and the block `A_v` of `x`, and lie in distinct blocks of `P`. So at least one of them, `u`, is in
+`C_v`, and the other is in `B_v` or in another block of `C_v` (`exists_of_mem_nodePairs`). -/
+def nodePairs (P : Finset (Finset X)) (x y : X) : Finset (Finset X) :=
   univ.filter fun p : Finset X =>
     p.card = 2 ∧ y ∉ p ∧ (∀ t ∈ p, t ∉ blockOf P x) ∧ ∀ B ∈ P, ¬ p ⊆ B
+
+/-- The set of four taxa `x, y` and the two taxa of `p`. A quartet containing `x, y` is given by the two
+other taxa (`erase_erase_quartetOfPair`). -/
+def quartetOfPair (x y : X) (p : Finset X) : Finset X := insert x (insert y p)
+
+/-- The quartets `xu|yz` and `xyuz` that determine the node `P` (the source's paragraph before its
+equation (2)): `u` joins the path at `P`, and `z` is in `B_v` other than `y`, or joins the path at `P` in
+another block. -/
+def nodeQuartets (P : Finset (Finset X)) (x y : X) : Finset (Finset X) :=
+  (nodePairs P x y).image (quartetOfPair x y)
 
 /-- The pair of a taxon joining the path at `P` and another beyond `P` towards `y`. -/
 private theorem mem_nodePairs_of_joinsAt {T P : Finset (Finset X)} {x y u z : X}
@@ -183,50 +200,45 @@ private theorem mem_nodePairs_of_joinsAt {T P : Finset (Finset X)} {x y u z : X}
     have e := eq_of_mem_block hV hB (blockOf_mem hV y) (hsub (by simp)) hz
     exact hu.2 (e ▸ hsub (by simp))
 
-/-- Any quartet `xu|yz` or `xyuz` determines a node on the path, and the quartets at the nodes are of
-these forms. Here a quartet is given by its taxa `u, z` other than `x, y`, and the quartets of these
-forms are those that are not `xy|uz` (`card_pairs_without`). If `u, z` join the path at the same node,
-the quartet is `xyuz` and that is the node; otherwise it is `xu|yz` where `u` joins the path nearer `x`,
-and the node is that of `u`. -/
-private theorem pairs_eq_biUnion_nodePairs {T : Finset (Finset X)} (hT : IsUnrootedTree T)
-    (hS : IsSplitFamily T) {x y : X} (hxy : x ≠ y) :
-    (univ.filter fun p : Finset X =>
-        p.card = 2 ∧ y ∉ p ∧ x ∉ p ∧ ¬ ∃ C ∈ T, p ⊆ C ∧ x ∉ C ∧ y ∉ C) =
-      (pathNodes T x y).biUnion fun P => nodePairs P x y := by
-  ext p
-  simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_biUnion]
-  constructor
-  · rintro ⟨hp2, hyp, hxp, hno⟩
-    obtain ⟨u, z, huz, rfl⟩ := Finset.card_eq_two.mp hp2
-    simp only [Finset.mem_insert, Finset.mem_singleton, not_or] at hyp hxp
-    obtain ⟨P, hP, hu⟩ := exists_joinsAt hS hxy (Ne.symm hxp.1) (Ne.symm hyp.1)
-    obtain ⟨P', hP', hz⟩ := exists_joinsAt hS hxy (Ne.symm hxp.2) (Ne.symm hyp.2)
-    by_cases hPP : P = P'
-    · subst hPP
-      obtain ⟨hV, -⟩ := mem_pathNodes.1 hP
-      refine ⟨P, hP, Finset.mem_filter.mpr ⟨Finset.mem_univ _, hp2, ?_, ?_, ?_⟩⟩
-      · simpa only [Finset.mem_insert, Finset.mem_singleton, not_or] using hyp
-      · intro t ht
-        simp only [Finset.mem_insert, Finset.mem_singleton] at ht
-        rcases ht with rfl | rfl
-        · exact hu.1
-        · exact hz.1
-      · intro B hB hsub
-        obtain ⟨hxB, hyB⟩ := hu.not_mem hV hB (hsub (by simp))
-        exact hno ⟨B, hV.mem B hB, hsub, hxB, hyB⟩
-    · rcases pathNodes_order hT hP hP' hPP hu hz with ⟨hzB, -⟩ | ⟨-, huB⟩
-      · exact ⟨P, hP, mem_nodePairs_of_joinsAt hP hu hzB (Ne.symm hyp.2) huz⟩
-      · refine ⟨P', hP', ?_⟩
-        rw [Finset.pair_comm]
-        exact mem_nodePairs_of_joinsAt hP' hz huB (Ne.symm hyp.1) huz.symm
-  · rintro ⟨P, hP, hp⟩
-    obtain ⟨hV, hd⟩ := mem_pathNodes.1 hP
-    obtain ⟨-, hp2, hyp, hA, hno⟩ := Finset.mem_filter.mp hp
-    refine ⟨hp2, hyp, fun hx => hA x hx (mem_blockOf hV x), ?_⟩
-    rintro ⟨C, hC, hpC, hxC, hyC⟩
-    rcases hV.edge_in_block C hC with ⟨F, hF, hsub⟩ | ⟨F, hF, hsub⟩
-    · exact hno F hF (hpC.trans hsub)
-    · exact hd F hF (hsub (Finset.mem_compl.2 hxC)) (hsub (Finset.mem_compl.2 hyC))
+/-- The pair of two taxa joining the path at `P` in distinct blocks. -/
+private theorem mem_nodePairs_of_joinsAt_of_ne {T P : Finset (Finset X)} {x y u z : X}
+    (hP : P ∈ pathNodes T x y) (hu : JoinsAt P x y u) (hz : JoinsAt P x y z)
+    (hne : blockOf P u ≠ blockOf P z) : ({u, z} : Finset X) ∈ nodePairs P x y := by
+  obtain ⟨hV, -⟩ := mem_pathNodes.1 hP
+  have huz : u ≠ z := fun e => hne (e ▸ rfl)
+  refine Finset.mem_filter.mpr ⟨Finset.mem_univ _, Finset.card_pair huz, ?_, ?_, ?_⟩
+  · simp only [Finset.mem_insert, Finset.mem_singleton, not_or]
+    exact ⟨fun e => hu.2 (e ▸ mem_blockOf hV y), fun e => hz.2 (e ▸ mem_blockOf hV y)⟩
+  · intro t ht
+    simp only [Finset.mem_insert, Finset.mem_singleton] at ht
+    rcases ht with rfl | rfl
+    · exact hu.1
+    · exact hz.1
+  · intro B hB hsub
+    exact hne ((blockOf_eq hV hB (hsub (by simp))).trans (blockOf_eq hV hB (hsub (by simp))).symm)
+
+/-- The two kinds of pairs at a node: `u` joins the path there, and `z` is in `B_v` other than `y`, or
+joins the path there in another block. -/
+private theorem exists_of_mem_nodePairs {P : Finset (Finset X)} {T : Finset (Finset X)} {x y : X}
+    (hP : P ∈ pathNodes T x y) {p : Finset X} (hp : p ∈ nodePairs P x y) :
+    ∃ u z, p = {u, z} ∧ u ≠ z ∧ JoinsAt P x y u ∧
+      ((z ∈ blockOf P y ∧ z ≠ y) ∨ (JoinsAt P x y z ∧ blockOf P u ≠ blockOf P z)) := by
+  obtain ⟨hV, -⟩ := mem_pathNodes.1 hP
+  obtain ⟨-, hp2, hyp, hA, hno⟩ := Finset.mem_filter.mp hp
+  obtain ⟨a, b, hab, rfl⟩ := Finset.card_eq_two.mp hp2
+  simp only [Finset.mem_insert, Finset.mem_singleton, not_or] at hyp
+  have hAa : a ∉ blockOf P x := hA a (by simp)
+  have hAb : b ∉ blockOf P x := hA b (by simp)
+  by_cases ha : a ∈ blockOf P y
+  · have hb : b ∉ blockOf P y := fun hb => hno _ (blockOf_mem hV y) (by
+      simp [Finset.insert_subset_iff, ha, hb])
+    exact ⟨b, a, Finset.pair_comm _ _, hab.symm, ⟨hAb, hb⟩, Or.inl ⟨ha, Ne.symm hyp.1⟩⟩
+  · refine ⟨a, b, rfl, hab, ⟨hAa, ha⟩, ?_⟩
+    by_cases hb : b ∈ blockOf P y
+    · exact Or.inl ⟨hb, Ne.symm hyp.2⟩
+    · refine Or.inr ⟨⟨hAb, hb⟩, fun e => hno _ (blockOf_mem hV a) ?_⟩
+      simp only [Finset.insert_subset_iff, Finset.singleton_subset_iff]
+      exact ⟨mem_blockOf hV a, e ▸ mem_blockOf hV b⟩
 
 /-- A pair at a node has a taxon joining the path there. -/
 private theorem joinsAt_of_mem_nodePairs {T P : Finset (Finset X)} {x y u z : X}
@@ -262,9 +274,9 @@ private theorem nodePairs_disjoint {T P P' : Finset (Finset X)} (hT : IsUnrooted
     · exact hnu h.1
   · exact hne (JoinsAt.unique hT hP hP' hz hz')
 
-/-- The quartets determining the node `v` number `∑_i |C_v^i| (∑_{i<j} |C_v^j| + |B_v| - 1)`: the taxon
-`u` is in `C_v^i`, and `z` in a later `C_v^j` (the quartet `xyuz`) or in `B_v` other than `y` (the
-quartet `xu|yz`). The source prints the upper limits of `i` and `j` as `k`, for `k - 2` blocks `C_v^i`. -/
+/-- The pairs at the node `v` number `∑_i |C_v^i| (∑_{i<j} |C_v^j| + |B_v| - 1)`: the taxon `u` is in
+`C_v^i`, and `z` in a later `C_v^j` or in `B_v` other than `y`. The source prints the upper limits of `i`
+and `j` as `k`, for `k - 2` blocks `C_v^i`. -/
 private theorem card_nodePairs {T P : Finset (Finset X)} (hS : IsSplitFamily T) {x y : X}
     (hP : P ∈ pathNodes T x y) :
     (nodePairs P x y).card =
@@ -334,110 +346,245 @@ private theorem card_nodePairs {T P : Finset (Finset X)} (hS : IsSplitFamily T) 
         · exact hnC B (Finset.mem_filter.mpr ⟨hB, hxB, hyB'⟩) hpB
   rw [heq, card_pairsAcross hdis, crossSum_insert hnot, Finset.card_erase_of_mem hyB]
 
-/-- On the four taxa `x, y, u, v`: the set is unresolved or `x, y` are separated, exactly when no side
-of the tree contains `u, v` and neither of `x, y`. -/
-private theorem unresolved_or_separated_iff {T : Finset (Finset X)} (hT : IsUnrootedTree T)
-    (hS : IsSplitFamily T) {x y u v : X} (h : ({x, y, u, v} : Finset X).card = 4) :
-    (({x, y, u, v} : Finset X) ∈ {q : Finset X | ∀ s ∈ treesOn q, ¬ Displays T s} ∨
-      ∃ s ∈ {s : QuartetTree X | Displays T s}, s.taxa = {x, y, u, v} ∧ Separated s x y) ↔
-      ¬ ∃ C ∈ T, u ∈ C ∧ v ∈ C ∧ x ∉ C ∧ y ∉ C := by
-  obtain ⟨hxy, hxu, hxv, hyu, hyv, huv⟩ := TreeMetric.ne_of_card_four h
-  have h' : ({u, v, x, y} : Finset X).card = 4 :=
-    TreeMetric.card_four_of_ne huv hxu.symm hyu.symm hxv.symm hyv.symm hxy
-  have hset : ({u, v, x, y} : Finset X) = {x, y, u, v} := by grind
-  constructor
-  · rintro hcon ⟨C, hC, huC, hvC, hxC, hyC⟩
-    have hdisp : Displays T (quartetTree u v x y h') :=
-      (TreeMetric.displays_quartetTree_iff hS h').mpr ⟨C, hC, huC, hvC, hxC, hyC⟩
-    rcases hcon with hcon | ⟨s, hs, hst, hsep⟩
-    · exact hcon _ (Finset.mem_filter.mpr ⟨Finset.mem_univ _, by simp [hset]⟩) hdisp
-    · have hss := hT.displays_unique hs hdisp (by simp [hst, hset])
-      subst hss
-      exact hsep.2.2 {x, y} (by simp) (by simp)
-  · intro hno
-    by_cases hd : ∃ s ∈ treesOn ({x, y, u, v} : Finset X), Displays T s
-    · obtain ⟨s, hs, hsd⟩ := hd
-      have hst : s.taxa = {x, y, u, v} := (Finset.mem_filter.mp hs).2
-      refine Or.inr ⟨s, hsd, hst, by simp [hst], by simp [hst], ?_⟩
-      obtain ⟨a, b, c, d, hq, rfl⟩ := TreeMetric.exists_eq_quartetTree s
-      obtain ⟨A, hA, ha, hb, hc, hd⟩ := (TreeMetric.displays_quartetTree_iff hS hq).mp hsd
-      rw [TreeMetric.taxa_quartetTree] at hst
-      obtain ⟨hab, hac, had, hbc, hbd, hcd⟩ := TreeMetric.ne_of_card_four hq
-      have hm : ∀ z, z = a ∨ z = b ∨ z = c ∨ z = d ↔ z = x ∨ z = y ∨ z = u ∨ z = v := by
-        intro z
-        have := Finset.ext_iff.mp hst z
-        simpa only [Finset.mem_insert, Finset.mem_singleton] using this
-      intro B hB ⟨hxB, hyB⟩
-      simp only [TreeMetric.val_quartetTree, Finset.mem_insert, Finset.mem_singleton] at hB
-      apply hno
-      have hu := (hm u).mpr (by simp)
-      have hv := (hm v).mpr (by simp)
-      clear hm hst hs hsd h h' hset hq hno
-      rcases hB with rfl | rfl
-      · -- `x, y` is the cherry `a, b`, and `u, v` the other
-        refine ⟨Aᶜ, hS.compl_mem A hA, ?_⟩
-        simp only [Finset.mem_insert, Finset.mem_singleton] at hxB hyB
-        simp only [Finset.mem_compl]
-        rcases hxB with rfl | rfl <;> rcases hyB with rfl | rfl <;> grind
-      · refine ⟨A, hA, ?_⟩
-        simp only [Finset.mem_insert, Finset.mem_singleton] at hxB hyB
-        rcases hxB with rfl | rfl <;> rcases hyB with rfl | rfl <;> grind
-    · refine Or.inl fun s hs hsd => hd ⟨s, hs, hsd⟩
-
 /-- The sets `Q_{x,y}` of the theorem. -/
 def qSet (T : Finset (Finset X)) (x y : X) : Finset (Finset X) :=
   univ.filter fun q : Finset X => q.card = 4 ∧ x ∈ q ∧ y ∈ q ∧
     (q ∈ {q : Finset X | ∀ s ∈ treesOn q, ¬ Displays T s} ∨
       ∃ s ∈ {s : QuartetTree X | Displays T s}, s.taxa = q ∧ Separated s x y)
 
-/-- The good pairs avoiding `x` correspond to the sets `Q_{x,y}`. -/
-private theorem card_pairs_without {T : Finset (Finset X)} (hT : IsUnrootedTree T)
-    (hS : IsSplitFamily T) {x y : X} (hxy : x ≠ y) :
-    (univ.filter fun p : Finset X =>
-      p.card = 2 ∧ y ∉ p ∧ x ∉ p ∧ ¬ ∃ C ∈ T, p ⊆ C ∧ x ∉ C ∧ y ∉ C).card = (qSet T x y).card := by
-  refine Finset.card_nbij' (fun p => insert x (insert y p)) (fun q => (q.erase x).erase y) ?_ ?_ ?_ ?_
-  · intro p hp
-    obtain ⟨hp2, hyp, hxp, hno⟩ := Finset.mem_filter.mp (Finset.mem_coe.mp hp) |>.2
-    obtain ⟨u, v, huv, rfl⟩ := Finset.card_eq_two.mp hp2
-    simp only [Finset.mem_insert, Finset.mem_singleton, not_or] at hyp hxp
-    have h4 : ({x, y, u, v} : Finset X).card = 4 :=
-      TreeMetric.card_four_of_ne hxy (Ne.intro hxp.1) (Ne.intro hxp.2) (Ne.intro hyp.1)
-        (Ne.intro hyp.2) huv
-    refine Finset.mem_coe.mpr (Finset.mem_filter.mpr ⟨Finset.mem_univ _, h4, by simp, by simp, ?_⟩)
-    refine (unresolved_or_separated_iff hT hS h4).mpr ?_
-    rintro ⟨C, hC, huC, hvC, hxC, hyC⟩
-    refine hno ⟨C, hC, ?_, hxC, hyC⟩
-    intro z hz
-    simp only [Finset.mem_insert, Finset.mem_singleton] at hz
-    rcases hz with rfl | rfl <;> assumption
-  · intro q hq
-    obtain ⟨hq4, hxq, hyq, hcond⟩ := (Finset.mem_filter.mp (Finset.mem_coe.mp hq)).2
-    have hp2 : ((q.erase x).erase y).card = 2 := by
-      rw [Finset.card_erase_of_mem (Finset.mem_erase.mpr ⟨hxy.symm, hyq⟩),
-        Finset.card_erase_of_mem hxq, hq4]
-    obtain ⟨u, v, huv, hp⟩ := Finset.card_eq_two.mp hp2
-    have hqeq : q = {x, y, u, v} := by
-      rw [← hp, Finset.insert_erase (Finset.mem_erase.mpr ⟨hxy.symm, hyq⟩), Finset.insert_erase hxq]
-    have h4 : ({x, y, u, v} : Finset X).card = 4 := hqeq ▸ hq4
-    subst hqeq
-    refine Finset.mem_coe.mpr (Finset.mem_filter.mpr ⟨Finset.mem_univ _, hp2, by simp, ?_, ?_⟩)
-    · simp
-    · beta_reduce
-      rw [hp]
-      rintro ⟨C, hC, hpC, hxC, hyC⟩
-      exact (unresolved_or_separated_iff hT hS h4).mp hcond
-        ⟨C, hC, hpC (by simp), hpC (by simp), hxC, hyC⟩
-  · intro p hp
-    obtain ⟨-, hyp, hxp, -⟩ := (Finset.mem_filter.mp (Finset.mem_coe.mp hp)).2
-    simp only
-    rw [Finset.erase_insert (fun h => ?_), Finset.erase_insert hyp]
-    rcases Finset.mem_insert.mp h with h | h
+/-! ### The quartets determine the nodes -/
+
+/-- "`z ∈ B_v \ {y}` gives `xu|yz`": a taxon `u` joining the path at `v`, and `z` in `B_v`, give a displayed
+quartet `xu|yz`. The edge from `v` towards `y` separates them. -/
+theorem displays_of_joinsAt_of_mem_block {T P : Finset (Finset X)} (hS : IsSplitFamily T)
+    {x y u z : X} (hP : P ∈ pathNodes T x y) (hu : JoinsAt P x y u) (hz : z ∈ blockOf P y)
+    (h4 : ({x, u, y, z} : Finset X).card = 4) : Displays T (quartetTree x u y z h4) := by
+  obtain ⟨hV, hd⟩ := mem_pathNodes.1 hP
+  have hBy := blockOf_mem hV y
+  refine (TreeMetric.displays_quartetTree_iff hS h4).mpr ⟨(blockOf P y)ᶜ, hS.compl_mem _ (hV.mem _ hBy),
+    Finset.mem_compl.mpr fun hx => hd _ hBy hx (mem_blockOf hV y), Finset.mem_compl.mpr hu.2,
+    fun h => Finset.mem_compl.mp h (mem_blockOf hV y), fun h => Finset.mem_compl.mp h hz⟩
+
+/-- "Distinct `C`'s give `xyuz`": two taxa joining the path at `v` in distinct blocks give the unresolved
+quartet `xyuz`, centred at `v`. -/
+theorem not_displays_of_joinsAt_of_ne {T P : Finset (Finset X)} {x y u z : X}
+    (hP : P ∈ pathNodes T x y) (hu : JoinsAt P x y u) (hz : JoinsAt P x y z)
+    (hne : blockOf P u ≠ blockOf P z) : ∀ s ∈ treesOn ({x, y, u, z} : Finset X), ¬ Displays T s := by
+  obtain ⟨hV, hd⟩ := mem_pathNodes.1 hP
+  have hI : InDistinctBlocks P ({x, y, u, z} : Finset X) := by
+    have hxy : blockOf P x ≠ blockOf P y := fun e =>
+      hd _ (blockOf_mem hV x) (mem_blockOf hV x) (e ▸ mem_blockOf hV y)
+    have hxu : blockOf P x ≠ blockOf P u := fun e => hu.1 (e ▸ mem_blockOf hV u)
+    have hxz : blockOf P x ≠ blockOf P z := fun e => hz.1 (e ▸ mem_blockOf hV z)
+    have hyu : blockOf P y ≠ blockOf P u := fun e => hu.2 (e ▸ mem_blockOf hV u)
+    have hyz : blockOf P y ≠ blockOf P z := fun e => hz.2 (e ▸ mem_blockOf hV z)
+    have key : ∀ a ∈ ({x, y, u, z} : Finset X), ∀ b ∈ ({x, y, u, z} : Finset X),
+        blockOf P a = blockOf P b → a = b := by
+      simp only [Finset.mem_insert, Finset.mem_singleton]
+      rintro a (rfl | rfl | rfl | rfl) b (rfl | rfl | rfl | rfl) h <;>
+        first
+          | rfl
+          | exact absurd h hxy
+          | exact absurd h hxu
+          | exact absurd h hxz
+          | exact absurd h hyu
+          | exact absurd h hyz
+          | exact absurd h hne
+          | exact absurd h.symm hxy
+          | exact absurd h.symm hxu
+          | exact absurd h.symm hxz
+          | exact absurd h.symm hyu
+          | exact absurd h.symm hyz
+          | exact absurd h.symm hne
+    intro B hB
+    refine Finset.card_le_one.2 fun a ha b hb => ?_
+    obtain ⟨haB, haq⟩ := Finset.mem_inter.1 ha
+    obtain ⟨hbB, hbq⟩ := Finset.mem_inter.1 hb
+    exact key a haq b hbq (by rw [blockOf_eq hV hB haB, blockOf_eq hV hB hbB])
+  intro s hs
+  exact not_displays_of_inDistinctBlocks hV (by rwa [mem_treesOn.1 hs])
+
+/-- "Any quartet `xu|yz` … that is displayed on the tree `T` determines a node `v` on `P` at which the path
+from `u` to `y` joins `P`": there, `z` is in `B_v`. -/
+theorem exists_node_of_displays {T : Finset (Finset X)} (hS : IsSplitFamily T) {x y u z : X}
+    (hxy : x ≠ y) (h4 : ({x, u, y, z} : Finset X).card = 4) (hd : Displays T (quartetTree x u y z h4)) :
+    ∃ P ∈ pathNodes T x y, JoinsAt P x y u ∧ z ∈ blockOf P y := by
+  obtain ⟨hxu, -, -, huy, -, -⟩ := TreeMetric.ne_of_card_four h4
+  obtain ⟨C, hC, hxC, huC, hyC, hzC⟩ := (TreeMetric.displays_quartetTree_iff hS h4).mp hd
+  obtain ⟨P, hP, hu⟩ := exists_joinsAt hS hxy (Ne.symm hxu) huy
+  obtain ⟨hV, -⟩ := mem_pathNodes.1 hP
+  refine ⟨P, hP, hu, ?_⟩
+  rcases hV.edge_in_block C hC with ⟨F, hF, hsub⟩ | ⟨F, hF, hsub⟩
+  · exact absurd (hsub huC) (by rw [← blockOf_eq hV hF (hsub hxC)]; exact hu.1)
+  · rw [blockOf_eq hV hF (hsub (Finset.mem_compl.mpr hyC))]
+    exact hsub (Finset.mem_compl.mpr hzC)
+
+/-- "Any quartet … `xyuz` that is displayed on the tree `T` determines a node `v` on `P`", its centre, where
+`u` and `z` join the path in distinct blocks. -/
+theorem exists_node_of_unresolved {T : Finset (Finset X)} (hT : IsUnrootedTree T) {x y u z : X}
+    (h4 : ({x, y, u, z} : Finset X).card = 4)
+    (hstar : ∀ s ∈ treesOn ({x, y, u, z} : Finset X), ¬ Displays T s) :
+    ∃ P ∈ pathNodes T x y, JoinsAt P x y u ∧ JoinsAt P x y z ∧ blockOf P u ≠ blockOf P z := by
+  obtain ⟨hxy, hxu, hxz, hyu, hyz, huz⟩ := TreeMetric.ne_of_card_four h4
+  obtain ⟨P, ⟨hP, hI⟩, -⟩ := existsUnique_center hT h4 hstar
+  obtain ⟨hV, -⟩ := mem_multifurcations.1 hP
+  have hone : ∀ B ∈ P, ∀ a ∈ ({x, y, u, z} : Finset X), ∀ b ∈ ({x, y, u, z} : Finset X),
+      a ∈ B → b ∈ B → a = b := fun B hB a ha b hb haB hbB =>
+    Finset.card_le_one.1 (hI B hB) a (Finset.mem_inter.2 ⟨haB, ha⟩) b (Finset.mem_inter.2 ⟨hbB, hb⟩)
+  refine ⟨P, mem_pathNodes.2 ⟨hV, fun B hB hxB hyB =>
+      hxy (hone B hB x (by simp) y (by simp) hxB hyB)⟩,
+    ⟨fun h => hxu (hone _ (blockOf_mem hV x) x (by simp) u (by simp) (mem_blockOf hV x) h),
+      fun h => hyu (hone _ (blockOf_mem hV y) y (by simp) u (by simp) (mem_blockOf hV y) h)⟩,
+    ⟨fun h => hxz (hone _ (blockOf_mem hV x) x (by simp) z (by simp) (mem_blockOf hV x) h),
+      fun h => hyz (hone _ (blockOf_mem hV y) y (by simp) z (by simp) (mem_blockOf hV y) h)⟩,
+    fun e => huz (hone _ (blockOf_mem hV z) u (by simp) z (by simp) (e ▸ mem_blockOf hV u)
+      (mem_blockOf hV z))⟩
+
+omit [Fintype X] in
+/-- A set of two taxa containing `x` is `{x, u}`. -/
+private theorem exists_eq_pair_of_mem {B : Finset X} {x : X} (hB : B.card = 2) (hx : x ∈ B) :
+    ∃ u, B = {x, u} := by
+  obtain ⟨a, b, -, rfl⟩ := Finset.card_eq_two.mp hB
+  simp only [Finset.mem_insert, Finset.mem_singleton] at hx
+  rcases hx with rfl | rfl
+  · exact ⟨b, rfl⟩
+  · exact ⟨a, Finset.pair_comm _ _⟩
+
+omit [Fintype X] in
+/-- A quartet tree separating `x, y` is `xu|yz`. -/
+theorem exists_eq_quartetTree_of_separated {s : QuartetTree X} {x y : X} (h : Separated s x y) :
+    ∃ u z, ∃ h4 : ({x, u, y, z} : Finset X).card = 4, s = quartetTree x u y z h4 := by
+  obtain ⟨hx, hy, hno⟩ := h
+  obtain ⟨B, hB, hxB⟩ : ∃ B ∈ s.val, x ∈ B := by
+    simpa only [QuartetTree.taxa, Finset.mem_sup, id] using hx
+  have hyC : y ∈ s.taxa \ B := Finset.mem_sdiff.2 ⟨hy, fun hyB => hno B hB ⟨hxB, hyB⟩⟩
+  have hC := TreeMetric.sdiff_mem_of_mem hB
+  obtain ⟨u, hu⟩ := exists_eq_pair_of_mem (s.card_of_mem hB) hxB
+  obtain ⟨z, hz⟩ := exists_eq_pair_of_mem (s.card_of_mem hC) hyC
+  have ht : s.taxa = {x, u, y, z} := by
+    rw [← Finset.union_sdiff_of_subset (TreeMetric.subset_taxa_of_mem hB), hz, hu]
+    ext t
+    simp only [Finset.mem_union, Finset.mem_insert, Finset.mem_singleton]
+    tauto
+  have h4 : ({x, u, y, z} : Finset X).card = 4 := ht ▸ s.card_taxa
+  refine ⟨u, z, h4, Subtype.ext ?_⟩
+  rw [TreeMetric.val_eq_of_mem hB, hz, hu, TreeMetric.val_quartetTree]
+
+omit [Fintype X] in
+/-- The quartet tree `xu|yz` separates `x, y`. -/
+theorem separated_quartetTree {x y u z : X} (h4 : ({x, u, y, z} : Finset X).card = 4) :
+    Separated (quartetTree x u y z h4) x y := by
+  obtain ⟨-, hxy, hxz, huy, -, -⟩ := TreeMetric.ne_of_card_four h4
+  refine ⟨by simp, by simp, ?_⟩
+  simp only [TreeMetric.val_quartetTree, Finset.mem_insert, Finset.mem_singleton]
+  rintro B (rfl | rfl) ⟨h1, h2⟩
+  · simp only [Finset.mem_insert, Finset.mem_singleton] at h2
+    rcases h2 with h | h
+    · exact hxy h.symm
+    · exact huy h.symm
+  · simp only [Finset.mem_insert, Finset.mem_singleton] at h1
+    rcases h1 with h | h
     · exact hxy h
-    · exact hxp h
-  · intro q hq
-    obtain ⟨-, hxq, hyq, -⟩ := (Finset.mem_filter.mp (Finset.mem_coe.mp hq)).2
-    simp only
-    rw [Finset.insert_erase (Finset.mem_erase.mpr ⟨hxy.symm, hyq⟩), Finset.insert_erase hxq]
+    · exact hxz h
+
+/-- The sets `Q_{x,y}` are the quartets determining the nodes on the path: a quartet `xu|yz` determines the
+node where `u` joins the path (`exists_node_of_displays`), a quartet `xyuz` its centre
+(`exists_node_of_unresolved`). Conversely, at a node, `z ∈ B_v \ {y}` gives `xu|yz`
+(`displays_of_joinsAt_of_mem_block`), and distinct `C`'s give `xyuz` (`not_displays_of_joinsAt_of_ne`). -/
+theorem qSet_eq_biUnion {T : Finset (Finset X)} (hT : IsUnrootedTree T) (hS : IsSplitFamily T)
+    {x y : X} (hxy : x ≠ y) :
+    qSet T x y = (pathNodes T x y).biUnion fun P => nodeQuartets P x y := by
+  ext q
+  simp only [qSet, Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_biUnion]
+  constructor
+  · rintro ⟨hq4, hxq, hyq, hstar | ⟨s, hs, hst, hsep⟩⟩
+    · -- the quartet `xyuz`
+      have hp2 : ((q.erase x).erase y).card = 2 := by
+        rw [Finset.card_erase_of_mem (Finset.mem_erase.mpr ⟨hxy.symm, hyq⟩),
+          Finset.card_erase_of_mem hxq, hq4]
+      obtain ⟨u, z, -, hp⟩ := Finset.card_eq_two.mp hp2
+      have hqeq : q = {x, y, u, z} := by
+        rw [← hp, Finset.insert_erase (Finset.mem_erase.mpr ⟨hxy.symm, hyq⟩), Finset.insert_erase hxq]
+      subst hqeq
+      obtain ⟨P, hP, hu, hz, hne⟩ := exists_node_of_unresolved hT hq4 hstar
+      exact ⟨P, hP, Finset.mem_image.mpr ⟨{u, z}, mem_nodePairs_of_joinsAt_of_ne hP hu hz hne, rfl⟩⟩
+    · -- the quartet `xu|yz`
+      obtain ⟨u, z, h4, rfl⟩ := exists_eq_quartetTree_of_separated hsep
+      obtain ⟨-, -, -, -, huz, hyz⟩ := TreeMetric.ne_of_card_four h4
+      obtain ⟨P, hP, hu, hzB⟩ := exists_node_of_displays hS hxy h4 hs
+      refine ⟨P, hP, Finset.mem_image.mpr ⟨{u, z},
+        mem_nodePairs_of_joinsAt hP hu hzB (Ne.symm hyz) huz, ?_⟩⟩
+      rw [← hst, TreeMetric.taxa_quartetTree]
+      ext t
+      simp only [quartetOfPair, Finset.mem_insert, Finset.mem_singleton]
+      tauto
+  · rintro ⟨P, hP, hq⟩
+    obtain ⟨hV, hd⟩ := mem_pathNodes.1 hP
+    obtain ⟨p, hp, rfl⟩ := Finset.mem_image.mp hq
+    obtain ⟨u, z, rfl, huz, hu, hzB | hz⟩ := exists_of_mem_nodePairs hP hp
+    · -- `z ∈ B_v \ {y}` gives `xu|yz`
+      obtain ⟨hzB, hzy⟩ := hzB
+      have hux : u ≠ x := fun e => hu.1 (e ▸ mem_blockOf hV x)
+      have huy : u ≠ y := fun e => hu.2 (e ▸ mem_blockOf hV y)
+      have hzx : z ≠ x := fun e => hd _ (blockOf_mem hV y) (e ▸ hzB) (mem_blockOf hV y)
+      have h4 : ({x, u, y, z} : Finset X).card = 4 :=
+        TreeMetric.card_four_of_ne (Ne.symm hux) hxy (Ne.symm hzx) huy huz (Ne.symm hzy)
+      have hset : quartetOfPair x y {u, z} = {x, u, y, z} := by
+        ext t
+        simp only [quartetOfPair, Finset.mem_insert, Finset.mem_singleton]
+        tauto
+      rw [hset]
+      exact ⟨h4, by simp, by simp, Or.inr ⟨_, displays_of_joinsAt_of_mem_block hS hP hu hzB h4,
+        TreeMetric.taxa_quartetTree h4, separated_quartetTree h4⟩⟩
+    · -- distinct `C`'s give `xyuz`
+      obtain ⟨hz, hne⟩ := hz
+      have hux : u ≠ x := fun e => hu.1 (e ▸ mem_blockOf hV x)
+      have huy : u ≠ y := fun e => hu.2 (e ▸ mem_blockOf hV y)
+      have hzx : z ≠ x := fun e => hz.1 (e ▸ mem_blockOf hV x)
+      have hzy : z ≠ y := fun e => hz.2 (e ▸ mem_blockOf hV y)
+      exact ⟨TreeMetric.card_four_of_ne hxy (Ne.symm hux) (Ne.symm hzx) (Ne.symm huy) (Ne.symm hzy) huz,
+        by simp [quartetOfPair], by simp [quartetOfPair],
+        Or.inl (not_displays_of_joinsAt_of_ne hP hu hz hne)⟩
+
+omit [Fintype X] in
+/-- A quartet containing `x, y` is given by the two other taxa. -/
+private theorem erase_erase_quartetOfPair {x y : X} (hxy : x ≠ y) {p : Finset X} (hx : x ∉ p)
+    (hy : y ∉ p) : ((quartetOfPair x y p).erase x).erase y = p := by
+  rw [quartetOfPair, Finset.erase_insert fun h => (Finset.mem_insert.mp h).elim hxy hx,
+    Finset.erase_insert hy]
+
+/-- A pair at a node avoids `x, y`. -/
+private theorem not_mem_of_mem_nodePairs {T P : Finset (Finset X)} {x y : X}
+    (hP : P ∈ pathNodes T x y) {p : Finset X} (hp : p ∈ nodePairs P x y) : x ∉ p ∧ y ∉ p := by
+  obtain ⟨hV, -⟩ := mem_pathNodes.1 hP
+  obtain ⟨-, -, hyp, hA, -⟩ := Finset.mem_filter.mp hp
+  exact ⟨fun hx => hA x hx (mem_blockOf hV x), hyp⟩
+
+/-- The source's display before equation (2): the quartets determining the node `v` number
+`∑_i |C_v^i| (∑_{i<j} |C_v^j| + |B_v| - 1)`, by `card_nodePairs`, each quartet being given by its two
+taxa other than `x, y`. -/
+theorem card_nodeQuartets {T P : Finset (Finset X)} (hS : IsSplitFamily T) {x y : X} (hxy : x ≠ y)
+    (hP : P ∈ pathNodes T x y) :
+    (nodeQuartets P x y).card =
+      crossSum (otherBlocks P x y) + ((blockOf P y).card - 1) * ∑ C ∈ otherBlocks P x y, C.card := by
+  rw [nodeQuartets, Finset.card_image_of_injOn, card_nodePairs hS hP]
+  intro p hp p' hp' he
+  have h1 := not_mem_of_mem_nodePairs hP (Finset.mem_coe.mp hp)
+  have h2 := not_mem_of_mem_nodePairs hP (Finset.mem_coe.mp hp')
+  rw [← erase_erase_quartetOfPair hxy h1.1 h1.2, he, erase_erase_quartetOfPair hxy h2.1 h2.2]
+
+/-- A quartet determines one node only. -/
+theorem nodeQuartets_disjoint {T P P' : Finset (Finset X)} (hT : IsUnrootedTree T) {x y : X}
+    (hxy : x ≠ y) (hP : P ∈ pathNodes T x y) (hP' : P' ∈ pathNodes T x y) (hne : P ≠ P') :
+    Disjoint (nodeQuartets P x y) (nodeQuartets P' x y) := by
+  refine Finset.disjoint_left.mpr fun q hq hq' => ?_
+  obtain ⟨p, hp, rfl⟩ := Finset.mem_image.mp hq
+  obtain ⟨p', hp', he⟩ := Finset.mem_image.mp hq'
+  have h1 := not_mem_of_mem_nodePairs hP hp
+  have h2 := not_mem_of_mem_nodePairs hP' hp'
+  have hpp : p' = p := by
+    rw [← erase_erase_quartetOfPair hxy h1.1 h1.2, ← he, erase_erase_quartetOfPair hxy h2.1 h2.2]
+  exact Finset.disjoint_left.mp (nodePairs_disjoint hT hP hP' hne) hp (hpp ▸ hp')
 
 private theorem qSet_comm (T : Finset (Finset X)) (x y : X) : qSet T y x = qSet T x y := by
   ext q
@@ -459,9 +606,9 @@ private theorem card_qSet_eq_sum {T : Finset (Finset X)} (hT : IsUnrootedTree T)
     (hS : IsSplitFamily T) {x y : X} (hxy : x ≠ y) :
     (qSet T x y).card = ∑ P ∈ pathNodes T x y,
       (crossSum (otherBlocks P x y) + ((blockOf P y).card - 1) * ∑ C ∈ otherBlocks P x y, C.card) := by
-  rw [← card_pairs_without hT hS hxy, pairs_eq_biUnion_nodePairs hT hS hxy, Finset.card_biUnion
-    fun P hP P' hP' hne => nodePairs_disjoint hT hP hP' hne]
-  exact Finset.sum_congr rfl fun P hP => card_nodePairs hS hP
+  rw [qSet_eq_biUnion hT hS hxy, Finset.card_biUnion
+    fun P hP P' hP' hne => nodeQuartets_disjoint hT hxy hP hP' hne]
+  exact Finset.sum_congr rfl fun P hP => card_nodeQuartets hS hxy hP
 
 /-- **Equation (2)** of the source, `|Q_{x,y}| = ∑_v (∑_i |C_v^i| (∑_{i<j} |C_v^j| + |B_v|)) - N + 2`,
 with the sum over the nodes `v ≠ x, y` on the path, and `N`, `2` moved across to stay in `ℕ`. It uses
@@ -623,7 +770,7 @@ theorem sum_sidePairs_compl_eq {T : Finset (Finset X)} (hS : IsSplitFamily T) {x
 `2 |Q_{x,y}| + 2N - 4`.
 
 The proof is the source's. Each quartet of `Q_{x,y}` determines one node on the path
-(`pairs_eq_biUnion_nodePairs`, `nodePairs_disjoint`), and the count by node (`card_nodePairs`) gives
+(`qSet_eq_biUnion`, `nodeQuartets_disjoint`), and the count by node (`card_nodeQuartets`) gives
 equations (2) and (3) (`equation_two`, `equation_three`). Adding them and grouping the terms by the edges
 on the path (`sum_sidePairs_eq`, `sum_sidePairs_compl_eq`) gives `2 |Q_{x,y}| = ∑_e w_Q(e) - 2N + 4`. -/
 theorem theorem2 {T : Finset (Finset X)} (hT : IsUnrootedTree T) {x y : X} (hxy : x ≠ y) :

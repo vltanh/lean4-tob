@@ -15,11 +15,13 @@ of `P`, displays exactly what the family at `P` does.
 * `liftBlocks`, `isBlockFamily_image_liftBlocks`: the family of the lifts of a tree on the blocks;
 * `QuartetTree.map`, `pullTree`, `pullTree_isUnrootedTree`, `displays_pullTree_iff`: restriction of a
   tree along an injection, such as a choice of representatives of the blocks;
-* `IsRepTuple`, `exists_isRepTuple`, `displays_splice_map_iff`: the restriction of a spliced tree to
-  representatives of the blocks is the tree that was spliced;
+* `IsRepTuple`, `exists_isRepTuple`: choices of representatives of the blocks;
 * `IsRepTuple.mem_pullTree_iff`, `pullTree_eq_of_forall_mem`, `filter_isBlockUnion_eq_image_pullTree`:
   a tree with the blocks as sides has one restriction to all representatives, whose lifts are its sides
   that are unions of blocks;
+* `IsBlockAttachment`, `IsBlockAttachment.pullTree_eq`, `attachSubtrees`, `isBlockAttachment_attachSubtrees`,
+  `IsBlockAttachment.exists_eq_attachSubtrees`, `isBlockAttachment_splice`: attaching rooted subtrees at the
+  leaves of a tree on the blocks; every such tree, and every splice, restricts back to the tree on the blocks;
 * `reattach`, `reattach_isUnrootedTree`, `subset_pullTree_reattach`: replacing that restriction by a
   refinement and reattaching the removed taxa;
 * `blockWeight`, `innerSum`, `prod_card_mul_sum_eq_sum_innerSum`, `innerSum_eq_quartetScore_pullTree`: a
@@ -537,29 +539,6 @@ theorem IsRepTuple.liftBlocks_inter_image (A D : Finset {B // B ∈ P}) :
   · rintro ⟨b, ⟨h1, h2⟩, rfl⟩
     exact ⟨(mem_liftBlocks_of_mem hd (hx b)).2 h1, b, h2, rfl⟩
 
-/-- The restriction of a spliced tree to representatives of the blocks of `P` is the tree on the blocks
-whose lifts were added at `P`. -/
-theorem displays_splice_map_iff {T : Finset (Finset X)} (hT : IsUnrootedTree T)
-    {L : Finset (Finset X) → Finset (Finset X)}
-    (hL : ∀ P ∈ multifurcations T, IsBlockFamily P (L P)) (hP : P ∈ multifurcations T)
-    {T₀ : Finset (Finset {B // B ∈ P})} (hLP : L P = T₀.image (liftBlocks P))
-    (s₀ : QuartetTree {B // B ∈ P}) :
-    Displays (splice T L) (s₀.map (hx.injective hd)) ↔ Displays T₀ s₀ := by
-  have hinj := hx.injective hd
-  have hdist : InDistinctBlocks P (s₀.map hinj).taxa :=
-    hx.inDistinctBlocks hd (by rw [QuartetTree.map_taxa]; exact image_subset_image (subset_univ _))
-  rw [displays_splice_iff hT hL hP hdist, hLP]
-  constructor
-  · rintro ⟨A', hA', hAs⟩
-    obtain ⟨A, hA, rfl⟩ := mem_image.1 hA'
-    rw [QuartetTree.map_taxa, hx.liftBlocks_inter_image hd, QuartetTree.map_val, mem_image] at hAs
-    obtain ⟨C, hC, hCe⟩ := hAs
-    exact ⟨A, hA, (image_injective hinj hCe) ▸ hC⟩
-  · rintro ⟨A, hA, hAs⟩
-    refine ⟨_, mem_image_of_mem _ hA, ?_⟩
-    rw [QuartetTree.map_taxa, hx.liftBlocks_inter_image hd, QuartetTree.map_val]
-    exact mem_image_of_mem _ hAs
-
 end Rep
 
 /-! ### Restricting a tree that has the blocks as sides -/
@@ -694,6 +673,304 @@ theorem filter_isBlockUnion_eq_image_pullTree (hcover : P.sup id = univ) {T : Fi
     exact ⟨((hx.mem_pullTree_iff hd hcover hT hall).1 hC).1, isBlockUnion_liftBlocks hd C⟩
 
 end Restrict
+
+/-! ### Attaching rooted subtrees at the leaves of a tree on the blocks -/
+
+section Attach
+
+variable {P : Finset (Finset X)} {T₀ : Finset (Finset {B // B ∈ P})} {T : Finset (Finset X)}
+
+/-- `T` arises from the tree `T₀` on the blocks of `P` by attaching rooted subtrees on the taxa of each
+block at the leaf of `T₀` labelled by that block (ECToBlob, lines 495-497 of the paper): the sides of `T`
+that are unions of blocks are the lifts of the sides of `T₀`. Each block is then a side of `T`, and the
+other sides lie inside a block or have their complement inside one (`IsUnrootedTree.isBlockUnion_or`):
+they are the clusters of the attached subtrees, with their complements. `attachSubtrees` is the
+construction from arbitrary rooted subtrees, and `isBlockAttachment_splice` says that a splice is such a
+tree. -/
+def IsBlockAttachment (P : Finset (Finset X)) (T₀ : Finset (Finset {B // B ∈ P}))
+    (T : Finset (Finset X)) : Prop :=
+  T.filter (IsBlockUnion P) = T₀.image (liftBlocks P)
+
+omit [Fintype X] in
+/-- The sides of `T₀` are sides of a tree attached to it, through their lifts, and so the blocks are:
+they are the lifts of the leaves of `T₀`. -/
+theorem IsBlockAttachment.block_mem (h : IsBlockAttachment P T₀ T) (hT₀ : IsUnrootedTree T₀)
+    (hY : 2 ≤ Fintype.card {B // B ∈ P}) {B : Finset X} (hB : B ∈ P) : B ∈ T := by
+  have hmem : B ∈ T₀.image (liftBlocks P) := mem_image.2 ⟨{⟨B, hB⟩},
+    (hT₀.isSplitFamily hY).singleton_mem _, liftBlocks_singleton _⟩
+  rw [← h] at hmem
+  exact (mem_filter.1 hmem).1
+
+/-- **Restricting an attachment.** Whatever the attached subtrees are, restricting to any choice of
+representatives of the blocks gives back the tree on the blocks. -/
+theorem IsBlockAttachment.pullTree_eq (h : IsBlockAttachment P T₀ T)
+    (hd : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C) (hcover : P.sup id = univ)
+    (hT₀ : IsUnrootedTree T₀) (hT : IsUnrootedTree T) (hY : 2 ≤ Fintype.card {B // B ∈ P})
+    {x : {B // B ∈ P} → X} (hx : IsRepTuple P x) : pullTree x T = T₀ := by
+  have hall : ∀ B ∈ P, B ∈ T := fun B hB => h.block_mem hT₀ hY hB
+  ext A
+  rw [hx.mem_pullTree_iff hd hcover hT hall]
+  constructor
+  · rintro ⟨hA, -, -⟩
+    have hmem : liftBlocks P A ∈ T.filter (IsBlockUnion P) :=
+      mem_filter.2 ⟨hA, isBlockUnion_liftBlocks hd A⟩
+    rw [h] at hmem
+    obtain ⟨A', hA', he⟩ := mem_image.1 hmem
+    have hAA : A' = A := by
+      rw [← hx.filter_mem_liftBlocks hd A', he, hx.filter_mem_liftBlocks hd A]
+    exact hAA ▸ hA'
+  · intro hA
+    have hmem : liftBlocks P A ∈ T.filter (IsBlockUnion P) := by
+      rw [h]
+      exact mem_image_of_mem _ hA
+    exact ⟨(mem_filter.1 hmem).1, hT₀.nonempty_of_mem hA, hT₀.nonempty_of_mem (hT₀.compl_mem hA)⟩
+
+/-- A proper union of blocks inside a block, or with its complement inside one, is that block or its
+complement, so the lift of a side of any tree on the blocks. -/
+theorem mem_image_liftBlocks_of_subset (hd : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C)
+    (hcover : P.sup id = univ) (hS : IsSplitFamily T₀) {A : Finset X} (hU : IsBlockUnion P A)
+    (hne : A.Nonempty) (hne' : Aᶜ.Nonempty) {B : Finset X} (hB : B ∈ P) (h : A ⊆ B ∨ Aᶜ ⊆ B) :
+    A ∈ T₀.image (liftBlocks P) := by
+  rcases h with h | h
+  · have hBA : B ⊆ A := (hU B hB).resolve_right fun hdis => by
+      obtain ⟨y, hy⟩ := hne
+      exact disjoint_left.1 hdis (h hy) hy
+    exact mem_image.2 ⟨{⟨B, hB⟩}, hS.singleton_mem _, by
+      rw [liftBlocks_singleton]
+      exact Subset.antisymm hBA h⟩
+  · have hdis : Disjoint B A := (hU B hB).resolve_left fun hsub => by
+      obtain ⟨y, hy⟩ := hne'
+      exact mem_compl.1 hy (hsub (h hy))
+    have hAe : Aᶜ = B := Subset.antisymm h fun y hy => mem_compl.2 (disjoint_left.1 hdis hy)
+    have hBA : Bᶜ = A := by rw [← hAe, compl_compl]
+    refine mem_image.2 ⟨{⟨B, hB⟩}ᶜ, hS.compl_mem _ (hS.singleton_mem _), ?_⟩
+    rw [liftBlocks_compl hd hcover, liftBlocks_singleton]
+    exact hBA
+
+/-- **A splice is an attachment.** Splicing `T₀` at the multifurcation `P` of `TB` attaches at each leaf
+of `T₀` the rooted subtree that the rest of the spliced tree forms on that block. -/
+theorem isBlockAttachment_splice {TB : Finset (Finset X)} (hTB : IsUnrootedTree TB)
+    {L : Finset (Finset X) → Finset (Finset X)}
+    (hL : ∀ P ∈ multifurcations TB, IsBlockFamily P (L P)) (hP : P ∈ multifurcations TB)
+    (hT₀ : IsUnrootedTree T₀) (hLP : L P = T₀.image (liftBlocks P)) :
+    IsBlockAttachment P T₀ (splice TB L) := by
+  obtain ⟨hV, h4⟩ := mem_multifurcations.1 hP
+  have hY : 2 ≤ Fintype.card {B // B ∈ P} := by
+    rw [Fintype.card_coe]
+    omega
+  have hS := hT₀.isSplitFamily hY
+  have hT := splice_isUnrootedTree hTB hL
+  ext A
+  rw [mem_filter]
+  constructor
+  · rintro ⟨hA, hU⟩
+    have key : ∀ B ∈ P, (A ⊆ B ∨ Aᶜ ⊆ B) → A ∈ T₀.image (liftBlocks P) := fun B hB h =>
+      mem_image_liftBlocks_of_subset hV.pairwiseDisjoint hV.cover hS hU (hT.nonempty_of_mem hA)
+        (hT.nonempty_of_mem (hT.compl_mem hA)) hB h
+    rcases mem_splice.1 hA with hA' | ⟨P', hP', hA'⟩
+    · rcases hV.edge_in_block A hA' with ⟨B, hB, h⟩ | ⟨B, hB, h⟩
+      · exact key B hB (Or.inl h)
+      · exact key B hB (Or.inr h)
+    · by_cases he : P' = P
+      · rw [he, hLP] at hA'
+        exact hA'
+      · obtain ⟨B, hB, B', hB', hu⟩ := hV.exists_union_eq_univ hTB (mem_multifurcations.1 hP').1
+          (Ne.symm he)
+        have hu' : ∀ y, y ∈ B ∨ y ∈ B' := fun y => mem_union.1 (hu ▸ mem_univ y)
+        rcases (hL P' hP').blockUnion A hA' B' hB' with h | h
+        · refine key B hB (Or.inr fun y hy => (hu' y).resolve_right fun hy' => ?_)
+          exact mem_compl.1 hy (h hy')
+        · refine key B hB (Or.inl fun y hy => (hu' y).resolve_right fun hy' => ?_)
+          exact disjoint_left.1 h hy' hy
+  · intro hA
+    obtain ⟨A₀, -, rfl⟩ := mem_image.1 hA
+    exact ⟨mem_splice.2 (Or.inr ⟨P, hP, hLP ▸ hA⟩), isBlockUnion_liftBlocks hV.pairwiseDisjoint _⟩
+
+/-- `R` is the family of clusters of a rooted tree on the taxa of `B`: nested or disjoint, with the
+root `B` and the single taxa. -/
+structure IsRootedTreeOn (B : Finset X) (R : Finset (Finset X)) : Prop where
+  subset : ∀ A ∈ R, A ⊆ B
+  nonempty : ∀ A ∈ R, A.Nonempty
+  top_mem : B ∈ R
+  singleton_mem : ∀ z ∈ B, {z} ∈ R
+  laminar : ∀ A ∈ R, ∀ C ∈ R, A ⊆ C ∨ C ⊆ A ∨ Disjoint A C
+
+/-- The tree on `X` from the tree `T₀` on the blocks by attaching the rooted tree `R b` on the taxa of the
+block `b` at the leaf labelled by `b`: the lifts of the sides of `T₀`, the clusters of the `R b`, and their
+complements. -/
+def attachSubtrees (P : Finset (Finset X)) (T₀ : Finset (Finset {B // B ∈ P}))
+    (R : {B // B ∈ P} → Finset (Finset X)) : Finset (Finset X) :=
+  T₀.image (liftBlocks P) ∪ univ.biUnion fun b => R b ∪ (R b).image compl
+
+theorem mem_attachSubtrees {R : {B // B ∈ P} → Finset (Finset X)} {A : Finset X} :
+    A ∈ attachSubtrees P T₀ R ↔
+      A ∈ T₀.image (liftBlocks P) ∨ ∃ b, A ∈ R b ∨ Aᶜ ∈ R b := by
+  simp only [attachSubtrees, mem_union, mem_biUnion, mem_univ, true_and, mem_image]
+  refine or_congr_right (exists_congr fun b => or_congr_right ⟨?_, fun h => ⟨Aᶜ, h, compl_compl A⟩⟩)
+  rintro ⟨C, hC, rfl⟩
+  rwa [compl_compl]
+
+private theorem compat_compl_left {A C : Finset X}
+    (h : A ⊆ C ∨ C ⊆ A ∨ Disjoint A C ∨ A ∪ C = univ) :
+    Aᶜ ⊆ C ∨ C ⊆ Aᶜ ∨ Disjoint Aᶜ C ∨ Aᶜ ∪ C = univ := by
+  rcases h with h | h | h | h
+  · refine Or.inr (Or.inr (Or.inr (eq_univ_iff_forall.2 fun y => ?_)))
+    by_cases hy : y ∈ A
+    · exact mem_union_right _ (h hy)
+    · exact mem_union_left _ (mem_compl.2 hy)
+  · exact Or.inr (Or.inr (Or.inl (disjoint_left.2 fun y hy hy' => mem_compl.1 hy (h hy'))))
+  · exact Or.inr (Or.inl fun y hy => mem_compl.2 (disjoint_right.1 h hy))
+  · refine Or.inl fun y hy => ?_
+    have : y ∈ A ∪ C := h ▸ mem_univ y
+    exact (mem_union.1 this).resolve_left (mem_compl.1 hy)
+
+variable {R : {B // B ∈ P} → Finset (Finset X)}
+
+/-- **Attaching rooted subtrees to a tree on the blocks gives a tree.** -/
+theorem attachSubtrees_isUnrootedTree (hd : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C)
+    (hcover : P.sup id = univ) (hP : 2 ≤ P.card) (hT₀ : IsUnrootedTree T₀)
+    (hR : ∀ b, IsRootedTreeOn b.val (R b)) : IsUnrootedTree (attachSubtrees P T₀ R) := by
+  have hne : ∀ B ∈ P, B.Nonempty := fun B hB =>
+    (hR ⟨B, hB⟩).nonempty _ (hR ⟨B, hB⟩).top_mem
+  have hfam := isBlockFamily_image_liftBlocks hne hd hcover hT₀
+  have hY : 2 ≤ Fintype.card {B // B ∈ P} := by rwa [Fintype.card_coe]
+  obtain ⟨x, hx⟩ := exists_isRepTuple hne
+  have hX : 2 ≤ Fintype.card X := hY.trans (Fintype.card_le_of_injective x (hx.injective hd))
+  -- a cluster of `R b` misses another block
+  have hout : ∀ b, ∀ A ∈ R b, Aᶜ.Nonempty := by
+    intro b A hA
+    obtain ⟨c, hc⟩ : ∃ c : {B // B ∈ P}, c ≠ b := Fintype.exists_ne_of_one_lt_card (by omega) b
+    obtain ⟨y, hy⟩ := hne c.val c.property
+    refine ⟨y, mem_compl.2 fun hyA => ?_⟩
+    exact hc (block_eq_of_mem hd hy ((hR b).subset A hA hyA))
+  -- the members before taking complements are compatible
+  let Base : Finset X → Prop := fun A => A ∈ T₀.image (liftBlocks P) ∨ ∃ b, A ∈ R b
+  have hbase : ∀ {A C}, Base A → Base C → A ⊆ C ∨ C ⊆ A ∨ Disjoint A C ∨ A ∪ C = univ := by
+    -- a lift and a cluster
+    have hlift : ∀ {A C}, A ∈ T₀.image (liftBlocks P) → (∃ b, C ∈ R b) →
+        A ⊆ C ∨ C ⊆ A ∨ Disjoint A C ∨ A ∪ C = univ := by
+      rintro A C hA ⟨b, hC⟩
+      rcases hfam.blockUnion A hA b.val b.property with h | h
+      · exact Or.inr (Or.inl (((hR b).subset C hC).trans h))
+      · exact Or.inr (Or.inr (Or.inl (h.symm.mono_right ((hR b).subset C hC))))
+    rintro A C (hA | hA) (hC | hC)
+    · exact hfam.compatible A hA C hC
+    · exact hlift hA hC
+    · exact compat_symm (hlift hC hA)
+    · obtain ⟨b, hA⟩ := hA
+      obtain ⟨c, hC⟩ := hC
+      by_cases hbc : b = c
+      · subst hbc
+        rcases (hR b).laminar A hA C hC with h | h | h
+        · exact Or.inl h
+        · exact Or.inr (Or.inl h)
+        · exact Or.inr (Or.inr (Or.inl h))
+      · refine Or.inr (Or.inr (Or.inl (disjoint_left.2 fun y hy hy' => hbc ?_)))
+        exact block_eq_of_mem hd ((hR b).subset A hA hy) ((hR c).subset C hC hy')
+  -- every member is a base one or the complement of one
+  have hor : ∀ {A}, A ∈ attachSubtrees P T₀ R → Base A ∨ Base Aᶜ := by
+    intro A hA
+    rcases mem_attachSubtrees.1 hA with h | ⟨b, h | h⟩
+    · exact Or.inl (Or.inl h)
+    · exact Or.inl (Or.inr ⟨b, h⟩)
+    · exact Or.inr (Or.inr ⟨b, h⟩)
+  refine (isUnrootedTree_iff hX _).2 ⟨?_, ?_, ?_, ?_, ?_⟩
+  · intro A hA
+    rcases mem_attachSubtrees.1 hA with h | ⟨b, h | h⟩
+    · exact hfam.nonempty A h
+    · exact (hR b).nonempty A h
+    · simpa only [compl_compl] using hout b _ h
+  · intro A hA
+    rcases mem_attachSubtrees.1 hA with h | ⟨b, h | h⟩
+    · exact hfam.compl_nonempty A h
+    · exact hout b A h
+    · exact (hR b).nonempty _ h
+  · intro A hA
+    rcases mem_attachSubtrees.1 hA with h | ⟨b, h | h⟩
+    · exact mem_attachSubtrees.2 (Or.inl (hfam.compl_mem A h))
+    · exact mem_attachSubtrees.2 (Or.inr ⟨b, Or.inr (by rwa [compl_compl])⟩)
+    · exact mem_attachSubtrees.2 (Or.inr ⟨b, Or.inl h⟩)
+  · intro y
+    obtain ⟨b, hb⟩ := exists_block hcover y
+    exact mem_attachSubtrees.2 (Or.inr ⟨b, Or.inl ((hR b).singleton_mem y hb)⟩)
+  · intro A hA C hC
+    rcases hor hA with h | h <;> rcases hor hC with h' | h'
+    · exact hbase h h'
+    · have := compat_compl_left (compat_symm (hbase h h'))
+      rw [compl_compl] at this
+      exact compat_symm this
+    · have := compat_compl_left (hbase h h')
+      rwa [compl_compl] at this
+    · have := compat_compl_left (compat_symm (compat_compl_left (hbase h h')))
+      rw [compl_compl, compl_compl] at this
+      exact compat_symm this
+
+/-- The tree `attachSubtrees P T₀ R` arises from `T₀` by attaching rooted subtrees at its leaves. -/
+theorem isBlockAttachment_attachSubtrees (hd : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C)
+    (hcover : P.sup id = univ) (hP : 2 ≤ P.card) (hT₀ : IsUnrootedTree T₀)
+    (hR : ∀ b, IsRootedTreeOn b.val (R b)) : IsBlockAttachment P T₀ (attachSubtrees P T₀ R) := by
+  have hT := attachSubtrees_isUnrootedTree hd hcover hP hT₀ hR
+  have hY : 2 ≤ Fintype.card {B // B ∈ P} := by rwa [Fintype.card_coe]
+  have hS := hT₀.isSplitFamily hY
+  ext A
+  rw [mem_filter]
+  constructor
+  · rintro ⟨hA, hU⟩
+    rcases mem_attachSubtrees.1 hA with h | ⟨b, h | h⟩
+    · exact h
+    · exact mem_image_liftBlocks_of_subset hd hcover hS hU (hT.nonempty_of_mem hA)
+        (hT.nonempty_of_mem (hT.compl_mem hA)) b.property (Or.inl ((hR b).subset A h))
+    · exact mem_image_liftBlocks_of_subset hd hcover hS hU (hT.nonempty_of_mem hA)
+        (hT.nonempty_of_mem (hT.compl_mem hA)) b.property (Or.inr ((hR b).subset _ h))
+  · intro hA
+    obtain ⟨A₀, -, rfl⟩ := mem_image.1 hA
+    exact ⟨mem_attachSubtrees.2 (Or.inl hA), isBlockUnion_liftBlocks hd _⟩
+
+/-- Conversely, a tree that `IsBlockAttachment` calls attached to `T₀` is the construction, with for rooted
+subtrees its sides inside the blocks: the predicate says exactly what the paper says. -/
+theorem IsBlockAttachment.exists_eq_attachSubtrees (h : IsBlockAttachment P T₀ T)
+    (hT₀ : IsUnrootedTree T₀) (hT : IsUnrootedTree T) (hP : 2 ≤ P.card) :
+    ∃ R : {B // B ∈ P} → Finset (Finset X), (∀ b, IsRootedTreeOn b.val (R b)) ∧
+      T = attachSubtrees P T₀ R := by
+  have hY : 2 ≤ Fintype.card {B // B ∈ P} := by rwa [Fintype.card_coe]
+  have hall : ∀ B ∈ P, B ∈ T := fun B hB => h.block_mem hT₀ hY hB
+  obtain ⟨B₀, hB₀⟩ := card_pos.1 (by omega : 0 < P.card)
+  have hS := hT.isSplitFamily (hT.two_le_card_of_mem (hall B₀ hB₀))
+  refine ⟨fun b => T.filter (· ⊆ b.val), fun b => ⟨?_, ?_, ?_, ?_, ?_⟩, ?_⟩
+  · exact fun A hA => (mem_filter.1 hA).2
+  · exact fun A hA => hT.nonempty_of_mem (mem_filter.1 hA).1
+  · exact mem_filter.2 ⟨hall _ b.property, Subset.refl _⟩
+  · exact fun z hz => mem_filter.2 ⟨hS.singleton_mem z, singleton_subset_iff.2 hz⟩
+  · intro A hA C hC
+    obtain ⟨hAT, hAb⟩ := mem_filter.1 hA
+    obtain ⟨hCT, hCb⟩ := mem_filter.1 hC
+    rcases hT.compatible hAT hCT with h' | h' | h' | h'
+    · exact Or.inl h'
+    · exact Or.inr (Or.inl h')
+    · exact Or.inr (Or.inr h')
+    · exfalso
+      obtain ⟨y, hy⟩ := hT.nonempty_of_mem (hT.compl_mem (hall _ b.property))
+      have hyu : y ∈ A ∪ C := h' ▸ mem_univ y
+      rcases mem_union.1 hyu with hyA | hyC
+      · exact mem_compl.1 hy (hAb hyA)
+      · exact mem_compl.1 hy (hCb hyC)
+  · ext A
+    rw [mem_attachSubtrees]
+    constructor
+    · intro hA
+      rcases hT.isBlockUnion_or hall hA with hU | ⟨B, hB, hsub⟩ | ⟨B, hB, hu⟩
+      · exact Or.inl (h ▸ mem_filter.2 ⟨hA, hU⟩)
+      · exact Or.inr ⟨⟨B, hB⟩, Or.inl (mem_filter.2 ⟨hA, hsub⟩)⟩
+      · refine Or.inr ⟨⟨B, hB⟩, Or.inr (mem_filter.2 ⟨hT.compl_mem hA, fun y hy => ?_⟩)⟩
+        have hyu : y ∈ A ∪ B := hu ▸ mem_univ y
+        exact (mem_union.1 hyu).resolve_left (mem_compl.1 hy)
+    · rintro (hA | ⟨b, hA | hA⟩)
+      · rw [← h] at hA
+        exact (mem_filter.1 hA).1
+      · exact (mem_filter.1 hA).1
+      · simpa only [compl_compl] using hT.compl_mem (mem_filter.1 hA).1
+
+end Attach
 
 /-! ### Reattaching the taxa removed by a restriction -/
 

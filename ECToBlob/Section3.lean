@@ -11,9 +11,11 @@ public import Mathlib.Order.Filter.AtTopBot.Basic
 Lemma 3.5, Theorem 3.1, Remark 3.2, Corollary 3.6, and the objective decompositions (3.2) and (3.3).
 Equation (3.3) as printed overcounts quartets (E2 of the report): `equation3_3` is the repaired
 identity, with the weights by block sizes, and the proof of Theorem 3.1 follows the paper's route
-with these weights. The splice of the local maximizers into the tree of blobs is the construction of
-`Basic/Phylogenetics/TreeSplice.lean`. The proof's description of all the maximizers, in the same weighted
-form, is `quartetScore_le_pullTree_of_starPart_maximizer` and `exists_splice_of_maximizer`.
+with these weights. Attaching rooted subtrees to a tree on the blocks, and the splice of the local
+maximizers into the tree of blobs, are the constructions of `Basic/Phylogenetics/TreeSplice.lean`. The
+claim on attached subtrees is `innerSum_le_of_isBlockAttachment`. The proof's description of all the
+maximizers, in the same weighted form, is `quartetScore_le_pullTree_of_starPart_maximizer` and
+`exists_splice_of_maximizer`.
 -/
 
 @[expose] public noncomputable section
@@ -196,66 +198,84 @@ theorem innerSum_eq_quartetScore {P : Finset (Finset X)} {p : QuartetTree X → 
   refine sum_congr rfl fun s₀ _ => ?_
   simp only [localWeight, map_eq_of_cutExchangeable h₂ hd hcut hx hx₀ s₀]
 
-/-- At a tree splicing `T₀` at `P`, the inner sum of (3.3) at every `x` is `f̃_m(T₀)`. -/
-theorem innerSum_splice {TB : Finset (Finset X)} (hTB : IsUnrootedTree TB)
-    {L : Finset (Finset X) → Finset (Finset X)}
-    (hL : ∀ P ∈ multifurcations TB, IsBlockFamily P (L P)) {P : Finset (Finset X)}
-    (hP : P ∈ multifurcations TB) {p : QuartetTree X → ℝ} (h₂ : CutExchangeable N p)
-    (hcut : ∀ B ∈ P, N.HasCutSplit (B : Set X)) (hd : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C)
+/-- At a tree obtained from `T₀` by attaching rooted subtrees at its leaves, the inner sum of (3.3) at
+every `x` is `f̃_m(T₀)`: the restriction to `x` is `T₀`, whatever the subtrees are. -/
+theorem innerSum_of_isBlockAttachment {P : Finset (Finset X)} {p : QuartetTree X → ℝ}
+    (h₂ : CutExchangeable N p) (hcut : ∀ B ∈ P, N.HasCutSplit (B : Set X))
+    (hd : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C) (hcover : P.sup id = univ) (hP : 2 ≤ P.card)
     {x₀ : {B // B ∈ P} → X} (hx₀ : IsRepTuple P x₀) {T₀ : Finset (Finset {B // B ∈ P})}
-    (hLP : L P = T₀.image (liftBlocks P)) {x : {B // B ∈ P} → X} (hx : IsRepTuple P x) :
-    innerSum P p (splice TB L) x = quartetScore (localWeight hd hx₀ p) T₀ := by
-  rw [innerSum_eq_quartetScore h₂ hd hcut hx₀ hx, quartetScore, quartetScore]
-  refine sum_congr rfl fun s₀ _ => ?_
-  have := (displays_pullTree_iff (T := splice TB L) (hx.injective hd) s₀).trans
-    (displays_splice_map_iff hd hx hTB hL hP hLP s₀)
-  simp only [this]
+    (hT₀ : IsUnrootedTree T₀) {T : Finset (Finset X)} (hT : IsUnrootedTree T)
+    (hA : IsBlockAttachment P T₀ T) {x : {B // B ∈ P} → X} (hx : IsRepTuple P x) :
+    innerSum P p T x = quartetScore (localWeight hd hx₀ p) T₀ := by
+  have hY : 2 ≤ Fintype.card {B // B ∈ P} := by rwa [Fintype.card_coe]
+  rw [innerSum_eq_quartetScore h₂ hd hcut hx₀ hx, hA.pullTree_eq hd hcover hT₀ hT hY hx]
 
-/-- A tree splicing a maximizer of `f̃_m` at `P` simultaneously maximizes the inner sums of (3.3). -/
-theorem innerSum_le_splice {TB : Finset (Finset X)} (hTB : IsUnrootedTree TB)
-    {L : Finset (Finset X) → Finset (Finset X)}
-    (hL : ∀ P ∈ multifurcations TB, IsBlockFamily P (L P)) {P : Finset (Finset X)}
-    (hP : P ∈ multifurcations TB) {p : QuartetTree X → ℝ} (h₂ : CutExchangeable N p)
-    (hcut : ∀ B ∈ P, N.HasCutSplit (B : Set X)) (hd : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C)
+/-- **The paper's lines 495-497**, in the weighted form of E2. "Taking any `T̃_jm` and attaching arbitrary
+rooted subtrees on the taxa in `X_i` at the leaf of `T̃_jm` labelled by `X_i` gives a tree that
+simultaneously maximizes the inner sum of (3.3) for each `x`." The tree `T` is any such attachment
+(`IsBlockAttachment`), and each inner sum at `x` is `f̃_m` of the restriction to `x`
+(`innerSum_eq_quartetScore`), so it is at most `f̃_m(T₀)`, the value at `T`. -/
+theorem innerSum_le_of_isBlockAttachment {P : Finset (Finset X)} {p : QuartetTree X → ℝ}
+    (h₂ : CutExchangeable N p) (hcut : ∀ B ∈ P, N.HasCutSplit (B : Set X))
+    (hd : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C) (hcover : P.sup id = univ) (hP : 2 ≤ P.card)
     {x₀ : {B // B ∈ P} → X} (hx₀ : IsRepTuple P x₀) {T₀ : Finset (Finset {B // B ∈ P})}
+    (hT₀ : IsUnrootedTree T₀)
     (hmax : ∀ T', IsUnrootedTree T' →
       quartetScore (localWeight hd hx₀ p) T' ≤ quartetScore (localWeight hd hx₀ p) T₀)
-    (hLP : L P = T₀.image (liftBlocks P)) {x : {B // B ∈ P} → X} (hx : IsRepTuple P x)
-    {T' : Finset (Finset X)} (hT' : IsUnrootedTree T') :
-    innerSum P p T' x ≤ innerSum P p (splice TB L) x := by
-  have hY : 2 ≤ Fintype.card {B // B ∈ P} := by
-    rw [Fintype.card_coe]
-    have := (mem_multifurcations.1 hP).2
-    omega
-  rw [innerSum_splice hTB hL hP h₂ hcut hd hx₀ hLP hx, innerSum_eq_quartetScore h₂ hd hcut hx₀ hx]
+    {T : Finset (Finset X)} (hT : IsUnrootedTree T) (hA : IsBlockAttachment P T₀ T)
+    {x : {B // B ∈ P} → X} (hx : IsRepTuple P x) {T' : Finset (Finset X)}
+    (hT' : IsUnrootedTree T') :
+    innerSum P p T' x ≤ innerSum P p T x := by
+  have hY : 2 ≤ Fintype.card {B // B ∈ P} := by rwa [Fintype.card_coe]
+  rw [innerSum_of_isBlockAttachment h₂ hcut hd hcover hP hx₀ hT₀ hT hA hx,
+    innerSum_eq_quartetScore h₂ hd hcut hx₀ hx]
   exact hmax _ (pullTree_isUnrootedTree (hx.injective hd) hT' hY)
 
-/-- A tree splicing a maximizer of `f̃_m` at `P` simultaneously maximizes the inner sums of (3.3),
-hence `f_m`, by Lemma 3.5. -/
-theorem starPart_le_splice {TB : Finset (Finset X)} (hTB : IsUnrootedTree TB)
-    {L : Finset (Finset X) → Finset (Finset X)}
-    (hL : ∀ P ∈ multifurcations TB, IsBlockFamily P (L P)) {P : Finset (Finset X)}
-    (hP : P ∈ multifurcations TB) {p : QuartetTree X → ℝ} (h₂ : CutExchangeable N p)
-    (hcut : ∀ B ∈ P, N.HasCutSplit (B : Set X)) (hd : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C)
+/-- The claim of the paper's lines 495-497 for the construction: attach the rooted trees `R b` on the
+blocks to a maximizer `T₀` of `f̃_m`. -/
+theorem innerSum_le_attachSubtrees {P : Finset (Finset X)} {p : QuartetTree X → ℝ}
+    (h₂ : CutExchangeable N p) (hcut : ∀ B ∈ P, N.HasCutSplit (B : Set X))
+    (hd : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C) (hcover : P.sup id = univ) (hP : 2 ≤ P.card)
     {x₀ : {B // B ∈ P} → X} (hx₀ : IsRepTuple P x₀) {T₀ : Finset (Finset {B // B ∈ P})}
+    (hT₀ : IsUnrootedTree T₀)
     (hmax : ∀ T', IsUnrootedTree T' →
       quartetScore (localWeight hd hx₀ p) T' ≤ quartetScore (localWeight hd hx₀ p) T₀)
-    (hLP : L P = T₀.image (liftBlocks P)) {T' : Finset (Finset X)} (hT' : IsUnrootedTree T') :
-    starPart P p T' ≤ starPart P p (splice TB L) := by
-  obtain ⟨hV, h4⟩ := mem_multifurcations.1 hP
-  have hne : ∀ B ∈ P, B.Nonempty := fun B hB => hTB.nonempty_of_mem (hV.mem B hB)
+    {R : {B // B ∈ P} → Finset (Finset X)} (hR : ∀ b, IsRootedTreeOn b.val (R b))
+    {x : {B // B ∈ P} → X} (hx : IsRepTuple P x) {T' : Finset (Finset X)}
+    (hT' : IsUnrootedTree T') :
+    innerSum P p T' x ≤ innerSum P p (attachSubtrees P T₀ R) x :=
+  innerSum_le_of_isBlockAttachment h₂ hcut hd hcover hP hx₀ hT₀ hmax
+    (attachSubtrees_isUnrootedTree hd hcover hP hT₀ hR)
+    (isBlockAttachment_attachSubtrees hd hcover hP hT₀ hR) hx hT'
+
+/-- A tree attaching rooted subtrees to a maximizer of `f̃_m` simultaneously maximizes the inner sums of
+(3.3), hence `f_m`, by Lemma 3.5. -/
+theorem starPart_le_of_isBlockAttachment {P : Finset (Finset X)} {p : QuartetTree X → ℝ}
+    (h₂ : CutExchangeable N p) (hcut : ∀ B ∈ P, N.HasCutSplit (B : Set X))
+    (hd : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C) (hcover : P.sup id = univ) (hP : 2 ≤ P.card)
+    {x₀ : {B // B ∈ P} → X} (hx₀ : IsRepTuple P x₀) {T₀ : Finset (Finset {B // B ∈ P})}
+    (hT₀ : IsUnrootedTree T₀)
+    (hmax : ∀ T', IsUnrootedTree T' →
+      quartetScore (localWeight hd hx₀ p) T' ≤ quartetScore (localWeight hd hx₀ p) T₀)
+    {T : Finset (Finset X)} (hT : IsUnrootedTree T) (hA : IsBlockAttachment P T₀ T)
+    {T' : Finset (Finset X)} (hT' : IsUnrootedTree T') :
+    starPart P p T' ≤ starPart P p T := by
+  have hY : 2 ≤ Fintype.card {B // B ∈ P} := by rwa [Fintype.card_coe]
+  have hne : ∀ B ∈ P, B.Nonempty := fun B hB =>
+    hT.nonempty_of_mem (hA.block_mem hT₀ hY hB)
   have hW : 0 < ∏ B ∈ P, (B.card : ℝ) :=
     prod_pos fun B hB => by exact_mod_cast card_pos.2 (hne B hB)
-  let Tstar : {T // IsUnrootedTree T} := ⟨splice TB L, splice_isUnrootedTree hTB hL⟩
+  let Tstar : {T // IsUnrootedTree T} := ⟨T, hT⟩
   let F : ({B // B ∈ P} → X) → {T : Finset (Finset X) // IsUnrootedTree T} → ℝ :=
     fun x T => innerSum P p T.val x
   have hsimul : ∀ x ∈ (univ : Finset ({B // B ∈ P} → X)).filter (fun x => ∀ B, x B ∈ B.val),
       ∀ T, F x T ≤ F x Tstar := fun x hx T =>
-    innerSum_le_splice hTB hL hP h₂ hcut hd hx₀ hmax hLP (mem_filter.1 hx).2 T.property
+    innerSum_le_of_isBlockAttachment h₂ hcut hd hcover hP hx₀ hT₀ hmax hT hA (mem_filter.1 hx).2
+      T.property
   have hsum := (lemma3_5 _ F Tstar hsimul).1 ⟨T', hT'⟩
-  have h33 := fun T => equation3_3 hd hV.cover p T
+  have h33 := fun T => equation3_3 hd hcover p T
   simp only [F, innerSum, Tstar] at hsum
-  rw [← h33 T', ← h33 (splice TB L)] at hsum
+  rw [← h33 T', ← h33 T] at hsum
   exact le_of_mul_le_mul_left hsum hW
 
 /-- **The paper's lines 497-500**, in the weighted form of E2. Every maximizer of `f_m`, restricted to any
@@ -279,7 +299,9 @@ theorem quartetScore_le_pullTree_of_starPart_maximizer {TB : Finset (Finset X)}
   have hY : 2 ≤ Fintype.card {B // B ∈ P} := by
     rw [Fintype.card_coe]
     omega
-  -- pick a maximizer of `f̃_m` and splice it at `P`
+  have hP2 : 2 ≤ P.card := by omega
+  -- pick a maximizer of `f̃_m` and attach rooted subtrees to it: here those that the tree of blobs has
+  -- on the blocks, through a splice at `P`
   obtain ⟨T₀, hT₀, hmax₀⟩ := exists_max_quartetScore hR (localWeight hd hx₀ p)
   let L : Finset (Finset X) → Finset (Finset X) := fun P' => if P' = P then T₀.image (liftBlocks P) else ∅
   have hLP : L P = T₀.image (liftBlocks P) := ite_eq_left rfl
@@ -292,12 +314,15 @@ theorem quartetScore_le_pullTree_of_starPart_maximizer {TB : Finset (Finset X)}
     · have hfam : L P' = ∅ := ite_eq_right he
       rw [hfam]
       exact ⟨by simp, by simp, by simp, by simp, by simp⟩
-  let Tstar : {T // IsUnrootedTree T} := ⟨splice TB L, splice_isUnrootedTree hTB hL⟩
+  have hA := isBlockAttachment_splice hTB hL hP hT₀ hLP
+  have hTs := splice_isUnrootedTree hTB hL
+  let Tstar : {T // IsUnrootedTree T} := ⟨splice TB L, hTs⟩
   let F : ({B // B ∈ P} → X) → {T : Finset (Finset X) // IsUnrootedTree T} → ℝ :=
     fun y T => innerSum P p T.val y
   have hsimul : ∀ y ∈ (univ : Finset ({B // B ∈ P} → X)).filter (fun y => ∀ B, y B ∈ B.val),
       ∀ T, F y T ≤ F y Tstar := fun y hy T =>
-    innerSum_le_splice hTB hL hP h₂ hcut hd hx₀ hmax₀ hLP (mem_filter.1 hy).2 T.property
+    innerSum_le_of_isBlockAttachment h₂ hcut hd hV.cover hP2 hx₀ hT₀ hmax₀ hTs hA
+      (mem_filter.1 hy).2 T.property
   -- `T` maximizes the sum of the inner sums, so each of them, by Lemma 3.5
   have hsum : ∀ T' : {T : Finset (Finset X) // IsUnrootedTree T},
       ∑ y ∈ (univ : Finset ({B // B ∈ P} → X)).filter (fun y => ∀ B, y B ∈ B.val), F y T' ≤
@@ -310,7 +335,7 @@ theorem quartetScore_le_pullTree_of_starPart_maximizer {TB : Finset (Finset X)}
     exact mul_le_mul_of_nonneg_left (hmax T'.val T'.property) hW.le
   have hle := (lemma3_5 _ F Tstar hsimul).2 ⟨T, hT⟩ hsum x (mem_filter.2 ⟨mem_univ x, hx⟩) Tstar
   simp only [F, Tstar] at hle
-  rw [innerSum_splice hTB hL hP h₂ hcut hd hx₀ hLP hx,
+  rw [innerSum_of_isBlockAttachment h₂ hcut hd hV.cover hP2 hx₀ hT₀ hTs hA hx,
     innerSum_eq_quartetScore h₂ hd hcut hx₀ hx] at hle
   exact (hmax₀ R hR).trans hle
 
@@ -378,7 +403,8 @@ theorem exists_isSpliceOfMaximizers {TB : Finset (Finset X)} (hTB : IsUnrootedTr
   exact ⟨L, hL⟩
 
 /-- A splice of maximizers of the local objectives maximizes every term of (3.2): the paper's lines
-501-503. -/
+501-503. At `f_m`, a splice attaches rooted subtrees to the maximizer spliced at `m`, so
+`starPart_le_of_isBlockAttachment` applies, the claim of lines 495-497 with Lemma 3.5. -/
 theorem objectivePart_le_splice {TB : Finset (Finset X)} (hTB : IsUnrootedTree TB)
     {p : QuartetTree X → ℝ} (hp : ∀ s, 0 ≤ p s)
     (h₁ : ∀ s, Displays TB s → ∀ r ∈ s.alternatives, p r < p s) (h₂ : CutExchangeable N p)
@@ -395,11 +421,13 @@ theorem objectivePart_le_splice {TB : Finset (Finset X)} (hTB : IsUnrootedTree T
     exact resolvedPart_le hTB T.property hp h₁
   | some P =>
     have hP := some_mem_insertNone.1 hi
-    obtain ⟨hV, -⟩ := mem_multifurcations.1 hP
-    obtain ⟨T₀, hLP, -, hmax₀⟩ := hL P hP
+    obtain ⟨hV, h4⟩ := mem_multifurcations.1 hP
+    obtain ⟨T₀, hLP, hT₀, hmax₀⟩ := hL P hP
     obtain ⟨x₀, hx₀⟩ := exists_isRepTuple fun B hB => hTB.nonempty_of_mem (hV.mem B hB)
-    exact starPart_le_splice hTB hfam hP h₂ (hcut P hP) hV.pairwiseDisjoint hx₀
-      (hmax₀ hV.pairwiseDisjoint x₀ hx₀) hLP T.property
+    -- the spliced tree attaches rooted subtrees to the maximizer of `f̃_m`
+    exact starPart_le_of_isBlockAttachment h₂ (hcut P hP) hV.pairwiseDisjoint hV.cover (by omega) hx₀
+      hT₀ (hmax₀ hV.pairwiseDisjoint x₀ hx₀) (splice_isUnrootedTree hTB hfam)
+      (isBlockAttachment_splice hTB hfam hP hT₀ hLP) T.property
 
 /-- A splice of maximizers of the local objectives maximizes the objective, by Lemma 3.5: the paper's lines
 503-504. -/
@@ -445,8 +473,11 @@ of the tree of blobs. The paper's `p` is a probability; only its nonnegativity i
 Departure from the paper: since the printed (3.3) overcounts (E2 of the report), the local objective
 `f̃_m` is weighted by the product of the sizes of the four blocks (`localWeight`), and (3.3) is
 `equation3_3`. The rest is the paper's route: (3.2), the maximizers of `f_R` display the resolved
-quartets of the tree of blobs, a spliced tree simultaneously maximizes the inner sums of (3.3), hence
-every `f_m` by Lemma 3.5, and `f_R`, hence `f` by Lemma 3.5; every maximizer of `f` maximizes `f_R`.
+quartets of the tree of blobs, attaching arbitrary rooted subtrees to a maximizer of `f̃_m` gives a tree
+that simultaneously maximizes the inner sums of (3.3) (`innerSum_le_of_isBlockAttachment`), hence `f_m` by
+Lemma 3.5 (`starPart_le_of_isBlockAttachment`). A spliced tree is such an attachment at each `m`
+(`isBlockAttachment_splice`) and maximizes `f_R`, hence `f` by Lemma 3.5; every maximizer of `f` maximizes
+`f_R`.
 
 The paper's description of the maximizers along the way, in the weighted form, is proved separately: every
 maximizer of `f_m` restricts to a maximizer of `f̃_m` on any representatives
@@ -529,9 +560,11 @@ theorem exists_splice_of_maximizer (hN : N.IsPhylogenetic) (p : QuartetTree X �
 
 /-- **Remark 3.2** (`ecto:rem3_2`). If on each set of four taxa the weights are the probabilities of
 the three resolved quartet trees, every maximizer is binary: a multifurcation can always be resolved
-so as to increase the score. The printed "arbitrarily resolved" is loose when some weights vanish: an
-arbitrary resolution need not increase the score, so the proof chooses four blocks and a resolution of
-their representatives with positive weight. -/
+so as to increase the score.
+
+Departure from the paper: the printed "arbitrarily resolved" is loose when some weights vanish, since a
+resolution whose quartets all have weight zero does not increase the score. So the proof chooses four blocks
+and a resolution of their representatives with positive weight, and adds that one split. -/
 theorem remark3_2 (p : QuartetTree X → ℝ) (hp : ∀ s, 0 ≤ p s)
     (hsum : ∀ q : Finset X, q.card = 4 → ∑ r ∈ treesOn q, p r = 1) {T : Finset (Finset X)}
     (hT : IsUnrootedTree T)

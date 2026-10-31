@@ -1,6 +1,11 @@
 module
 
+public import External.AllmanBanosRhodes2019.NANUQ
+public import External.AllmanBanosRhodes2019.Placement
+public import External.AllmanBanosRhodes2019.Proposition9
+public import External.AllmanBanosRhodes2019.ThreeTwoCycle
 public import External.AllmanEtAl2023.Basic
+public import External.AllmanEtAl2023.Corollary1
 public import External.AllmanEtAl2023.CutOrder
 public import External.AllmanEtAl2023.CycleLemma
 public import External.AllmanEtAl2023.Reduction

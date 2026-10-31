@@ -24,12 +24,14 @@ of `ab|cd` neither a cut split nor a trivial 4-blob (`not_rdom_of_isStray`, `not
 
 All of this is written in the language of domination of `Basic/Phylogenetics/NetworkCuts.lean`.
 
-Corollary 4.3 enters through `FalseEdge.exists_cut_witness`, which also serves the other types of
-quartets: Corollary 4.2, which the paper uses for the type `bi`, is not needed, since the witness
-lies in the multipartition of `T₀`, the smallest of the sets of quartets that the algorithm can use
-at an edge.
+Corollary 4.3 enters through `FalseEdge.exists_cut_witness`. The witness lies in the multipartition
+of `T₀`, the smallest of the sets of quartets that the algorithm can use at an edge, so it serves
+all three quartet types and the overall p-values. The proof of Theorem 8.2 calls on
+`falseEdge_witness` only in the case that is the gap, when the witness of Corollary 4.2 or 4.3 has a
+trivial 4-blob (`Deterministic.Run.exists_not_t1Null_of_witness`).
 
-API: `ECToBlob.falseEdge_witness`, `FalseEdge.exists_mem_multipartitionQuartets`.
+API: `ECToBlob.falseEdge_witness`, `FalseEdge.exists_cut_witness`,
+`FalseEdge.exists_mem_multipartitionQuartets`.
 -/
 
 @[expose] public noncomputable section

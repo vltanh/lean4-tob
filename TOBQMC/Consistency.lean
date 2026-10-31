@@ -116,7 +116,9 @@ any selection of disjoint covers, the method on `k` independent gene trees retur
 probability tending to one.
 
 The proof combines Theorem 1 (`theorem1_optimal`), Theorem 2 (`theorem2`) and the correctness of TINNiK's
-hypothesis tests on all four-taxon subsets, as the paper says. The paper cites TINNiK's Theorem 4 for that
+hypothesis tests on all four-taxon subsets, as the paper says.
+
+Departure from the paper, repairing E21 of the report: the paper cites TINNiK's Theorem 4 for that
 correctness; it is a step of that theorem's proof (`TINNiK.tests_correct`), whose hypothesis,
 CF-detectability, holds under the paper's assumptions (`Level1.cfDetectable`). The paper does not say why:
 it is 6a on the non-treelike subsets, nonanomaly and exchangeability on those the tree of blobs resolves,

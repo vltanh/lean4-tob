@@ -1,5 +1,7 @@
 module
 
+public import Basic.Phylogenetics.Defs
+public import Mathlib.Analysis.Asymptotics.AsymptoticEquivalent
 public import Mathlib.Probability.Distributions.Gaussian.Real
 public import Mathlib.Analysis.SpecialFunctions.PolarCoord
 public import Mathlib.MeasureTheory.Integral.IntegralEqImproper
@@ -9,15 +11,18 @@ public import Mathlib.MeasureTheory.Integral.Prod
 # Tails of squares of standard Gaussians
 
 The tail of `Z₁² + Z₂²` for independent standard Gaussians (the `χ²` distribution with two degrees of
-freedom), by polar coordinates, and positivity and a lower bound for the Gaussian on an interval.
+freedom), by polar coordinates, and positivity and a lower bound for the Gaussian on an interval. The Mills
+ratio bounds for the Gaussian tail, and from them the asymptotics of the tail of `χ²₁`.
 
 Main results: `ProbabilityTheory.gaussianReal_prod_real_lt_sq_add_sq`,
-`ProbabilityTheory.gaussianReal_real_Ioo_pos`, `ProbabilityTheory.gaussianPDFReal_le_gaussianReal_real_Ioo`.
+`ProbabilityTheory.gaussianReal_real_Ioo_pos`, `ProbabilityTheory.gaussianPDFReal_le_gaussianReal_real_Ioo`,
+`ProbabilityTheory.gaussianReal_real_Ioi_le_div`, `ProbabilityTheory.mul_gaussianPDFReal_le_gaussianReal_real_Ioi`,
+`Phylogenetics.chiSqOneTail_isEquivalent`, `Phylogenetics.chiSqOneTail_log_isEquivalent`.
 -/
 
 @[expose] public noncomputable section
 
-open MeasureTheory Real Set Filter Topology
+open MeasureTheory Real Set Filter Topology Asymptotics
 open scoped ENNReal
 
 namespace ProbabilityTheory
@@ -147,4 +152,233 @@ theorem gaussianPDFReal_le_gaussianReal_real_Ioo {a : ℝ} (ha : 0 ≤ a) :
   have h3 : x ^ 2 ≤ (a + 1) ^ 2 := pow_le_pow_left₀ (ha.trans hx.1.le) hx.2.le 2
   linarith
 
+/-! ### The Mills ratio -/
+
+private lemma gaussianPDFReal_zero_one (z : ℝ) :
+    gaussianPDFReal 0 1 z = (√(2 * π))⁻¹ * exp (-z ^ 2 / 2) := by
+  simp only [gaussianPDFReal, NNReal.coe_one, mul_one, sub_zero]
+
+private lemma real_eq_setIntegral (s : Set ℝ) :
+    (gaussianReal 0 1).real s = ∫ z in s, gaussianPDFReal 0 1 z := by
+  rw [measureReal_def, gaussianReal_apply_eq_integral _ one_ne_zero, ENNReal.toReal_ofReal]
+  exact integral_nonneg fun _ => gaussianPDFReal_nonneg _ _ _
+
+/-- The derivative of the standard Gaussian density. -/
+theorem hasDerivAt_gaussianPDFReal (z : ℝ) :
+    HasDerivAt (gaussianPDFReal 0 1) (-z * gaussianPDFReal 0 1 z) z := by
+  have h1 : HasDerivAt (fun r : ℝ => -r ^ 2 / 2) (-z) z := by
+    have := ((hasDerivAt_pow 2 z).neg).div_const 2
+    convert this using 1
+    simp only [Nat.cast_ofNat, Nat.add_one_sub_one, pow_one]
+    ring
+  have h2 := (h1.exp).const_mul (√(2 * π))⁻¹
+  have hfun : gaussianPDFReal 0 1 = fun r : ℝ => (√(2 * π))⁻¹ * exp (-r ^ 2 / 2) :=
+    funext gaussianPDFReal_zero_one
+  rw [hfun]
+  convert h2 using 1
+  ring
+
+/-- The standard Gaussian density tends to `0` at infinity. -/
+theorem tendsto_gaussianPDFReal_atTop : Tendsto (gaussianPDFReal 0 1) atTop (𝓝 0) := by
+  have h1 : Tendsto (fun r : ℝ => -r ^ 2 / 2) atTop atBot := by
+    have : Tendsto (fun r : ℝ => r ^ 2 / 2) atTop atTop :=
+      (tendsto_pow_atTop (two_ne_zero)).atTop_div_const (by norm_num)
+    refine (tendsto_neg_atTop_atBot.comp this).congr fun r => ?_
+    simp only [Function.comp]
+    ring
+  have h2 := (tendsto_exp_atBot.comp h1).const_mul (√(2 * π))⁻¹
+  rw [mul_zero] at h2
+  exact h2.congr fun r => (gaussianPDFReal_zero_one r).symm
+
+/-- **The upper Mills ratio bound**: `P(Z > x) ≤ φ(x) / x`, for `x > 0`. -/
+theorem gaussianReal_real_Ioi_le_div {x : ℝ} (hx : 0 < x) :
+    (gaussianReal 0 1).real (Ioi x) ≤ gaussianPDFReal 0 1 x / x := by
+  set g' : ℝ → ℝ := fun z => z * gaussianPDFReal 0 1 z / x with hg'
+  have hderiv : ∀ z ∈ Ici x, HasDerivAt (fun r => -(gaussianPDFReal 0 1 r / x)) (g' z) z := by
+    intro z _
+    convert ((hasDerivAt_gaussianPDFReal z).div_const x).neg using 1
+    simp only [hg']
+    ring
+  have hpos : ∀ z ∈ Ioi x, 0 ≤ g' z := fun z hz =>
+    div_nonneg (mul_nonneg (hx.le.trans (le_of_lt hz)) (gaussianPDFReal_nonneg _ _ _)) hx.le
+  have hlim : Tendsto (fun r => -(gaussianPDFReal 0 1 r / x)) atTop (𝓝 0) := by
+    simpa using (tendsto_gaussianPDFReal_atTop.div_const x).neg
+  have hint := integral_Ioi_of_hasDerivAt_of_nonneg' hderiv hpos hlim
+  have hint' := integrableOn_Ioi_deriv_of_nonneg' hderiv hpos hlim
+  rw [real_eq_setIntegral]
+  calc ∫ z in Ioi x, gaussianPDFReal 0 1 z ≤ ∫ z in Ioi x, g' z := by
+        refine setIntegral_mono_on (integrable_gaussianPDFReal _ _).integrableOn hint'
+          measurableSet_Ioi fun z hz => ?_
+        have hzx : 1 ≤ z / x := (one_le_div hx).2 (le_of_lt hz)
+        have hφ := gaussianPDFReal_nonneg 0 1 z
+        simp only [hg']
+        have : z * gaussianPDFReal 0 1 z / x = z / x * gaussianPDFReal 0 1 z := by ring
+        rw [this]
+        nlinarith
+    _ = gaussianPDFReal 0 1 x / x := by
+        rw [hint]
+        ring
+
+/-- **The lower Mills ratio bound**: `x / (1 + x²) · φ(x) ≤ P(Z > x)`, for `x ≥ 1`. -/
+theorem mul_gaussianPDFReal_le_gaussianReal_real_Ioi {x : ℝ} (hx : 1 ≤ x) :
+    x / (1 + x ^ 2) * gaussianPDFReal 0 1 x ≤ (gaussianReal 0 1).real (Ioi x) := by
+  set g' : ℝ → ℝ := fun z => (1 - 2 / (1 + z ^ 2) ^ 2) * gaussianPDFReal 0 1 z with hg'
+  have hne : ∀ z : ℝ, 1 + z ^ 2 ≠ 0 := fun z => by positivity
+  have hderiv : ∀ z ∈ Ici x, HasDerivAt (fun r => -(r / (1 + r ^ 2) * gaussianPDFReal 0 1 r)) (g' z) z := by
+    intro z _
+    have h1 : HasDerivAt (fun r : ℝ => 1 + r ^ 2) (2 * z) z := by
+      simpa using (hasDerivAt_pow 2 z).const_add 1
+    have h2 : HasDerivAt (fun r => -(r / (1 + r ^ 2) * gaussianPDFReal 0 1 r))
+        (-((1 * (1 + z ^ 2) - z * (2 * z)) / (1 + z ^ 2) ^ 2 * gaussianPDFReal 0 1 z +
+          z / (1 + z ^ 2) * (-z * gaussianPDFReal 0 1 z))) z :=
+      (((hasDerivAt_id' z).div h1 (hne z)).mul (hasDerivAt_gaussianPDFReal z)).neg
+    convert h2 using 1
+    simp only [hg']
+    have := hne z
+    field_simp
+    ring
+  have hpos : ∀ z ∈ Ioi x, 0 ≤ g' z := by
+    intro z hz
+    have hz1 : 1 ≤ z := hx.trans (le_of_lt hz)
+    refine mul_nonneg ?_ (gaussianPDFReal_nonneg _ _ _)
+    have h1 : (2 : ℝ) ≤ 1 + z ^ 2 := by nlinarith
+    have h2 : (2 : ℝ) ≤ (1 + z ^ 2) ^ 2 := by nlinarith
+    have h3 : 2 / (1 + z ^ 2) ^ 2 ≤ 1 := (div_le_one (by positivity)).2 h2
+    linarith
+  have hlim : Tendsto (fun r => -(r / (1 + r ^ 2) * gaussianPDFReal 0 1 r)) atTop (𝓝 0) := by
+    have hlow : Tendsto (fun r => -gaussianPDFReal 0 1 r) atTop (𝓝 0) := by
+      simpa using tendsto_gaussianPDFReal_atTop.neg
+    refine tendsto_of_tendsto_of_tendsto_of_le_of_le' hlow tendsto_const_nhds ?_ ?_
+    · filter_upwards [eventually_ge_atTop 0] with r hr
+      have hφ := gaussianPDFReal_nonneg 0 1 r
+      have h1 : r / (1 + r ^ 2) ≤ 1 := (div_le_one (by positivity)).2 (by nlinarith [sq_nonneg (r - 1)])
+      nlinarith
+    · filter_upwards [eventually_ge_atTop 0] with r hr
+      have hφ := gaussianPDFReal_nonneg 0 1 r
+      have h1 : 0 ≤ r / (1 + r ^ 2) := by positivity
+      nlinarith [mul_nonneg h1 hφ]
+  have hint := integral_Ioi_of_hasDerivAt_of_nonneg' hderiv hpos hlim
+  have hint' := integrableOn_Ioi_deriv_of_nonneg' hderiv hpos hlim
+  rw [real_eq_setIntegral]
+  calc x / (1 + x ^ 2) * gaussianPDFReal 0 1 x = ∫ z in Ioi x, g' z := by
+        rw [hint]
+        ring
+    _ ≤ ∫ z in Ioi x, gaussianPDFReal 0 1 z := by
+        refine setIntegral_mono_on hint' (integrable_gaussianPDFReal _ _).integrableOn
+          measurableSet_Ioi fun z _ => ?_
+        have hφ := gaussianPDFReal_nonneg 0 1 z
+        have h3 : 0 ≤ 2 / (1 + z ^ 2) ^ 2 := by positivity
+        simp only [hg']
+        nlinarith
+
+/-- The tail of `Z²` at `x²` is twice the tail of `Z` at `x`, by symmetry. -/
+theorem gaussianReal_real_lt_sq_eq {x : ℝ} (hx : 0 ≤ x) :
+    (gaussianReal 0 1).real {z : ℝ | x ^ 2 < z ^ 2} = 2 * (gaussianReal 0 1).real (Ioi x) := by
+  have hset : {z : ℝ | x ^ 2 < z ^ 2} = Ioi x ∪ Iio (-x) := by
+    ext z
+    simp only [mem_ofPred_eq, mem_union, mem_Ioi, mem_Iio]
+    constructor
+    · intro h
+      by_contra hcon
+      push Not at hcon
+      have := sq_le_sq' hcon.2 hcon.1
+      linarith
+    · rintro (h | h)
+      · nlinarith
+      · nlinarith
+  have hdisj : Disjoint (Ioi x) (Iio (-x)) := by
+    rw [Set.disjoint_left]
+    intro z h₁ h₂
+    have h₃ : x < z := h₁
+    have h₄ : z < -x := h₂
+    linarith
+  have hsymm : (gaussianReal 0 1).real (Iio (-x)) = (gaussianReal 0 1).real (Ioi x) := by
+    have h : gaussianReal 0 1 = (gaussianReal 0 1).map (fun y : ℝ => -y) := by
+      rw [gaussianReal_map_neg, neg_zero]
+    conv_lhs => rw [h]
+    rw [measureReal_def, measureReal_def, Measure.map_apply (by fun_prop) measurableSet_Iio]
+    congr 2
+    ext y
+    simp
+  rw [hset, measureReal_union hdisj measurableSet_Iio, hsymm]
+  ring
+
+/-- `2 φ(√t) / √t = 1 / √(exp t · t · π / 2)`, for `t > 0`. -/
+private lemma two_mul_pdf_div_sqrt {t : ℝ} (ht : 0 < t) :
+    2 * gaussianPDFReal 0 1 √t / √t = 1 / √(exp t * t * π / 2) := by
+  have hst : 0 < √t := Real.sqrt_pos.2 ht
+  have hpi : 0 < √(2 * π) := Real.sqrt_pos.2 (by positivity)
+  have hexp : exp (t / 2) ^ 2 = exp t := by
+    rw [sq, ← Real.exp_add]
+    congr 1
+    ring
+  have hsq : exp t * t * π / 2 = (exp (t / 2) * √t * (√(2 * π) / 2)) ^ 2 := by
+    rw [mul_pow, mul_pow, div_pow, Real.sq_sqrt ht.le, Real.sq_sqrt (by positivity), hexp]
+    ring
+  rw [hsq, Real.sqrt_sq (by positivity), gaussianPDFReal_zero_one, Real.sq_sqrt ht.le,
+    show -t / 2 = -(t / 2) by ring, Real.exp_neg]
+  have := (Real.exp_pos (t / 2)).ne'
+  field_simp
+
+/-- **The tail of `Z²`, asymptotically**: `P(Z² > t) ∼ 1 / √(exp t · t · π / 2)`, by the Mills ratio bounds. -/
+theorem gaussianReal_real_lt_sq_isEquivalent :
+    (fun t : ℝ => (gaussianReal 0 1).real {z : ℝ | t < z ^ 2}) ~[atTop]
+      fun t => 1 / √(exp t * t * π / 2) := by
+  refine isEquivalent_of_tendsto_one ?_
+  have hlow : Tendsto (fun t : ℝ => 1 - (1 + t)⁻¹) atTop (𝓝 1) := by
+    have h1 : Tendsto (fun t : ℝ => 1 + t) atTop atTop := tendsto_atTop_add_const_left _ _ tendsto_id
+    simpa using tendsto_const_nhds.sub (tendsto_inv_atTop_zero.comp h1)
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le' hlow tendsto_const_nhds ?_ ?_
+  all_goals
+    filter_upwards [eventually_ge_atTop 1] with t ht
+    have ht0 : 0 < t := by linarith
+    have hst : 0 < √t := Real.sqrt_pos.2 ht0
+    have hst1 : 1 ≤ √t := Real.one_le_sqrt.2 ht
+    have hsq : √t ^ 2 = t := Real.sq_sqrt ht0.le
+    have hpdf : 0 < gaussianPDFReal 0 1 √t := gaussianPDFReal_pos _ _ _ one_ne_zero
+    have hmain : (gaussianReal 0 1).real {z : ℝ | t < z ^ 2} =
+        2 * (gaussianReal 0 1).real (Ioi √t) := by
+      conv_lhs => rw [← hsq]
+      exact gaussianReal_real_lt_sq_eq hst.le
+    have hup := gaussianReal_real_Ioi_le_div hst
+    have hlo := mul_gaussianPDFReal_le_gaussianReal_real_Ioi hst1
+    rw [hsq] at hlo
+    simp only [Pi.div_apply]
+    rw [← two_mul_pdf_div_sqrt ht0, hmain]
+  · rw [le_div_iff₀ (by positivity)]
+    have hd : (0 : ℝ) < 1 + t := by linarith
+    have hkey : (1 - (1 + t)⁻¹) * (2 * gaussianPDFReal 0 1 √t / √t) =
+        2 * (√t / (1 + t) * gaussianPDFReal 0 1 √t) := by
+      field_simp
+      ring_nf
+      rw [hsq]
+    rw [hkey]
+    linarith
+  · rw [div_le_one (by positivity)]
+    have hkey : 2 * gaussianPDFReal 0 1 √t / √t = 2 * (gaussianPDFReal 0 1 √t / √t) := by ring
+    rw [hkey]
+    linarith
+
 end ProbabilityTheory
+
+namespace Phylogenetics
+
+open ProbabilityTheory
+
+/-- **The tail of `χ²₁`, asymptotically**: `P(X₁² > t) ∼ 1 / √(exp t · t · π / 2)`. -/
+theorem chiSqOneTail_isEquivalent :
+    chiSqOneTail ~[atTop] fun t => 1 / √(exp t * t * π / 2) :=
+  gaussianReal_real_lt_sq_isEquivalent
+
+/-- **"`αₙ ∼ 1/√(n log(n)π/2)`"** (ECToBlob's proof of Theorem 8.2, `notes/paper2026/paper.txt`, line 1054): the tail of
+`χ²₁` at `log n`. -/
+theorem chiSqOneTail_log_isEquivalent :
+    (fun n : ℕ => chiSqOneTail (Real.log n)) ~[atTop] fun n : ℕ => 1 / √(n * Real.log n * π / 2) := by
+  have hlog : Tendsto (fun n : ℕ => Real.log n) atTop atTop :=
+    Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
+  refine (chiSqOneTail_isEquivalent.comp_tendsto hlog).congr_right ?_
+  filter_upwards [eventually_gt_atTop 0] with n hn
+  have hn' : (0 : ℝ) < n := by exact_mod_cast hn
+  simp only [Function.comp, Real.exp_log hn']
+
+end Phylogenetics

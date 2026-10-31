@@ -14,9 +14,9 @@ ASTRAL corollary. These results use the exchangeability of taxa on one side of a
 (`External.AneEtAl2024.exchangeability`).
 
 The route of Lemma 3 is the paper's. If every maximizer of the blob `v` part of the score broke a block,
-detaching taxa and reattaching them to a best taxon of their block (`detachReattach`,
-`vertexPart_detachReattach`, `exists_block_side`) would give a maximizer that does not: a contradiction
-(`exists_vertex_maximizer`). Such a maximizer is binary after removing all but one taxon from each block
+detaching the taxa of a broken block and reattaching them to a best taxon of that block (`detachReattach`,
+`vertexPart_detachReattach`, `exists_block_side`), for all broken blocks (`exists_all_blocks_side`), would
+give a maximizer that does not: a contradiction (`exists_vertex_maximizer`). Such a maximizer is binary after removing all but one taxon from each block
 (`isBinaryTree_pullTree_of_vertex_maximizer`): a refinement of the restricted tree, with the removed taxa
 reattached (`reattach`), would gain at every choice of the representatives, and the gain on all the taxa, times the number of choices, is the sum of these gains (`vertexPart_lt_reattach`). Contracting the edges inside blocks leaves a family of
 unions of blocks (`displays_filter_isBlockUnion`). These families and the tree of blobs have a common
@@ -345,10 +345,10 @@ theorem vertexTaxonPart_detachReattach_of_ne {F : QuartetTree X → ℝ} (hB₀ 
       eq_false fun h' => h ⟨h'.1, h'.2.1⟩
     simp only [e, ↓reduceIte]
 
-/-- One block: detach every other taxon of the block and reattach it to the chosen taxon `a`
+/-- One block `P_j`: detach every other taxon of the block and reattach it to the chosen taxon `a`
 (the paper's lines 476-485), with the paper's two cases, `QS^{v(a)} = QS^{v(b)}` and `QS^{v(a)} > QS^{v(b)}`.
 The result has the block as a side, its blob `v` score is not smaller, and the other blocks that were
-sides stay sides. -/
+sides stay sides. The paper applies this to a block that `T*` breaks; the step itself does not use that. -/
 theorem exists_block_side {N : RootedNetwork V E X} {F : QuartetTree X → ℝ}
     (hEx : CutExchangeable N F) (hd : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C)
     (hcut : N.HasCutSplit (B₀ : Set X)) (hB₀ : B₀ ∈ P) (hne : B₀.Nonempty) (hne' : B₀ᶜ.Nonempty)
@@ -412,35 +412,45 @@ theorem exists_block_side {N : RootedNetwork V E X} {F : QuartetTree X → ℝ}
   rw [insert_erase haB] at hside
   exact ⟨T', hT', hside, hle, hother⟩
 
-/-- All blocks (the paper's "repeating for all `b` and all `P_j`", line 485). -/
+/-- All blocks (the paper's "repeating for all `b` and all `P_j`", line 485). While the tree breaks a block
+`P_j`, so that no edge induces `P_j | S \ P_j`, apply the detachment at `P_j`. The block becomes a side and
+the blocks that were sides stay sides, so fewer blocks are broken. -/
 theorem exists_all_blocks_side {N : RootedNetwork V E X} {F : QuartetTree X → ℝ} {TN : Finset (Finset X)}
     (hEx : CutExchangeable N F) (hTN : IsUnrootedTree TN) (hV : IsVertexPartition TN P)
     (hcut : ∀ B ∈ P, N.HasCutSplit (B : Set X)) {T : Finset (Finset X)} (hT : IsUnrootedTree T)
     (hX : 2 ≤ Fintype.card X) :
     ∃ T', IsUnrootedTree T' ∧ (∀ C ∈ P, C ∈ T') ∧ vertexPart P F T ≤ vertexPart P F T' := by
-  have key : ∀ 𝔅 : Finset (Finset X), 𝔅 ⊆ P → ∃ T', IsUnrootedTree T' ∧ (∀ C ∈ 𝔅, C ∈ T') ∧
-      vertexPart P F T ≤ vertexPart P F T' := by
-    intro 𝔅
-    induction 𝔅 using Finset.induction_on with
-    | empty => exact fun _ => ⟨T, hT, by simp, le_refl _⟩
-    | insert B₀ 𝔅 hB₀n ih =>
-      intro hsub
-      have hB₀ := hsub (mem_insert_self _ _)
-      obtain ⟨T₁, hT₁, hall, hle⟩ := ih fun x hx => hsub (mem_insert_of_mem hx)
-      have hB₀T := hV.mem B₀ hB₀
-      obtain ⟨T₂, hT₂, hside, hle₂, hother⟩ := exists_block_side (F := F) hEx hV.pairwiseDisjoint
-        (hcut B₀ hB₀) hB₀ (hTN.nonempty_of_mem hB₀T) (hTN.nonempty_of_mem (hTN.compl_mem hB₀T))
-        hT₁ hX
-      refine ⟨T₂, hT₂, fun C hC => ?_, hle.trans hle₂⟩
-      rcases mem_insert.1 hC with rfl | hC
-      · exact hside
-      · exact hother C (hsub (mem_insert_of_mem hC)) (fun e => hB₀n (e ▸ hC)) (hall C hC)
-  obtain ⟨T', hT', hall, hle⟩ := key P (Subset.refl _)
-  exact ⟨T', hT', hall, hle⟩
+  have key : ∀ (n : ℕ) (T : Finset (Finset X)), IsUnrootedTree T →
+      (P.filter fun C => C ∉ T).card < n →
+      ∃ T', IsUnrootedTree T' ∧ (∀ C ∈ P, C ∈ T') ∧ vertexPart P F T ≤ vertexPart P F T' := by
+    intro n
+    induction n with
+    | zero => exact fun _ _ h => absurd h (Nat.not_lt_zero _)
+    | succ n ih =>
+      intro T hT hn
+      by_cases hall : ∀ C ∈ P, C ∈ T
+      · exact ⟨T, hT, hall, le_refl _⟩
+      · -- a block `P_j` that `T` breaks
+        push Not at hall
+        obtain ⟨Pj, hPj, hPjT⟩ := hall
+        have hPjS := hV.mem Pj hPj
+        obtain ⟨T₁, hT₁, hside, hle, hother⟩ := exists_block_side (F := F) hEx hV.pairwiseDisjoint
+          (hcut Pj hPj) hPj (hTN.nonempty_of_mem hPjS) (hTN.nonempty_of_mem (hTN.compl_mem hPjS)) hT hX
+        have hlt : (P.filter fun C => C ∉ T₁).card < (P.filter fun C => C ∉ T).card := by
+          refine card_lt_card ⟨fun C hC => ?_, fun hsub => ?_⟩
+          · obtain ⟨hCP, hCT₁⟩ := mem_filter.1 hC
+            refine mem_filter.2 ⟨hCP, fun hCT => hCT₁ (hother C hCP ?_ hCT)⟩
+            rintro rfl
+            exact hCT₁ hside
+          · exact (mem_filter.1 (hsub (mem_filter.2 ⟨hPj, hPjT⟩))).2 hside
+        obtain ⟨T', hT', hall', hle'⟩ := ih T₁ hT₁ (by omega)
+        exact ⟨T', hT', hall', hle.trans hle'⟩
+  exact key _ T hT (Nat.lt_succ_self _)
 
 /-- **The claim of the paper's lines 464-466**, by the contradiction of its lines 472-486. There is a tree
 `B*(v)` that (1) maximizes `QS^v` and (2) does not break apart the blocks of `P`. Suppose that all
-maximizers violate (2), and let `T*` be one. Repeating the detachment for all taxa and all blocks gives a
+maximizers violate (2), and let `T*` be one, with a block `P_j` that it breaks. Detaching the taxa of `P_j`
+and reattaching them to a best taxon of `P_j` does not lower the score, and repeating for all blocks gives a
 tree with a blob `v` score at least that of `T*`, hence a maximizer, that satisfies (2). -/
 theorem exists_vertex_maximizer {N : RootedNetwork V E X} {F : QuartetTree X → ℝ}
     {TN : Finset (Finset X)} (hEx : CutExchangeable N F) (hTN : IsUnrootedTree TN)
@@ -456,14 +466,21 @@ theorem exists_vertex_maximizer {N : RootedNetwork V E X} {F : QuartetTree X →
     by_contra hall
     push Not at hall
     exact hcon ⟨T', hT', hall, hmax⟩
-  -- let `T*` be one such tree
+  -- let `T*` be one such tree: there is a block `P_j` such that no edge in `T*` induces `P_j | S \ P_j`
   obtain ⟨Tstar, hTstar, hmax⟩ := (univ.filter fun T : Finset (Finset X) => IsUnrootedTree T).exists_max_image
     (vertexPart P F) ⟨TN, by simpa using hTN⟩
-  -- repeating for all taxa and all blocks yields a tree with property (2) and score at least that of `T*`
-  obtain ⟨T', hT', hall, hle⟩ := exists_all_blocks_side (F := F) hEx hTN hV hcut
-    (mem_filter.1 hTstar).2 hX
+  have hTstar' : IsUnrootedTree Tstar := (mem_filter.1 hTstar).2
+  have hmax' : ∀ T, IsUnrootedTree T → vertexPart P F T ≤ vertexPart P F Tstar :=
+    fun T hT => hmax T (by simpa using hT)
+  obtain ⟨Pj, hPj, -⟩ := hviolate Tstar hTstar' hmax'
+  -- detach each `b ∈ P_j` and reattach it to the chosen `a ∈ P_j`
+  have hPjS := hV.mem Pj hPj
+  obtain ⟨T₁, hT₁, -, hle₁, -⟩ := exists_block_side (F := F) hEx hV.pairwiseDisjoint (hcut Pj hPj) hPj
+    (hTN.nonempty_of_mem hPjS) (hTN.nonempty_of_mem (hTN.compl_mem hPjS)) hTstar' hX
+  -- repeating for all `P_j` yields a tree with property (2) and score at least that of `T*`
+  obtain ⟨T', hT', hall, hle⟩ := exists_all_blocks_side (F := F) hEx hTN hV hcut hT₁ hX
   -- it is a maximizer, so it violates property (2): a contradiction
-  obtain ⟨C, hC, hCT'⟩ := hviolate T' hT' fun T hT => (hmax T (by simpa using hT)).trans hle
+  obtain ⟨C, hC, hCT'⟩ := hviolate T' hT' fun T hT => (hmax' T hT).trans (hle₁.trans hle)
   exact hCT' (hall C hC)
 
 /-- `QS^v`, multiplied by the number of representative tuples of the blocks, is the sum over the tuples of
@@ -678,12 +695,19 @@ alternatives. E22 of the report: the printed "minimum of all differences" vanish
 def Margin (N : RootedNetwork V E X) (F : QuartetTree X → ℝ) (π : ℝ) : Prop :=
   ∀ s, Displays (treeOfBlobs N) s → ∀ r ∈ s.alternatives, π ≤ F s - F r
 
-/-- **Supplement, Lemma 4** (`tob2025:supplement_lemma4`), with the corrected margin (E22) and strict
-bounds (E24). If all the errors of the weights `w` are below `π / (2 |f₄(S)|)`, the score of a
-refinement `B` maximizing the star part exceeds that of every binary tree not refining `T_N`. The proof
-is the supplement's: quartets on which the two trees agree cancel, the tree part gains more than
-`|Y_tree| (π - 2δ)` (its (5), strict since `Y_tree` is not empty), the star part loses at most
-`2 |Y_star| δ` (its (8)), and `|Y_tree| + |Y_star| ≤ |f₄(S)|`. -/
+/-- **Supplement, Lemma 4** (`tob2025:supplement_lemma4`). If all the errors of the weights `w` are below
+`π / (2 |f₄(S)|)`, the score of a refinement `B` maximizing the star part exceeds that of every binary tree
+not refining `T_N`. The proof is the supplement's: quartets on which the two trees agree cancel, the tree
+part gains more than `|Y_tree| (π - 2δ)` (its (5)), the star part loses at most `2 |Y_star| δ` (its (6), (7)
+and (8)), which gives its (4), since `|Y_tree| + |Y_star| ≤ |f₄(S)|`.
+
+Departure from the paper: the supplement's `π` is the least of all three pairwise differences of a
+T-quartet's concordance factors, which vanishes, since the alternatives are equal (E22). `Margin` compares
+the displayed quartet with its alternatives. The supplement also weakens strict bounds on the errors to
+non-strict ones and then claims a strict inequality at the boundary radius (E24); here (5) keeps them strict,
+since `Y_tree` is not empty. Both changes are forced. The supplement takes `B*` to be a maximizer of `QS_E`,
+and gets its maximal star part from Lemma 5 (its name for Lemma 3); here this is the hypothesis `hstar`, and
+`theorem1` applies the lemma to the tree of Lemma 3. -/
 theorem supplementLemma4 {V E : Type*} {N : RootedNetwork V E X} (hN : N.IsPhylogenetic)
     {F w : QuartetTree X → ℝ} {π : ℝ} (hπ : 0 < π) (hmargin : Margin N F π)
     (herr : ∀ s, |w s - F s| < π / (2 * ((Fintype.card X).choose 4 : ℝ)))
@@ -787,20 +811,21 @@ theorem supplementLemma4 {V E : Type*} {N : RootedNetwork V E X} (hN : N.IsPhylo
       have h2 := hup (sT q)
       linarith
     rwa [sum_const, nsmul_eq_mul] at this
+  -- Equation (6)
+  have h6 : ∑ q ∈ Ystar, F (sB q) - (Ystar.card : ℝ) * δ ≤ ∑ q ∈ Ystar, w (sB q) := by
+    have : ∑ q ∈ Ystar, (F (sB q) - δ) ≤ ∑ q ∈ Ystar, w (sB q) :=
+      sum_le_sum fun q _ => (hlo (sB q)).le
+    rwa [sum_sub_distrib, sum_const, nsmul_eq_mul] at this
+  -- Equation (7)
+  have h7 : ∑ q ∈ Ystar, w (sT q) ≤ ∑ q ∈ Ystar, F (sT q) + (Ystar.card : ℝ) * δ := by
+    have : ∑ q ∈ Ystar, w (sT q) ≤ ∑ q ∈ Ystar, (F (sT q) + δ) :=
+      sum_le_sum fun q _ => (hup (sT q)).le
+    rwa [sum_add_distrib, sum_const, nsmul_eq_mul] at this
   -- Equation (8)
   have h8 : starPart TN w T - starPart TN w B ≤ 2 * (Ystar.card : ℝ) * δ := by
     have h1 := hstar' w
     have h2 := hstar' F
-    have h3 : ∑ q ∈ Ystar, (F (sB q) - F (sT q)) - (Ystar.card : ℝ) * (2 * δ) ≤
-        ∑ q ∈ Ystar, (w (sB q) - w (sT q)) := by
-      have : ∑ q ∈ Ystar, ((F (sB q) - F (sT q)) - 2 * δ) ≤
-          ∑ q ∈ Ystar, (w (sB q) - w (sT q)) := by
-        refine sum_le_sum fun q _ => ?_
-        have h4 := hlo (sB q)
-        have h5 := hup (sT q)
-        linarith
-      rwa [sum_sub_distrib, sum_const, nsmul_eq_mul] at this
-    have h4 := hstar
+    rw [sum_sub_distrib] at h1 h2
     linarith
   -- combining the bounds
   have hC : ((Fintype.card X).choose 4 : ℝ) = (f4.card : ℝ) := by
@@ -826,8 +851,11 @@ theorem supplementLemma4 {V E : Type*} {N : RootedNetwork V E X} (hN : N.IsPhylo
       mul_le_mul_of_nonneg_left hYcard (by positivity)
     have h2 : π ≤ (Ytree.card : ℝ) * π := le_mul_of_one_le_left hπ.le hYpos
     linarith
+  -- Equation (4)
+  have h4 : starPart TN w T - starPart TN w B < treePart TN w B - treePart TN w T := by
+    nlinarith
   rw [equation1 TN w T, equation1 TN w B]
-  nlinarith
+  linarith
 
 /-- A positive margin exists when the network is T-quartet-nonanomalous. -/
 theorem exists_margin {N : RootedNetwork V E X} {F : QuartetTree X → ℝ}
@@ -1034,9 +1062,9 @@ def AstralSpace {Ω : Type*} (G : ℕ → Ω → Finset (Finset X)) (k : ℕ) (�
 
 /-- **Corollary of Theorem 1** (`tob2025:astral_corollary`): almost
 surely, for all large `k`, every optimum of the score in ASTRAL's search space is a refinement of the
-tree of blobs, since every split has positive probability under the NMSC: every binary gene tree has
-positive probability (`geneTreeDist_pos`), so it occurs almost surely (the paper cites Mirarab et al.),
-and then ASTRAL's search space contains all binary trees. -/
+tree of blobs. Every bipartition of a binary tree has positive probability under the NMSC, at least that of
+a binary gene tree inducing it (`geneTreeDist_pos`), so it appears almost surely (the paper cites Mirarab
+et al.), and then ASTRAL's search space contains all binary trees, so Theorem 1 applies. -/
 theorem astral_corollary [Fintype V] [Fintype E] {N : RootedNetwork V E X} {θ : MetricData E} {ρ : ℝ}
     (hStd : StandardAssumptions N θ ρ)
     (hNon : IsTQuartetNonanomalous N (nmscCF N θ ρ)) (hX : 4 ≤ Fintype.card X)
@@ -1047,40 +1075,46 @@ theorem astral_corollary [Fintype V] [Fintype E] {N : RootedNetwork V E X} {θ :
       treeOfBlobs N ⊆ B := by
   have hN := hStd.phylogenetic
   have hne' : Nonempty X := Fintype.card_pos_iff.1 (by omega)
-  -- every binary gene tree occurs almost surely, since it has positive probability
-  have hocc : ∀ᵐ ω ∂P, ∀ H : Finset (Finset X), IsBinaryHierarchy H → ∃ i, G i ω = H := by
-    refine ae_all_iff.2 fun H => ?_
-    by_cases hH : IsBinaryHierarchy H
-    · have hpos := geneTreeDist_pos hN hStd.metric hStd.rho hH
-      have hsum : ∀ d : ∀ g : Finset (Finset X), Decidable (g = H),
-          (∑ g, @ite _ (g = H) (d g) (geneTreeDist N θ ρ g) 0) = geneTreeDist N θ ρ H := by
+  -- every bipartition has positive probability, at least that of a binary gene tree inducing it, so it
+  -- appears almost surely
+  have hocc : ∀ᵐ ω ∂P, ∀ A : Finset X, (∃ H, IsBinaryHierarchy H ∧ A ∈ unroot H) →
+      ∃ i, A ∈ unroot (G i ω) := by
+    refine ae_all_iff.2 fun A => ?_
+    by_cases hA : ∃ H, IsBinaryHierarchy H ∧ A ∈ unroot H
+    · obtain ⟨H, hH, hAH⟩ := hA
+      have hpos := geneTreeDist_pos hN hStd.metric hStd.rho hH
+      have hsum : ∀ d : ∀ g : Finset (Finset X), Decidable (A ∈ unroot g),
+          0 < ∑ g, @ite _ (A ∈ unroot g) (d g) (geneTreeDist N θ ρ g) 0 := by
         intro d
-        rw [sum_eq_single H]
-        · simp
-        · intro g _ hg
-          simp [hg]
-        · simp
-      filter_upwards [ae_tendsto_freq hG (fun g => g = H)] with ω hω _
-      obtain ⟨k, hk⟩ := (hω.eventually (lt_mem_nhds (a := 0)
-        (lt_of_lt_of_eq hpos (hsum _).symm))).exists
+        refine lt_of_lt_of_le ?_ (single_le_sum (f := fun g =>
+          @ite _ (A ∈ unroot g) (d g) (geneTreeDist N θ ρ g) 0) (fun g _ => ?_) (mem_univ H))
+        · change 0 < @ite _ (A ∈ unroot H) (d H) (geneTreeDist N θ ρ H) 0
+          rwa [ite_eq_left hAH]
+        · split_ifs
+          · exact geneTreeDist_nonneg hN hStd.metric hStd.rho g
+          · exact le_rfl
+      filter_upwards [ae_tendsto_freq hG (fun g => A ∈ unroot g)] with ω hω _
+      obtain ⟨k, hk⟩ := (hω.eventually (lt_mem_nhds (hsum _))).exists
       by_contra hcon
       push Not at hcon
       simp [hcon] at hk
-    · exact ae_of_all _ fun _ h => absurd h hH
+    · exact ae_of_all _ fun _ h => absurd h hA
   filter_upwards [theorem1_optimal hStd hNon hX P G hG, hocc] with ω ⟨K₀, hK₀⟩ hω
-  -- from some point on, ASTRAL's search space contains all binary trees
-  obtain ⟨K₁, hK₁⟩ : ∃ K₁, ∀ H : Finset (Finset X), IsBinaryHierarchy H → ∃ i < K₁, G i ω = H := by
+  -- from some point on, all these bipartitions have appeared, and ASTRAL's search space contains all
+  -- binary trees
+  obtain ⟨K₁, hK₁⟩ : ∃ K₁, ∀ A : Finset X, (∃ H, IsBinaryHierarchy H ∧ A ∈ unroot H) →
+      ∃ i < K₁, A ∈ unroot (G i ω) := by
     classical
     choose! idx hidx using hω
-    obtain ⟨M, hM⟩ := ((univ : Finset (Finset (Finset X))).image idx).exists_le
-    exact ⟨M + 1, fun H hH => ⟨idx H, Nat.lt_succ_of_le (hM _ (mem_image_of_mem _ (mem_univ H))),
-      hidx H hH⟩⟩
+    obtain ⟨M, hM⟩ := ((univ : Finset (Finset X)).image idx).exists_le
+    exact ⟨M + 1, fun A hA => ⟨idx A, Nat.lt_succ_of_le (hM _ (mem_image_of_mem _ (mem_univ A))),
+      hidx A hA⟩⟩
   have hspace : ∀ k, K₁ ≤ k → ∀ T, IsBinaryTree T → AstralSpace G k ω T := by
     intro k hk T hT
     refine ⟨hT, fun A hA => ?_⟩
     obtain ⟨H, hH, rfl, hbin⟩ := hT
-    obtain ⟨i, hi, he⟩ := hK₁ H ⟨hH, hbin⟩
-    exact ⟨i, lt_of_lt_of_le hi hk, he ▸ hA⟩
+    obtain ⟨i, hi, he⟩ := hK₁ A ⟨H, ⟨hH, hbin⟩, hA⟩
+    exact ⟨i, lt_of_lt_of_le hi hk, he⟩
   refine ⟨max K₀ K₁, fun k hk B hB hopt => ?_⟩
   exact hK₀ k ((le_max_left _ _).trans hk) B hB.1 fun T hT =>
     hopt T (hspace k ((le_max_right _ _).trans hk) T hT)

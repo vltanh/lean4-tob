@@ -11,8 +11,8 @@ public import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 E. S. Allman, H. Baños, J. D. Mitchell, J. A. Rhodes, *The tree of blobs of a species network:
 identifiability under the coalescent*, J. Math. Biol. 86 (2023), 10.
 
-* `theorem2`, the B-quartet inference rule, is proved, from the description of the tree of blobs by
-  cut edges.
+* `theorem2`, the B-quartet inference rule, is proved by the source's argument, on the node `v` of the
+  tree of blobs that `b, c, d` determine (`rule_core`).
 * `lemma3` and `closure_complete`, the combinatorial content of Theorem 3, are proved: from the
   B-quartets detected on induced 4-taxon networks, the inference rule reaches all B-quartets.
   `lemma3` follows the source's cycle through `A`, `K_ab`, `e₀`, `K_cd` (`lemma3_blob`, in
@@ -20,8 +20,8 @@ identifiability under the coalescent*, J. Math. Biol. 86 (2023), 10.
   `External/AllmanEtAl2023/SubgraphBlobs.lean`). `not_resolves_iff_exists_determines` and
   `isBQuartet_iff_not_resolves` translate between the source's "determines a blob" and the
   description by domination used here.
-* `Corollary1`, the CF-detectability of 4-blobs for generic parameters, is proved in
-  `External/AllmanEtAl2023/Theorem1.lean`.
+* `Corollary1`, the CF-detectability of 4-blobs for generic parameters, is defined here. Theorem 1 is proved in
+  `External/AllmanEtAl2023/Theorem1.lean`, and Corollary 1 in `External/AllmanEtAl2023/Corollary1.lean`.
 -/
 
 @[expose] public noncomputable section
@@ -116,100 +116,6 @@ private theorem not_separating (hN : N.IsPhylogenetic) (hS : IsSplitFamily (tree
     have heq := inducedCutSplit_unique hN hcs hs₀ (by rw [hst, TreeMetric.taxa_quartetTree])
     subst heq
     exact hsep.2.2 {a, e} (by simp) (by simp)
-
-/-- The rule in the form used by the closure: its third hypothesis is that one of the three sets is
-a B-quartet of the network, or has a cut-edge split separating `a, e` on its induced network. This
-is stronger than the source's Theorem 2 (`theorem2`), whose hypothesis (b) asks for a B-quartet on
-the induced 4-taxon network, and it is needed: the closure's rule fires from a set inferred to be a
-B-quartet of the network, which may be treelike when induced (`closure_sound`). The source's proof
-applies unchanged, since a cut edge separating `a, e` from `b, c, d` also resolves the set on the
-network. The side of a split of the tree of blobs resolving one of the three sets is located by
-cases on the taxa: it resolves `{a,b,c,d}` or `{b,c,d,e}`, or it separates `a, e` from `b, c, d`. -/
-theorem rule_core (hN : N.IsPhylogenetic) {a b c d e : X} (h5 : ({a, b, c, d, e} : Finset X).card = 5)
-    (habcd : IsBQuartet N {a, b, c, d}) (hbcde : IsBQuartet N {b, c, d, e})
-    {t : Finset X} (ht : t ∈ ({{a, b, c, e}, {a, b, d, e}, {a, c, d, e}} : Finset (Finset X)))
-    (hrule : IsBQuartet N t ∨ ∃ s ∈ treesOn t, InducedCutSplit N s ∧ Separated s a e)
-    {q : Finset X} (hq : q ∈ ({{a, b, c, e}, {a, b, d, e}, {a, c, d, e}} : Finset (Finset X))) :
-    IsBQuartet N q := by
-  obtain ⟨hab, hac, had, hae, hbc, hbd, hbe, hcd, hce, hde⟩ := ne_of_card_five h5
-  have hX : 2 ≤ Fintype.card X := by
-    have := Finset.card_le_univ ({a, b, c, d, e} : Finset X)
-    omega
-  have hS := isSplitFamily_treeOfBlobs hN hX
-  -- no side separates `a, e` from `b, c, d`
-  have hsep : ∀ A ∈ treeOfBlobs N, a ∈ A → e ∈ A → b ∉ A → c ∉ A → d ∉ A → False := by
-    intro A hA ha he hb hc hd
-    simp only [Finset.mem_insert, Finset.mem_singleton] at ht
-    rcases ht with rfl | rfl | rfl
-    · have hset : ({a, b, c, e} : Finset X) = {a, e, b, c} := by grind
-      rw [hset] at hrule
-      exact not_separating hN hS (TreeMetric.card_four_of_ne hae hab hac hbe.symm hce.symm hbc) hA
-        ha he hb hc hrule
-    · have hset : ({a, b, d, e} : Finset X) = {a, e, b, d} := by grind
-      rw [hset] at hrule
-      exact not_separating hN hS (TreeMetric.card_four_of_ne hae hab had hbe.symm hde.symm hbd) hA
-        ha he hb hd hrule
-    · have hset : ({a, c, d, e} : Finset X) = {a, e, c, d} := by grind
-      rw [hset] at hrule
-      exact not_separating hN hS (TreeMetric.card_four_of_ne hae hac had hce.symm hde.symm hcd) hA
-        ha he hc hd hrule
-  have h4₁ : ({a, b, c, d} : Finset X).card = 4 := TreeMetric.card_four_of_ne hab hac had hbc hbd hcd
-  have h4₂ : ({b, c, d, e} : Finset X).card = 4 := TreeMetric.card_four_of_ne hbc hbd hbe hcd hce hde
-  have h1 := (TreeMetric.forall_not_displays_iff h4₁).mp habcd
-  have h2 := (TreeMetric.forall_not_displays_iff h4₂).mp hbcde
-  -- the side is located by cases on the taxa
-  have hcontra : ∀ A ∈ treeOfBlobs N, ((a ∈ A ∧ e ∈ A ∧ b ∉ A ∧ c ∉ A ∧ d ∉ A) ∨
-      (a ∉ A ∧ e ∉ A ∧ b ∈ A ∧ c ∈ A ∧ d ∈ A)) → False := by
-    rintro A hA (⟨ha, he, hb, hc, hd⟩ | ⟨ha, he, hb, hc, hd⟩)
-    · exact hsep A hA ha he hb hc hd
-    · refine hsep Aᶜ (hS.compl_mem A hA) (Finset.mem_compl.mpr ha) (Finset.mem_compl.mpr he) ?_ ?_ ?_
-      · simpa using hb
-      · simpa using hc
-      · simpa using hd
-  simp only [Finset.mem_insert, Finset.mem_singleton] at hq
-  rcases hq with rfl | rfl | rfl
-  · have h4 := TreeMetric.card_four_of_ne hab hac hae hbc hbe hce
-    refine (TreeMetric.forall_not_displays_iff h4).mpr fun A hA h3 => hcontra A hA ?_
-    have h1' := h1 A hA
-    have h2' := h2 A hA
-    rw [TreeMetric.card_inter_four h4₁] at h1'
-    rw [TreeMetric.card_inter_four h4₂] at h2'
-    rw [TreeMetric.card_inter_four h4] at h3
-    by_cases ha : a ∈ A <;> by_cases hb : b ∈ A <;> by_cases hc : c ∈ A <;> by_cases hd : d ∈ A <;>
-      by_cases he : e ∈ A <;> simp only [ha, hb, hc, hd, he, ite_true, ite_false] at h1' h2' h3 <;>
-      first | omega | simp [ha, hb, hc, hd, he]
-  · have h4 := TreeMetric.card_four_of_ne hab had hae hbd hbe hde
-    refine (TreeMetric.forall_not_displays_iff h4).mpr fun A hA h3 => hcontra A hA ?_
-    have h1' := h1 A hA
-    have h2' := h2 A hA
-    rw [TreeMetric.card_inter_four h4₁] at h1'
-    rw [TreeMetric.card_inter_four h4₂] at h2'
-    rw [TreeMetric.card_inter_four h4] at h3
-    by_cases ha : a ∈ A <;> by_cases hb : b ∈ A <;> by_cases hc : c ∈ A <;> by_cases hd : d ∈ A <;>
-      by_cases he : e ∈ A <;> simp only [ha, hb, hc, hd, he, ite_true, ite_false] at h1' h2' h3 <;>
-      first | omega | simp [ha, hb, hc, hd, he]
-  · have h4 := TreeMetric.card_four_of_ne hac had hae hcd hce hde
-    refine (TreeMetric.forall_not_displays_iff h4).mpr fun A hA h3 => hcontra A hA ?_
-    have h1' := h1 A hA
-    have h2' := h2 A hA
-    rw [TreeMetric.card_inter_four h4₁] at h1'
-    rw [TreeMetric.card_inter_four h4₂] at h2'
-    rw [TreeMetric.card_inter_four h4] at h3
-    by_cases ha : a ∈ A <;> by_cases hb : b ∈ A <;> by_cases hc : c ∈ A <;> by_cases hd : d ∈ A <;>
-      by_cases he : e ∈ A <;> simp only [ha, hb, hc, hd, he, ite_true, ite_false] at h1' h2' h3 <;>
-      first | omega | simp [ha, hb, hc, hd, he]
-
-/-- **Theorem 2 of the source (B-quartet Inference Rule; TINNiK Theorem 2).** If `{a,b,c,d}`
-and `{b,c,d,e}` are B-quartets of the network, and on the induced 4-taxon network one of
-`{a,b,c,e}`, `{a,b,d,e}`, `{a,c,d,e}` is a T-quartet with `a, e` separated or a B-quartet, then all
-three are B-quartets. The source treats binary networks; the binary condition is not needed. -/
-theorem theorem2 (hN : N.IsPhylogenetic) {a b c d e : X} (h5 : ({a, b, c, d, e} : Finset X).card = 5)
-    (habcd : IsBQuartet N {a, b, c, d}) (hbcde : IsBQuartet N {b, c, d, e})
-    {t : Finset X} (ht : t ∈ ({{a, b, c, e}, {a, b, d, e}, {a, c, d, e}} : Finset (Finset X)))
-    (hrule : ¬ IsTreelike N t ∨ ∃ s ∈ treesOn t, InducedCutSplit N s ∧ Separated s a e)
-    {q : Finset X} (hq : q ∈ ({{a, b, c, e}, {a, b, d, e}, {a, c, d, e}} : Finset (Finset X))) :
-    IsBQuartet N q :=
-  rule_core hN h5 habcd hbcde ht (hrule.imp_left (isBQuartet_of_not_isTreelike hN)) hq
 
 /-- The cut edges of the subgraph induced on `Y` resolve `q`: some arc is a cut on `Y` with exactly
 two taxa of `q` below it. -/
@@ -642,6 +548,167 @@ theorem isBQuartet_iff_not_resolves (hN : N.IsPhylogenetic) {q : Finset X} (hq :
     ext z
     simp only [Finset.mem_filter, Finset.mem_inter, Finset.mem_coe]
     tauto
+
+/-- A blob determined by at least three taxa of a B-quartet `q` is the blob that `q` determines. This
+is "since `{a, b, c, d}` and `{b, c, d, e}` are B-quartets, undirected paths in the tree of blobs from
+the taxa `a` and `e` also first meet those from `b, c, d` at `v`" in the source's proof of Theorem 2. -/
+theorem determines_of_isBQuartet (hN : N.IsPhylogenetic) {v : V} {q S : Finset X} (hq : q.card = 4)
+    (hB : IsBQuartet N q) (hS : S ⊆ q) (h3 : 2 < S.card)
+    (hv : v ∈ N.ancestralVertices ((Finset.univ : Finset X) : Set X))
+    (hdet : Determines N.graph (N.ancestralArcs ((Finset.univ : Finset X) : Set X)) v N.leaf S) :
+    Determines N.graph (N.ancestralArcs ((Finset.univ : Finset X) : Set X)) v N.leaf q := by
+  obtain ⟨v', hv', hdet'⟩ := (not_resolves_iff_exists_determines hN (Finset.subset_univ q) hq).mp
+    ((isBQuartet_iff_not_resolves hN hq).mp hB)
+  refine hdet'.of_sameBlobIn ((hdet'.mono hS).sameBlobIn hdet h3 (fun s _ => ?_)
+    (walks_ancestral hN hv' hv))
+  exact walks_ancestral hN hv' (N.leaf_mem_ancestralVertices (Finset.mem_coe.mpr (Finset.mem_univ s)))
+
+/-- "An edge in the tree of blobs, and hence a cut edge in the network" (the source's proof of Theorem
+2): a cut edge of the network with a taxon on each side gives a side of the tree of blobs. -/
+theorem filter_mem_treeOfBlobs (hN : N.IsPhylogenetic) {g : E} {T : Set V}
+    (hg : g ∈ N.ancestralArcs ((Finset.univ : Finset X) : Set X))
+    (hO : OnlyCrosses N.graph (N.ancestralArcs ((Finset.univ : Finset X) : Set X)) g T)
+    (hc : N.graph.Crosses g T) {x y : X} (hx : N.leaf x ∈ T) (hy : N.leaf y ∉ T) :
+    Finset.univ.filter (fun z => N.leaf z ∈ T) ∈ treeOfBlobs N := by
+  rw [Finset.coe_univ] at hg hO
+  refine Finset.mem_filter.mpr ⟨Finset.mem_univ _, ⟨x, by simpa using hx⟩, ⟨y, by simpa using hy⟩, ?_⟩
+  refine (hasCutSplit_iff_hasCutSplitOn_univ hN _).mpr ⟨g, hg, T, fun f hf => ⟨hO f hf, ?_⟩, fun z _ => ?_⟩
+  · rintro rfl
+    exact hc
+  · simp
+
+/-- The rule in the form used by the closure: its third hypothesis is that one of the three sets is
+a B-quartet of the network, or has a cut-edge split separating `a, e` on its induced network. This
+is stronger than the source's Theorem 2 (`theorem2`), whose hypothesis (b) asks for a B-quartet on
+the induced 4-taxon network, and it is needed: the closure's rule fires from a set inferred to be a
+B-quartet of the network, which may be treelike when induced (`closure_sound`). The source's proof
+applies unchanged, since a cut edge separating `a, e` from `b, c, d` also resolves the set on the
+network (`not_separating`).
+
+The proof is the source's, `notes/sources/allman2023.txt` lines 199-200, in its order. The taxa `b, c, d`
+determine a blob, a node `v` of the tree of blobs, and the two B-quartets make `a` and `e` first meet them
+at `v` (`determines_of_isBQuartet`). If the paths from `a`, `e` met before `v`, they would use one incident
+cut edge of the blob, separating `a, e` from `b, c, d` (`filter_mem_treeOfBlobs`), and picking any two of
+`b, c, d` contradicts the third hypothesis (`not_separating`). So all five paths first meet at `v`
+(`Determines.insert`), and every four of the five taxa determine that blob. -/
+theorem rule_core (hN : N.IsPhylogenetic) {a b c d e : X} (h5 : ({a, b, c, d, e} : Finset X).card = 5)
+    (habcd : IsBQuartet N {a, b, c, d}) (hbcde : IsBQuartet N {b, c, d, e})
+    {t : Finset X} (ht : t ∈ ({{a, b, c, e}, {a, b, d, e}, {a, c, d, e}} : Finset (Finset X)))
+    (hrule : IsBQuartet N t ∨ ∃ s ∈ treesOn t, InducedCutSplit N s ∧ Separated s a e)
+    {q : Finset X} (hq : q ∈ ({{a, b, c, e}, {a, b, d, e}, {a, c, d, e}} : Finset (Finset X))) :
+    IsBQuartet N q := by
+  obtain ⟨hab, hac, had, hae, hbc, hbd, hbe, hcd, hce, hde⟩ := ne_of_card_five h5
+  have hX : 2 ≤ Fintype.card X := by
+    have := Finset.card_le_univ ({a, b, c, d, e} : Finset X)
+    omega
+  have hS := isSplitFamily_treeOfBlobs hN hX
+  have hU : ∀ x : X, x ∈ ((Finset.univ : Finset X) : Set X) := fun x =>
+    Finset.mem_coe.mpr (Finset.mem_univ x)
+  -- "The taxa `b, c, d` determine a blob in `𝒩⁺`, corresponding to a node `v` in its tree of blobs."
+  obtain ⟨v, hv, hdet⟩ := exists_determines_three hN (hU b) (hU c) (hU d) hbc hbd hcd
+  have hw : ∀ x, N.graph.Walks (N.ancestralArcs ((Finset.univ : Finset X) : Set X)) v (N.leaf x) :=
+    fun x => walks_ancestral hN hv (N.leaf_mem_ancestralVertices (hU x))
+  have h3 : ({b, c, d} : Finset X).card = 3 := by
+    rw [Finset.card_insert_of_notMem (by simp [hbc, hbd]), Finset.card_pair hcd]
+  have h4₁ : ({a, b, c, d} : Finset X).card = 4 := TreeMetric.card_four_of_ne hab hac had hbc hbd hcd
+  have h4₂ : ({b, c, d, e} : Finset X).card = 4 := TreeMetric.card_four_of_ne hbc hbd hbe hcd hce hde
+  have hsub₂ : ({b, c, d} : Finset X) ⊆ {b, c, d, e} := by
+    intro x hx
+    simp only [Finset.mem_insert, Finset.mem_singleton] at hx ⊢
+    tauto
+  -- "since `{a, b, c, d}` and `{b, c, d, e}` are B-quartets, undirected paths in the tree of blobs from
+  -- the taxa `a` and `e` also first meet those from `b, c, d` at `v`"
+  have hdet₁ := determines_of_isBQuartet hN h4₁ habcd (Finset.subset_insert a _) (by omega) hv hdet
+  have hdet₂ := determines_of_isBQuartet hN h4₂ hbcde hsub₂ (by omega) hv hdet
+  -- every taxon is beyond a cut edge incident to the blob
+  have hlead : ∀ x, ∃ g, LeadsTo N.graph (N.ancestralArcs ((Finset.univ : Finset X) : Set X)) v g (N.leaf x) :=
+    fun x => (exists_leadsTo (hw x)).resolve_left fun hb =>
+      hdet.ne_of_isPendantIn (by omega) (isPendantIn_leaf hN x _) (fun s _ => hw s)
+        ((isPendantIn_leaf hN x _).eq_of_sameBlobIn hb)
+  -- "Suppose the paths from `a`, `e` do meet before `v`."
+  have hmeet : ∀ g, LeadsTo N.graph (N.ancestralArcs ((Finset.univ : Finset X) : Set X)) v g (N.leaf a) →
+      LeadsTo N.graph (N.ancestralArcs ((Finset.univ : Finset X) : Set X)) v g (N.leaf e) → False := by
+    intro g hga hge
+    -- "Then there is an edge in the tree of blobs, and hence a cut edge in the network, that separates
+    -- `a`, `e` from `b`, `c`, `d`."
+    have hO : OnlyCrosses N.graph (N.ancestralArcs ((Finset.univ : Finset X) : Set X)) g
+        (far N.graph (N.ancestralArcs ((Finset.univ : Finset X) : Set X)) g v) := onlyCrosses_far
+    have hvT : v ∉ far N.graph (N.ancestralArcs ((Finset.univ : Finset X) : Set X)) g v :=
+      not_mem_far_self
+    have hbT : N.leaf b ∉ far N.graph (N.ancestralArcs ((Finset.univ : Finset X) : Set X)) g v :=
+      fun h => hab (hdet₁.eq_of_mem_side hO hvT (by simp) (by simp) (hw a) (hw b) hga.2 h)
+    have hcT : N.leaf c ∉ far N.graph (N.ancestralArcs ((Finset.univ : Finset X) : Set X)) g v :=
+      fun h => hac (hdet₁.eq_of_mem_side hO hvT (by simp) (by simp) (hw a) (hw c) hga.2 h)
+    have hdT : N.leaf d ∉ far N.graph (N.ancestralArcs ((Finset.univ : Finset X) : Set X)) g v :=
+      fun h => had (hdet₁.eq_of_mem_side hO hvT (by simp) (by simp) (hw a) (hw d) hga.2 h)
+    obtain ⟨hgF, p, r, hl, hp, hr⟩ := exists_links_of_walks hO hvT (hw a) hga.2
+    have hA := filter_mem_treeOfBlobs hN hgF hO (hl.crosses hp hr) hga.2 hbT
+    have hmemA : ∀ {x}, N.leaf x ∈ far N.graph (N.ancestralArcs ((Finset.univ : Finset X) : Set X)) g v →
+        x ∈ Finset.univ.filter (fun z => N.leaf z ∈ far N.graph (N.ancestralArcs ((Finset.univ : Finset X) : Set X)) g v) :=
+      fun hx => Finset.mem_filter.mpr ⟨Finset.mem_univ _, hx⟩
+    have hnmemA : ∀ {x}, N.leaf x ∉ far N.graph (N.ancestralArcs ((Finset.univ : Finset X) : Set X)) g v →
+        x ∉ Finset.univ.filter (fun z => N.leaf z ∈ far N.graph (N.ancestralArcs ((Finset.univ : Finset X) : Set X)) g v) :=
+      fun hx hm => hx (Finset.mem_filter.mp hm).2
+    -- "This implies that picking any two of `b, c, d`, the taxa `a`, `e` are not separated in the 4-taxon
+    -- tree of blobs, nor do they form a B-quartet with `a`, `e`."
+    simp only [Finset.mem_insert, Finset.mem_singleton] at ht
+    rcases ht with rfl | rfl | rfl
+    · have hset : ({a, b, c, e} : Finset X) = {a, e, b, c} := by grind
+      rw [hset] at hrule
+      exact not_separating hN hS (TreeMetric.card_four_of_ne hae hab hac hbe.symm hce.symm hbc) hA
+        (hmemA hga.2) (hmemA hge.2) (hnmemA hbT) (hnmemA hcT) hrule
+    · have hset : ({a, b, d, e} : Finset X) = {a, e, b, d} := by grind
+      rw [hset] at hrule
+      exact not_separating hN hS (TreeMetric.card_four_of_ne hae hab had hbe.symm hde.symm hbd) hA
+        (hmemA hga.2) (hmemA hge.2) (hnmemA hbT) (hnmemA hdT) hrule
+    · have hset : ({a, c, d, e} : Finset X) = {a, e, c, d} := by grind
+      rw [hset] at hrule
+      exact not_separating hN hS (TreeMetric.card_four_of_ne hae hac had hce.symm hde.symm hcd) hA
+        (hmemA hga.2) (hmemA hge.2) (hnmemA hcT) (hnmemA hdT) hrule
+  -- "so that all 5 paths from `a, b, c, d, e` first meet at `v`"
+  obtain ⟨ge, hge⟩ := hlead e
+  have hdet₅ : Determines N.graph (N.ancestralArcs ((Finset.univ : Finset X) : Set X)) v N.leaf
+      (insert e {a, b, c, d}) := by
+    refine hdet₁.insert (hw e) hge fun s hs => ?_
+    obtain ⟨gs, hgs⟩ := hlead s
+    refine ⟨gs, hgs, ?_⟩
+    simp only [Finset.mem_insert, Finset.mem_singleton] at hs
+    rcases hs with rfl | rfl | rfl | rfl
+    · rintro rfl
+      exact hmeet gs hgs hge
+    · exact hdet₂.ne_of_leadsTo (by simp) (by simp) hbe (hw _) (hw e) hgs hge
+    · exact hdet₂.ne_of_leadsTo (by simp) (by simp) hce (hw _) (hw e) hgs hge
+    · exact hdet₂.ne_of_leadsTo (by simp) (by simp) hde (hw _) (hw e) hgs hge
+  have hfin : ∀ q : Finset X, q ⊆ insert e {a, b, c, d} → q.card = 4 → IsBQuartet N q :=
+    fun q hsub h4 => (isBQuartet_iff_not_resolves hN h4).mpr
+      ((not_resolves_iff_exists_determines hN (Finset.subset_univ q) h4).mpr
+        ⟨v, hv, hdet₅.mono hsub⟩)
+  have hsub : ∀ {r s u v' : X}, r ∈ (insert e {a, b, c, d} : Finset X) →
+      s ∈ (insert e {a, b, c, d} : Finset X) → u ∈ (insert e {a, b, c, d} : Finset X) →
+      v' ∈ (insert e {a, b, c, d} : Finset X) → ({r, s, u, v'} : Finset X) ⊆ insert e {a, b, c, d} := by
+    intro r s u v' hr hs hu hv' x hx
+    simp only [Finset.mem_insert, Finset.mem_singleton] at hx
+    rcases hx with rfl | rfl | rfl | rfl <;> assumption
+  simp only [Finset.mem_insert, Finset.mem_singleton] at hq
+  rcases hq with rfl | rfl | rfl
+  · exact hfin _ (hsub (by simp) (by simp) (by simp) (by simp))
+      (TreeMetric.card_four_of_ne hab hac hae hbc hbe hce)
+  · exact hfin _ (hsub (by simp) (by simp) (by simp) (by simp))
+      (TreeMetric.card_four_of_ne hab had hae hbd hbe hde)
+  · exact hfin _ (hsub (by simp) (by simp) (by simp) (by simp))
+      (TreeMetric.card_four_of_ne hac had hae hcd hce hde)
+
+/-- **Theorem 2 of the source (B-quartet Inference Rule; TINNiK Theorem 2).** If `{a,b,c,d}`
+and `{b,c,d,e}` are B-quartets of the network, and on the induced 4-taxon network one of
+`{a,b,c,e}`, `{a,b,d,e}`, `{a,c,d,e}` is a T-quartet with `a, e` separated or a B-quartet, then all
+three are B-quartets. The source treats binary networks; the binary condition is not needed. -/
+theorem theorem2 (hN : N.IsPhylogenetic) {a b c d e : X} (h5 : ({a, b, c, d, e} : Finset X).card = 5)
+    (habcd : IsBQuartet N {a, b, c, d}) (hbcde : IsBQuartet N {b, c, d, e})
+    {t : Finset X} (ht : t ∈ ({{a, b, c, e}, {a, b, d, e}, {a, c, d, e}} : Finset (Finset X)))
+    (hrule : ¬ IsTreelike N t ∨ ∃ s ∈ treesOn t, InducedCutSplit N s ∧ Separated s a e)
+    {q : Finset X} (hq : q ∈ ({{a, b, c, e}, {a, b, d, e}, {a, c, d, e}} : Finset (Finset X))) :
+    IsBQuartet N q :=
+  rule_core hN h5 habcd hbcde ht (hrule.imp_left (isBQuartet_of_not_isTreelike hN)) hq
 
 /-- **Theorem 3 of the source, combinatorial part.** From the 4-taxon sets with no cut-edge split on
 their induced networks, and the quartet trees of the others, the closure under the inference rule

@@ -172,9 +172,12 @@ fidelity:
     the closed simplex (E31). Library statements omit hypotheses that the proofs do not use (REPORT.md, Section 5);
     Challenge.lean keeps them. Readings: REPORT.md, Section 6. Departures from the papers' proofs (REPORT.md, Section 7).
     Repairing gaps: ECToBlob Theorem 3.1 (E2), Corollary 3.6 (E3), Theorem 8.2 (E11-E17), TOB-QMC supplement Lemma 4
-    (E22, E24), TINNiK Theorem 4 under the alternative (E33). Because Lean lacks the mathematics: TINNiK Proposition 5, by a direct
-    central limit argument in place of van der Vaart's Theorem 16.7. Among cited results, smaller changes: Allman et al.'s Theorem 1 and
-    Corollary 1 (no 2-blob step; on the network directly; one explicit parameter) and Lemma 3 (paths and the cycle as sets of arcs).
+    (E22, E24), TOB-QMC Lemma 4 (E19), Corollary 1 (E20) and consistency (E21), TINNiK Theorem 4 under the alternative (E33). Because Lean lacks the mathematics: TINNiK Proposition 5, by a direct
+    central limit argument in place of van der Vaart's Theorem 16.7. Not forced, and documented: ECToBlob Theorem 4.1 (3-blobs and chains on the unsuppressed graph) and Proposition 5.1 (on the network, not on each quarnet);
+    TOB-QMC Lemma 1, Lemma 4 (no suppression) and supplement Lemma 8 (a lowest reticulation, not disjoint paths); among cited results, Allman et al.'s Theorem 1 (no 2-blob step; Lemma 1 not stated; one argument across the rooted forms;
+    deleted networks in the coordinates of the network; only part of strictly cut off a deletion) and Corollary 1 (the induced network cut at the LSA, not their Definition 6). Other cited results: neighbor joining
+    (Studier and Keppler's Lemma fails at polytomies), NANUQ Theorem 36 (no centroid CF; levels), Ane et al. Proposition 12 (conditioning at the arc). NANUQ Proposition 9, Buneman's theorem, ASTRAL's dynamic program and the T3 theorems have
+    no printed proof that was followed. False claims found, not formalized as stated: ECToBlob Remark 8.4 for non-binary networks (E35), ECToBlob Remark 3.3 under the cited non-strict definition (E36), NANUQ Theorem 36 as printed.
 
 review:
   status: "agent-reviewed"
