@@ -1,6 +1,7 @@
 module
 
 public import External.AllmanEtAl2023.CutOrder
+public import External.AllmanEtAl2023.CycleLemma
 public import Mathlib.MeasureTheory.Constructions.Pi
 public import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 
@@ -10,12 +11,17 @@ public import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 E. S. Allman, H. Baños, J. D. Mitchell, J. A. Rhodes, *The tree of blobs of a species network:
 identifiability under the coalescent*, J. Math. Biol. 86 (2023), 10.
 
-* `theorem2`, the B-quartet inference rule, is proved, from the description of the tree of blobs
-  by cut edges.
+* `theorem2`, the B-quartet inference rule, is proved, from the description of the tree of blobs by
+  cut edges.
 * `lemma3` and `closure_complete`, the combinatorial content of Theorem 3, are proved: from the
   B-quartets detected on induced 4-taxon networks, the inference rule reaches all B-quartets.
-* `Corollary1`, the CF-detectability of 4-blobs for generic parameters, is the assumed result;
-  see `External/AllmanEtAl2023/README.md`.
+  `lemma3` follows the source's cycle through `A`, `K_ab`, `e₀`, `K_cd` (`lemma3_blob`, in
+  `External/AllmanEtAl2023/CycleLemma.lean`), and uses its Lemma 2 (`lemma2`, in
+  `External/AllmanEtAl2023/SubgraphBlobs.lean`). `not_resolves_iff_exists_determines` and
+  `isBQuartet_iff_not_resolves` translate between the source's "determines a blob" and the
+  description by domination used here.
+* `Corollary1`, the CF-detectability of 4-blobs for generic parameters, is proved in
+  `External/AllmanEtAl2023/Theorem1.lean`.
 -/
 
 @[expose] public noncomputable section
@@ -93,8 +99,8 @@ private theorem isSplitFamily_treeOfBlobs (hN : N.IsPhylogenetic) (hX : 2 ≤ Fi
   have : Nonempty X := Fintype.card_pos_iff.mp (by omega)
   exact (isUnrootedTree_iff hX _).mp (treeOfBlobs_isUnrootedTree hN)
 
-/-- No side of the tree of blobs has `a, e` and not `u, v`, if `{a,e,u,v}` is a B-quartet or a cut-edge
-split of its induced network separates `a, e`. -/
+/-- No side of the tree of blobs has `a, e` and not `u, v`, if `{a,e,u,v}` is a B-quartet or a
+cut-edge split of its induced network separates `a, e`. -/
 private theorem not_separating (hN : N.IsPhylogenetic) (hS : IsSplitFamily (treeOfBlobs N))
     {a e u v : X} (h : ({a, e, u, v} : Finset X).card = 4) {A : Finset X}
     (hA : A ∈ treeOfBlobs N) (ha : a ∈ A) (he : e ∈ A) (hu : u ∉ A) (hv : v ∉ A)
@@ -111,10 +117,14 @@ private theorem not_separating (hN : N.IsPhylogenetic) (hS : IsSplitFamily (tree
     subst heq
     exact hsep.2.2 {a, e} (by simp) (by simp)
 
-/-- The rule in the form used by the closure: its third hypothesis is that one of the three sets is a
-B-quartet of the network, or has a cut-edge split separating `a, e` on its induced network. The side
-of a split of the tree of blobs resolving one of the three sets is located by cases on the taxa: it
-resolves `{a,b,c,d}` or `{b,c,d,e}`, or it separates `a, e` from `b, c, d`. -/
+/-- The rule in the form used by the closure: its third hypothesis is that one of the three sets is
+a B-quartet of the network, or has a cut-edge split separating `a, e` on its induced network. This
+is stronger than the source's Theorem 2 (`theorem2`), whose hypothesis (b) asks for a B-quartet on
+the induced 4-taxon network, and it is needed: the closure's rule fires from a set inferred to be a
+B-quartet of the network, which may be treelike when induced (`closure_sound`). The source's proof
+applies unchanged, since a cut edge separating `a, e` from `b, c, d` also resolves the set on the
+network. The side of a split of the tree of blobs resolving one of the three sets is located by
+cases on the taxa: it resolves `{a,b,c,d}` or `{b,c,d,e}`, or it separates `a, e` from `b, c, d`. -/
 theorem rule_core (hN : N.IsPhylogenetic) {a b c d e : X} (h5 : ({a, b, c, d, e} : Finset X).card = 5)
     (habcd : IsBQuartet N {a, b, c, d}) (hbcde : IsBQuartet N {b, c, d, e})
     {t : Finset X} (ht : t ∈ ({{a, b, c, e}, {a, b, d, e}, {a, c, d, e}} : Finset (Finset X)))
@@ -201,8 +211,8 @@ theorem theorem2 (hN : N.IsPhylogenetic) {a b c d e : X} (h5 : ({a, b, c, d, e} 
     IsBQuartet N q :=
   rule_core hN h5 habcd hbcde ht (hrule.imp_left (isBQuartet_of_not_isTreelike hN)) hq
 
-/-- The cut edges of the subgraph induced on `Y` resolve `q`: some arc is a cut on `Y` with exactly two
-taxa of `q` below it. -/
+/-- The cut edges of the subgraph induced on `Y` resolve `q`: some arc is a cut on `Y` with exactly
+two taxa of `q` below it. -/
 def Resolves (N : RootedNetwork V E X) (Y q : Finset X) : Prop :=
   ∃ e, IsCutOn N Y e ∧ (q.filter (N.IsBelow e)).card = 2
 
@@ -224,12 +234,88 @@ theorem resolves_of_hasCutSplitOn (hN : N.IsPhylogenetic) {Y q : Finset X} {A : 
     congr 1
     exact Finset.filter_congr fun x hx => hor x (hq hx)
 
+omit [Fintype X] [DecidableEq X] in
+/-- **The source's B-quartets and `Resolves`.** On the subgraph induced on `Y`, four taxa of `Y`
+determine a blob (Definitions 8 and 12 of the source) exactly when no arc dominating the taxa of `Y`
+below it has two of them below it. -/
+theorem not_resolves_iff_exists_determines (hN : N.IsPhylogenetic) {Y q : Finset X} (hq : q ⊆ Y)
+    (h4 : q.card = 4) :
+    ¬ Resolves N Y q ↔ ∃ v ∈ N.ancestralVertices (Y : Set X),
+      Determines N.graph (N.ancestralArcs (Y : Set X)) v N.leaf q := by
+  have hqY : ∀ s ∈ q, s ∈ (Y : Set X) := fun s hs => Finset.mem_coe.mpr (hq hs)
+  constructor
+  · intro hR
+    refine exists_determines_of_no_split hN hqY (by omega) fun e T hO hT hT' => hR ?_
+    obtain ⟨s, hs, t, ht, hst, hsT, htT⟩ := hT
+    obtain ⟨s', hs', t', ht', hst', hsT', htT'⟩ := hT'
+    -- the arc `e` is in the subgraph, since it separates two of its taxa
+    obtain ⟨he, _, _, hl, hp, hq'⟩ := exists_links_of_walks hO.compl (not_not.mpr hsT)
+      (walks_ancestral hN (N.leaf_mem_ancestralVertices (hqY s hs))
+        (N.leaf_mem_ancestralVertices (hqY s' hs'))) hsT'
+    have hcut : N.HasCutSplitOn (Y : Set X) {x | N.leaf x ∈ T} := by
+      refine ⟨e, he, T, fun f hf => ⟨hO f hf, ?_⟩, fun x _ => Iff.rfl⟩
+      rintro rfl
+      exact Links.crosses hl.symm hq' (not_not.mp hp)
+    refine resolves_of_hasCutSplitOn hN hcut hq h4 ?_
+    have h1 : 2 ≤ (q.filter (· ∈ {x | N.leaf x ∈ T})).card :=
+      Finset.one_lt_card.mpr ⟨s, by simp [hs, hsT], t, by simp [ht, htT], hst⟩
+    have h2 : 2 ≤ (q.filter (fun x => ¬ x ∈ {x | N.leaf x ∈ T})).card :=
+      Finset.one_lt_card.mpr ⟨s', Finset.mem_filter.mpr ⟨hs', hsT'⟩, t',
+        Finset.mem_filter.mpr ⟨ht', htT'⟩, hst'⟩
+    have := Finset.card_filter_add_card_filter_not (s := q) (· ∈ {x | N.leaf x ∈ T})
+    omega
+  · rintro ⟨v, hv, hdet⟩ ⟨e, he, h2⟩
+    obtain ⟨x₀, hx₀⟩ : (q.filter (N.IsBelow e)).Nonempty := Finset.card_pos.mp (by omega)
+    obtain ⟨hx₀q, hx₀b⟩ := Finset.mem_filter.mp hx₀
+    have hY : ∀ y ∈ (Y : Set X), N.Dominates e y ∨ ¬ N.IsBelow e y := fun y hy => by
+      by_cases hb : N.IsBelow e y
+      · exact Or.inl (he y (Finset.mem_coe.mp hy) hb)
+      · exact Or.inr hb
+    obtain ⟨-, hc⟩ := crosses_domSet_iff hN (hqY x₀ hx₀q) (he x₀ (hq hx₀q) hx₀b) hY
+    have hO : OnlyCrosses N.graph (N.ancestralArcs (Y : Set X)) e (N.domSet e) :=
+      fun f hf hcf => (hc f hf).mp hcf
+    have hW : ∀ s ∈ q, N.graph.Walks (N.ancestralArcs (Y : Set X)) v (N.leaf s) := fun s hs =>
+      walks_ancestral hN hv (N.leaf_mem_ancestralVertices (hqY s hs))
+    have h2' : (q.filter fun x => ¬ N.IsBelow e x).card = 2 := by
+      have := Finset.card_filter_add_card_filter_not (s := q) (N.IsBelow e)
+      omega
+    obtain ⟨s, t, hst, hf⟩ := Finset.card_eq_two.mp h2
+    obtain ⟨s', t', hst', hf'⟩ := Finset.card_eq_two.mp h2'
+    have hs : s ∈ q.filter (N.IsBelow e) := by simp [hf]
+    have ht : t ∈ q.filter (N.IsBelow e) := by simp [hf]
+    have hs' : s' ∈ q.filter fun x => ¬ N.IsBelow e x := by simp [hf']
+    have ht' : t' ∈ q.filter fun x => ¬ N.IsBelow e x := by simp [hf']
+    obtain ⟨hsq, hsb⟩ := Finset.mem_filter.mp hs
+    obtain ⟨htq, htb⟩ := Finset.mem_filter.mp ht
+    obtain ⟨hsq', hsb'⟩ := Finset.mem_filter.mp hs'
+    obtain ⟨htq', htb'⟩ := Finset.mem_filter.mp ht'
+    have hnd : ∀ {x : X}, ¬ N.IsBelow e x → N.leaf x ∈ (N.domSet e)ᶜ := fun hb hd =>
+      hb (Dominates.isBelow hN hd)
+    by_cases hvT : v ∈ N.domSet e
+    · exact hst' (hdet.eq_of_mem_side hO.compl (not_not.mpr hvT) hsq' htq' (hW s' hsq') (hW t' htq')
+        (hnd hsb') (hnd htb'))
+    · exact hst (hdet.eq_of_mem_side hO hvT hsq htq (hW s hsq) (hW t htq) (he s (hq hsq) hsb)
+        (he t (hq htq) htb))
+
+omit [Fintype X] [DecidableEq X] in
+/-- **Corollary 2 of the source**, for taxon sets: a B-quartet on the subgraph induced on a set of
+taxa is one on the subgraph induced on any larger set. From Lemma 2. -/
+theorem corollary2 (hN : N.IsPhylogenetic) {Y Z q : Finset X} (hYZ : Y ⊆ Z) (hq : q ⊆ Y)
+    (h4 : q.card = 4) (hR : ¬ Resolves N Y q) : ¬ Resolves N Z q := by
+  obtain ⟨v, hv, hdet⟩ := (not_resolves_iff_exists_determines hN hq h4).mp hR
+  have hsub : ((Y : Finset X) : Set X) ⊆ Z := Finset.coe_subset.mpr hYZ
+  refine (not_resolves_iff_exists_determines hN (hq.trans hYZ) h4).mpr
+    ⟨v, N.ancestralVertices_mono hsub hv, (lemma2 (N.ancestralArcs_mono hsub) (by omega)
+      (fun s _ => isPendantIn_leaf hN s _) ?_ ?_ hdet).1⟩
+  · exact fun s hs => walks_ancestral hN hv
+      (N.leaf_mem_ancestralVertices (Finset.mem_coe.mpr (hq hs)))
+  · exact fun f hf => walks_ancestral hN hv (N.source_mem_ancestralVertices hf)
+
 omit [Fintype X] in
-/-- **Lemma 3 of the source**, in the fixed network, for the subgraphs induced on subsets `Y`.
-Departure from the source (a cited result): the source builds a cycle through the arcs ancestral
-to `α` and the two components of the induced graph without `e₀`. Here the same facts are read off
-from domination: since `e₀` is not a cut on `Y`, the taxon `α` is below `e₀` and not dominated by it,
-and any arc `f` resolving `{a,b,c,α}` on `Y \ {d}` is compared with `e₀`. -/
+/-- **Lemma 3 of the source**, in the fixed network, for the subgraphs induced on subsets `Y`. Its
+proof is `lemma3_blob` in the source's language of blobs: `¬ Resolves` is translated to and from
+"determines a blob" by `not_resolves_iff_exists_determines`, and the hypotheses on `e₀` give a side
+of a cut edge of the subgraph induced on `Y \ {α}`. -/
 theorem lemma3 (hN : N.IsPhylogenetic) {Y : Finset X} {a b c d α : X} {e₀ : E}
     (h4 : ({a, b, c, d} : Finset X).card = 4) (ha : a ∈ Y) (hb : b ∈ Y) (hc : c ∈ Y) (hd : d ∈ Y)
     (hα : α ∈ Y) (hαa : α ≠ a) (hαb : α ≠ b) (hαc : α ≠ c) (hαd : α ≠ d)
@@ -238,126 +324,137 @@ theorem lemma3 (hN : N.IsPhylogenetic) {Y : Finset X} {a b c d α : X} {e₀ : E
       (¬ N.IsBelow e₀ a ∧ ¬ N.IsBelow e₀ b ∧ N.IsBelow e₀ c ∧ N.IsBelow e₀ d))
     (hB : ¬ Resolves N Y {a, b, c, d}) : ¬ Resolves N (Y.erase d) {a, b, c, α} := by
   obtain ⟨hab, hac, had, hbc, hbd, hcd⟩ := TreeMetric.ne_of_card_four h4
+  have hq : ({a, b, c, d} : Finset X) ⊆ Y := by
+    intro x hx
+    simp only [Finset.mem_insert, Finset.mem_singleton] at hx
+    rcases hx with rfl | rfl | rfl | rfl <;> assumption
+  have hq' : ({a, b, c, α} : Finset X) ⊆ Y.erase d := by
+    intro x hx
+    simp only [Finset.mem_insert, Finset.mem_singleton] at hx
+    rcases hx with rfl | rfl | rfl | rfl
+    · exact Finset.mem_erase.mpr ⟨had, ha⟩
+    · exact Finset.mem_erase.mpr ⟨hbd, hb⟩
+    · exact Finset.mem_erase.mpr ⟨hcd, hc⟩
+    · exact Finset.mem_erase.mpr ⟨hαd, hα⟩
   have h4' : ({a, b, c, α} : Finset X).card = 4 :=
     TreeMetric.card_four_of_ne hab hac hαa.symm hbc hαb.symm hαc.symm
-  have hq0 : (({a, b, c, d} : Finset X).filter (N.IsBelow e₀)).card = 2 := by
-    rw [TreeMetric.card_filter_four h4]
-    rcases hor with ⟨h1, h2, h3, h5⟩ | ⟨h1, h2, h3, h5⟩ <;> simp [h1, h2, h3, h5]
-  -- `e₀` is not a cut on `Y`: `α` is below it and not dominated by it
-  have hαB : N.IsBelow e₀ α := by
-    by_contra hn
-    exact hB ⟨e₀, fun x hx hb' => hcut x hx (fun h => hn (h ▸ hb')) hb', hq0⟩
-  have hαD : ¬ N.Dominates e₀ α := by
-    intro hD
-    refine hB ⟨e₀, fun x hx hb' => ?_, hq0⟩
-    by_cases hxα : x = α
-    · exact hxα ▸ hD
-    · exact hcut x hx hxα hb'
-  have hαA : N.AvoidingReach e₀ N.root (N.leaf α) := not_not.mp hαD
-  rintro ⟨f, hf, hf2⟩
-  rw [TreeMetric.card_filter_four h4'] at hf2
-  have hfY : ∀ x ∈ Y, x ≠ d → N.IsBelow f x → N.Dominates f x :=
-    fun x hx hxd hb' => hf x (Finset.mem_erase.mpr ⟨hxd, hx⟩) hb'
-  by_cases hαF : N.IsBelow f α
-  · have hfα := hfY α hα hαd hαF
-    have hne : e₀ ≠ f := by
-      rintro rfl
-      exact hαD hfα
-    rcases order_of_isBelow_of_dominates hN hαB hfα hne with h1 | h1
-    · -- `f` is below `e₀`
-      have hu : ∃ u ∈ Y, u ≠ d ∧ u ≠ α ∧ N.IsBelow f u := by
-        by_contra hno
-        push Not at hno
-        have h1 := hno a ha had hαa.symm
-        have h2 := hno b hb hbd hαb.symm
-        have h3 := hno c hc hcd hαc.symm
-        simp [h1, h2, h3, hαF] at hf2
-      obtain ⟨u, hu, hud, huα, Fu⟩ := hu
-      have Bu := isBelow_of_above h1 Fu
-      have Du := hcut u hu huα Bu
-      have hav : N.AvoidingReach e₀ N.root (N.graph.source f) := by
-        rcases avoiding_split e₀ f hαA with h' | ⟨h', -⟩
-        · exact absurd h' hfα
-        · exact h'
-      rcases reaches_split e₀ Fu with h2 | ⟨h2, -⟩
-      · exact Du ((hav.trans (avoiding_step hne.symm)).trans h2)
-      · exact above_antisymm hN h1 h2
-    · -- `f` is above `e₀`
-      rcases hor with ⟨ba, bb, bc, bd⟩ | ⟨ba, bb, bc, bd⟩
-      · have Fa := isBelow_of_above h1 ba
-        have Fb := isBelow_of_above h1 bb
-        simp only [Fa, Fb, hαF, ite_true] at hf2
-        split_ifs at hf2 <;> omega
-      · have Fc := isBelow_of_above h1 bc
-        have Fd := isBelow_of_above h1 bd
-        have hna : ¬ N.IsBelow f a ∧ ¬ N.IsBelow f b := by
-          simp only [Fc, hαF, ite_true] at hf2
-          split_ifs at hf2 with h1' h2'
-          all_goals first | omega | exact ⟨‹_›, ‹_›⟩
-        have Dd : N.Dominates f d := by
-          intro hav
-          rcases avoiding_split f e₀ hav with h' | ⟨h', -⟩
-          · exact hcut d hd hαd.symm bd h'
-          · rcases reaches_split f bc with h2 | ⟨h2, -⟩
-            · exact hfY c hc hcd Fc ((h'.trans (avoiding_step hne)).trans h2)
-            · exact above_antisymm hN h1 h2
-        refine hB ⟨f, fun x hx hb' => ?_, ?_⟩
-        · by_cases hxd : x = d
-          · exact hxd ▸ Dd
-          · exact hfY x hx hxd hb'
-        · rw [TreeMetric.card_filter_four h4]
-          simp [hna.1, hna.2, Fc, Fd]
-  · have hne : e₀ ≠ f := by
-      rintro rfl
-      exact hαF hαB
-    have hnot : ¬ N.graph.Reaches (N.graph.target f) (N.graph.source e₀) :=
-      fun h => hαF (isBelow_of_above h hαB)
-    have hsub : ∀ u ∈ Y, u ≠ d → N.IsBelow e₀ u → N.IsBelow f u →
-        N.graph.Reaches (N.graph.target e₀) (N.graph.source f) := by
-      intro u hu hud hbu hfu
-      rcases order_of_isBelow_of_dominates hN hbu (hfY u hu hud hfu) hne with h | h
-      · exact h
-      · exact absurd h hnot
-    simp only [hαF, ite_false, add_zero] at hf2
-    have hor2 : N.IsBelow f a ∨ N.IsBelow f b := by
-      by_contra hno
-      push Not at hno
-      simp only [hno.1, hno.2, ite_false] at hf2
-      split_ifs at hf2 <;> omega
-    -- from now on `f` has exactly `a, b` below it
-    have hfinal : N.IsBelow f a ∧ N.IsBelow f b ∧ ¬ N.IsBelow f c ∧ ¬ N.IsBelow f d := by
-      rcases hor with ⟨ba, bb, nc, nd⟩ | ⟨na, nb, bc, bd⟩
-      · have hlow : N.graph.Reaches (N.graph.target e₀) (N.graph.source f) := by
-          rcases hor2 with h | h
-          · exact hsub a ha had ba h
-          · exact hsub b hb hbd bb h
-        have hFc : ¬ N.IsBelow f c := fun h => nc (isBelow_of_above hlow h)
-        have hFd : ¬ N.IsBelow f d := fun h => nd (isBelow_of_above hlow h)
-        simp only [hFc, ite_false, add_zero] at hf2
-        split_ifs at hf2 with h1' h2'
-        all_goals first | omega | exact ⟨‹_›, ‹_›, hFc, hFd⟩
-      · have hFc : ¬ N.IsBelow f c := by
-          intro Fc
-          have hlow := hsub c hc hcd bc Fc
-          rcases hor2 with h | h
-          · exact na (isBelow_of_above hlow h)
-          · exact nb (isBelow_of_above hlow h)
-        have hFa : N.IsBelow f a ∧ N.IsBelow f b := by
-          simp only [hFc, ite_false, add_zero] at hf2
-          split_ifs at hf2 with h1' h2'
-          all_goals first | omega | exact ⟨‹_›, ‹_›⟩
-        have hFd : ¬ N.IsBelow f d := by
-          intro Fd
-          rcases order_of_isBelow_of_dominates hN Fd (hcut d hd hαd.symm bd) hne.symm with h | h
-          · exact hnot h
-          · exact na (isBelow_of_above h hFa.1)
-        exact ⟨hFa.1, hFa.2, hFc, hFd⟩
-    obtain ⟨Fa, Fb, Fc, Fd⟩ := hfinal
-    refine hB ⟨f, fun x hx hb' => hfY x hx (fun h => Fd (h ▸ hb')) hb', ?_⟩
-    rw [TreeMetric.card_filter_four h4]
-    simp [Fa, Fb, Fc, Fd]
+  obtain ⟨v₀, hv₀, hdet⟩ := (not_resolves_iff_exists_determines hN hq h4).mp hB
+  -- the arc `e₀` gives a side of a cut edge of the subgraph induced on `Y \ {α}`
+  have hmem : ∀ {x : X}, x ∈ Y → x ≠ α → x ∈ ((Y.erase α : Finset X) : Set X) := fun hx hne =>
+    Finset.mem_coe.mpr (Finset.mem_erase.mpr ⟨hne, hx⟩)
+  have hY : ∀ y ∈ ((Y.erase α : Finset X) : Set X), N.Dominates e₀ y ∨ ¬ N.IsBelow e₀ y := by
+    intro y hy
+    obtain ⟨hyα, hyY⟩ := Finset.mem_erase.mp (Finset.mem_coe.mp hy)
+    by_cases hbe : N.IsBelow e₀ y
+    · exact Or.inl (hcut y hyY hyα hbe)
+    · exact Or.inr hbe
+  have hnd : ∀ {x : X}, ¬ N.IsBelow e₀ x → N.leaf x ∉ N.domSet e₀ := fun hb' hd' =>
+    hb' (Dominates.isBelow hN hd')
+  obtain ⟨T₁, hT₁, ha₁, hb₁, hc₁, hd₁⟩ : ∃ T₁, OnlyCrosses N.graph (arcsOff N Y α) e₀ T₁ ∧
+      N.leaf a ∉ T₁ ∧ N.leaf b ∉ T₁ ∧ N.leaf c ∈ T₁ ∧ N.leaf d ∈ T₁ := by
+    rcases hor with ⟨ba, bb, nc, nd⟩ | ⟨na, nb, bc, bd⟩
+    · obtain ⟨-, hcr⟩ := crosses_domSet_iff hN (hmem ha hαa.symm) (hcut a ha hαa.symm ba) hY
+      refine ⟨(N.domSet e₀)ᶜ, OnlyCrosses.compl fun f hf hcf => (hcr f hf).mp hcf, ?_, ?_, hnd nc, hnd nd⟩
+      · exact not_not.mpr (hcut a ha hαa.symm ba)
+      · exact not_not.mpr (hcut b hb hαb.symm bb)
+    · obtain ⟨-, hcr⟩ := crosses_domSet_iff hN (hmem hc hαc.symm) (hcut c hc hαc.symm bc) hY
+      exact ⟨N.domSet e₀, fun f hf hcf => (hcr f hf).mp hcf, hnd na, hnd nb,
+        hcut c hc hαc.symm bc, hcut d hd hαd.symm bd⟩
+  obtain ⟨v, hv, hdet'⟩ := lemma3_blob hN h4 ha hb hc hd hα hαa hαb hαc hαd hv₀ hdet hT₁ ha₁ hb₁ hc₁ hd₁
+  exact (not_resolves_iff_exists_determines hN hq' h4').mpr ⟨v, hv, hdet'⟩
 
-/-- The induction of the source's Theorem 3, on the taxa `Y` of the subgraph. -/
+omit [Fintype X] [DecidableEq X] in
+/-- **"All edges in `ℬ` are retained"**, in the first step of the source's proof of Theorem 3. Let
+`R` have a taxon from each component containing a taxon, of the graph left by deleting the blob of
+`v`, which `q` determines. Each node of the blob is above a taxon of `R`: paths from it leave the
+blob by a cut edge `g` directed away from it, and every taxon beyond `g` is below `g`. -/
+theorem exists_reaches_rep (hN : N.IsPhylogenetic) {Y R q : Finset X} {v p : V}
+    (hv : v ∈ N.ancestralVertices (Y : Set X)) (hqY : q ⊆ Y) (h3 : 3 ≤ q.card)
+    (hdet : Determines N.graph (N.ancestralArcs (Y : Set X)) v N.leaf q) (hRY : R ⊆ Y)
+    (hcov : ∀ x ∈ Y, ∃ r ∈ R, N.graph.Walks
+      (N.ancestralArcs (Y : Set X) \ incidentCuts N.graph (N.ancestralArcs (Y : Set X)) v) (N.leaf x) (N.leaf r))
+    (hp : SameBlobIn N.graph (N.ancestralArcs (Y : Set X)) v p) :
+    ∃ r ∈ R, N.graph.Reaches p (N.leaf r) := by
+  have hWq : ∀ t ∈ q, N.graph.Walks (N.ancestralArcs (Y : Set X)) v (N.leaf t) := fun t ht =>
+    walks_ancestral hN hv (N.leaf_mem_ancestralVertices (Finset.mem_coe.mpr (hqY ht)))
+  obtain ⟨x, hx, hpx⟩ := mem_ancestralVertices_of_walks hv hp.walks
+  have hvx := walks_ancestral hN hv (N.leaf_mem_ancestralVertices hx)
+  -- the cut edge `g` leading to the component of `x`
+  have hb : ¬ SameBlobIn N.graph (N.ancestralArcs (Y : Set X)) v (N.leaf x) := fun h =>
+    hdet.ne_of_isPendantIn h3 (isPendantIn_leaf hN x _) hWq ((isPendantIn_leaf hN x _).eq_of_sameBlobIn h)
+  obtain ⟨g, hg⟩ := (exists_leadsTo hvx).resolve_left hb
+  obtain ⟨r, hr, hw⟩ := hcov x (Finset.mem_coe.mp hx)
+  have hO : OnlyCrosses N.graph (N.ancestralArcs (Y : Set X)) g
+      (far N.graph (N.ancestralArcs (Y : Set X)) g v) := onlyCrosses_far
+  have hrT : N.leaf r ∈ far N.graph (N.ancestralArcs (Y : Set X)) g v :=
+    (N.graph.mem_iff_mem_of_walks
+      (F := N.ancestralArcs (Y : Set X) \ incidentCuts N.graph (N.ancestralArcs (Y : Set X)) v)
+      (fun f hf hc => hf.2 (hO f hf.1 hc ▸ hg.1)) hw).mp hg.2
+  have hpT : p ∉ far N.graph (N.ancestralArcs (Y : Set X)) g v :=
+    fun hc => hc (hp.walks_diff hg.1.1)
+  obtain ⟨h1, h2, -, -⟩ := reaches_of_enters hO hpT hg.2 hpx fun f hf => ⟨x, hx, hf⟩
+  -- the root is on the side of the blob
+  have hroot : N.root ∉ far N.graph (N.ancestralArcs (Y : Set X)) g v := fun hrootT =>
+    (reaches_of_enters hO.compl (not_not.mpr hrootT) h2 (hN.root_reaches _) fun f hf =>
+      N.mem_ancestralVertices_of_reaches hf (N.source_mem_ancestralVertices hg.1.1.1)).2.1 h2
+  obtain ⟨-, -, -, h4⟩ := reaches_of_enters hO hroot hrT (hN.root_reaches _) fun f hf =>
+    ⟨r, Finset.mem_coe.mpr (hRY hr), hf⟩
+  exact ⟨r, hr, (h1.tail ⟨g, rfl, rfl⟩).trans h4⟩
+
+omit [Fintype X] in
+/-- **The first step of the source's proof of Theorem 3.** If `q` determines a blob of the subgraph
+on `Y`, choose one taxon from each component with a taxon of the graph left by deleting the blob,
+four of these being `q`. Passing to the subgraph on those taxa, all arcs of the blob are retained,
+and `q` still determines a blob. -/
+theorem exists_representatives (hN : N.IsPhylogenetic) {Y q : Finset X} (hqY : q ⊆ Y) (h4 : q.card = 4)
+    (hR : ¬ Resolves N Y q) : ∃ R, q ⊆ R ∧ R ⊆ Y ∧ ¬ Resolves N R q := by
+  obtain ⟨v, hv, hdet⟩ := (not_resolves_iff_exists_determines hN hqY h4).mp hR
+  have h3 : 3 ≤ q.card := by omega
+  -- one taxon from each component: a largest subset of `Y` containing `q` with no two in one component
+  have hmemq : q ∈ Y.powerset.filter
+      fun R => q ⊆ R ∧ Determines N.graph (N.ancestralArcs (Y : Set X)) v N.leaf R :=
+    Finset.mem_filter.mpr ⟨Finset.mem_powerset.mpr hqY, Finset.Subset.refl _, hdet⟩
+  obtain ⟨R, hqR, hmem, hmax⟩ := Finset.exists_le_maximal _ hmemq
+  obtain ⟨hRY', -, hdetR⟩ := Finset.mem_filter.mp hmem
+  have hRY := Finset.mem_powerset.mp hRY'
+  have hcov : ∀ x ∈ Y, ∃ r ∈ R, N.graph.Walks
+      (N.ancestralArcs (Y : Set X) \ incidentCuts N.graph (N.ancestralArcs (Y : Set X)) v)
+      (N.leaf x) (N.leaf r) := by
+    intro x hx
+    by_contra hno
+    push Not at hno
+    have hins : insert x R ∈ Y.powerset.filter
+        fun R => q ⊆ R ∧ Determines N.graph (N.ancestralArcs (Y : Set X)) v N.leaf R := by
+      refine Finset.mem_filter.mpr ⟨Finset.mem_powerset.mpr (Finset.insert_subset hx hRY),
+        hqR.trans (Finset.subset_insert _ _), fun s hs t ht hst hw => ?_⟩
+      rcases Finset.mem_insert.mp hs with rfl | hs' <;> rcases Finset.mem_insert.mp ht with rfl | ht'
+      · exact hst rfl
+      · exact hno t ht' hw
+      · exact hno s hs' (N.graph.walks_symm hw)
+      · exact hdetR s hs' t ht' hst hw
+    have hxR : x ∈ R := hmax hins (Finset.subset_insert _ _) (Finset.mem_insert_self _ _)
+    exact hno x hxR .refl
+  have hsub : ((R : Finset X) : Set X) ⊆ Y := Finset.coe_subset.mpr hRY
+  -- all arcs of the blob are retained
+  have : Finite E := hN.finite_arcs
+  have harcs : blobArcsIn N.graph (N.ancestralArcs (Y : Set X)) v ⊆ N.ancestralArcs (R : Set X) := by
+    intro f hf
+    obtain ⟨r, hr, hreach⟩ := exists_reaches_rep hN hv hqY h3 hdet hRY hcov
+      (Relation.ReflTransGen.tail hf.2 ⟨f, hf.1, Or.inl ⟨rfl, rfl⟩⟩)
+    exact ⟨r, Finset.mem_coe.mpr hr, hreach⟩
+  have hblob : ∀ x, SameBlobIn N.graph (N.ancestralArcs (Y : Set X)) v x →
+      SameBlobIn N.graph (N.ancestralArcs (R : Set X)) v x := fun x hx =>
+    sameBlobIn_of_isBridgelessSubgraph (isBridgelessSubgraph_blob v) harcs
+      Relation.ReflTransGen.refl hx
+  obtain ⟨r, hr, hreach⟩ := exists_reaches_rep hN hv hqY h3 hdet hRY hcov Relation.ReflTransGen.refl
+  exact ⟨R, hqR, hRY, (not_resolves_iff_exists_determines hN hqR h4).mpr
+    ⟨v, ⟨r, Finset.mem_coe.mpr hr, hreach⟩,
+      hdet.of_subset (N.ancestralArcs_mono hsub) hblob⟩⟩
+
+/-- The induction of the source's Theorem 3, on the taxa `Y` of the subgraph. For `Y = q` the base
+case; otherwise the source's three steps: pass to one taxon per component at the blob
+(`exists_representatives`); remove a taxon if `q` stays unresolved; and otherwise Lemma 3 twice and
+Inference Rule (a). -/
 private theorem closure_aux (hN : N.IsPhylogenetic) (n : ℕ) :
     ∀ Y : Finset X, Y.card = n → ∀ q : Finset X, q.card = 4 → q ⊆ Y → ¬ Resolves N Y q →
       BInferred {q' | q'.card = 4 ∧ ¬ IsTreelike N q'} {s | InducedCutSplit N s} q := by
@@ -377,6 +474,10 @@ private theorem closure_aux (hN : N.IsPhylogenetic) (n : ℕ) :
       ext x
       simp only [Finset.mem_filter, Finset.mem_coe]
       exact ⟨fun h => h.2, fun h => ⟨hBs h, h⟩⟩
+    -- one taxon per component at the blob
+    obtain ⟨R, hqR, -, hRR⟩ := exists_representatives hN hqY hq hR
+    by_cases hRlt : R ⊂ Y
+    · exact ih _ (hY ▸ Finset.card_lt_card hRlt) R rfl q hq hqR hRR
     obtain ⟨α, hαY, hαq⟩ : ∃ α ∈ Y, α ∉ q := by
       by_contra hno
       push Not at hno
@@ -503,43 +604,60 @@ private theorem closure_aux (hN : N.IsPhylogenetic) (n : ℕ) :
       refine ih _ hlt (Y.erase α) rfl q hq (fun x hx => ?_) hRα
       exact Finset.mem_erase.mpr ⟨fun h => hαq (h ▸ hx), hqY hx⟩
 
+/-- A B-quartet of the network, as the tree of blobs defines it, is a set of four taxa unresolved on
+the whole network. With `not_resolves_iff_exists_determines`, this is the source's Definition 12:
+`q` determines a blob. -/
+theorem isBQuartet_iff_not_resolves (hN : N.IsPhylogenetic) {q : Finset X} (hq : q.card = 4) :
+    IsBQuartet N q ↔ ¬ Resolves N Finset.univ q := by
+  constructor
+  · rintro hB ⟨e, he, h2⟩
+    have hbelow : (q.filter (N.IsBelow e)).Nonempty := Finset.card_pos.mp (by omega)
+    obtain ⟨x, hx⟩ := hbelow
+    obtain ⟨hxq, hxb⟩ := Finset.mem_filter.mp hx
+    have hc2 : (q.filter fun x => ¬ N.IsBelow e x).card = 2 := by
+      have := Finset.card_filter_add_card_filter_not (s := q) (N.IsBelow e)
+      omega
+    obtain ⟨y, hy⟩ : (q.filter fun x => ¬ N.IsBelow e x).Nonempty := Finset.card_pos.mp (by omega)
+    obtain ⟨hyq, hyb⟩ := Finset.mem_filter.mp hy
+    let A : Finset X := Finset.univ.filter (N.IsBelow e)
+    have hcut : N.HasCutSplit (A : Set X) := by
+      refine (hasCutSplit_iff_hasCutSplitOn_univ hN _).mpr ?_
+      have := hasCutSplitOn_of_isCutOn hN he (A := (A : Set X)) (fun x _ => by simp [A]) (x := x)
+        (Finset.mem_univ _) hxb
+      simpa using this
+    have hA : A ∈ treeOfBlobs N := by
+      refine Finset.mem_filter.mpr ⟨Finset.mem_univ _, ⟨x, by simpa [A] using hxb⟩,
+        ⟨y, by simpa [A] using hyb⟩, hcut⟩
+    have hinter : A ∩ q = q.filter (N.IsBelow e) := by
+      ext z
+      simp only [Finset.mem_inter, Finset.mem_filter, Finset.mem_univ, true_and, A]
+      tauto
+    exact (TreeMetric.forall_not_displays_iff hq).mp hB A hA (hinter ▸ h2)
+  · refine fun hR => (TreeMetric.forall_not_displays_iff hq).mpr fun A hA h2 => hR ?_
+    have hcut := (hasCutSplit_iff_hasCutSplitOn_univ hN _).mp (Finset.mem_filter.mp hA).2.2.2
+    refine resolves_of_hasCutSplitOn hN (Y := Finset.univ) (by simpa using hcut)
+      (Finset.subset_univ _) hq ?_
+    rw [← h2]
+    congr 1
+    ext z
+    simp only [Finset.mem_filter, Finset.mem_inter, Finset.mem_coe]
+    tauto
+
 /-- **Theorem 3 of the source, combinatorial part.** From the 4-taxon sets with no cut-edge split on
 their induced networks, and the quartet trees of the others, the closure under the inference rule
 reaches every B-quartet of the network. With soundness (`theorem2`) this is what Theorem 3 uses of
-Theorem 1. The induction is on the taxa of an induced subgraph, as in the source: if a taxon can be removed
-with `q` staying unresolved, it is removed; otherwise `q` is inferred from Lemma 3, applied twice, by Inference
-Rule (a). The source first passes to one representative taxon per component at the blob; the removal
-step subsumes this. Departure from the source: Lemma 3 is proved without its cycle (see `lemma3`). -/
+Theorem 1. The induction is on the taxa of an induced subgraph, as in the source, in `closure_aux`.
+The source concludes on the induced networks and transfers to `𝒩⁺` by its Corollary 2
+(`corollary2`). Here the closure is taken on the fixed network throughout, so the transfer is built
+in. -/
 theorem closure_complete (hN : N.IsPhylogenetic) {q : Finset X} (hq : q.card = 4)
     (hB : IsBQuartet N q) :
-    BInferred {q' | q'.card = 4 ∧ ¬ IsTreelike N q'} {s | InducedCutSplit N s} q := by
-  refine closure_aux hN _ Finset.univ rfl q hq (Finset.subset_univ _) ?_
-  rintro ⟨e, he, h2⟩
-  have hbelow : (q.filter (N.IsBelow e)).Nonempty := Finset.card_pos.mp (by omega)
-  obtain ⟨x, hx⟩ := hbelow
-  obtain ⟨hxq, hxb⟩ := Finset.mem_filter.mp hx
-  have hc2 : (q.filter fun x => ¬ N.IsBelow e x).card = 2 := by
-    have := Finset.card_filter_add_card_filter_not (s := q) (N.IsBelow e)
-    omega
-  obtain ⟨y, hy⟩ : (q.filter fun x => ¬ N.IsBelow e x).Nonempty := Finset.card_pos.mp (by omega)
-  obtain ⟨hyq, hyb⟩ := Finset.mem_filter.mp hy
-  let A : Finset X := Finset.univ.filter (N.IsBelow e)
-  have hcut : N.HasCutSplit (A : Set X) := by
-    refine (hasCutSplit_iff_hasCutSplitOn_univ hN _).mpr ?_
-    have := hasCutSplitOn_of_isCutOn hN he (A := (A : Set X)) (fun x _ => by simp [A]) (x := x)
-      (Finset.mem_univ _) hxb
-    simpa using this
-  have hA : A ∈ treeOfBlobs N := by
-    refine Finset.mem_filter.mpr ⟨Finset.mem_univ _, ⟨x, by simpa [A] using hxb⟩,
-      ⟨y, by simpa [A] using hyb⟩, hcut⟩
-  have hinter : A ∩ q = q.filter (N.IsBelow e) := by
-    ext z
-    simp only [Finset.mem_inter, Finset.mem_filter, Finset.mem_univ, true_and, A]
-    tauto
-  exact (TreeMetric.forall_not_displays_iff hq).mp hB A hA (hinter ▸ h2)
+    BInferred {q' | q'.card = 4 ∧ ¬ IsTreelike N q'} {s | InducedCutSplit N s} q :=
+  closure_aux hN _ Finset.univ rfl q hq (Finset.subset_univ _)
+    ((isBQuartet_iff_not_resolves hN hq).mp hB)
 
-/-- Soundness of the closure: everything the rule infers from the 4-taxon sets with no cut-edge split
-on their induced networks is a B-quartet. -/
+/-- Soundness of the closure: everything the rule infers from the 4-taxon sets with no cut-edge
+split on their induced networks is a B-quartet. -/
 theorem closure_sound (hN : N.IsPhylogenetic) {q : Finset X}
     (h : BInferred {q' | q'.card = 4 ∧ ¬ IsTreelike N q'} {s | InducedCutSplit N s} q) :
     IsBQuartet N q := by

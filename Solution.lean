@@ -130,14 +130,11 @@ theorem consistency {V E X : Type*} [Fintype V] [Fintype E] [Fintype X] [Decidab
           tobqmc ml (α k) β (quartetCount unroot ω) (solve (quartetCount unroot ω))
             (cover (solve (quartetCount unroot ω))) = treeOfBlobs N) atTop (𝓝 1) := TOBQMC.consistency hStd hLevel hNon hBlob hX
 
-/-- **TINNiK, Theorem 4**, conditional on CF-detectability for generic parameters
-(`External.AllmanEtAl2023.Corollary1`). For generic numerical parameters on a binary network there is a sequence
-`α_m → 0` such that for any `β > 0` and `2 > δ ≥ 0`, any exact distance-based tree building method and any
-selection of maximum likelihood topologies, the TINNiK algorithm using the cut test on `m` independent gene trees
-from the NMSC infers the tree of blobs with probability tending to one. -/
+/-- **TINNiK, Theorem 4.** For generic numerical parameters on a binary network, there is a sequence `α_m → 0` such that for
+any `β > 0` and `0 ≤ δ < 2`, any exact tree builder and any selection of maximum likelihood topologies, the TINNiK
+algorithm on `m` independent gene trees infers the tree of blobs with probability tending to one. -/
 theorem theorem4 {V E X : Type*} [Fintype V] [Fintype E] [Fintype X] [DecidableEq X]
-    {N : RootedNetwork V E X} (hN : N.IsPhylogenetic) (_ : N.IsBinary) (hX : 4 ≤ Fintype.card X)
-    (hCor : External.AllmanEtAl2023.Corollary1 N) :
+    {N : RootedNetwork V E X} (hN : N.IsPhylogenetic) (hBin : N.IsBinary) (hX : 4 ≤ Fintype.card X) :
     ∃ A : Set (MetricData E), External.AllmanEtAl2023.IsGenericNull N A ∧
       ∀ θ, N.IsMetric θ → θ ∉ A →
         ∃ α : ℕ → ℝ, Tendsto α atTop (𝓝 0) ∧ (∀ m, 0 < α m) ∧
@@ -145,6 +142,6 @@ theorem theorem4 {V E X : Type*} [Fintype V] [Fintype E] [Fintype X] [DecidableE
           ∀ (M : TreeBuilder X), IsExactBuilder M →
           ∀ (ml : (QuartetTree X → ℝ) → Finset X → QuartetTree X), IsMLSelection ml →
             Tendsto (fun m => iidProb (geneTreeDist N θ 0) m fun ω =>
-              tinnik ml (α m) β δ M (quartetCount unroot ω) = treeOfBlobs N) atTop (𝓝 1) := TINNiK.theorem4 hN hX hCor
+              tinnik ml (α m) β δ M (quartetCount unroot ω) = treeOfBlobs N) atTop (𝓝 1) := TINNiK.theorem4 hN hX hBin
 
 end Challenge

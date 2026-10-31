@@ -119,18 +119,6 @@ theorem avoidingReach_or_reaches (e : E) {a b : V} (h : N.graph.Reaches a b) :
     · exact Or.inr (ih.tail ⟨f, rfl, rfl⟩)
 
 omit [Fintype X] [DecidableEq X] in
-/-- A path starting below the source of `e`, at no ancestor of it, avoids `e`. -/
-theorem avoidingReach_of_not_reaches_source {e : E} {a b : V} (h : N.graph.Reaches a b)
-    (ha : ¬ N.graph.Reaches a (N.graph.source e)) : N.AvoidingReach e a b := by
-  induction h with
-  | refl => exact .refl
-  | @tail w b hw hwb ih =>
-    obtain ⟨f, rfl, rfl⟩ := hwb
-    refine ih.tail ⟨f, ?_, rfl, rfl⟩
-    rintro rfl
-    exact ha hw
-
-omit [Fintype X] [DecidableEq X] in
 /-- A dominated taxon is below the arc. -/
 theorem isBelow_of_dominates (hN : N.IsPhylogenetic) {e : E} {x : X} (h : N.Dominates e x) :
     N.IsBelow e x :=
@@ -568,21 +556,6 @@ theorem target_eq_reticulation (hN : N.IsPhylogenetic) (hLevel : IsLevelOne N) {
   exact reticulation_unique hN hLevel hsb h2 hh hh₂
 
 omit [Fintype X] [DecidableEq X] in
-/-- **A non-bridge arc of the blob does not dominate the reticulation.** -/
-theorem avoidingReach_root_reticulation (hN : N.IsPhylogenetic) (hLevel : IsLevelOne N) {v h : V}
-    (hh : SameBlob N v h) (hh₂ : 2 ≤ N.graph.indegree h) {e : E}
-    (ht : SameBlob N v (N.graph.target e)) (he : ¬ IsBridge N e) :
-    N.AvoidingReach e N.root h := by
-  rw [isBridge_iff_reaches hN] at he
-  push Not at he
-  obtain ⟨f, hfe, hR, hnot⟩ := he
-  have hfh := target_eq_reticulation hN hLevel hh hh₂ ht hfe hR hnot
-  have hsf : N.AvoidingReach e N.root (N.graph.source f) :=
-    (avoidingReach_or_reaches e (hN.root_reaches _)).resolve_right hnot
-  rw [← hfh]
-  exact hsf.tail ⟨f, hfe, rfl, rfl⟩
-
-omit [Fintype X] [DecidableEq X] in
 /-- An arc into a vertex of the blob dominates the taxa below it that are not below the
 reticulation. -/
 theorem dominates_of_below (hN : N.IsPhylogenetic) (hLevel : IsLevelOne N) {v h : V}
@@ -600,27 +573,6 @@ theorem dominates_of_below (hN : N.IsPhylogenetic) (hLevel : IsLevelOne N) {v h 
 end LevelOne
 
 /-! ### Entering a blob -/
-
-omit [Fintype X] [DecidableEq X] in
-/-- A vertex outside a blob with a descendant in the blob reaches the whole blob. -/
-theorem reaches_of_reaches_blob (hN : N.IsPhylogenetic) {v t b u : V} (ht : ¬ SameBlob N v t)
-    (hb : SameBlob N v b) (hR : N.graph.Reaches t b) (hu : SameBlob N v u) :
-    N.graph.Reaches t u := by
-  have : ∃ g, N.graph.Reaches t (N.graph.source g) ∧ ¬ SameBlob N v (N.graph.source g) ∧
-      SameBlob N v (N.graph.target g) := by
-    induction hR with
-    | refl => exact absurd hb ht
-    | @tail a b hta hab ih =>
-      obtain ⟨g, rfl, rfl⟩ := hab
-      by_cases ha : SameBlob N v (N.graph.source g)
-      · exact ih ha
-      · exact ⟨g, hta, ha, hb⟩
-  obtain ⟨g, hg1, hg2, hg3⟩ := this
-  have hgb : IsBridge N g := by
-    by_contra hnb
-    exact hg2 (sameBlob_trans hg3 (sameBlob_symm (sameBlob_of_not_isBridge hnb)))
-  exact (hg1.trans (reaches_of_arc N g)).trans
-    (reaches_of_sameBlob hN hgb (sameBlob_trans (sameBlob_symm hg3) hu))
 
 omit [Fintype X] [DecidableEq X] in
 /-- Every blob has a top vertex, reaching the whole blob. -/

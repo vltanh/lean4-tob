@@ -25,9 +25,8 @@ Main results of three papers: **ECToBlob** (Rhodes, Allman, Ané, Baños, bioRxi
 **TINNiK** (Allman, Baños, Mitchell, Rhodes, Algorithms Mol. Biol. 19, 2024), Theorem 4. `REPORT.md` lists every
 correction and departure.
 
-The only theorem here that is **conditional** is `theorem4`, on one result of the literature, stated as a named
-hypothesis: `External.AllmanEtAl2023.Corollary1` (Allman et al. 2023, Theorem 1 and Corollary 1; TINNiK's Theorem 1): 4-blobs
-are CF-detectable for generic parameters. `CFDetectable` is the pointwise property of one parameter value.
+All are proved, with no assumed result. This includes the CF-detectability of 4-blobs for generic parameters (Allman et
+al. 2023, Theorem 1 and Corollary 1; TINNiK's Theorem 1), which `theorem4` uses.
 
 The definitions are copied word for word from `Basic/Phylogenetics/Defs.lean`. A network is a directed multigraph
 with named arcs; the sides of its splits represent an unrooted tree; the tree of blobs is the family of nonempty
@@ -812,20 +811,9 @@ open Phylogenetics Phylogenetics.RootedNetwork MeasureTheory
 
 variable {V E X : Type*} [Fintype X] [DecidableEq X]
 
-/-- `CF` is strictly `s`-cut (Definition 15): the alternatives of `s` are equal, and differ from `s`. -/
-def IsStrictlyCut (p : QuartetTree X → ℝ) (s : QuartetTree X) : Prop :=
-  (∀ r ∈ s.alternatives, p r ≠ p s) ∧ ∀ r ∈ s.alternatives, ∀ r' ∈ s.alternatives, p r = p r'
-
 /-- `CF` on the taxa `q` is non-cut (Definition 15): its three entries are distinct. -/
 def IsNonCut (p : QuartetTree X → ℝ) (q : Finset X) : Prop :=
   ∀ r ∈ treesOn q, ∀ r' ∈ treesOn q, r ≠ r' → p r ≠ p r'
-
-/-- CF-detectability of the induced 4-taxon networks at given concordance factors: a cut-edge split
-of the induced network gives a strictly cut CF, and an induced network without one (with a 4-blob)
-gives a non-cut CF. -/
-structure CFDetectable (N : RootedNetwork V E X) (p : QuartetTree X → ℝ) : Prop where
-  cut : ∀ s : QuartetTree X, InducedCutSplit N s → IsStrictlyCut p s
-  blob : ∀ q : Finset X, q.card = 4 → ¬ IsTreelike N q → IsNonCut p q
 
 variable [Fintype V] [Fintype E]
 
@@ -837,12 +825,6 @@ def IsGenericNull (N : RootedNetwork V E X) (A : Set (MetricData E)) : Prop :=
     ((Measure.pi fun _ : E => (volume : Measure ℝ)).prod (Measure.pi fun _ : E => (volume : Measure ℝ)))
       {x | ∃ θ ∈ A, N.IsMetric θ ∧ θ.length = x.1 ∧
         ∀ e, N.IsHybridArc e → e ≠ d (N.graph.target e) → θ.inheritance e = x.2 e} = 0
-
-/-- **Assumed result: Corollary 1 of the source**, from its Theorem 1 (TINNiK Theorem 1). For a rooted
-binary phylogenetic network, the numerical parameters at which the NMSC with independent inheritance
-fails CF-detectability on some induced 4-taxon network form a null set. -/
-def Corollary1 (N : RootedNetwork V E X) : Prop :=
-  IsGenericNull N {θ | N.IsMetric θ ∧ ¬ CFDetectable N (nmscCF N θ 0)}
 
 end External.AllmanEtAl2023
 
@@ -968,14 +950,11 @@ theorem consistency {V E X : Type*} [Fintype V] [Fintype E] [Fintype X] [Decidab
             (cover (solve (quartetCount unroot ω))) = treeOfBlobs N) atTop (𝓝 1) := by
   sorry
 
-/-- **TINNiK, Theorem 4**, conditional on CF-detectability for generic parameters
-(`External.AllmanEtAl2023.Corollary1`). For generic numerical parameters on a binary network there is a sequence
-`α_m → 0` such that for any `β > 0` and `2 > δ ≥ 0`, any exact distance-based tree building method and any
-selection of maximum likelihood topologies, the TINNiK algorithm using the cut test on `m` independent gene trees
-from the NMSC infers the tree of blobs with probability tending to one. -/
+/-- **TINNiK, Theorem 4.** For generic numerical parameters on a binary network, there is a sequence `α_m → 0` such that for
+any `β > 0` and `0 ≤ δ < 2`, any exact tree builder and any selection of maximum likelihood topologies, the TINNiK
+algorithm on `m` independent gene trees infers the tree of blobs with probability tending to one. -/
 theorem theorem4 {V E X : Type*} [Fintype V] [Fintype E] [Fintype X] [DecidableEq X]
-    {N : RootedNetwork V E X} (hN : N.IsPhylogenetic) (_ : N.IsBinary) (hX : 4 ≤ Fintype.card X)
-    (hCor : External.AllmanEtAl2023.Corollary1 N) :
+    {N : RootedNetwork V E X} (hN : N.IsPhylogenetic) (hBin : N.IsBinary) (hX : 4 ≤ Fintype.card X) :
     ∃ A : Set (MetricData E), External.AllmanEtAl2023.IsGenericNull N A ∧
       ∀ θ, N.IsMetric θ → θ ∉ A →
         ∃ α : ℕ → ℝ, Tendsto α atTop (𝓝 0) ∧ (∀ m, 0 < α m) ∧

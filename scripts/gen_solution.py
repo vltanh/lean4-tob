@@ -16,7 +16,7 @@ PROOFS = {
     'theorem1_optimal': 'TOBQMC.theorem1_optimal hStd hNon hX P G hG',
     'theorem2': 'TOBQMC.theorem2 hN hBin hLevel hB hTB Q hQ',
     'consistency': 'TOBQMC.consistency hStd hLevel hNon hBlob hX',
-    'theorem4': 'TINNiK.theorem4 hN hX hCor',
+    'theorem4': 'TINNiK.theorem4 hN hX hBin',
 }
 
 HEADER = """module

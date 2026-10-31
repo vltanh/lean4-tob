@@ -821,20 +821,9 @@ open Phylogenetics Phylogenetics.RootedNetwork MeasureTheory
 
 variable {V E X : Type*} [Fintype X] [DecidableEq X]
 
-/-- `CF` is strictly `s`-cut (Definition 15): the alternatives of `s` are equal, and differ from `s`. -/
-def IsStrictlyCut (p : QuartetTree X → ℝ) (s : QuartetTree X) : Prop :=
-  (∀ r ∈ s.alternatives, p r ≠ p s) ∧ ∀ r ∈ s.alternatives, ∀ r' ∈ s.alternatives, p r = p r'
-
 /-- `CF` on the taxa `q` is non-cut (Definition 15): its three entries are distinct. -/
 def IsNonCut (p : QuartetTree X → ℝ) (q : Finset X) : Prop :=
   ∀ r ∈ treesOn q, ∀ r' ∈ treesOn q, r ≠ r' → p r ≠ p r'
-
-/-- CF-detectability of the induced 4-taxon networks at given concordance factors: a cut-edge split
-of the induced network gives a strictly cut CF, and an induced network without one (with a 4-blob)
-gives a non-cut CF. -/
-structure CFDetectable (N : RootedNetwork V E X) (p : QuartetTree X → ℝ) : Prop where
-  cut : ∀ s : QuartetTree X, InducedCutSplit N s → IsStrictlyCut p s
-  blob : ∀ q : Finset X, q.card = 4 → ¬ IsTreelike N q → IsNonCut p q
 
 variable [Fintype V] [Fintype E]
 
@@ -846,12 +835,6 @@ def IsGenericNull (N : RootedNetwork V E X) (A : Set (MetricData E)) : Prop :=
     ((Measure.pi fun _ : E => (volume : Measure ℝ)).prod (Measure.pi fun _ : E => (volume : Measure ℝ)))
       {x | ∃ θ ∈ A, N.IsMetric θ ∧ θ.length = x.1 ∧
         ∀ e, N.IsHybridArc e → e ≠ d (N.graph.target e) → θ.inheritance e = x.2 e} = 0
-
-/-- **Assumed result: Corollary 1 of the source**, from its Theorem 1 (TINNiK Theorem 1). For a rooted
-binary phylogenetic network, the numerical parameters at which the NMSC with independent inheritance
-fails CF-detectability on some induced 4-taxon network form a null set. -/
-def Corollary1 (N : RootedNetwork V E X) : Prop :=
-  IsGenericNull N {θ | N.IsMetric θ ∧ ¬ CFDetectable N (nmscCF N θ 0)}
 
 end External.AllmanEtAl2023
 
@@ -885,3 +868,30 @@ def alphaSeq (n : ℕ) : ℝ := chiSqOneTail (Real.log n)
 def betaSeq (n : ℕ) : ℝ := chiSqTwoTail (Real.log n)
 
 end ECToBlob
+
+namespace External.AllmanEtAl2023
+
+open Phylogenetics Phylogenetics.RootedNetwork
+
+variable {V E X : Type*} [Fintype X] [DecidableEq X]
+
+/-- `CF` is strictly `s`-cut (Definition 15): the alternatives of `s` are equal, and differ from `s`. -/
+def IsStrictlyCut (p : QuartetTree X → ℝ) (s : QuartetTree X) : Prop :=
+  (∀ r ∈ s.alternatives, p r ≠ p s) ∧ ∀ r ∈ s.alternatives, ∀ r' ∈ s.alternatives, p r = p r'
+
+/-- CF-detectability of the induced 4-taxon networks at given concordance factors: a cut-edge split
+of the induced network gives a strictly cut CF, and an induced network without one (with a 4-blob)
+gives a non-cut CF. -/
+structure CFDetectable (N : RootedNetwork V E X) (p : QuartetTree X → ℝ) : Prop where
+  cut : ∀ s : QuartetTree X, InducedCutSplit N s → IsStrictlyCut p s
+  blob : ∀ q : Finset X, q.card = 4 → ¬ IsTreelike N q → IsNonCut p q
+
+variable [Fintype V] [Fintype E]
+
+/-- Corollary 1 of the source, from its Theorem 1 (TINNiK Theorem 1), as a statement about a network; `corollary1` in `External/AllmanEtAl2023/Theorem1.lean` proves it. For a rooted
+binary phylogenetic network, the numerical parameters at which the NMSC with independent inheritance
+fails CF-detectability on some induced 4-taxon network form a null set. -/
+def Corollary1 (N : RootedNetwork V E X) : Prop :=
+  IsGenericNull N {θ | N.IsMetric θ ∧ ¬ CFDetectable N (nmscCF N θ 0)}
+
+end External.AllmanEtAl2023

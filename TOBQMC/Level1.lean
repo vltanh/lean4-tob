@@ -4,13 +4,15 @@ public import Basic.Phylogenetics.NetworkCuts
 public import Basic.Phylogenetics.TreeSplits
 public import External.HuberEtAl2025.Theorem51
 public import TOBQMC.Level1Blobs
+public import TOBQMC.Wedge
 
 /-!
 # TOB-QMC §4.3: false positives in a refinement, with a linear number of tests, for level-1 networks
 
 Lemma 2, Lemma 4, Corollary 1, Definition 2, Theorem 2 and the 3-fix-1-alter search.
 A taxon set's oracle answer *treelike* is `IsTreelike N Y`: the restriction has a cut edge with a
-non-trivial split, equivalently no 4-blob.
+non-trivial split, equivalently no 4-blob. On four taxa this is a cut edge of the union of the wedge
+paths between them (`Level1.isTreelike_iff_hasWedgeCutSplit`), which is where Lemma 4 is proved.
 -/
 
 @[expose] public noncomputable section
@@ -174,39 +176,30 @@ theorem isTreelike_of_hasCutSplitOn {Y P : Finset X} (hY : Y.card = 4) (hPY : P 
   exact h
 
 omit [Fintype V] [Fintype E] in
-/-- A taxon-set's treelikeness in the domination language: an arc dominating two of the taxa, with
-the other two not below it. -/
-theorem exists_separates_of_isTreelike (hN : N.IsPhylogenetic) {Y : Finset X} (hY : Y.card = 4)
-    (h : IsTreelike N Y) :
-    ∃ (e : E) (P Q : Finset X), P.card = 2 ∧ Q.card = 2 ∧ P ⊆ Y ∧ Q ⊆ Y ∧ (∀ a ∈ Y, a ∈ P ∨ a ∈ Q) ∧
-      (∀ a ∈ P, N.Dominates e a) ∧ ∀ a ∈ Q, ¬ N.IsBelow e a := by
-  obtain ⟨s, hs, C, hC, hcut⟩ := h
-  have hsY : s.taxa = Y := (mem_filter.mp hs).2
-  rw [hsY] at hcut
-  have hCY : C ⊆ Y := by
-    rw [← hsY]
-    exact le_sup (f := id) hC
-  have hC2 : C.card = 2 := s.2.2.1 C hC
-  have hQ2 : (Y \ C).card = 2 := by
-    rw [card_sdiff_of_subset hCY]
-    omega
-  have h1 : ((Y : Set X) ∩ (C : Set X)) = (C : Set X) :=
-    Set.inter_eq_right.mpr (coe_subset.mpr hCY)
-  have h2 : ((Y : Set X) \ (C : Set X)) = ((Y \ C : Finset X) : Set X) := (coe_sdiff _ _).symm
-  rw [hasCutSplitOn_iff_separates hN, h1, h2] at hcut
-  obtain ⟨e, ⟨-, hsep⟩ | ⟨-, hsep⟩⟩ := hcut
-  · refine ⟨e, C, Y \ C, hC2, hQ2, hCY, sdiff_subset, fun a ha => ?_, ?_, ?_⟩
-    · by_cases hac : a ∈ C
-      · exact Or.inl hac
-      · exact Or.inr (mem_sdiff.mpr ⟨ha, hac⟩)
-    · exact fun a ha => hsep.1 a (mem_coe.mpr ha)
-    · exact fun a ha => hsep.2 a (mem_coe.mpr ha)
-  · refine ⟨e, Y \ C, C, hQ2, hC2, sdiff_subset, hCY, fun a ha => ?_, ?_, ?_⟩
-    · by_cases hac : a ∈ C
-      · exact Or.inr hac
-      · exact Or.inl (mem_sdiff.mpr ⟨ha, hac⟩)
-    · exact fun a ha => hsep.1 a (mem_coe.mpr ha)
-    · exact fun a ha => hsep.2 a (mem_coe.mpr ha)
+/-- **The representation bridge on four taxa.** `Y` is treelike exactly when a cut edge of the subnetwork on
+`Y`, the union of the wedge paths between its taxa, induces a `2|2` split (TOB-QMC writes that `N⁻|Y`
+contains no 4-blob). -/
+theorem isTreelike_iff_hasWedgeCutSplit (hN : N.IsPhylogenetic) {Y : Finset X} (hY : Y.card = 4) :
+    IsTreelike N Y ↔ ∃ P : Finset X, P ⊆ Y ∧ P.card = 2 ∧ N.HasWedgeCutSplit (Y : Set X) (P : Set X) := by
+  have hne : ∀ {P : Finset X}, P ⊆ Y → P.card = 2 → ((Y : Set X) ∩ (P : Set X)).Nonempty ∧
+      ((Y : Set X) \ (P : Set X)).Nonempty := by
+    intro P hPY hP
+    obtain ⟨a, ha⟩ := card_pos.mp (by omega : 0 < P.card)
+    obtain ⟨b, hb⟩ := card_pos.mp (by rw [card_sdiff_of_subset hPY]; omega : 0 < (Y \ P).card)
+    obtain ⟨hbY, hbP⟩ := mem_sdiff.mp hb
+    exact ⟨⟨a, mem_coe.mpr (hPY ha), mem_coe.mpr ha⟩, ⟨b, mem_coe.mpr hbY, fun hc => hbP (mem_coe.mp hc)⟩⟩
+  constructor
+  · rintro ⟨s, hs, C, hC, hcut⟩
+    have hsY : s.taxa = Y := (mem_filter.mp hs).2
+    rw [hsY] at hcut
+    have hCY : C ⊆ Y := by
+      rw [← hsY]
+      exact le_sup (f := id) hC
+    have hC2 : C.card = 2 := s.2.2.1 C hC
+    exact ⟨C, hCY, hC2, (hasWedgeCutSplit_iff_hasCutSplitOn hN (hne hCY hC2).1 (hne hCY hC2).2).mpr hcut⟩
+  · rintro ⟨P, hPY, hP, hcut⟩
+    exact isTreelike_of_hasCutSplitOn hY hPY hP
+      ((hasWedgeCutSplit_iff_hasCutSplitOn hN (hne hPY hP).1 (hne hPY hP).2).mp hcut)
 
 omit [Fintype V] [Fintype E] in
 /-- A cut side with two taxa of `Y` in it and the other two outside: by **Lemma 2**, `Y` is treelike. -/
@@ -240,48 +233,16 @@ theorem isTreelike_of_hasCutSplit (hN : N.IsPhylogenetic) {A Y : Finset X}
 
 /-! ### The two directions of Lemma 4 -/
 
-/-- Lemma 4, `⇐`: taxa in distinct blocks, one of them below the reticulation, are not treelike. All of
-the blob is ancestral to `d`. A separating arc has two dominated taxa, in distinct blocks, so a vertex of
-the blob below it, and hence `d` below it. If it is an arc of the blob it does not dominate `d`
-(`avoidingReach_root_reticulation`); otherwise it has the whole blob below it, and one of the two taxa
-not below it, in distinct blocks, is below the blob: both are impossible. -/
-theorem not_isTreelike_of_distinct (hN : N.IsPhylogenetic) (hLevel : IsLevelOne N) {h : V}
-    (hh : SameBlob N v h) (hh₂ : 2 ≤ N.graph.indegree h) {Y : Finset X} (hY : Y.card = 4)
+/-- Lemma 4, `⇐`: taxa in distinct blocks, one of them below the reticulation, are not treelike. The
+wedge paths between them form the cycle of the blob, with all four taxa attached, so no cut edge of the
+subnetwork on `Y` induces a `2|2` split (`not_hasWedgeCutSplit`). -/
+theorem not_isTreelike_of_distinct (hN : N.IsPhylogenetic) (hBin : N.IsBinary) (hLevel : IsLevelOne N)
+    {h : V} (hh : SameBlob N v h) (hh₂ : 2 ≤ N.graph.indegree h) {Y : Finset X} (hY : Y.card = 4)
     (hdist : ∀ a ∈ Y, ∀ b ∈ Y, a ≠ b → ¬ SameBlock N v a b) {d : X} (hd : d ∈ Y)
     (hdh : N.graph.Reaches h (N.leaf d)) : ¬ IsTreelike N Y := by
   intro ht
-  obtain ⟨e, P, Q, hP, hQ, hPY, hQY, hcov, hdom, hnb⟩ := exists_separates_of_isTreelike hN hY ht
-  -- the target of `e` has a descendant in the blob, as the two dominated taxa are in distinct blocks
-  obtain ⟨p₁, p₂, hp, rfl⟩ := card_eq_two.mp hP
-  have hb : ∃ b, SameBlob N v b ∧ N.graph.Reaches (N.graph.target e) b := by
-    by_contra hno
-    push Not at hno
-    refine hdist p₁ (hPY (by simp)) p₂ (hPY (by simp)) hp (blockWalk_of_both_below
-      (fun w hw hsb => hno w hsb hw)
-      (isBelow_of_dominates hN (hdom p₁ (by simp))) (isBelow_of_dominates hN (hdom p₂ (by simp))))
-  obtain ⟨b, hb, htb⟩ := hb
-  have hth := htb.trans (reaches_reticulation hN hLevel hh hh₂ hb)
-  -- so `d` is below `e`, hence dominated
-  have hdP : d ∈ ({p₁, p₂} : Finset X) :=
-    (hcov d hd).resolve_right fun hq => hnb d hq (hth.trans hdh)
-  -- one of the two taxa not below `e` is below the top of the blob
-  obtain ⟨T, hT, hTall⟩ := exists_top hN v
-  obtain ⟨q₁, q₂, hq, rfl⟩ := card_eq_two.mp hQ
-  have hqT : ∃ q ∈ ({q₁, q₂} : Finset X), N.graph.Reaches T (N.leaf q) := by
-    rcases reaches_top_of_not_blockWalk hN hTall
-      (hdist q₁ (hQY (by simp)) q₂ (hQY (by simp)) hq) with h' | h'
-    · exact ⟨q₁, by simp, h'⟩
-    · exact ⟨q₂, by simp, h'⟩
-  obtain ⟨q, hqQ, hqT⟩ := hqT
-  have hnotT : ¬ N.graph.Reaches (N.graph.target e) T := fun htT => hnb q hqQ (htT.trans hqT)
-  by_cases htb' : SameBlob N v (N.graph.target e)
-  · by_cases hebr : IsBridge N e
-    · exact hnotT (reaches_of_sameBlob hN hebr (sameBlob_trans (sameBlob_symm htb') hT))
-    · have hav := avoidingReach_root_reticulation hN hLevel hh hh₂ htb' hebr
-      have hnh : ¬ N.graph.Reaches h (N.graph.source e) :=
-        fun hc => not_reaches_source hN e (hth.trans hc)
-      exact hdom d hdP (hav.trans (avoidingReach_of_not_reaches_source hdh hnh))
-  · exact hnotT (reaches_of_reaches_blob hN htb' hb htb hT)
+  obtain ⟨P, hPY, hP, hcut⟩ := (isTreelike_iff_hasWedgeCutSplit hN hY).mp ht
+  exact not_hasWedgeCutSplit hN hBin hLevel hh hh₂ hY hdist hd hdh hPY hP hcut
 
 omit [Fintype V] [Fintype E] in
 /-- Lemma 4, `⇒`, same block: two taxa in one block, with the other two on the other side of the edge,
@@ -335,27 +296,20 @@ theorem isTreelike_of_sameBlock (hN : N.IsPhylogenetic) {A Y : Finset X} (hv : R
       have := card_le_card hsub
       omega
 
-/-- Lemma 4, `⇒`, no taxon below the reticulation: the part of the blob ancestral to `Y` is a tree, and
-the arc found by `exists_arc_two_below` is a cut edge of the induced network with a `2|2` split. -/
+/-- Lemma 4, `⇒`, no taxon below the reticulation: there is only one wedge path between two attachments
+(`wedgePath_unique`), and no wedge path includes the reticulation, so a single path connects the
+attachments, and their order along it gives a cut edge of the subnetwork with a `2|2` split
+(`exists_hasWedgeCutSplit`). -/
 theorem isTreelike_of_not_below (hN : N.IsPhylogenetic) (hBin : N.IsBinary) (hLevel : IsLevelOne N)
     {h : V} (hh : SameBlob N v h) (hh₂ : 2 ≤ N.graph.indegree h) {Y : Finset X} (hY : Y.card = 4)
     (hdist : ∀ a ∈ Y, ∀ b ∈ Y, a ≠ b → ¬ SameBlock N v a b)
-    (hno : ∀ a ∈ Y, ¬ N.graph.Reaches h (N.leaf a)) : IsTreelike N Y := by
-  obtain ⟨k, -, hc, h2⟩ := exists_arc_two_below hN hBin hY hdist
-  have hPY : below N Y (N.graph.target k) ⊆ Y := filter_subset _ _
-  refine isTreelike_of_hasCutSplitOn hY hPY h2 ?_
-  rw [hasCutSplitOn_iff_separates hN]
-  refine ⟨k, Or.inl ⟨?_, ?_, ?_⟩⟩
-  · obtain ⟨a, ha⟩ := card_pos.mp (by omega : 0 < (below N Y (N.graph.target k)).card)
-    exact ⟨a, mem_coe.mpr (hPY ha), mem_coe.mpr ha⟩
-  · rintro a ⟨ha, haP⟩
-    have := mem_below.mp (mem_coe.mp haP)
-    exact dominates_of_below hN hLevel hh hh₂ hc this.2 (hno a this.1)
-  · rintro a ⟨ha, haP⟩ hbelow
-    exact haP (mem_coe.mpr (mem_below.mpr ⟨mem_coe.mp ha, hbelow⟩))
+    (hno : ∀ a ∈ Y, ¬ N.graph.Reaches h (N.leaf a)) : IsTreelike N Y :=
+  (isTreelike_iff_hasWedgeCutSplit hN hY).mpr
+    (exists_hasWedgeCutSplit hN hBin hLevel hh hh₂ hY hdist hno)
 
 omit [Fintype X] in
-/-- In distinct blocks, at most one taxon is below the reticulation. -/
+/-- In distinct blocks, at most one taxon is below the reticulation: the case of two or more taxa below
+it, which the paper's proof of `⇒` does not treat (it states this fact only in the proof of Corollary 1). -/
 theorem existsUnique_below (hN : N.IsPhylogenetic) (hBin : N.IsBinary) (hLevel : IsLevelOne N)
     {h : V} (hh : SameBlob N v h) (hh₂ : 2 ≤ N.graph.indegree h) {Y : Finset X}
     (hdist : ∀ a ∈ Y, ∀ b ∈ Y, a ≠ b → ¬ SameBlock N v a b) {d : X} (hd : d ∈ Y)
@@ -576,18 +530,22 @@ reticulation vertex is `h`. For a four-taxon set `Y` around the edge, the restri
 `Y` has a 4-blob if and only if the taxa of `Y` lie in distinct blocks at the blob and exactly one
 of them descends from `h`.
 
-The case split of `⇒` is the paper's: taxa in one block are separated by the block's cut edge and
-**Lemma 2**; with distinct blocks and no taxon below `h`, an arc of the blob gives the `2|2` split that
-the paper reads off the path through `B(a), B(b), B(c), B(d)` (`exists_arc_two_below`).
+The proof is the paper's, on the subnetwork `N.wedgeArcs Y` of `TOBQMC/Wedge.lean`, the union of the
+wedge paths between taxa of `Y`. Its cut edges with both sides nonempty are those of the network induced
+on `Y` (`hasWedgeCutSplit_iff_hasCutSplitOn`, `hasWedgeCutSplit_iff_inducedNetwork_hasCutSplit`), so
+`IsTreelike N Y` says that one of them induces a `2|2` split (`isTreelike_iff_hasWedgeCutSplit`).
 
-Departure from the paper, in both directions, because treelikeness here is a statement about the rooted induced
-subgraph, and wedge paths and the suppressed semi-directed network have no counterpart. For `⇐`, the paper exhibits the suppressed 4-taxon
-semi-directed network by wedge paths and sees the 4-blob in it; here `⇐` shows directly that no arc of the subgraph separates two
-taxa from two others (`not_isTreelike_of_distinct`). For `⇒` with distinct blocks and no taxon below `h`, the paper uses
-that there is one wedge path between each pair and reads the split off their order; here `exists_arc_two_below` descends from the top of the
-blob to an arc with exactly two taxa below it. The paper's `⇒` does not treat two taxa below `h` explicitly; they are
-in one block (`blockWalk_of_below_reticulation`), which distinct blocks exclude. Of the hypotheses
-on the refinement, only `RefinesBlob` is used. -/
+`⇐`: the wedge paths from `h` to the attachments of the other taxa cover the blob
+(`exactly_two_wedgePaths`), so the subnetwork contains a cycle with the four taxa attached, and has no cut
+edge with a `2|2` split (`not_isTreelike_of_distinct`).
+
+`⇒`: two taxa in one block are separated by the block's cut edge, and `Y` is treelike by **Lemma 2**
+(`isTreelike_of_sameBlock`). With distinct blocks and no taxon below `h`, there is one wedge path between
+two attachments (`wedgePath_unique`), and the order along the path gives the split
+(`isTreelike_of_not_below`). The paper does not treat two or more taxa below `h`, which distinct blocks
+exclude (`existsUnique_below`).
+
+Of the hypotheses on the refinement, only `RefinesBlob` is used. -/
 theorem lemma4 (hN : N.IsPhylogenetic) (hBin : N.IsBinary) (hLevel : IsLevelOne N) {A : Finset X}
     {v h : V} (hv : RefinesBlob N A v) (hh : SameBlob N v h) (hh₂ : 2 ≤ N.graph.indegree h)
     {Y : Finset X} (hY : Y.card = 4) (hYA : (A ∩ Y).card = 2) :
@@ -606,12 +564,16 @@ theorem lemma4 (hN : N.IsPhylogenetic) (hBin : N.IsBinary) (hLevel : IsLevelOne 
     obtain ⟨d, hd, hdh⟩ := hex
     exact existsUnique_below hN hBin hLevel hh hh₂ hdist hd hdh
   · rintro ⟨hdist, d, ⟨hd, hdh⟩, -⟩
-    exact not_isTreelike_of_distinct hN hLevel hh hh₂ hY hdist hd hdh
+    exact not_isTreelike_of_distinct hN hBin hLevel hh hh₂ hY hdist hd hdh
 
 /-- **Corollary 1** (`tob2025:corollary1`). For a binary level-1 network and a binary refinement `B` of
 its tree of blobs, an edge of `B` is in the tree of blobs exactly when the oracle answers treelike on
-all four-taxon subsets around it. The paper derives "each side has at least two blocks" from `B` being
-binary; it follows from the edge not being in the tree of blobs (`exists_not_sameBlock`). -/
+all four-taxon subsets around it. The false positive case follows the paper's observations: (1) the
+descendants of the reticulation are in one block (`existsUnique_below`), and (3) each side contains at
+least two blocks, which gives (2), at least four blocks. The paper derives (3) from `B` being binary; it
+follows from the edge not being in the tree of blobs (`exists_not_sameBlock`). A taxon below the
+reticulation and these blocks give a four-taxon subset meeting the conditions of **Lemma 4**
+(`exists_quartet_through`). -/
 theorem corollary1 (hN : N.IsPhylogenetic) (hBin : N.IsBinary) (hLevel : IsLevelOne N)
     {B : Finset (Finset X)} (hB : IsBinaryTree B) (hTB : treeOfBlobs N ⊆ B) {A : Finset X}
     (hA : A ∈ internalSides B) :

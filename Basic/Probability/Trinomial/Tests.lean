@@ -10,9 +10,11 @@ null of the three tests:
 
 * the star test, `tendsto_star_lrt`, `tendsto_star_pearson`;
 * the T1 test off its boundary, `tendsto_t1`, and at the centroid, `centroid_tight`;
-* the cut test on a strictly cut concordance factor, `tendsto_cut_null`;
 * the likelihood ratio statistic of the cut model: `closeOnBalls_cutS_of_ne`,
-  `closeOnBalls_cutS_centroid`.
+  `closeOnBalls_cutS_centroid`;
+* the cut test on a strictly cut concordance factor: its distribution tends to `χ²₁` uniformly,
+  `abs_cutTail_sub_chiSqOneTail_lt`, so its p-value is asymptotically uniform, `tendsto_cut`, and it does
+  not reject at levels tending to `0`, `tendsto_cut_null`.
 -/
 
 @[expose] public noncomputable section
@@ -117,80 +119,92 @@ theorem t1Tail_le_one_sub {μ κ : ℝ} (hμ : 0 ≤ μ) :
 
 /-! ### The cut test distribution -/
 
-/-- A shift of the standard normal, on an interval around the mean. -/
-theorem gaussianReal_real_abs_sub_lt (μ : ℝ) :
-    (gaussianReal μ 1).real {z : ℝ | |z - μ| < 1} = (gaussianReal 0 1).real (Ioo (-1) 1) := by
-  have hmap : (gaussianReal 0 1).map (fun x ↦ x + μ) = gaussianReal μ 1 := by
+/-- The cut test distribution, as the law of a function of two standard normals. -/
+theorem cutTail_eq_stdPlane (φ n t : ℝ) :
+    cutTail φ n t = stdPlane.real {z : ℝ × ℝ | t < min (z.1 ^ 2)
+      (min ((Real.sin (alphaZero φ) * z.1 + Real.cos (alphaZero φ) * (z.2 + muZero φ n)) ^ 2)
+        ((Real.sin (alphaZero φ) * z.1 - Real.cos (alphaZero φ) * (z.2 + muZero φ n)) ^ 2))} := by
+  have hmap : (gaussianReal 0 1).map (fun y ↦ y + muZero φ n) = gaussianReal (muZero φ n) 1 := by
     rw [gaussianReal_map_add_const, zero_add]
-  have hm : MeasurableSet {z : ℝ | |z - μ| < 1} := measurableSet_lt (by fun_prop) measurable_const
-  rw [← hmap, measureReal_def, measureReal_def, Measure.map_apply (by fun_prop) hm]
-  congr 2
-  ext x
-  simp only [mem_preimage, mem_ofPred_eq, mem_Ioo, abs_lt]
-  constructor
-  · rintro ⟨h₁, h₂⟩
-    exact ⟨by linarith, by linarith⟩
-  · rintro ⟨h₁, h₂⟩
-    exact ⟨by linarith, by linarith⟩
-
-/-- The cut test distribution has a uniform positive tail at `K` when `|μ₀|` is large and `cos α₀`
-is bounded below: there the three lines are far from `Z̄`, unless it is close to `Z = 0`. -/
-theorem cutTail_ge {K c₀ : ℝ} (hK : 0 ≤ K) (hc₀ : 0 < c₀) :
-    ∃ δ M : ℝ, 0 < δ ∧ ∀ φ n : ℝ, c₀ ≤ Real.cos (alphaZero φ) → M ≤ |muZero φ n| →
-      δ ≤ cutTail φ n K := by
-  set r := √K with hr
-  have hr0 : 0 ≤ r := Real.sqrt_nonneg K
-  have hrK : r ^ 2 = K := Real.sq_sqrt hK
-  refine ⟨(gaussianReal 0 1).real (Ioo r (r + 1)) * (gaussianReal 0 1).real (Ioo (-1) 1),
-    1 + (2 * r + 2) / c₀, mul_pos (gaussianReal_real_Ioo_pos (by linarith))
-      (gaussianReal_real_Ioo_pos (by norm_num)), fun φ n hcos hμ ↦ ?_⟩
-  set μ := muZero φ n with hμdef
-  rw [← gaussianReal_real_abs_sub_lt μ, ← measureReal_prod_prod]
+  have hprod : (gaussianReal 0 1).prod (gaussianReal (muZero φ n) 1) =
+      stdPlane.map (Prod.map id fun y ↦ y + muZero φ n) := by
+    rw [stdPlane, ← Measure.map_prod_map _ _ measurable_id (by fun_prop), Measure.map_id, hmap]
+  have hm : MeasurableSet {z : ℝ × ℝ | t < min (z.1 ^ 2)
+      (min ((Real.sin (alphaZero φ) * z.1 + Real.cos (alphaZero φ) * z.2) ^ 2)
+        ((Real.sin (alphaZero φ) * z.1 - Real.cos (alphaZero φ) * z.2) ^ 2))} :=
+    (isOpen_lt continuous_const (by fun_prop)).measurableSet
   unfold cutTail
-  rw [← hμdef]
-  refine measureReal_mono ?_
-  rintro ⟨x, y⟩ ⟨hx, hy⟩
-  have hx₁ : r < x := hx.1
-  have hx₂ : x < r + 1 := hx.2
-  have hy' : |y - μ| < 1 := hy
-  -- the lower bound on `|y|`
-  have hμy : |μ| ≤ |y| + 1 := by
-    have := abs_sub_abs_le_abs_sub μ y
-    rw [abs_sub_comm μ y] at this
-    linarith
-  have hcy : (2 * r + 2) ≤ c₀ * |y| := by
-    have h₁ : (2 * r + 2) / c₀ ≤ |y| := by linarith
-    rw [div_le_iff₀ hc₀] at h₁
-    linarith
-  set a := alphaZero φ with ha
-  have hcosy : 2 * r + 2 ≤ Real.cos a * |y| :=
-    hcy.trans (mul_le_mul_of_nonneg_right hcos (abs_nonneg y))
-  have hcosabs : Real.cos a * |y| = |Real.cos a * y| := by
-    rw [abs_mul, abs_of_pos (hc₀.trans_le hcos)]
-  have hsinx : |Real.sin a * x| ≤ r + 1 := by
+  rw [hprod, measureReal_def, Measure.map_apply (by fun_prop) hm, measureReal_def]
+  rfl
+
+/-- A point near `(0, μ)` is at distance at least `R` from the line `y = -(tan α) x`, when `(0, μ)` is at
+distance `|μ| cos α ≥ 3 R` from it. -/
+private lemma sq_le_sq_line {s c x y μ R : ℝ} (hs : |s| ≤ 1) (hc : 0 ≤ c) (hc1 : c ≤ 1) (hx : |x| < R)
+    (hy : |y| < R) (hM : 3 * R ≤ c * |μ|) : x ^ 2 ≤ (s * x + c * (y + μ)) ^ 2 := by
+  have h₁ : |c * y| ≤ R := by
+    rw [abs_mul, abs_of_nonneg hc]
+    nlinarith [abs_nonneg y]
+  have h₂ : |s * x| ≤ R := by
     rw [abs_mul]
-    have h₁ := Real.abs_sin_le_one a
-    have h₂ : |x| ≤ r + 1 := by
-      rw [abs_le]
-      constructor <;> linarith
-    calc |Real.sin a| * |x| ≤ 1 * (r + 1) := by gcongr
-      _ = r + 1 := one_mul _
-  have hsq : ∀ u : ℝ, r < |u| → K < u ^ 2 := by
-    intro u hu
-    rw [← hrK, ← sq_abs u]
-    exact pow_lt_pow_left₀ hu hr0 two_ne_zero
-  change K < min (x ^ 2)
-    (min ((Real.sin a * x + Real.cos a * y) ^ 2) ((Real.sin a * x - Real.cos a * y) ^ 2))
-  refine lt_min ?_ (lt_min ?_ ?_)
-  · exact hsq x (by rw [abs_of_pos (by linarith)]; exact hx₁)
-  · apply hsq
-    have := abs_sub_abs_le_abs_sub (Real.cos a * y) (-(Real.sin a * x))
-    rw [abs_neg, sub_neg_eq_add, add_comm] at this
-    linarith
-  · apply hsq
-    have := abs_sub_abs_le_abs_sub (Real.cos a * y) (Real.sin a * x)
-    rw [abs_sub_comm] at this
-    linarith
+    nlinarith [abs_nonneg x, abs_nonneg s]
+  have h₃ : 3 * R ≤ |c * μ| := by rwa [abs_mul, abs_of_nonneg hc]
+  obtain ⟨h₄, h₅⟩ := abs_le.1 h₁
+  obtain ⟨h₆, h₇⟩ := abs_le.1 h₂
+  have hline : R ≤ |s * x + c * (y + μ)| := by
+    rcases le_abs.1 h₃ with h | h
+    · exact (by linarith : R ≤ s * x + c * (y + μ)).trans (le_abs_self _)
+    · exact (by linarith : R ≤ -(s * x + c * (y + μ))).trans (neg_le_abs _)
+  rw [sq_le_sq]
+  exact hx.le.trans hline
+
+/-- **The test distribution converges to `χ²₁` as its parameter runs off**, uniformly in the argument `t`
+and in `φ` and `n`: its tail is within `ε` of that of `Z²` once `cos α₀ |μ₀|`, the distance from the
+mean `(0, μ₀)` to the two lines `y = ± (tan α₀) x`, is large. On a box around the mean with most of the mass,
+the least of the three squares is `Z²`.
+
+Both signs of `μ₀` are covered: the anomalous concordance factors have `μ₀ → -∞`. The condition is on
+`cos α₀ |μ₀|` and not on `|μ₀|` alone: `α₀ → π/2` as `φ → 3/2`, so that for fixed `n` there `|μ₀| → ∞`, while
+`cos α₀ μ₀ → -√n` and the law tends to that of `min (Z², (Z - √n)², (Z + √n)²)`. -/
+theorem abs_cutTail_sub_chiSqOneTail_lt {ε : ℝ} (hε : 0 < ε) :
+    ∃ M : ℝ, ∀ φ n t : ℝ, M ≤ Real.cos (alphaZero φ) * |muZero φ n| →
+      |cutTail φ n t - chiSqOneTail t| < ε := by
+  have hε' : 0 < min ε 1 := lt_min hε one_pos
+  have hc0 : 0 ≤ 1 - min ε 1 := by linarith [min_le_right ε 1]
+  have hc : ENNReal.ofReal (1 - min ε 1) < stdPlane univ := by
+    rw [measure_univ]
+    exact ENNReal.ofReal_lt_one.2 (by linarith)
+  obtain ⟨R, hR, hRc⟩ := exists_lt_measure_box stdPlane hc
+  rw [univ_inter] at hRc
+  have hball : 1 - min ε 1 < stdPlane.real (Metric.ball 0 R) :=
+    (ENNReal.ofReal_lt_iff_lt_toReal hc0 (measure_ne_top _ _)).1 hRc
+  refine ⟨3 * R, fun φ n t hM ↦ abs_lt.2 ⟨?_, ?_⟩⟩
+  · set s := Real.sin (alphaZero φ) with hs
+    set c := Real.cos (alphaZero φ) with hcdef
+    set μ := muZero φ n with hμ
+    have hc₀ : 0 ≤ c := (Real.cos_arctan_pos _).le
+    have hc₁ : c ≤ 1 := Real.cos_le_one _
+    have hs₁ : |s| ≤ 1 := Real.abs_sin_le_one _
+    have hsub : {z : ℝ × ℝ | t < z.1 ^ 2} ⊆ {z : ℝ × ℝ | t < min (z.1 ^ 2)
+        (min ((s * z.1 + c * (z.2 + μ)) ^ 2) ((s * z.1 - c * (z.2 + μ)) ^ 2))} ∪
+        (Metric.ball 0 R)ᶜ := by
+      rintro ⟨x, y⟩ hz
+      by_cases hb : ((x, y) : ℝ × ℝ) ∈ Metric.ball (0 : ℝ × ℝ) R
+      · left
+        have hz' : t < x ^ 2 := hz
+        obtain ⟨hx, hy⟩ := mem_ball_iff.1 hb
+        have h₁ := sq_le_sq_line (μ := μ) hs₁ hc₀ hc₁ hx hy hM
+        have h₂ := sq_le_sq_line (μ := μ) (s := -s) (by rwa [abs_neg]) hc₀ hc₁ hx hy hM
+        have e : (-s * x + c * (y + μ)) ^ 2 = (s * x - c * (y + μ)) ^ 2 := by ring
+        rw [e] at h₂
+        change t < min (x ^ 2) (min ((s * x + c * (y + μ)) ^ 2) ((s * x - c * (y + μ)) ^ 2))
+        rw [min_eq_left (le_min h₁ h₂)]
+        exact hz'
+      · exact Or.inr hb
+    have h₁ := (measureReal_mono (μ := stdPlane) hsub).trans (measureReal_union_le _ _)
+    rw [stdPlane_real_first, probReal_compl_eq_one_sub Metric.isOpen_ball.measurableSet,
+      ← cutTail_eq_stdPlane] at h₁
+    linarith [min_le_left ε 1]
+  · linarith [cutTail_le_chiSqOneTail φ n t]
 
 /-! ### The parameter of the test distributions -/
 
@@ -265,6 +279,24 @@ theorem eventually_cos_alphaZero_ge (hφ : 0 < φ ∧ φ < 3 / 2) :
   obtain ⟨δ, hδ, hball⟩ := Metric.eventually_nhds_iff.1 hev
   filter_upwards [eventually_phiHat_close hφ (R := R) hδ] with n hn a b c hsum h₂
   exact (hball (by rw [Real.dist_eq]; exact hn a b c hsum h₂)).le
+
+/-- **The test distribution at the estimate of `φ`** is close to `χ²₁`, at every argument, with
+probability tending to one: the estimate is consistent, so that `|μ̂₀|` is large and `cos α̂₀` stays
+away from `0`. -/
+theorem eventually_abs_cutTail_estimate_sub_lt (hφ : 0 < φ ∧ φ < 3 / 2) (hφ1 : φ ≠ 1) {ε : ℝ}
+    (hε : 0 < ε) :
+    ∀ᶠ n : ℕ in atTop, ∀ a b c : ℝ, a + b + c = n → |(whiten φ n a b c).2| < R → ∀ t : ℝ,
+      |cutTail (3 * (b + c) / (2 * (a + b + c))) (a + b + c) t - chiSqOneTail t| < ε := by
+  obtain ⟨M, hM⟩ := abs_cutTail_sub_chiSqOneTail_lt hε
+  have hc : 0 < Real.cos (alphaZero φ) := Real.cos_arctan_pos _
+  filter_upwards [eventually_abs_muZero_large hφ hφ1 (2 * M / Real.cos (alphaZero φ)) (R := R),
+    eventually_cos_alphaZero_ge hφ (R := R)] with n h₁ h₂ a b c hsum hb t
+  refine hM _ _ _ ?_
+  have h₃ := h₁ a b c hsum hb
+  have h₄ := mul_le_mul_of_nonneg_right (h₂ a b c hsum hb)
+    (abs_nonneg (muZero (3 * (b + c) / (2 * (a + b + c))) (a + b + c)))
+  rw [div_le_iff₀ hc] at h₃
+  linarith
 
 /-! ### Statistics of samples -/
 
@@ -501,38 +533,6 @@ theorem centroid_tight {ε : ℝ} (hε : 0 < ε) :
   filter_upwards [hmain] with n hn
   linarith
 
-/-- **The cut test on a strictly cut concordance factor**: the line of the first topology has the
-least statistic with probability tending to one, and for any levels `α_n → 0` the test does not
-reject. -/
-theorem tendsto_cut_null (hφ : 0 < φ ∧ φ < 3 / 2) (hφ1 : φ ≠ 1) {α : ℕ → ℝ}
-    (hα : Tendsto α atTop (𝓝 0)) :
-    Tendsto (fun n ↦ iidProb (cutPoint φ) n fun η ↦
-      (lineS (count η 1) (count η 2) < lineS (count η 0) (count η 2) ∧
-        lineS (count η 1) (count η 2) < lineS (count η 0) (count η 1)) ∧
-      α n ≤ cutPValueR (count η 0) (count η 1) (count η 2)) atTop (𝓝 1) := by
-  refine tendsto_iidProb_one hφ fun R hR ↦ ?_
-  have hc₀ : 0 < Real.cos (alphaZero φ) / 2 := by
-    have : 0 < Real.cos (alphaZero φ) := Real.cos_arctan_pos _
-    positivity
-  set K := R ^ 2 + 1 with hK
-  have hK0 : 0 ≤ K := by positivity
-  obtain ⟨δ, M, hδ, hcut⟩ := cutTail_ge hK0 hc₀
-  filter_upwards [eventually_lineS_first hφ hR one_pos, eventually_lineS_other_large hφ hφ1 hR K,
-    eventually_abs_muZero_large hφ hφ1 M (R := R), eventually_cos_alphaZero_ge hφ (R := R),
-    hα.eventually (gt_mem_nhds hδ)] with n h₁ h₂ h₃ h₄ h₅ η hη₁ hη₂
-  have hη₁' : |(whiten φ n (count η 0) (count η 1) (count η 2)).1| < R := hη₁
-  have hη₂' : |(whiten φ n (count η 0) (count η 1) (count η 2)).2| < R := hη₂
-  have hl := abs_lt.1 (h₁ _ _ _ (count_add η) hη₁' hη₂')
-  have hsq := sq_lt_of_abs_lt hη₁'
-  have hline : lineS (count η 1) (count η 2) < K := by linarith [hl.2]
-  obtain ⟨h₆, h₇⟩ := h₂ _ _ _ (count_add η) hη₁' hη₂'
-  refine ⟨⟨hline.trans h₆, hline.trans h₇⟩, ?_⟩
-  have hT : min (lineS (count η 1) (count η 2))
-      (min (lineS (count η 0) (count η 2)) (lineS (count η 0) (count η 1))) ≤ K :=
-    (min_le_left _ _).trans hline.le
-  have h₈ := hcut _ _ (h₄ _ _ _ (count_add η) hη₂') (h₃ _ _ _ (count_add η) hη₂')
-  exact h₅.le.trans (h₈.trans (cutTail_anti _ _ hT))
-
 /-! ### The cut model statistic -/
 
 /-- The likelihood ratio statistic of the cut model: the least of the statistics of its three
@@ -585,5 +585,114 @@ theorem closeOnBalls_cutS_centroid :
     eventually_lineS_third_centroid hR hε] with n h₁ h₂ h₃ η hη₁ hη₂
   exact abs_min_sub_min_lt (h₁ _ _ _ (count_add η) hη₁ hη₂)
     (abs_min_sub_min_lt (h₂ _ _ _ (count_add η) hη₁ hη₂) (h₃ _ _ _ (count_add η) hη₁ hη₂))
+
+/-! ### The cut test on a strictly cut concordance factor -/
+
+/-- `tendsto_cut` at the positive levels: each is the tail of `χ²₁` at a threshold `t` of the limit `Z²`. -/
+private theorem tendsto_cut_of_pos (hφ : 0 < φ ∧ φ < 3 / 2) (hφ1 : φ ≠ 1) {x : ℝ} (hx : 0 < x)
+    (h1 : x ≤ 1) :
+    Tendsto (fun n ↦ iidProb (cutPoint φ) n fun η ↦
+      cutPValueR (count η 0) (count η 1) (count η 2) ≤ x) atTop (𝓝 x) := by
+  obtain ⟨t, ht0, htx⟩ := exists_chiSqOneTail_eq hx h1
+  have hclose := closeOnBalls_cutS_of_ne hφ hφ1
+  have hlim : Tendsto (fun n ↦ iidProb (cutPoint φ) n fun η ↦
+      cutPValueR (count η 0) (count η 1) (count η 2) ≤ x) atTop
+      (𝓝 (stdPlane.real {z | t < z.1 ^ 2})) := by
+    refine tendsto_iidProb_of_threshold hφ (T := fun z ↦ z.1 ^ 2) (by fun_prop) ?_ ?_
+      (stdPlane_first_null t)
+    · intro R hR δ hδ
+      filter_upwards [hclose R hR δ hδ] with n hn η hη₁ hη₂ hη₃
+      have h₄ : |cutS (count η 0) (count η 1) (count η 2) - (sampleW φ η).1 ^ 2| < δ :=
+        hn η hη₁ hη₂
+      have hη₃' : t + δ < (sampleW φ η).1 ^ 2 := hη₃
+      have h₅ : t ≤ cutS (count η 0) (count η 1) (count η 2) := by
+        linarith [(abs_lt.1 h₄).1]
+      exact (cutTail_le_chiSqOneTail _ _ _).trans ((chiSqOneTail_anti h₅).trans_eq htx)
+    · intro R hR δ hδ
+      by_cases hδt : t - δ < 0
+      · refine Eventually.of_forall fun n η _ _ hη₃ ↦ ?_
+        have hη₃' : (sampleW φ η).1 ^ 2 < t - δ := hη₃
+        exact absurd (sq_nonneg (sampleW φ η).1) (not_le.2 (hη₃'.trans hδt))
+      have h₆ : chiSqOneTail t < chiSqOneTail (t - δ / 2) :=
+        chiSqOneTail_lt_of_lt (by linarith) (by linarith)
+      filter_upwards [hclose R hR (δ / 2) (half_pos hδ),
+        eventually_abs_cutTail_estimate_sub_lt hφ hφ1 (R := R) (sub_pos.2 h₆)]
+        with n h₁ h₂ η hη₁ hη₂ hη₃ hle
+      have h₃ : |cutS (count η 0) (count η 1) (count η 2) - (sampleW φ η).1 ^ 2| < δ / 2 :=
+        h₁ η hη₁ hη₂
+      have hη₃' : (sampleW φ η).1 ^ 2 < t - δ := hη₃
+      have h₄ : cutS (count η 0) (count η 1) (count η 2) ≤ t - δ / 2 := by
+        linarith [(abs_lt.1 h₃).2]
+      have h₅ := (abs_lt.1 (h₂ _ _ _ (count_add η) hη₂
+        (cutS (count η 0) (count η 1) (count η 2)))).1
+      have h₇ := chiSqOneTail_anti h₄
+      have hle' : cutTail (3 * (count η 1 + count η 2) /
+          (2 * (count η 0 + count η 1 + count η 2))) (count η 0 + count η 1 + count η 2)
+          (cutS (count η 0) (count η 1) (count η 2)) ≤ x := hle
+      linarith
+  rwa [stdPlane_real_first, htx] at hlim
+
+/-- **The cut test on a strictly cut concordance factor: its p-value is asymptotically uniform.** The
+statistic tends to `Z²`, and the test distribution at the estimate of `φ` to `χ²₁`. -/
+theorem tendsto_cut (hφ : 0 < φ ∧ φ < 3 / 2) (hφ1 : φ ≠ 1) {x : ℝ} (h0 : 0 ≤ x) (h1 : x ≤ 1) :
+    Tendsto (fun n ↦ iidProb (cutPoint φ) n fun η ↦
+      cutPValueR (count η 0) (count η 1) (count η 2) ≤ x) atTop (𝓝 x) := by
+  rcases h0.eq_or_lt with rfl | hx
+  · have hd := cutPoint_isDist hφ
+    refine tendsto_order.2 ⟨fun c hc ↦ Eventually.of_forall fun n ↦
+      hc.trans_le (iidProb_nonneg hd n _), fun c hc ↦ ?_⟩
+    have hy : 0 < min c 1 := lt_min hc one_pos
+    have h := tendsto_cut_of_pos hφ hφ1 (half_pos hy) (by linarith [min_le_right c 1])
+    filter_upwards [h.eventually (gt_mem_nhds (by linarith [min_le_left c 1] : min c 1 / 2 < c))]
+      with n hn
+    exact (iidProb_mono hd fun η hη ↦ hη.trans (half_pos hy).le).trans_lt hn
+  · exact tendsto_cut_of_pos hφ hφ1 hx h1
+
+/-- **The cut test on a strictly cut concordance factor**: the line of the first topology has the
+least statistic with probability tending to one, and for any levels `α_n → 0` the test does not
+reject, since its p-value is asymptotically uniform (`tendsto_cut`). -/
+theorem tendsto_cut_null (hφ : 0 < φ ∧ φ < 3 / 2) (hφ1 : φ ≠ 1) {α : ℕ → ℝ}
+    (hα : Tendsto α atTop (𝓝 0)) :
+    Tendsto (fun n ↦ iidProb (cutPoint φ) n fun η ↦
+      (lineS (count η 1) (count η 2) < lineS (count η 0) (count η 2) ∧
+        lineS (count η 1) (count η 2) < lineS (count η 0) (count η 1)) ∧
+      α n ≤ cutPValueR (count η 0) (count η 1) (count η 2)) atTop (𝓝 1) := by
+  have hd := cutPoint_isDist hφ
+  have hline : Tendsto (fun n ↦ iidProb (cutPoint φ) n fun η ↦
+      lineS (count η 1) (count η 2) < lineS (count η 0) (count η 2) ∧
+        lineS (count η 1) (count η 2) < lineS (count η 0) (count η 1)) atTop (𝓝 1) := by
+    refine tendsto_iidProb_one hφ fun R hR ↦ ?_
+    filter_upwards [eventually_lineS_first hφ hR one_pos,
+      eventually_lineS_other_large hφ hφ1 hR (R ^ 2 + 1)] with n h₁ h₂ η hη₁ hη₂
+    have hη₁' : |(whiten φ n (count η 0) (count η 1) (count η 2)).1| < R := hη₁
+    have hη₂' : |(whiten φ n (count η 0) (count η 1) (count η 2)).2| < R := hη₂
+    have hl := abs_lt.1 (h₁ _ _ _ (count_add η) hη₁' hη₂')
+    have hsq := sq_lt_of_abs_lt hη₁'
+    have hK : lineS (count η 1) (count η 2) < R ^ 2 + 1 := by linarith [hl.2]
+    obtain ⟨h₃, h₄⟩ := h₂ _ _ _ (count_add η) hη₁' hη₂'
+    exact ⟨hK.trans h₃, hK.trans h₄⟩
+  have hlevel : Tendsto (fun n ↦ iidProb (cutPoint φ) n fun η ↦
+      α n ≤ cutPValueR (count η 0) (count η 1) (count η 2)) atTop (𝓝 1) := by
+    refine tendsto_order.2 ⟨fun c hc ↦ ?_, fun c hc ↦
+      Eventually.of_forall fun n ↦ (iidProb_le_one hd n _).trans_lt hc⟩
+    have hc' : 0 < 1 - c := sub_pos.2 hc
+    set y := min ((1 - c) / 2) 1 with hy
+    have hy₀ : 0 < y := lt_min (half_pos hc') one_pos
+    have hy₁ : y ≤ 1 := min_le_right _ _
+    have hy₂ : y < 1 - c := (min_le_left _ _).trans_lt (by linarith)
+    filter_upwards [(tendsto_cut hφ hφ1 hy₀.le hy₁).eventually (gt_mem_nhds hy₂),
+      hα.eventually (gt_mem_nhds hy₀)] with n h₁ h₂
+    have h₃ := iidProb_not hd n fun η ↦ cutPValueR (count η 0) (count η 1) (count η 2) ≤ y
+    have h₄ : iidProb (cutPoint φ) n (fun η ↦ ¬ cutPValueR (count η 0) (count η 1) (count η 2) ≤ y) ≤
+        iidProb (cutPoint φ) n fun η ↦ α n ≤ cutPValueR (count η 0) (count η 1) (count η 2) :=
+      iidProb_mono hd fun η hη ↦ h₂.le.trans (not_le.1 hη).le
+    linarith
+  have h := tendsto_iidProb_forall hd (ι := Bool) (fun b n η ↦ if b = true then
+      lineS (count η 1) (count η 2) < lineS (count η 0) (count η 2) ∧
+        lineS (count η 1) (count η 2) < lineS (count η 0) (count η 1)
+      else α n ≤ cutPValueR (count η 0) (count η 1) (count η 2))
+    (by intro b; cases b <;> simpa)
+  refine tendsto_iidProb_of_imp hd (Eventually.of_forall fun n η hη ↦ ?_) h
+  exact ⟨by simpa using hη true, by simpa using hη false⟩
 
 end Phylogenetics.Trinomial

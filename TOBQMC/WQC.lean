@@ -13,13 +13,15 @@ Definition 1, Equations (1)–(4), Lemma 3, the perturbation Lemma 4 of the Supp
 ASTRAL corollary. These results use the exchangeability of taxa on one side of a cut edge
 (`External.AneEtAl2024.exchangeability`).
 
-The route of Lemma 3 is the paper's. A maximizer of the blob `v` part of the score is changed, by
+The route of Lemma 3 is the paper's. If every maximizer of the blob `v` part of the score broke a block,
 detaching taxa and reattaching them to a best taxon of their block (`detachReattach`,
-`vertexPart_detachReattach`, `exists_block_side`), into a maximizer that does not break the blocks
-(`exists_vertex_maximizer`). It resolves every quartet around `v` (`displays_of_vertex_maximizer`), and
-contracting the edges inside blocks leaves a family of unions of blocks (`displays_filter_isBlockUnion`).
-These families and the tree of blobs have a common refinement, the compatibility supertree of the paper,
-which is `splice`.
+`vertexPart_detachReattach`, `exists_block_side`) would give a maximizer that does not: a contradiction
+(`exists_vertex_maximizer`). Such a maximizer is binary after removing all but one taxon from each block
+(`isBinaryTree_pullTree_of_vertex_maximizer`): a refinement of the restricted tree, with the removed taxa
+reattached (`reattach`), would gain at every choice of the representatives, and the gain on all the taxa is
+the sum of these gains (`vertexPart_lt_reattach`). Contracting the edges inside blocks leaves a family of
+unions of blocks (`displays_filter_isBlockUnion`). These families and the tree of blobs have a common
+refinement, the compatibility supertree of the paper, which is `splice`.
 -/
 
 @[expose] public noncomputable section
@@ -345,8 +347,9 @@ theorem vertexTaxonPart_detachReattach_of_ne {F : QuartetTree X → ℝ} (hB₀ 
     simp only [e, ↓reduceIte]
 
 /-- One block: detach every other taxon of the block and reattach it to the chosen taxon `a`
-(the paper's lines 476-485). The result has the block as a side, its blob `v` score is not smaller, and
-the other blocks that were sides stay sides. -/
+(the paper's lines 476-485), with the paper's two cases, `QS^{v(a)} = QS^{v(b)}` and `QS^{v(a)} > QS^{v(b)}`.
+The result has the block as a side, its blob `v` score is not smaller, and the other blocks that were
+sides stay sides. -/
 theorem exists_block_side {N : RootedNetwork V E X} {F : QuartetTree X → ℝ}
     (hEx : CutExchangeable N F) (hd : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C)
     (hcut : N.HasCutSplit (B₀ : Set X)) (hB₀ : B₀ ∈ P) (hne : B₀.Nonempty) (hne' : B₀ᶜ.Nonempty)
@@ -387,11 +390,17 @@ theorem exists_block_side {N : RootedNetwork V E X} {F : QuartetTree X → ℝ}
         rcases mem_insert.1 h with rfl | h
         · exact hbB
         · exact hDsub y h
-      · rw [vertexPart_detachReattach hEx hd hcut hB₀ haB hbB (Ne.symm hba),
-          hpart b hbB hbD, hpart a haB (fun h =>
-            (mem_erase.1 (hsub (mem_insert_of_mem h))).1 rfl)]
-        have := hamax b hbB
-        linarith
+      · have hstep : vertexPart P F (detachReattach a b T₁) = vertexPart P F T₁ -
+            vertexTaxonPart P b F T + vertexTaxonPart P a F T := by
+          rw [vertexPart_detachReattach hEx hd hcut hB₀ haB hbB (Ne.symm hba),
+            hpart b hbB hbD, hpart a haB (fun h =>
+              (mem_erase.1 (hsub (mem_insert_of_mem h))).1 rfl)]
+        -- the paper's two cases: the same blob `v` score, or a greater one
+        rcases (hamax b hbB).eq_or_lt with heq | hlt
+        · rw [hstep, heq, sub_add_cancel]
+          exact hle
+        · rw [hstep]
+          linarith
       · intro c hc hcn
         have hcb : c ≠ b := fun e => hcn (e ▸ mem_insert_self _ _)
         rw [vertexTaxonPart_detachReattach_of_ne hB₀ hc hbB hcb]
@@ -430,49 +439,130 @@ theorem exists_all_blocks_side {N : RootedNetwork V E X} {F : QuartetTree X → 
   obtain ⟨T', hT', hall, hle⟩ := key P (Subset.refl _)
   exact ⟨T', hT', hall, hle⟩
 
-/-- **The claim of the paper's lines 464-466.** There is a tree `B*(v)` that (1) maximizes `QS^v` and
-(2) does not break apart the blocks of `P`. -/
+/-- **The claim of the paper's lines 464-466**, by the contradiction of its lines 472-486. There is a tree
+`B*(v)` that (1) maximizes `QS^v` and (2) does not break apart the blocks of `P`. Suppose that all
+maximizers violate (2), and let `T*` be one. Repeating the detachment for all taxa and all blocks gives a
+tree with a blob `v` score at least that of `T*`, hence a maximizer, that satisfies (2). -/
 theorem exists_vertex_maximizer {N : RootedNetwork V E X} {F : QuartetTree X → ℝ}
     {TN : Finset (Finset X)} (hEx : CutExchangeable N F) (hTN : IsUnrootedTree TN)
     (hV : IsVertexPartition TN P) (hcut : ∀ B ∈ P, N.HasCutSplit (B : Set X))
     (hX : 2 ≤ Fintype.card X) :
     ∃ T', IsUnrootedTree T' ∧ (∀ C ∈ P, C ∈ T') ∧
       ∀ T, IsUnrootedTree T → vertexPart P F T ≤ vertexPart P F T' := by
-  obtain ⟨Tm, hTm, hmax⟩ := (univ.filter fun T : Finset (Finset X) => IsUnrootedTree T).exists_max_image
+  -- suppose that all trees that maximize `QS^v` violate property (2)
+  by_contra hcon
+  have hviolate : ∀ T', IsUnrootedTree T' →
+      (∀ T, IsUnrootedTree T → vertexPart P F T ≤ vertexPart P F T') → ∃ C ∈ P, C ∉ T' := by
+    intro T' hT' hmax
+    by_contra hall
+    push Not at hall
+    exact hcon ⟨T', hT', hall, hmax⟩
+  -- let `T*` be one such tree
+  obtain ⟨Tstar, hTstar, hmax⟩ := (univ.filter fun T : Finset (Finset X) => IsUnrootedTree T).exists_max_image
     (vertexPart P F) ⟨TN, by simpa using hTN⟩
+  -- repeating for all taxa and all blocks yields a tree with property (2) and score at least that of `T*`
   obtain ⟨T', hT', hall, hle⟩ := exists_all_blocks_side (F := F) hEx hTN hV hcut
-    (mem_filter.1 hTm).2 hX
-  exact ⟨T', hT', hall, fun T hT => (hmax T (by simpa using hT)).trans hle⟩
+    (mem_filter.1 hTstar).2 hX
+  -- it is a maximizer, so it violates property (2): a contradiction
+  obtain ⟨C, hC, hCT'⟩ := hviolate T' hT' fun T hT => (hmax T (by simpa using hT)).trans hle
+  exact hCT' (hall C hC)
 
-/-- **The second observation of the paper (lines 489-492).** A maximizer of `QS^v` resolves every set of
-four taxa in distinct blocks, since a refinement resolving it would have a larger score: the concordance
-factors are positive. -/
+/-- `QS^v`, multiplied by the number of representative tuples of the blocks, is the sum over the tuples of
+its inner sums, each read on the taxa of the tuple. -/
+theorem prod_card_mul_vertexPart (hd : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C)
+    (hcover : P.sup id = univ) (F : QuartetTree X → ℝ) (T : Finset (Finset X)) :
+    (∏ B ∈ P, (B.card : ℝ)) * vertexPart P F T =
+      ∑ y ∈ (univ : Finset ({B // B ∈ P} → X)).filter (fun y => ∀ B, y B ∈ B.val),
+        innerSum P F T y :=
+  prod_card_mul_sum_eq_sum_innerSum hd hcover F T
+
+/-- The gain in `QS^v` between two trees, multiplied by the number of representative tuples, is the sum of
+the gains at the tuples. -/
+theorem prod_card_mul_vertexPart_sub (hd : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C)
+    (hcover : P.sup id = univ) (F : QuartetTree X → ℝ) (T T₁ : Finset (Finset X)) :
+    (∏ B ∈ P, (B.card : ℝ)) * (vertexPart P F T₁ - vertexPart P F T) =
+      ∑ y ∈ (univ : Finset ({B // B ∈ P} → X)).filter (fun y => ∀ B, y B ∈ B.val),
+        (innerSum P F T₁ y - innerSum P F T y) := by
+  rw [mul_sub, prod_card_mul_vertexPart hd hcover, prod_card_mul_vertexPart hd hcover, sum_sub_distrib]
+
+/-- **The refinement step of the paper's lines 490-492.** Let `T'` have the blocks as sides, and let `R` be a
+proper refinement of its restriction to the representatives `x`. Reattaching the removed taxa to `R` gains
+at every representative tuple `y`, not only at `x`: `T'` has the same restriction to `y`, and a refinement
+increases a score with positive weights. The gain on all the taxa is the sum of these gains over the
+tuples (`prod_card_mul_vertexPart_sub`), which is the paper's "the score increase would be amplified after
+reattaching the removed taxa". -/
+theorem vertexPart_lt_reattach {F : QuartetTree X → ℝ} (hF : ∀ s, 0 < F s)
+    (hd : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C) (hcover : P.sup id = univ) (hP : 2 ≤ P.card)
+    {T' : Finset (Finset X)} (hT' : IsUnrootedTree T') (hall : ∀ C ∈ P, C ∈ T')
+    {x : {B // B ∈ P} → X} (hx : IsRepTuple P x) {R : Finset (Finset {B // B ∈ P})}
+    (hR : IsUnrootedTree R) (hsub : pullTree x T' ⊂ R) :
+    vertexPart P F T' < vertexPart P F (reattach P T' R) := by
+  have hne : ∀ B ∈ P, B.Nonempty := fun B hB => hT'.nonempty_of_mem (hall B hB)
+  have hY : 2 ≤ Fintype.card {B // B ∈ P} := by rwa [Fintype.card_coe]
+  have hW : 0 < ∏ B ∈ P, (B.card : ℝ) :=
+    prod_pos fun B hB => by exact_mod_cast card_pos.2 (hne B hB)
+  have hT'' := reattach_isUnrootedTree hd hcover hT' hall hR hx hsub.subset hP
+  have hgain : ∀ y ∈ (univ : Finset ({B // B ∈ P} → X)).filter (fun y => ∀ B, y B ∈ B.val),
+      0 < innerSum P F (reattach P T' R) y - innerSum P F T' y := by
+    intro y hy
+    have hy' : IsRepTuple P y := (mem_filter.1 hy).2
+    rw [sub_pos, innerSum_eq_quartetScore_pullTree hd hy', innerSum_eq_quartetScore_pullTree hd hy']
+    refine quartetScore_lt_of_ssubset (fun s₀ => mul_pos (blockSizeProd_pos hne s₀) (hF _))
+      (pullTree_isUnrootedTree (hy'.injective hd) hT' hY)
+      (pullTree_isUnrootedTree (hy'.injective hd) hT'' hY) ?_
+    rw [pullTree_eq_of_forall_mem hd hcover hT' hall hy' hx]
+    exact Finset.ssubset_of_ssubset_of_subset hsub (subset_pullTree_reattach hd hR hy')
+  have hsum := sum_pos hgain ⟨x, mem_filter.2 ⟨mem_univ x, hx⟩⟩
+  rw [← prod_card_mul_vertexPart_sub hd hcover] at hsum
+  exact sub_pos.1 ((mul_pos_iff_of_pos_left hW).1 hsum)
+
+/-- **The second observation of the paper (lines 489-492).** `B*(v)` is binary after removing all but one
+taxon from each block. By contradiction: a refinement of the modified tree, with the removed taxa
+reattached, would increase `QS^v`. -/
+theorem isBinaryTree_pullTree_of_vertex_maximizer {F : QuartetTree X → ℝ} (hF : ∀ s, 0 < F s)
+    {TN : Finset (Finset X)} (hV : IsVertexPartition TN P) {T' : Finset (Finset X)}
+    (hT' : IsUnrootedTree T') (hall : ∀ C ∈ P, C ∈ T')
+    (hmax : ∀ T, IsUnrootedTree T → vertexPart P F T ≤ vertexPart P F T')
+    {x : {B // B ∈ P} → X} (hx : IsRepTuple P x) : IsBinaryTree (pullTree x T') := by
+  have hP : 2 ≤ P.card := by
+    have := hV.three_le
+    omega
+  have hd := hV.pairwiseDisjoint
+  have hY : 2 ≤ Fintype.card {B // B ∈ P} := by rwa [Fintype.card_coe]
+  -- suppose that the restriction is not binary, and refine it
+  by_contra hnb
+  obtain ⟨R, hR, hsub⟩ := exists_ssubset_of_not_isBinaryTree
+    (pullTree_isUnrootedTree (hx.injective hd) hT' hY) hnb
+  -- reattaching the removed taxa gives a tree with a larger score
+  exact absurd (hmax _ (reattach_isUnrootedTree hd hV.cover hT' hall hR hx hsub.subset hP))
+    (not_le.2 (vertexPart_lt_reattach hF hd hV.cover hP hT' hall hx hR hsub))
+
+/-- The second observation in terms of all the taxa: `B*(v)` resolves every set of four taxa in distinct
+blocks, since these taxa lie among some representatives of the blocks. -/
 theorem displays_of_vertex_maximizer {F : QuartetTree X → ℝ} (hF : ∀ s, 0 < F s)
-    {T' : Finset (Finset X)} (hT' : IsUnrootedTree T')
+    {TN : Finset (Finset X)} (hV : IsVertexPartition TN P) {T' : Finset (Finset X)}
+    (hT' : IsUnrootedTree T') (hall : ∀ C ∈ P, C ∈ T')
     (hmax : ∀ T, IsUnrootedTree T → vertexPart P F T ≤ vertexPart P F T') {q : Finset X}
     (hq : q.card = 4) (hI : InDistinctBlocks P q) : ∃ s ∈ treesOn q, Displays T' s := by
-  by_contra hcon
-  push Not at hcon
-  -- some quartet tree on `q`
-  obtain ⟨C, hCq, hCc⟩ := exists_subset_card_eq (s := q) (n := 2) (by omega)
-  let s := quartetOfCherry q C hq hCq hCc
-  have hst : s.taxa = q := quartetOfCherry_taxa q C hq hCq hCc
-  obtain ⟨T₁, hT₁, hsub, hd⟩ := exists_refinement_displays hT' s (fun r hr => hcon r (hst ▸ hr))
-  refine absurd (hmax T₁ hT₁) (not_le.2 ?_)
-  refine sum_lt_sum (fun r _ => ?_) ⟨s, mem_univ _, ?_⟩
-  · by_cases hr : InDistinctBlocks P r.taxa ∧ Displays T' r
-    · have : InDistinctBlocks P r.taxa ∧ Displays T₁ r := ⟨hr.1, hr.2.mono hsub⟩
-      simp only [hr, this, and_self, ↓reduceIte, le_refl]
-    · rw [ite_eq_right hr]
-      split_ifs
-      · exact (hF r).le
-      · exact le_refl _
-  · have hIs : InDistinctBlocks P s.taxa := hst ▸ hI
-    have hnot : ¬ Displays T' s := hcon s (mem_treesOn.2 hst)
-    simp only [hIs, hnot, hd, and_self, and_false, ↓reduceIte]
-    exact hF s
+  obtain ⟨x, hx, hqx⟩ := exists_isRepTuple_superset
+    (fun B hB => hT'.nonempty_of_mem (hall B hB)) hV.cover hI
+  have hinj := hx.injective hV.pairwiseDisjoint
+  have himg : (univ.filter fun b => x b ∈ q).image x = q := by
+    ext y
+    simp only [mem_image, mem_filter, mem_univ, true_and]
+    constructor
+    · rintro ⟨b, hb, rfl⟩
+      exact hb
+    · intro hy
+      obtain ⟨b, -, rfl⟩ := mem_image.1 (hqx hy)
+      exact ⟨b, hy, rfl⟩
+  obtain ⟨s₀, hs₀, hds⟩ := (isBinaryTree_pullTree_of_vertex_maximizer hF hV hT' hall hmax
+    hx).exists_displays (q := univ.filter fun b => x b ∈ q) (by
+      rw [← card_image_of_injective _ hinj, himg, hq])
+  refine ⟨s₀.map hinj, mem_treesOn.2 ?_, (displays_pullTree_iff hinj s₀).1 hds⟩
+  rw [QuartetTree.map_taxa, mem_treesOn.1 hs₀, himg]
 
-/-- **The third observation of the paper (lines 492-495).** Keeping the sides of `T'` that are unions of
+/-- **The third observation of the paper (lines 492-496).** Keeping the sides of `T'` that are unions of
 blocks contracts the edges inside blocks: on quartets in distinct blocks, nothing changes. -/
 theorem displays_filter_isBlockUnion {T' : Finset (Finset X)} (hT' : IsUnrootedTree T')
     (hall : ∀ C ∈ P, C ∈ T') {s : QuartetTree X} (hI : InDistinctBlocks P s.taxa) :
@@ -514,14 +604,8 @@ the proof uses:
 there is a binary refinement `B` of the tree of blobs that maximizes the star part and the tree part of
 the score over binary trees, and has a larger score than every binary tree not refining the tree of
 blobs. The compatibility supertree of the paper's lines 497-498 (Warnow, Chapters 3, 7: compatible
-splits have a common refinement) is `splice`, by `splice_isUnrootedTree`.
-
-Departure from the paper, in the second observation (lines 489-492): the paper says that the tree on one taxon per
-block is binary, and that a refinement's gain "would be amplified after reattaching". Trees here are split families on all of `X`, so the
-formal claim is the translation of the first part, that the maximizer resolves every 4-taxon set in distinct blocks
-(`displays_of_vertex_maximizer`), and no restriction or reattachment occurs: a refinement resolving a further such set has a larger score
-on `X` directly. The strictness of the paper's (2) needs that the quartets a tree displays determine its splits
-(`subset_of_forall_displays`). -/
+splits have a common refinement) is `splice`, by `splice_isUnrootedTree`. The strictness of the paper's
+(2) needs that the quartets a tree displays determine its splits (`subset_of_forall_displays`). -/
 theorem lemma3_of_properties {V E : Type*} {N : RootedNetwork V E X} (hN : N.IsPhylogenetic)
     {F : QuartetTree X → ℝ} (hF : ∀ s, 0 < F s) (hEx : CutExchangeable N F)
     (hNon : IsTQuartetNonanomalous N F) (hX : 4 ≤ Fintype.card X) :
@@ -545,7 +629,7 @@ theorem lemma3_of_properties {V E : Type*} {N : RootedNetwork V E X} (hN : N.IsP
     obtain ⟨T', hT', hall, hmax⟩ := exists_vertex_maximizer (F := F) hEx hTN hV hcut hX'
     refine ⟨T'.filter (IsBlockUnion P), isBlockFamily_filter hT', ?_, ?_⟩
     · intro q hq hI
-      obtain ⟨s, hs, hds⟩ := displays_of_vertex_maximizer hF hT' hmax hq hI
+      obtain ⟨s, hs, hds⟩ := displays_of_vertex_maximizer hF hV hT' hall hmax hq hI
       exact ⟨s, hs, (displays_filter_isBlockUnion hT' hall ((mem_treesOn.1 hs) ▸ hI)).1 hds⟩
     · intro L hL hLP T hT
       refine (hmax T hT).trans (le_of_eq ?_)

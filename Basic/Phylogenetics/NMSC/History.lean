@@ -33,6 +33,10 @@ vertex:
   forest arriving at the root of a history of nonzero weight is a binary forest on all the lineages.
 * `injDist_nonneg`, `sum_injDist`, `injDist_support`: the process with injected forests.
 * `exists_chain_history`: a history of positive weight in which no lineages coalesce.
+
+The results that do not need a positive inheritance also hold at the boundary of the parameters,
+with the suffix `_weak`, for `RootedNetwork.IsWeakMetric` or, when no sign is used,
+`RootedNetwork.IsNormalized`.
 -/
 
 @[expose] public noncomputable section
@@ -41,6 +45,34 @@ open Finset
 open scoped Classical
 
 namespace Phylogenetics
+
+namespace RootedNetwork
+
+variable {V E X : Type*} [Fintype E] (N : RootedNetwork V E X)
+
+/-- Inheritance probabilities without their signs: tree arcs have inheritance one, and the
+inheritance of the arcs entering a reticulation sums to one. All the identities of this file and of
+`Basic/Phylogenetics/NMSC/Marginal.lean` hold in this generality, which covers the affine line
+through two parameter points. -/
+def IsNormalized (θ : MetricData E) : Prop :=
+  (∀ e, N.IsTreeArc e → θ.inheritance e = 1) ∧
+  ∀ v, 2 ≤ N.graph.indegree v → ∑ e, (if N.graph.target e = v then θ.inheritance e else 0) = 1
+
+/-- Parameters on the boundary of `IsMetric`: lengths are nonnegative, hybrid arcs have nonnegative
+inheritance, and `IsNormalized` holds. A hybrid arc of inheritance `0` is effectively deleted
+(Allman, Baños, Mitchell, Rhodes 2023, proof of Theorem 1). -/
+def IsWeakMetric (θ : MetricData E) : Prop :=
+  (∀ e, 0 ≤ θ.length e) ∧ (∀ e, N.IsHybridArc e → 0 ≤ θ.inheritance e) ∧ N.IsNormalized θ
+
+variable {N}
+
+theorem IsWeakMetric.isNormalized {θ : MetricData E} (hθ : N.IsWeakMetric θ) : N.IsNormalized θ :=
+  hθ.2.2
+
+theorem IsMetric.isNormalized {θ : MetricData E} (hθ : N.IsMetric θ) : N.IsNormalized θ :=
+  ⟨hθ.2.2.1, hθ.2.2.2.2⟩
+
+end RootedNetwork
 
 namespace NMSC
 
@@ -236,9 +268,22 @@ theorem inheritance_pos (hθ : N.IsMetric θ) (e : E) : 0 < θ.inheritance e := 
   · exact hθ.2.2.2.1 e h
 
 omit [Fintype V] [DecidableEq X] [Fintype X] in
+/-- Valid parameters are weak parameters. -/
+theorem _root_.Phylogenetics.RootedNetwork.IsMetric.isWeakMetric (hθ : N.IsMetric θ) :
+    N.IsWeakMetric θ :=
+  ⟨length_nonneg hθ, fun e he => (hθ.2.2.2.1 e he).le, hθ.isNormalized⟩
+
+omit [Fintype V] [DecidableEq X] [Fintype X] in
+theorem inheritance_nonneg_weak (hθ : N.IsWeakMetric θ) (e : E) : 0 ≤ θ.inheritance e := by
+  rcases isTreeArc_or_isHybridArc (N := N) e with h | h
+  · rw [hθ.2.2.1 e h]
+    exact zero_le_one
+  · exact hθ.2.1 e h
+
+omit [Fintype V] [DecidableEq X] [Fintype X] in
 /-- The inheritance probabilities of the arcs entering a non-root vertex sum to one. -/
-theorem sum_inheritance (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) {v : V} (hv : v ≠ N.root) :
-    ∑ e : {e // N.graph.target e = v}, θ.inheritance e.val = 1 := by
+theorem sum_inheritance_weak (hN : N.IsPhylogenetic) (hθ : N.IsNormalized θ) {v : V}
+    (hv : v ≠ N.root) : ∑ e : {e // N.graph.target e = v}, θ.inheritance e.val = 1 := by
   have hsum : ∑ e : {e // N.graph.target e = v}, θ.inheritance e.val =
       ∑ e, if N.graph.target e = v then θ.inheritance e else 0 := by
     rw [← sum_filter]
@@ -254,11 +299,17 @@ theorem sum_inheritance (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) {v : V} (h
     rw [← sum_filter]
     change ∑ f ∈ arcsInto N v, θ.inheritance f = 1
     rw [he, sum_singleton]
-    refine hθ.2.2.1 e ?_
+    refine hθ.1 e ?_
     unfold RootedNetwork.IsTreeArc
     rw [hev]
     omega
-  · exact hθ.2.2.2.2 v h
+  · exact hθ.2 v h
+
+omit [Fintype V] [DecidableEq X] [Fintype X] in
+/-- The inheritance probabilities of the arcs entering a non-root vertex sum to one. -/
+theorem sum_inheritance (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) {v : V} (hv : v ≠ N.root) :
+    ∑ e : {e // N.graph.target e = v}, θ.inheritance e.val = 1 :=
+  sum_inheritance_weak hN hθ.isNormalized hv
 
 variable (N) in
 /-- A set of vertices closed under children. -/
@@ -381,22 +432,43 @@ theorem vertexWeight_congr {inj inj' : V → Finset (Finset X)} {u : V}
   rw [h1 e (mem_arcsInto.1 he), h2 e (mem_arcsInto.1 he)]
 
 omit [Fintype V] in
-theorem allocationFactor_nonneg (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1) (F : Finset (Finset X))
-    (v : V) (bot : E → Finset (Finset X)) : 0 ≤ allocationFactor N θ ρ F v bot := by
+theorem allocationFactor_nonneg_weak (hθ : N.IsWeakMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+    (F : Finset (Finset X)) (v : V) (bot : E → Finset (Finset X)) :
+    0 ≤ allocationFactor N θ ρ F v bot := by
   refine sum_nonneg fun a _ => ?_
   split_ifs
-  · exact allocationWeight_nonneg hρ.1 hρ.2 (fun e => (inheritance_pos hθ e.val).le) a
+  · exact allocationWeight_nonneg hρ.1 hρ.2 (fun e => inheritance_nonneg_weak hθ e.val) a
   · exact le_rfl
+
+omit [Fintype V] in
+theorem allocationFactor_nonneg (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1) (F : Finset (Finset X))
+    (v : V) (bot : E → Finset (Finset X)) : 0 ≤ allocationFactor N θ ρ F v bot :=
+  allocationFactor_nonneg_weak hθ.isWeakMetric hρ F v bot
+
+omit [Fintype V] in
+theorem vertexWeight_nonneg_weak (hθ : N.IsWeakMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+    (inj : V → Finset (Finset X)) (v : V) (bot top : E → Finset (Finset X)) :
+    0 ≤ vertexWeight N θ ρ inj v bot top :=
+  mul_nonneg (allocationFactor_nonneg_weak hθ hρ _ _ _)
+    (prod_nonneg fun e _ => kingmanTransition_nonneg (hθ.1 e) _ _)
+
+theorem injWeight_nonneg_weak (hθ : N.IsWeakMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+    (inj : V → Finset (Finset X)) (bot top : E → Finset (Finset X)) :
+    0 ≤ injWeight N θ ρ inj bot top :=
+  prod_nonneg fun _ _ => vertexWeight_nonneg_weak hθ hρ _ _ _ _
 
 theorem injWeight_nonneg (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1) (inj : V → Finset (Finset X))
     (bot top : E → Finset (Finset X)) : 0 ≤ injWeight N θ ρ inj bot top :=
-  prod_nonneg fun _ _ => mul_nonneg (allocationFactor_nonneg hθ hρ _ _ _)
-    (prod_nonneg fun e _ => kingmanTransition_nonneg (length_nonneg hθ e) _ _)
+  injWeight_nonneg_weak hθ.isWeakMetric hρ inj bot top
+
+theorem historyWeight_nonneg_weak (hθ : N.IsWeakMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+    (bot top : E → Finset (Finset X)) : 0 ≤ historyWeight N θ ρ bot top :=
+  mul_nonneg (prod_nonneg fun _ _ => allocationFactor_nonneg_weak hθ hρ _ _ _)
+    (prod_nonneg fun e _ => kingmanTransition_nonneg (hθ.1 e) _ _)
 
 theorem historyWeight_nonneg (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
     (bot top : E → Finset (Finset X)) : 0 ≤ historyWeight N θ ρ bot top :=
-  mul_nonneg (prod_nonneg fun _ _ => allocationFactor_nonneg hθ hρ _ _ _)
-    (prod_nonneg fun e _ => kingmanTransition_nonneg (length_nonneg hθ e) _ _)
+  historyWeight_nonneg_weak hθ.isWeakMetric hρ bot top
 
 omit [Fintype V] in
 /-- A nonzero allocation comes from an assignment of the roots to the arcs. -/
@@ -452,13 +524,21 @@ theorem sum_allocationFactor_mul (F : Finset (Finset X)) (v : V)
 
 omit [Fintype V] in
 /-- The allocations of the roots of `F` at `v` have total mass one over the arcs entering `v`. -/
-theorem sum_allocationFactor (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+theorem sum_allocationFactor_weak (hN : N.IsPhylogenetic) (hθ : N.IsNormalized θ) (hρ : 0 ≤ ρ)
     {v : V} (hv : v ≠ N.root) (F : Finset (Finset X)) :
     ∑ y : E → Finset (Finset X), allocationFactor N θ ρ F v y =
       (Fintype.card (Finset (Finset X)) : ℝ) ^ #(arcsInto N v)ᶜ := by
   have h := sum_allocationFactor_mul (N := N) (θ := θ) (ρ := ρ) F v (fun _ => 1) (fun _ _ _ => rfl)
   simp only [mul_one, one_mul] at h
-  rw [h, ← sum_mul, sum_allocationWeight hρ.1 (sum_inheritance hN hθ hv), one_mul]
+  rw [h, ← sum_mul, sum_allocationWeight hρ (sum_inheritance_weak hN hθ hv), one_mul]
+
+omit [Fintype V] in
+/-- The allocations of the roots of `F` at `v` have total mass one over the arcs entering `v`. -/
+theorem sum_allocationFactor (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+    {v : V} (hv : v ≠ N.root) (F : Finset (Finset X)) :
+    ∑ y : E → Finset (Finset X), allocationFactor N θ ρ F v y =
+      (Fintype.card (Finset (Finset X)) : ℝ) ^ #(arcsInto N v)ᶜ :=
+  sum_allocationFactor_weak hN hθ.isNormalized hρ.1 hv F
 
 end Weights
 
@@ -807,7 +887,7 @@ theorem arriving_overwrite {inj : V → Finset (Finset X)} {D : Finset V} {v : V
 
 /-- The sum over the histories of the factors of `insert v D`, with the arcs entering `v` summed
 out: the sum for `D`, up to the number of values of these arcs. -/
-theorem sum_step (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+theorem sum_step_weak (hN : N.IsPhylogenetic) (hθ : N.IsNormalized θ) (hρ : 0 ≤ ρ)
     {inj : V → Finset (Finset X)} (hinj : ValidInj inj) {D : Finset V}
     (hD : DownClosed N D) {v : V} (hvD : v ∉ D) (hv : v ≠ N.root)
     (hch : ∀ e, N.graph.source e = v → N.graph.target e ∈ D) :
@@ -864,7 +944,7 @@ theorem sum_step (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ �
           allocationFactor N θ ρ (arriving N inj top v) v y := fun y =>
       allocationFactor_congr fun e he => overwrite_of_mem (mem_arcsInto.2 he) _ _
     simp only [hsimp]
-    exact sum_allocationFactor hN hθ hρ hv _
+    exact sum_allocationFactor_weak hN hθ hρ hv _
   calc (B ^ #S) ^ 2 * ∑ bot : E → Finset (Finset X), ∑ top : E → Finset (Finset X),
           ∏ u ∈ insert v D, vertexWeight N θ ρ inj u bot top
       = B ^ #S * ∑ bot : E → Finset (Finset X), (B ^ #S *
@@ -881,10 +961,23 @@ theorem sum_step (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ �
         exact sum_congr rfl fun top _ => hbot top
     _ = _ := sum_comm
 
+/-- The sum over the histories of the factors of `insert v D`, with the arcs entering `v` summed
+out: the sum for `D`, up to the number of values of these arcs. -/
+theorem sum_step (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+    {inj : V → Finset (Finset X)} (hinj : ValidInj inj) {D : Finset V}
+    (hD : DownClosed N D) {v : V} (hvD : v ∉ D) (hv : v ≠ N.root)
+    (hch : ∀ e, N.graph.source e = v → N.graph.target e ∈ D) :
+    ((Fintype.card (Finset (Finset X)) : ℝ) ^ #(arcsInto N v)) ^ 2 *
+        ∑ bot : E → Finset (Finset X), ∑ top : E → Finset (Finset X),
+          ∏ u ∈ insert v D, vertexWeight N θ ρ inj u bot top =
+      ∑ bot : E → Finset (Finset X), ∑ top : E → Finset (Finset X),
+        ∏ u ∈ D, vertexWeight N θ ρ inj u bot top :=
+  sum_step_weak hN hθ.isNormalized hρ.1 hinj hD hvD hv hch
+
 /-- The sum over the histories of the factors of a set `D` closed under children, up to the number
 of values of the arcs not entering `D`. -/
-theorem sum_sum_prod_vertexWeight (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ)
-    (hρ : 0 ≤ ρ ∧ ρ ≤ 1) {inj : V → Finset (Finset X)} (hinj : ValidInj inj) {D : Finset V}
+theorem sum_sum_prod_vertexWeight_weak (hN : N.IsPhylogenetic) (hθ : N.IsNormalized θ)
+    (hρ : 0 ≤ ρ) {inj : V → Finset (Finset X)} (hinj : ValidInj inj) {D : Finset V}
     (hD : DownClosed N D) (hroot : N.root ∉ D) :
     ((Fintype.card (Finset (Finset X)) : ℝ) ^ #(univ.filter fun e => N.graph.target e ∈ D)) ^ 2 *
         ∑ bot : E → Finset (Finset X), ∑ top : E → Finset (Finset X),
@@ -896,7 +989,7 @@ theorem sum_sum_prod_vertexWeight (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ)
     · simp [sum_const, sq]
     · obtain ⟨v, hv, hD', hch⟩ := exists_top_vertex hN hD hne
       have hvr : v ≠ N.root := fun h => hroot (h ▸ hv)
-      have hstep := sum_step hN hθ hρ hinj hD' (notMem_erase v D) hvr hch
+      have hstep := sum_step_weak hN hθ hρ hinj hD' (notMem_erase v D) hvr hch
       rw [insert_erase hv] at hstep
       have hih := ih (D.erase v) (erase_ssubset hv) hD' fun h => hroot (mem_of_mem_erase h)
       rw [← hih, ← hstep, ← mul_assoc, ← mul_pow, ← pow_add]
@@ -917,25 +1010,49 @@ theorem sum_sum_prod_vertexWeight (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ)
         · exact he
         · exact he ▸ hv
 
+/-- The sum over the histories of the factors of a set `D` closed under children, up to the number
+of values of the arcs not entering `D`. -/
+theorem sum_sum_prod_vertexWeight (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ)
+    (hρ : 0 ≤ ρ ∧ ρ ≤ 1) {inj : V → Finset (Finset X)} (hinj : ValidInj inj) {D : Finset V}
+    (hD : DownClosed N D) (hroot : N.root ∉ D) :
+    ((Fintype.card (Finset (Finset X)) : ℝ) ^ #(univ.filter fun e => N.graph.target e ∈ D)) ^ 2 *
+        ∑ bot : E → Finset (Finset X), ∑ top : E → Finset (Finset X),
+          ∏ u ∈ D, vertexWeight N θ ρ inj u bot top =
+      ((Fintype.card (Finset (Finset X)) : ℝ) ^ Fintype.card E) ^ 2 :=
+  sum_sum_prod_vertexWeight_weak hN hθ.isNormalized hρ.1 hinj hD hroot
+
 /-- **The histories of the process with injected forests have total mass one.** -/
-theorem sum_sum_injWeight (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+theorem sum_sum_injWeight_weak (hN : N.IsPhylogenetic) (hθ : N.IsNormalized θ) (hρ : 0 ≤ ρ)
     {inj : V → Finset (Finset X)} (hinj : ValidInj inj) :
     ∑ bot : E → Finset (Finset X), ∑ top : E → Finset (Finset X),
       injWeight N θ ρ inj bot top = 1 := by
   have hD := downClosed_erase_root (N := N) hN
-  have h := sum_sum_prod_vertexWeight (θ := θ) (ρ := ρ) hN hθ hρ hinj hD (notMem_erase _ _)
+  have h := sum_sum_prod_vertexWeight_weak (θ := θ) (ρ := ρ) hN hθ hρ hinj hD (notMem_erase _ _)
   have hall : (univ.filter fun e => N.graph.target e ∈ univ.erase N.root) = univ :=
     filter_true_of_mem fun e _ => mem_erase.2 ⟨target_ne_root hN e, mem_univ _⟩
   rw [hall, card_univ] at h
   have hB : (0 : ℝ) < Fintype.card (Finset (Finset X)) := by exact_mod_cast Fintype.card_pos
   exact mul_left_cancel₀ (pow_ne_zero 2 (pow_ne_zero _ hB.ne')) (h.trans (mul_one _).symm)
 
+/-- **The histories of the process with injected forests have total mass one.** -/
+theorem sum_sum_injWeight (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+    {inj : V → Finset (Finset X)} (hinj : ValidInj inj) :
+    ∑ bot : E → Finset (Finset X), ∑ top : E → Finset (Finset X),
+      injWeight N θ ρ inj bot top = 1 :=
+  sum_sum_injWeight_weak hN hθ.isNormalized hρ.1 hinj
+
 /-- **The histories of the network multispecies coalescent have total mass one.** -/
-theorem sum_sum_historyWeight (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1) :
+theorem sum_sum_historyWeight_weak (hN : N.IsPhylogenetic) (hθ : N.IsNormalized θ) (hρ : 0 ≤ ρ) :
     ∑ bot : E → Finset (Finset X), ∑ top : E → Finset (Finset X),
       historyWeight N θ ρ bot top = 1 := by
   simp only [historyWeight_eq_injWeight hN]
-  exact sum_sum_injWeight hN hθ hρ (validInj_taxaInj univ)
+  exact sum_sum_injWeight_weak hN hθ hρ (validInj_taxaInj univ)
+
+/-- **The histories of the network multispecies coalescent have total mass one.** -/
+theorem sum_sum_historyWeight (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1) :
+    ∑ bot : E → Finset (Finset X), ∑ top : E → Finset (Finset X),
+      historyWeight N θ ρ bot top = 1 :=
+  sum_sum_historyWeight_weak hN hθ.isNormalized hρ.1
 
 /-- The forest arriving at the root of a history of nonzero weight is a binary forest on all the
 taxa. -/
@@ -950,25 +1067,36 @@ theorem good_arrivingForest_root (hN : N.IsPhylogenetic) {bot top : E → Finset
 
 /-! ### The process with injected forests -/
 
-theorem injDist_term_nonneg (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
-    {inj : V → Finset (Finset X)} (hinj : ValidInj inj) (bot top : E → Finset (Finset X))
-    (G : Finset (Finset X)) :
+theorem injDist_term_nonneg_weak (hN : N.IsPhylogenetic) (hθ : N.IsWeakMetric θ)
+    (hρ : 0 ≤ ρ ∧ ρ ≤ 1) {inj : V → Finset (Finset X)} (hinj : ValidInj inj)
+    (bot top : E → Finset (Finset X)) (G : Finset (Finset X)) :
     0 ≤ injWeight N θ ρ inj bot top * kingmanAbsorption (arriving N inj top N.root) G := by
   by_cases h : injWeight N θ ρ inj bot top = 0
   · simp [h]
-  · exact mul_nonneg (injWeight_nonneg hθ hρ inj bot top)
+  · exact mul_nonneg (injWeight_nonneg_weak hθ hρ inj bot top)
       (kingmanAbsorption_nonneg (good_arriving_root hN hinj h).1.1 G)
+
+theorem injDist_term_nonneg (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+    {inj : V → Finset (Finset X)} (hinj : ValidInj inj) (bot top : E → Finset (Finset X))
+    (G : Finset (Finset X)) :
+    0 ≤ injWeight N θ ρ inj bot top * kingmanAbsorption (arriving N inj top N.root) G :=
+  injDist_term_nonneg_weak hN hθ.isWeakMetric hρ hinj bot top G
+
+theorem injDist_nonneg_weak (hN : N.IsPhylogenetic) (hθ : N.IsWeakMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+    {inj : V → Finset (Finset X)} (hinj : ValidInj inj) (G : Finset (Finset X)) :
+    0 ≤ injDist N θ ρ inj G :=
+  sum_nonneg fun _ _ => sum_nonneg fun _ _ => injDist_term_nonneg_weak hN hθ hρ hinj _ _ G
 
 theorem injDist_nonneg (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
     {inj : V → Finset (Finset X)} (hinj : ValidInj inj) (G : Finset (Finset X)) :
     0 ≤ injDist N θ ρ inj G :=
-  sum_nonneg fun _ _ => sum_nonneg fun _ _ => injDist_term_nonneg hN hθ hρ hinj _ _ G
+  injDist_nonneg_weak hN hθ.isWeakMetric hρ hinj G
 
 /-- The process with injected forests has total mass one. -/
-theorem sum_injDist (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+theorem sum_injDist_weak (hN : N.IsPhylogenetic) (hθ : N.IsNormalized θ) (hρ : 0 ≤ ρ)
     {inj : V → Finset (Finset X)} (hinj : ValidInj inj) : ∑ G, injDist N θ ρ inj G = 1 := by
   unfold injDist
-  rw [sum_comm, ← sum_sum_injWeight (θ := θ) (ρ := ρ) hN hθ hρ hinj]
+  rw [sum_comm, ← sum_sum_injWeight_weak (θ := θ) (ρ := ρ) hN hθ hρ hinj]
   refine sum_congr rfl fun bot _ => ?_
   rw [sum_comm]
   refine sum_congr rfl fun top _ => ?_
@@ -976,6 +1104,11 @@ theorem sum_injDist (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ �
   by_cases h : injWeight N θ ρ inj bot top = 0
   · simp [h]
   · rw [kingmanAbsorption_sum (good_arriving_root hN hinj h).1.1, mul_one]
+
+/-- The process with injected forests has total mass one. -/
+theorem sum_injDist (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+    {inj : V → Finset (Finset X)} (hinj : ValidInj inj) : ∑ G, injDist N θ ρ inj G = 1 :=
+  sum_injDist_weak hN hθ.isNormalized hρ.1 hinj
 
 /-- The support of the process with injected forests: binary forests, with the injected clusters,
 on all the injected lineages, with one root when there are lineages. -/

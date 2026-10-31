@@ -10,6 +10,9 @@ Operations on trees given by the sides of their splits, used by TOB-QMC's proof 
 * `exists_refinement_displays`: a quartet that a tree does not resolve can be resolved, in any of the
   three ways, by a refinement;
 * `isBinaryTree_of_forall_displays`: a tree resolving every set of four taxa is binary;
+* `exists_ssubset_of_not_isBinaryTree`, `quartetScore_lt_of_ssubset`: a tree that is not binary has a
+  proper refinement, and a proper refinement increases a score with positive weights;
+* `exists_mem_multifurcations_isBlockUnion`: refining a tree only resolves its multifurcations;
 * `detachReattach a b T`: the tree `T` with the taxon `b` detached and reattached as sister to `a`, as
   the restriction of `T` along the retraction `b ↦ a` with the new pendant edges of `a` and `b`;
   `displays_detachReattach_of_not_mem` and `displays_detachReattach_of_mem` give what it displays;
@@ -182,6 +185,121 @@ theorem IsBinaryTree.isUnrootedTree {T : Finset (Finset X)} (hT : IsBinaryTree T
     IsUnrootedTree T := by
   obtain ⟨H, hH, hu, -⟩ := hT
   exact ⟨H, hH, hu⟩
+
+/-- A tree that is not binary has a proper refinement. -/
+theorem exists_ssubset_of_not_isBinaryTree {T : Finset (Finset X)} (hT : IsUnrootedTree T)
+    (h : ¬ IsBinaryTree T) : ∃ R, IsUnrootedTree R ∧ T ⊂ R := by
+  obtain ⟨q, hq, hnot⟩ : ∃ q : Finset X, q.card = 4 ∧ ∀ s ∈ treesOn q, ¬ Displays T s := by
+    by_contra hcon
+    push Not at hcon
+    exact h (isBinaryTree_of_forall_displays hT hcon)
+  obtain ⟨C, hCq, hCc⟩ := exists_subset_card_eq (s := q) (n := 2) (by omega)
+  let s := quartetOfCherry q C hq hCq hCc
+  have hst : s.taxa = q := quartetOfCherry_taxa q C hq hCq hCc
+  obtain ⟨R, hR, hsub, hd⟩ := exists_refinement_displays hT s (fun r hr => hnot r (hst ▸ hr))
+  refine ⟨R, hR, ssubset_of_subset_of_ne hsub ?_⟩
+  rintro rfl
+  exact hnot s (mem_treesOn.2 hst) hd
+
+/-- Any proper refinement of a tree increases a score with positive weights. -/
+theorem quartetScore_lt_of_ssubset {w : QuartetTree X → ℝ} (hw : ∀ s, 0 < w s)
+    {T T' : Finset (Finset X)} (hT : IsUnrootedTree T) (hT' : IsUnrootedTree T') (h : T ⊂ T') :
+    quartetScore w T < quartetScore w T' := by
+  obtain ⟨s, hs, hnot⟩ : ∃ s, Displays T' s ∧ ¬ Displays T s := by
+    by_contra hcon
+    push Not at hcon
+    exact h.2 (subset_of_forall_displays hT hT' hcon)
+  refine sum_lt_sum (fun r _ => ?_) ⟨s, mem_univ _, ?_⟩
+  · by_cases hr : Displays T r
+    · simp only [hr, hr.mono h.subset, ↓reduceIte, le_refl]
+    · simp only [hr, ↓reduceIte]
+      split_ifs
+      · exact (hw r).le
+      · exact le_refl _
+  · simp only [hs, hnot, ↓reduceIte]
+    exact hw s
+
+/-- A side of a refinement of a tree that is not a side of the tree is a union of blocks at a
+multifurcation of the tree: refining a tree only resolves its multifurcations. -/
+theorem exists_mem_multifurcations_isBlockUnion {T T' : Finset (Finset X)} (hT : IsUnrootedTree T)
+    (hT' : IsUnrootedTree T') (hsub : T ⊆ T') {A : Finset X} (hA : A ∈ T') (hnot : A ∉ T) :
+    ∃ P ∈ multifurcations T, IsBlockUnion P A := by
+  have hSF := hT.isSplitFamily (hT'.two_le_card_of_mem hA)
+  have hAne := hT'.nonempty_of_mem hA
+  obtain ⟨r, hrA⟩ : ∃ r, r ∉ A := by
+    obtain ⟨r, hr⟩ := hT'.nonempty_of_mem (hT'.compl_mem hA)
+    exact ⟨r, mem_compl.1 hr⟩
+  have hH := rootedAt_isHierarchy hSF r
+  obtain ⟨K, hK, hAK, hleast⟩ := hH.exists_least hAne
+  have hrc : ({r} : Finset X)ᶜ ∈ rootedAt T r :=
+    mem_rootedAt.2 (Or.inr (Or.inr ⟨hSF.compl_mem _ (hSF.singleton_mem r), by simp⟩))
+  have hKr : K ⊆ {r}ᶜ := hleast _ hrc fun x hx => by
+    simp only [mem_compl, mem_singleton]
+    rintro rfl
+    exact hrA hx
+  have hrK : r ∉ K := fun h => (by simpa using hKr h : r ≠ r) rfl
+  have hKu : K ≠ univ := fun h => hrK (h ▸ mem_univ r)
+  have hKT : K ∈ T := by
+    rcases mem_rootedAt.1 hK with h | h | h
+    · exact absurd h hKu
+    · exact absurd (h ▸ mem_singleton_self r) hrK
+    · exact h.1
+  have hAK' : A ⊂ K := ssubset_of_subset_of_ne hAK fun e => hnot (e ▸ hKT)
+  have hK2 : 2 ≤ K.card := by
+    have h1 := card_lt_card hAK'
+    have h2 := card_pos.2 hAne
+    omega
+  have hVP := hH.isVertexPartition_insert_compl hK hKu hK2
+  rw [unroot_rootedAt hSF r] at hVP
+  have hchildT : ∀ D ∈ childClusters (rootedAt T r) K, D ∈ T := fun D hD =>
+    hVP.mem D (mem_insert_of_mem hD)
+  have hchild : ∀ D ∈ childClusters (rootedAt T r) K, D ⊆ A ∨ Disjoint D A := by
+    intro D hD
+    obtain ⟨hDH, hDK, -⟩ := mem_childClusters.1 hD
+    rcases hT'.compatible (hsub (hchildT D hD)) hA with h | h | h | h
+    · exact Or.inl h
+    · exact absurd (hleast D hDH h) (not_subset_of_ssubset hDK)
+    · exact Or.inr h
+    · rcases mem_union.1 (h ▸ mem_univ r : r ∈ D ∪ A) with h' | h'
+      · exact absurd (hDK.subset h') hrK
+      · exact absurd h' hrA
+  refine ⟨_, mem_multifurcations.2 ⟨hVP, ?_⟩, fun B hB => ?_⟩
+  · -- two children inside `A` and one outside, with the complement of `K`
+    have hinside : ∀ {a}, a ∈ A → ∃ D ∈ childClusters (rootedAt T r) K, a ∈ D ∧ D ⊆ A := by
+      intro a ha
+      obtain ⟨D, hD, haD⟩ := hH.exists_mem_childClusters hK2 (hAK ha)
+      exact ⟨D, hD, haD, (hchild D hD).resolve_right fun h => disjoint_left.1 h haD ha⟩
+    obtain ⟨a₁, ha₁⟩ := hAne
+    obtain ⟨D₁, hD₁, -, hD₁A⟩ := hinside ha₁
+    obtain ⟨a₂, ha₂, ha₂D₁⟩ : ∃ a₂ ∈ A, a₂ ∉ D₁ := by
+      by_contra hcon
+      push Not at hcon
+      exact hnot (Subset.antisymm hD₁A hcon ▸ hchildT D₁ hD₁)
+    obtain ⟨D₂, hD₂, ha₂D₂, hD₂A⟩ := hinside ha₂
+    obtain ⟨y, hyK, hyA⟩ := exists_of_ssubset hAK'
+    obtain ⟨D₃, hD₃, hyD₃⟩ := hH.exists_mem_childClusters hK2 hyK
+    have h12 : D₁ ≠ D₂ := fun e => ha₂D₁ (e ▸ ha₂D₂)
+    have h13 : D₁ ≠ D₃ := fun e => hyA (hD₁A (e ▸ hyD₃))
+    have h23 : D₂ ≠ D₃ := fun e => hyA (hD₂A (e ▸ hyD₃))
+    have hnotin : Kᶜ ∉ childClusters (rootedAt T r) K := by
+      intro h
+      obtain ⟨h1, h2, -⟩ := mem_childClusters.1 h
+      obtain ⟨z, hz⟩ := hH.2.2.1 _ h1
+      exact mem_compl.1 hz (h2.subset hz)
+    have hcard : ({D₁, D₂, D₃} : Finset (Finset X)).card = 3 := by
+      rw [card_insert_of_notMem (by simp [h12, h13]), card_pair h23]
+    have hle : ({D₁, D₂, D₃} : Finset (Finset X)).card ≤
+        (childClusters (rootedAt T r) K).card := card_le_card fun D hD => by
+      simp only [mem_insert, mem_singleton] at hD
+      rcases hD with rfl | rfl | rfl
+      · exact hD₁
+      · exact hD₂
+      · exact hD₃
+    rw [card_insert_of_notMem hnotin]
+    omega
+  · rcases mem_insert.1 hB with rfl | hB
+    · exact Or.inr (disjoint_left.2 fun y hy hyA => mem_compl.1 hy (hAK hyA))
+    · exact hchild B hB
 
 /-! ### Detaching a taxon and reattaching it as sister to another -/
 

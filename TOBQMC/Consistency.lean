@@ -2,6 +2,7 @@ module
 
 public import TINNiK.Basic
 public import TOBQMC.Level1
+public import TOBQMC.Level1CF
 public import TOBQMC.WQC
 public import Basic.Probability.Trinomial.Bridge
 
@@ -9,7 +10,7 @@ public import Basic.Probability.Trinomial.Bridge
 # TOB-QMC §4.3: statistical consistency for level-1 networks
 
 The unnumbered claim at the end of §4.3 (`tob2025:consistency`), combining Theorem 1, Theorem 2 and
-TINNiK Theorem 4: for level-1 networks, with levels `α_k → 0` and any `β > 0`, labelling the edges of
+the tests of TINNiK Theorem 4: for level-1 networks, with levels `α_k → 0` and any `β > 0`, labelling the edges of
 any optimal solution of Weighted Quartet Consensus by hypothesis tests on a disjoint cover and
 contracting those labelled false positives returns the tree of blobs with probability tending to one.
 The tests are TINNiK's star and cut tests; the T3 option is not treated.
@@ -114,16 +115,12 @@ any `β > 0`, any selection of maximum likelihood topologies, any solver of Weig
 any selection of disjoint covers, the method on `k` independent gene trees returns the tree of blobs with
 probability tending to one.
 
-The proof combines Theorem 1 (`theorem1_optimal`), Theorem 2 (`theorem2`) and TINNiK's hypothesis tests, as
-the paper says. The paper cites TINNiK's Theorem 4 for the tests' being correct on all four-taxon subsets. That is
-a step of the proof of that theorem, not its statement (`TINNiK.tests_correct`), for generic parameters at `ρ = 0`.
-
-Departure from the paper (E21 of the report): the argument here needs less than the citation. It uses correct
-answers on the non-treelike subsets, by 6a (`TINNiK.tendsto_testedB`), and on the subsets the tree of blobs
-resolves, by nonanomaly and exchangeability (`TINNiK.tendsto_not_testedB`, `NMSC.cut_alternatives`). A treelike
-subset around a false positive is harmless, since the edge is labelled by another subset. This is not forced:
-correctness on all subsets also holds under the printed assumptions, with a further fact on level-1 networks
-that the argument here does not need. -/
+The proof combines Theorem 1 (`theorem1_optimal`), Theorem 2 (`theorem2`) and the correctness of TINNiK's
+hypothesis tests on all four-taxon subsets, as the paper says. The paper cites TINNiK's Theorem 4 for that
+correctness; it is a step of that theorem's proof (`TINNiK.tests_correct`), whose hypothesis,
+CF-detectability, holds under the paper's assumptions (`Level1.cfDetectable`). The paper does not say why:
+it is 6a on the non-treelike subsets, nonanomaly and exchangeability on those the tree of blobs resolves,
+and `Level1.nmscCF_lt_of_not_displays`, a fact about level-1 networks, on the other treelike subsets. -/
 theorem consistency [Fintype V] [Fintype E] {N : RootedNetwork V E X} {θ : MetricData E} {ρ : ℝ}
     (hStd : StandardAssumptions N θ ρ) (hLevel : IsLevelOne N)
     (hNon : IsTQuartetNonanomalous N (nmscCF N θ ρ))
@@ -144,47 +141,25 @@ theorem consistency [Fintype V] [Fintype E] {N : RootedNetwork V E X} {θ : Metr
   have hne : Nonempty X := Fintype.card_pos_iff.mp (by omega)
   have hd : IsDist (geneTreeDist N θ ρ) :=
     ⟨geneTreeDist_nonneg hN hStd.metric hStd.rho, sum_geneTreeDist hN hStd.metric hStd.rho⟩
-  -- the subsets that the tree of blobs resolves are not judged B-quartets
-  have hres := tendsto_iidProb_forall hd (ι := {s : QuartetTree X // Displays (treeOfBlobs N) s})
-    (fun s k ω => s.val.taxa ∉ testedB ml (chiSqOneTail (Real.log k)) β (quartetCount unroot ω))
-    fun s => TINNiK.tendsto_not_testedB hN hStd.metric hStd.rho QuartetTests.tendsto_chiSqOneTail_log hβ hml
-      ⟨fun r hr => (hNon s.val s.property r hr).ne,
-        NMSC.cut_alternatives hN hStd.metric hStd.rho s.val
-          (External.AllmanEtAl2023.inducedCutSplit_of_displays hN s.property)⟩
-  -- the non-treelike subsets are, by 6a
-  have hblob := tendsto_iidProb_forall hd
-    (ι := {q : Finset X // q.card = 4 ∧ ¬ IsTreelike N q})
-    (fun q k ω => q.val ∈ testedB ml (chiSqOneTail (Real.log k)) β (quartetCount unroot ω))
-    fun q => TINNiK.tendsto_testedB hN hStd.metric hStd.rho
-      (fun k => QuartetTests.chiSqOneTail_pos (Real.log k)) QuartetTests.tendsto_log_chiSqOneTail_log hβ hml
-      q.property.1 (hBlob q.val q.property.1 q.property.2)
+  -- the tests are correct on all four-taxon subsets
+  have hdet := Level1.cfDetectable hStd hLevel hNon hBlob
+  have htests := TINNiK.tests_correct hN hX hStd.metric hStd.rho hdet
+    QuartetTests.tendsto_chiSqOneTail_log
+    (TINNiK.rejects_of_log hN hStd.metric hStd.rho hdet
+      (fun k => QuartetTests.chiSqOneTail_pos (Real.log k)) QuartetTests.tendsto_log_chiSqOneTail_log)
+    hβ hml
   refine tendsto_iidProb_of_imp hd (Eventually.of_forall fun k ω hω => ?_)
-    (TINNiK.tendsto_iidProb_and hd (TINNiK.tendsto_iidProb_and hd hres hblob)
-      (tendsto_optimaRefine hStd hNon hX hd))
-  obtain ⟨⟨hR, hB⟩, hopt⟩ := hω
+    (TINNiK.tendsto_iidProb_and hd htests (tendsto_optimaRefine hStd hNon hX hd))
+  obtain ⟨⟨hB, -⟩, hopt⟩ := hω
   obtain ⟨hbin, hmax⟩ := hsolve (quartetCount unroot ω)
   have hTB := hopt _ hbin hmax
   have hcov := hcover _ hbin
-  have hu := IsBinaryTree.isUnrootedTree hbin
-  rw [← theorem2 hN hStd.binary hLevel hu hTB _ hcov, tobqmc]
+  -- so the method is the oracle's, on a refinement of the tree of blobs: Theorem 2
+  rw [← theorem2 hN hStd.binary hLevel (IsBinaryTree.isUnrootedTree hbin) hTB _ hcov, tobqmc]
   congr 1
-  refine Finset.filter_congr fun A hA => ?_
-  by_cases hAT : A ∈ treeOfBlobs N
-  · -- a true positive: no subset around it is judged a B-quartet, and all are treelike
-    constructor
-    · rintro ⟨Y, hYQ, hY⟩
-      obtain ⟨s, hs, rfl⟩ := (hcov A hA).around Y hYQ
-      have hbi := (mem_filter.mp (mem_filter.mp hs).1).2
-      exact absurd hY (hR ⟨s, ⟨A, hAT, hbi⟩⟩)
-    · rintro ⟨Y, hYQ, hnt⟩
-      obtain ⟨s, hs, rfl⟩ := (hcov A hA).around Y hYQ
-      have hbi := (mem_filter.mp (mem_filter.mp hs).1).2
-      exact absurd (Level1.isTreelike_of_hasCutSplit hN (mem_filter.mp hAT).2.2.2 (QuartetTree.card_taxa s)
-        (s.2.2.1 _ hbi)) hnt
-  · -- a false positive: Lemma 4 finds a non-treelike subset in the cover, and it is judged a B-quartet
-    obtain ⟨Y, hYQ, hnt⟩ := Level1.exists_not_isTreelike hN hStd.binary hLevel hu hTB hA hAT (hcov A hA)
-    obtain ⟨s, -, rfl⟩ := (hcov A hA).around Y hYQ
-    exact ⟨fun _ => ⟨_, hYQ, hnt⟩, fun _ =>
-      ⟨_, hYQ, hB ⟨s.taxa, QuartetTree.card_taxa s, hnt⟩⟩⟩
+  refine Finset.filter_congr fun A hA => exists_congr fun Y => and_congr_right fun hYQ => ?_
+  obtain ⟨s, -, rfl⟩ := (hcov A hA).around Y hYQ
+  rw [hB]
+  exact ⟨fun h => h.2, fun h => ⟨QuartetTree.card_taxa s, h⟩⟩
 
 end TOBQMC

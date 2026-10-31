@@ -30,6 +30,9 @@ lineages of the four taxa of `s` (`nmscCF_eq_cherryMass`).
 * `vertexKernel_trace`: consistency at one vertex.
 * `sum_injDist_trace`, `geneTreeDistOn`, `geneTreeDist_trace`: consistency.
 * `cherryMass`, `displays_unroot_iff`, `nmscCF_eq_cherryMass`: concordance factors.
+
+All of these use the inheritance probabilities only through their sums, so each has a version with
+the suffix `_weak` for `RootedNetwork.IsNormalized`.
 -/
 
 @[expose] public noncomputable section
@@ -204,8 +207,8 @@ theorem sum_prod_kingman_trace (S : Finset E) (ℓ : E → ℝ) (Z : Finset X)
 omit [Fintype V] in
 /-- The urn is consistent at a vertex: restricting the lineages `Z` after the allocation of the
 roots of `F` is the allocation of the roots of the restriction. -/
-theorem sum_allocationFactor_trace (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ)
-    (hρ : 0 ≤ ρ ∧ ρ ≤ 1) {v : V} (hv : v ≠ N.root) {F : Finset (Finset X)} (hF : IsForest F)
+theorem sum_allocationFactor_trace_weak (hN : N.IsPhylogenetic) (hθ : N.IsNormalized θ)
+    (hρ : 0 ≤ ρ) {v : V} (hv : v ≠ N.root) {F : Finset (Finset X)} (hF : IsForest F)
     (Z : Finset X) (Λ : (E → Finset (Finset X)) → ℝ)
     (hΛ : ∀ b b', (∀ f ∈ arcsInto N v, b f = b' f) → Λ b = Λ b') :
     ∑ b : E → Finset (Finset X), allocationFactor N θ ρ F v b * Λ (traceAll Z b) =
@@ -225,8 +228,8 @@ theorem sum_allocationFactor_trace (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ)
   choose j hjm hjZ using hex
   have hjinj : Function.Injective j := fun r' s' h =>
     Subtype.ext (by rw [← hjZ r', ← hjZ s', h])
-  have hγ := sum_inheritance hN hθ hv
-  rw [← sum_allocationWeight_mul_comp hρ.1 hγ j hjinj
+  have hγ := sum_inheritance_weak hN hθ hv
+  rw [← sum_allocationWeight_mul_comp hρ hγ j hjinj
     (fun a' => Λ (assignedForest N rF v a') *
       (Fintype.card (Finset (Finset X)) : ℝ) ^ #(arcsInto N v)ᶜ)]
   refine sum_congr rfl fun a _ => ?_
@@ -249,8 +252,19 @@ theorem sum_allocationFactor_trace (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ)
       simp only [Function.comp, hjr, hr]
 
 omit [Fintype V] in
+/-- The urn is consistent at a vertex: restricting the lineages `Z` after the allocation of the
+roots of `F` is the allocation of the roots of the restriction. -/
+theorem sum_allocationFactor_trace (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ)
+    (hρ : 0 ≤ ρ ∧ ρ ≤ 1) {v : V} (hv : v ≠ N.root) {F : Finset (Finset X)} (hF : IsForest F)
+    (Z : Finset X) (Λ : (E → Finset (Finset X)) → ℝ)
+    (hΛ : ∀ b b', (∀ f ∈ arcsInto N v, b f = b' f) → Λ b = Λ b') :
+    ∑ b : E → Finset (Finset X), allocationFactor N θ ρ F v b * Λ (traceAll Z b) =
+      ∑ b : E → Finset (Finset X), allocationFactor N θ ρ (traceForest Z F) v b * Λ b :=
+  sum_allocationFactor_trace_weak hN hθ.isNormalized hρ.1 hv hF Z Λ hΛ
+
+omit [Fintype V] in
 /-- Consistency of one step of the chain. -/
-theorem vertexKernel_trace (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+theorem vertexKernel_trace_weak (hN : N.IsPhylogenetic) (hθ : N.IsNormalized θ) (hρ : 0 ≤ ρ)
     {v : V} (hv : v ≠ N.root) {F : Finset (Finset X)} (hF : IsForest F) (Z : Finset X)
     (ψ : (E → Finset (Finset X)) → ℝ)
     (hψ : ∀ t t', (∀ f ∈ arcsInto N v, t f = t' f) → ψ t = ψ t') :
@@ -265,7 +279,7 @@ theorem vertexKernel_trace (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 
     congr 1
     exact prod_congr rfl fun f hf => by rw [h f hf]
   change _ = ∑ b : E → Finset (Finset X), allocationFactor N θ ρ (traceForest Z F) v b * Λ b
-  rw [← sum_allocationFactor_trace hN hθ hρ hv hF Z Λ hΛ]
+  rw [← sum_allocationFactor_trace_weak hN hθ hρ hv hF Z Λ hΛ]
   refine sum_congr rfl fun b _ => ?_
   by_cases hb : allocationFactor N θ ρ F v b = 0
   · simp [hb]
@@ -275,11 +289,21 @@ theorem vertexKernel_trace (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 
     rw [ha ⟨f, mem_arcsInto.1 hf⟩]
     exact hF.subset fun _ h => (mem_forestBelow.1 h).1
 
+omit [Fintype V] in
+/-- Consistency of one step of the chain. -/
+theorem vertexKernel_trace (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+    {v : V} (hv : v ≠ N.root) {F : Finset (Finset X)} (hF : IsForest F) (Z : Finset X)
+    (ψ : (E → Finset (Finset X)) → ℝ)
+    (hψ : ∀ t t', (∀ f ∈ arcsInto N v, t f = t' f) → ψ t = ψ t') :
+    vertexKernel N θ ρ v F (fun t => ψ (traceAll Z t)) =
+      vertexKernel N θ ρ v (traceForest Z F) ψ :=
+  vertexKernel_trace_weak hN hθ.isNormalized hρ.1 hv hF Z ψ hψ
+
 /-! ### Consistency of the process -/
 
 /-- The law of the forests at the top of the arcs entering a set `D` closed under children, for a
 subset `Z` of the lineages. -/
-theorem sum_sum_trace (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+theorem sum_sum_trace_weak (hN : N.IsPhylogenetic) (hθ : N.IsNormalized θ) (hρ : 0 ≤ ρ)
     {inj : V → Finset (Finset X)} (hinj : ValidInj inj) (Z : Finset X) {D : Finset V}
     (hD : DownClosed N D) (hroot : N.root ∉ D) (φ : (E → Finset (Finset X)) → ℝ)
     (hφ : ∀ t t', (∀ f, N.graph.target f ∈ D → t f = t' f) → φ t = φ t') :
@@ -339,7 +363,7 @@ theorem sum_sum_trace (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤
           by_cases hfS : f ∈ arcsInto N v
           · rw [overwrite_of_mem hfS, overwrite_of_mem hfS, h f hfS]
           · rw [overwrite_of_notMem hfS, overwrite_of_notMem hfS]
-        have hk := vertexKernel_trace (N := N) (θ := θ) (ρ := ρ) hN hθ hρ hvr hgood Z _ hψ
+        have hk := vertexKernel_trace_weak (N := N) (θ := θ) (ρ := ρ) hN hθ hρ hvr hgood Z _ hψ
         have hmap : ∀ t : E → Finset (Finset X), traceAll Z (overwrite (arcsInto N v) top t) =
             overwrite (arcsInto N v) (traceAll Z top) (traceAll Z t) := by
           intro t
@@ -350,9 +374,21 @@ theorem sum_sum_trace (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤
         simp only [hmap, φ']
         rw [hk, arriving_trace]
 
+/-- The law of the forests at the top of the arcs entering a set `D` closed under children, for a
+subset `Z` of the lineages. -/
+theorem sum_sum_trace (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+    {inj : V → Finset (Finset X)} (hinj : ValidInj inj) (Z : Finset X) {D : Finset V}
+    (hD : DownClosed N D) (hroot : N.root ∉ D) (φ : (E → Finset (Finset X)) → ℝ)
+    (hφ : ∀ t t', (∀ f, N.graph.target f ∈ D → t f = t' f) → φ t = φ t') :
+    ∑ bot : E → Finset (Finset X), ∑ top : E → Finset (Finset X),
+        (∏ u ∈ D, vertexWeight N θ ρ inj u bot top) * φ (traceAll Z top) =
+      ∑ bot : E → Finset (Finset X), ∑ top : E → Finset (Finset X),
+        (∏ u ∈ D, vertexWeight N θ ρ (fun w => traceForest Z (inj w)) u bot top) * φ top :=
+  sum_sum_trace_weak hN hθ.isNormalized hρ.1 hinj Z hD hroot φ hφ
+
 /-- **Sampling consistency.** The forest formed by the lineages `Z` in the process with injected
 forests `inj` is distributed as the process with the restrictions of `inj`. -/
-theorem sum_injDist_trace (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+theorem sum_injDist_trace_weak (hN : N.IsPhylogenetic) (hθ : N.IsNormalized θ) (hρ : 0 ≤ ρ)
     {inj : V → Finset (Finset X)} (hinj : ValidInj inj) (Z : Finset X) (H : Finset (Finset X)) :
     ∑ G, (if traceForest Z G = H then injDist N θ ρ inj G else 0) =
       injDist N θ ρ (fun w => traceForest Z (inj w)) H := by
@@ -360,7 +396,7 @@ theorem sum_injDist_trace (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0
   have hD := downClosed_erase_root (N := N) hN
   have hall : ∀ f, N.graph.target f ∈ univ.erase N.root := fun f =>
     mem_erase.2 ⟨target_ne_root hN f, mem_univ _⟩
-  have h := sum_sum_trace (θ := θ) (ρ := ρ) hN hθ hρ hinj Z hD (notMem_erase _ _)
+  have h := sum_sum_trace_weak (θ := θ) (ρ := ρ) hN hθ hρ hinj Z hD (notMem_erase _ _)
     (fun top => kingmanAbsorption (arriving N ri top N.root) H)
     (fun t t' h => by
       have : t = t' := funext fun f => h f (hall f)
@@ -386,6 +422,14 @@ theorem sum_injDist_trace (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0
   · simp [hw]
   · congr 1
     rw [kingmanAbsorption_trace (good_arriving_root hN hinj hw).1.1 Z H, arriving_trace]
+
+/-- **Sampling consistency.** The forest formed by the lineages `Z` in the process with injected
+forests `inj` is distributed as the process with the restrictions of `inj`. -/
+theorem sum_injDist_trace (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+    {inj : V → Finset (Finset X)} (hinj : ValidInj inj) (Z : Finset X) (H : Finset (Finset X)) :
+    ∑ G, (if traceForest Z G = H then injDist N θ ρ inj G else 0) =
+      injDist N θ ρ (fun w => traceForest Z (inj w)) H :=
+  sum_injDist_trace_weak hN hθ.isNormalized hρ.1 hinj Z H
 
 omit [Fintype V] [Fintype E] in
 theorem traceForest_taxaInj (Y Z : Finset X) (v : V) :
@@ -426,13 +470,21 @@ theorem geneTreeDistOn_univ (hN : N.IsPhylogenetic) (G : Finset (Finset X)) :
 
 /-- **Sampling consistency for gene trees**: the restriction of a gene tree to the taxa `Y` has the
 distribution of the forest of the lineages of `Y`. -/
-theorem geneTreeDist_trace (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+theorem geneTreeDist_trace_weak (hN : N.IsPhylogenetic) (hθ : N.IsNormalized θ) (hρ : 0 ≤ ρ)
     (Y : Finset X) (H : Finset (Finset X)) :
     ∑ G, (if traceForest Y G = H then geneTreeDist N θ ρ G else 0) =
       geneTreeDistOn N θ ρ Y H := by
   simp only [geneTreeDist_eq_injDist hN]
-  rw [sum_injDist_trace hN hθ hρ (validInj_taxaInj univ) Y H]
+  rw [sum_injDist_trace_weak hN hθ hρ (validInj_taxaInj univ) Y H]
   simp only [traceForest_taxaInj, univ_inter]
+
+/-- **Sampling consistency for gene trees**: the restriction of a gene tree to the taxa `Y` has the
+distribution of the forest of the lineages of `Y`. -/
+theorem geneTreeDist_trace (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+    (Y : Finset X) (H : Finset (Finset X)) :
+    ∑ G, (if traceForest Y G = H then geneTreeDist N θ ρ G else 0) =
+      geneTreeDistOn N θ ρ Y H :=
+  geneTreeDist_trace_weak hN hθ.isNormalized hρ.1 Y H
 
 /-! ### Concordance factors -/
 
@@ -470,7 +522,7 @@ theorem displays_unroot_iff (s : QuartetTree X) (G : Finset (Finset X)) :
     omega
 
 /-- **The concordance factor of a quartet tree** is read from the lineages of its four taxa. -/
-theorem nmscCF_eq_cherryMass (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+theorem nmscCF_eq_cherryMass_weak (hN : N.IsPhylogenetic) (hθ : N.IsNormalized θ) (hρ : 0 ≤ ρ)
     (s : QuartetTree X) : nmscCF N θ ρ s = cherryMass N θ ρ (taxaInj N s.taxa) s := by
   unfold nmscCF cherryMass
   have h : ∀ G : Finset (Finset X), (if Displays (unroot G) s then geneTreeDist N θ ρ G else 0) =
@@ -484,11 +536,16 @@ theorem nmscCF_eq_cherryMass (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ 
   refine sum_congr rfl fun H _ => ?_
   have hd : injDist N θ ρ (taxaInj N s.taxa) H =
       ∑ G, (if traceForest s.taxa G = H then geneTreeDist N θ ρ G else 0) :=
-    (geneTreeDist_trace hN hθ hρ s.taxa H).symm
+    (geneTreeDist_trace_weak hN hθ hρ s.taxa H).symm
   rw [hd]
   split_ifs with hc
   · rfl
   · simp
+
+/-- **The concordance factor of a quartet tree** is read from the lineages of its four taxa. -/
+theorem nmscCF_eq_cherryMass (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+    (s : QuartetTree X) : nmscCF N θ ρ s = cherryMass N θ ρ (taxaInj N s.taxa) s :=
+  nmscCF_eq_cherryMass_weak hN hθ.isNormalized hρ.1 s
 
 end NMSC
 

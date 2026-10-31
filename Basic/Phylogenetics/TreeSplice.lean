@@ -17,6 +17,13 @@ of `P`, displays exactly what the family at `P` does.
   tree along an injection, such as a choice of representatives of the blocks;
 * `IsRepTuple`, `exists_isRepTuple`, `displays_splice_map_iff`: the restriction of a spliced tree to
   representatives of the blocks is the tree that was spliced;
+* `IsRepTuple.mem_pullTree_iff`, `pullTree_eq_of_forall_mem`, `filter_isBlockUnion_eq_image_pullTree`:
+  a tree with the blocks as sides has one restriction to all representatives, whose lifts are its sides
+  that are unions of blocks;
+* `reattach`, `reattach_isUnrootedTree`, `subset_pullTree_reattach`: replacing that restriction by a
+  refinement and reattaching the removed taxa;
+* `blockWeight`, `innerSum`, `prod_card_mul_sum_eq_sum_innerSum`, `innerSum_eq_quartetScore_pullTree`: a
+  sum over quartet trees in distinct blocks as a sum over representative tuples;
 * `exists_max_quartetScore`: a maximizing tree exists;
 * `sum_ite_taxa_subset_image`: quartet trees on the image of an injection are those of its domain;
 * `map_eq_of_cutExchangeable`: by exchangeability, a weight of a quartet tree in distinct blocks does
@@ -554,6 +561,400 @@ theorem displays_splice_map_iff {T : Finset (Finset X)} (hT : IsUnrootedTree T)
     exact mem_image_of_mem _ hAs
 
 end Rep
+
+/-! ### Restricting a tree that has the blocks as sides -/
+
+section Restrict
+
+variable {P : Finset (Finset X)} (hd : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C)
+  {x : {B // B ∈ P} → X} (hx : IsRepTuple P x)
+
+omit [Fintype X] in
+@[simp] theorem liftBlocks_singleton (b : {B // B ∈ P}) : liftBlocks P {b} = b.val := by
+  simp [liftBlocks]
+
+include hd hx
+
+omit [Fintype X] in
+/-- A lift, restricted to representatives, is the set of blocks that was lifted. -/
+theorem IsRepTuple.filter_mem_liftBlocks (A : Finset {B // B ∈ P}) :
+    (univ.filter fun b => x b ∈ liftBlocks P A) = A := by
+  ext b
+  simp only [mem_filter, mem_univ, true_and]
+  exact mem_liftBlocks_of_mem hd (hx b)
+
+/-- A union of blocks is the lift of the set of blocks whose representatives it contains. -/
+theorem IsRepTuple.liftBlocks_filter_mem (hcover : P.sup id = univ) {C : Finset X}
+    (hC : IsBlockUnion P C) : liftBlocks P (univ.filter fun b => x b ∈ C) = C := by
+  ext y
+  obtain ⟨b, hb⟩ := exists_block hcover y
+  rw [mem_liftBlocks_of_mem hd hb]
+  simp only [mem_filter, mem_univ, true_and]
+  rcases hC b.val b.property with h | h
+  · exact iff_of_true (h (hx b)) (h hb)
+  · exact iff_of_false (disjoint_left.1 h (hx b)) (disjoint_left.1 h hb)
+
+omit hd in
+/-- A nonempty union of blocks contains a representative. -/
+theorem IsRepTuple.filter_mem_nonempty (hcover : P.sup id = univ) {C : Finset X}
+    (hC : IsBlockUnion P C) (hne : C.Nonempty) : (univ.filter fun b => x b ∈ C).Nonempty := by
+  obtain ⟨y, hy⟩ := hne
+  obtain ⟨b, hb⟩ := exists_block hcover y
+  rcases hC b.val b.property with h | h
+  · exact ⟨b, mem_filter.2 ⟨mem_univ b, h (hx b)⟩⟩
+  · exact absurd hy (disjoint_left.1 h hb)
+
+omit hd in
+/-- A union of blocks with a nonempty complement misses a representative. -/
+theorem IsRepTuple.compl_filter_mem_nonempty (hcover : P.sup id = univ) {C : Finset X}
+    (hC : IsBlockUnion P C) (hne : Cᶜ.Nonempty) : (univ.filter fun b => x b ∈ C)ᶜ.Nonempty := by
+  obtain ⟨y, hy⟩ := hne
+  obtain ⟨b, hb⟩ := exists_block hcover y
+  rcases hC b.val b.property with h | h
+  · exact absurd (h hb) (mem_compl.1 hy)
+  · exact ⟨b, mem_compl.2 fun hb' => disjoint_left.1 h (hx b) (mem_filter.1 hb').2⟩
+
+omit hd hx in
+/-- A side of a tree with the blocks of `P` as sides is a union of blocks, or it or its complement
+lies inside a block. -/
+theorem IsUnrootedTree.isBlockUnion_or {T : Finset (Finset X)} (hT : IsUnrootedTree T)
+    (hall : ∀ B ∈ P, B ∈ T) {C : Finset X} (hC : C ∈ T) :
+    IsBlockUnion P C ∨ (∃ B ∈ P, C ⊆ B) ∨ ∃ B ∈ P, C ∪ B = univ := by
+  by_contra hcon
+  push Not at hcon
+  obtain ⟨h1, h2, h3⟩ := hcon
+  unfold IsBlockUnion at h1
+  push Not at h1
+  obtain ⟨B, hB, hnot1, hnot2⟩ := h1
+  rcases hT.compatible hC (hall B hB) with h | h | h | h
+  · exact h2 B hB h
+  · exact hnot1 h
+  · exact hnot2 h.symm
+  · exact h3 B hB h
+
+/-- The restriction to representatives of a tree with the blocks as sides, without mentioning the
+representatives: its sides are the sets of blocks whose lifts are sides of the tree. -/
+theorem IsRepTuple.mem_pullTree_iff (hcover : P.sup id = univ) {T : Finset (Finset X)}
+    (hT : IsUnrootedTree T) (hall : ∀ B ∈ P, B ∈ T) {A : Finset {B // B ∈ P}} :
+    A ∈ pullTree x T ↔ liftBlocks P A ∈ T ∧ A.Nonempty ∧ Aᶜ.Nonempty := by
+  constructor
+  · intro hA
+    obtain ⟨⟨C, hC, hCA⟩, h1, h2⟩ := mem_pullTree.1 hA
+    refine ⟨?_, h1, h2⟩
+    rcases hT.isBlockUnion_or hall hC with hU | ⟨B, hB, hsub⟩ | ⟨B, hB, hu⟩
+    · rw [← hCA, hx.liftBlocks_filter_mem hd hcover hU]
+      exact hC
+    · have hAe : A = {⟨B, hB⟩} := by
+        have key : ∀ c ∈ A, c = ⟨B, hB⟩ := fun c hc => by
+          rw [← hCA] at hc
+          exact block_eq_of_mem hd (hx c) (hsub (mem_filter.1 hc).2)
+        obtain ⟨b, hb⟩ := h1
+        ext c
+        rw [mem_singleton]
+        exact ⟨key c, fun e => e ▸ key b hb ▸ hb⟩
+      rw [hAe, liftBlocks_singleton]
+      exact hall B hB
+    · have hAe : Aᶜ = {⟨B, hB⟩} := by
+        have key : ∀ c ∈ Aᶜ, c = ⟨B, hB⟩ := fun c hc => by
+          have hxc : x c ∉ C := fun h =>
+            mem_compl.1 hc (hCA ▸ mem_filter.2 ⟨mem_univ c, h⟩)
+          have hxu : x c ∈ C ∪ B := hu ▸ mem_univ _
+          exact block_eq_of_mem hd (hx c) ((mem_union.1 hxu).resolve_left hxc)
+        obtain ⟨b, hb⟩ := h2
+        ext c
+        rw [mem_singleton]
+        exact ⟨key c, fun e => e ▸ key b hb ▸ hb⟩
+      rw [← compl_compl A, hAe, liftBlocks_compl hd hcover, liftBlocks_singleton]
+      exact hT.compl_mem (hall B hB)
+  · rintro ⟨h1, h2, h3⟩
+    exact mem_pullTree.2 ⟨⟨_, h1, hx.filter_mem_liftBlocks hd A⟩, h2, h3⟩
+
+omit hx in
+/-- A tree with the blocks as sides has the same restriction to any choice of representatives. -/
+theorem pullTree_eq_of_forall_mem (hcover : P.sup id = univ) {T : Finset (Finset X)}
+    (hT : IsUnrootedTree T) (hall : ∀ B ∈ P, B ∈ T) {x x' : {B // B ∈ P} → X}
+    (hx : IsRepTuple P x) (hx' : IsRepTuple P x') : pullTree x T = pullTree x' T := by
+  ext A
+  rw [hx.mem_pullTree_iff hd hcover hT hall, hx'.mem_pullTree_iff hd hcover hT hall]
+
+/-- For a tree with the blocks as sides, the sides that are unions of blocks are the lifts of its
+restriction to representatives. -/
+theorem filter_isBlockUnion_eq_image_pullTree (hcover : P.sup id = univ) {T : Finset (Finset X)}
+    (hT : IsUnrootedTree T) (hall : ∀ B ∈ P, B ∈ T) :
+    T.filter (IsBlockUnion P) = (pullTree x T).image (liftBlocks P) := by
+  ext A
+  simp only [mem_filter, mem_image]
+  constructor
+  · rintro ⟨hA, hU⟩
+    refine ⟨univ.filter fun b => x b ∈ A, mem_pullTree.2 ⟨⟨A, hA, rfl⟩,
+      hx.filter_mem_nonempty hcover hU (hT.nonempty_of_mem hA),
+      hx.compl_filter_mem_nonempty hcover hU (hT.nonempty_of_mem (hT.compl_mem hA))⟩,
+      hx.liftBlocks_filter_mem hd hcover hU⟩
+  · rintro ⟨C, hC, rfl⟩
+    exact ⟨((hx.mem_pullTree_iff hd hcover hT hall).1 hC).1, isBlockUnion_liftBlocks hd C⟩
+
+end Restrict
+
+/-! ### Reattaching the taxa removed by a restriction -/
+
+section Reattach
+
+variable {P : Finset (Finset X)}
+
+/-- The tree `T`, with the blocks of `P` as sides, after replacing its restriction to representatives
+of the blocks by a refinement `R` and reattaching the removed taxa: each leaf of `R` is replaced by the
+subtree of `T` on that block. The sides of `T` inside a block stay, and the sides of `T` that are unions
+of blocks are lifts of sides of `R`. -/
+def reattach (P : Finset (Finset X)) (T : Finset (Finset X)) (R : Finset (Finset {B // B ∈ P})) :
+    Finset (Finset X) :=
+  T ∪ R.image (liftBlocks P)
+
+omit [Fintype X] in
+theorem subset_reattach (T : Finset (Finset X)) (R : Finset (Finset {B // B ∈ P})) :
+    T ⊆ reattach P T R :=
+  subset_union_left
+
+variable (hd : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C) (hcover : P.sup id = univ)
+  {T : Finset (Finset X)} (hT : IsUnrootedTree T) (hall : ∀ B ∈ P, B ∈ T)
+  {R : Finset (Finset {B // B ∈ P})} (hR : IsUnrootedTree R)
+  {x : {B // B ∈ P} → X} (hx : IsRepTuple P x) (hsub : pullTree x T ⊆ R)
+
+include hd hcover hT hall hR hx hsub in
+private theorem compatible_liftBlocks_of_mem {A : Finset X} (hA : A ∈ T) {C : Finset {B // B ∈ P}}
+    (hC : C ∈ R) :
+    A ⊆ liftBlocks P C ∨ liftBlocks P C ⊆ A ∨ Disjoint A (liftBlocks P C) ∨
+      A ∪ liftBlocks P C = univ := by
+  have hne : ∀ B ∈ P, B.Nonempty := fun B hB => hT.nonempty_of_mem (hall B hB)
+  have hfam := isBlockFamily_image_liftBlocks hne hd hcover hR
+  rcases hT.isBlockUnion_or hall hA with hU | ⟨B, hB, hAB⟩ | ⟨B, hB, hu⟩
+  · have hmem : (univ.filter fun b => x b ∈ A) ∈ R := hsub (mem_pullTree.2 ⟨⟨A, hA, rfl⟩,
+      hx.filter_mem_nonempty hcover hU (hT.nonempty_of_mem hA),
+      hx.compl_filter_mem_nonempty hcover hU (hT.nonempty_of_mem (hT.compl_mem hA))⟩)
+    have := hfam.compatible _ (mem_image_of_mem _ hmem) _ (mem_image_of_mem _ hC)
+    rwa [hx.liftBlocks_filter_mem hd hcover hU] at this
+  · rcases isBlockUnion_liftBlocks hd C B hB with h | h
+    · exact Or.inl (hAB.trans h)
+    · exact Or.inr (Or.inr (Or.inl (h.mono_left hAB)))
+  · rcases isBlockUnion_liftBlocks hd C B hB with h | h
+    · refine Or.inr (Or.inr (Or.inr (eq_univ_iff_forall.2 fun y => ?_)))
+      have : y ∈ A ∪ B := hu ▸ mem_univ y
+      rcases mem_union.1 this with h' | h'
+      · exact mem_union_left _ h'
+      · exact mem_union_right _ (h h')
+    · refine Or.inr (Or.inl fun y hy => ?_)
+      have : y ∈ A ∪ B := hu ▸ mem_univ y
+      rcases mem_union.1 this with h' | h'
+      · exact h'
+      · exact absurd hy (disjoint_left.1 h h')
+
+include hd hcover hT hall hR hx hsub in
+/-- Reattaching the removed taxa to a refinement of the restriction gives a tree. -/
+theorem reattach_isUnrootedTree (hP : 2 ≤ P.card) : IsUnrootedTree (reattach P T R) := by
+  have hne : ∀ B ∈ P, B.Nonempty := fun B hB => hT.nonempty_of_mem (hall B hB)
+  have hfam := isBlockFamily_image_liftBlocks hne hd hcover hR
+  have hX : 2 ≤ Fintype.card X :=
+    (by rwa [Fintype.card_coe] : 2 ≤ Fintype.card {B // B ∈ P}).trans
+      (Fintype.card_le_of_injective x (hx.injective hd))
+  have hSF := hT.isSplitFamily hX
+  have hmem : ∀ A, A ∈ reattach P T R ↔ A ∈ T ∨ A ∈ R.image (liftBlocks P) := fun A => mem_union
+  have hcompat : ∀ A ∈ T, ∀ A' ∈ R.image (liftBlocks P),
+      A ⊆ A' ∨ A' ⊆ A ∨ Disjoint A A' ∨ A ∪ A' = univ := by
+    intro A hA A' hA'
+    obtain ⟨C, hC, rfl⟩ := mem_image.1 hA'
+    exact compatible_liftBlocks_of_mem hd hcover hT hall hR hx hsub hA hC
+  refine (isUnrootedTree_iff hX _).2 ⟨?_, ?_, ?_, ?_, ?_⟩
+  · intro A hA
+    rcases (hmem A).1 hA with h | h
+    · exact hSF.nonempty A h
+    · exact hfam.nonempty A h
+  · intro A hA
+    rcases (hmem A).1 hA with h | h
+    · exact hSF.compl_nonempty A h
+    · exact hfam.compl_nonempty A h
+  · intro A hA
+    rcases (hmem A).1 hA with h | h
+    · exact (hmem _).2 (Or.inl (hSF.compl_mem A h))
+    · exact (hmem _).2 (Or.inr (hfam.compl_mem A h))
+  · exact fun y => (hmem _).2 (Or.inl (hSF.singleton_mem y))
+  · intro A hA B hB
+    rcases (hmem A).1 hA with h | h <;> rcases (hmem B).1 hB with h' | h'
+    · exact hSF.compatible A h B h'
+    · exact hcompat A h B h'
+    · exact compat_symm (hcompat B h' A h)
+    · exact hfam.compatible A h B h'
+
+include hd hR in
+omit [Fintype X] in
+/-- The restriction of the reattached tree to any representatives contains the refinement. -/
+theorem subset_pullTree_reattach {y : {B // B ∈ P} → X} (hy : IsRepTuple P y) :
+    R ⊆ pullTree y (reattach P T R) := fun C hC =>
+  mem_pullTree.2 ⟨⟨liftBlocks P C, mem_union_right _ (mem_image_of_mem _ hC),
+    hy.filter_mem_liftBlocks hd C⟩, hR.nonempty_of_mem hC, hR.nonempty_of_mem (hR.compl_mem hC)⟩
+
+end Reattach
+
+/-! ### A sum over quartet trees in distinct blocks, as a sum over representative tuples -/
+
+section RepSum
+
+variable {P : Finset (Finset X)}
+
+/-- A set of taxa in distinct blocks lies among some representatives of the blocks. -/
+theorem exists_isRepTuple_superset (hne : ∀ B ∈ P, B.Nonempty) (hcover : P.sup id = univ)
+    {q : Finset X} (hI : InDistinctBlocks P q) : ∃ x, IsRepTuple P x ∧ q ⊆ univ.image x := by
+  have h : ∀ b : {B // B ∈ P}, ∃ y ∈ b.val, (b.val ∩ q).Nonempty → y ∈ q := fun b => by
+    by_cases hb : (b.val ∩ q).Nonempty
+    · obtain ⟨y, hy⟩ := hb
+      exact ⟨y, (mem_inter.1 hy).1, fun _ => (mem_inter.1 hy).2⟩
+    · obtain ⟨y, hy⟩ := hne b.val b.property
+      exact ⟨y, hy, fun h => absurd h hb⟩
+  choose x hx hxq using h
+  refine ⟨x, hx, fun y hy => ?_⟩
+  obtain ⟨b, hb⟩ := exists_block hcover y
+  have hmem : (b.val ∩ q).Nonempty := ⟨y, mem_inter.2 ⟨hb, hy⟩⟩
+  have : x b = y := card_le_one.1 (hI b.val b.property) _ (mem_inter.2 ⟨hx b, hxq b hmem⟩) _
+    (mem_inter.2 ⟨hb, hy⟩)
+  exact mem_image.2 ⟨b, mem_univ b, this⟩
+
+/-- The weight of a quartet tree in the sum over representative tuples: the product of the sizes of the
+blocks of `P` meeting its taxa. -/
+def blockWeight (P : Finset (Finset X)) (s : QuartetTree X) : ℝ :=
+  ∏ B ∈ P.filter fun B => (B ∩ s.taxa).Nonempty, (B.card : ℝ)
+
+/-- Counting the representative tuples containing the taxa of a quartet tree in distinct blocks. -/
+theorem card_rep_mul_blockWeight
+    (hdisj : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C)
+    (hcover : P.sup id = univ) {s : QuartetTree X} (hI : InDistinctBlocks P s.taxa) :
+    (((univ : Finset ({B // B ∈ P} → X)).filter
+        (fun x => (∀ B, x B ∈ B.val) ∧ s.taxa ⊆ univ.image x)).card : ℝ) * blockWeight P s =
+      ∏ B ∈ P, (B.card : ℝ) := by
+  set q := s.taxa with hq
+  let F : (b : {B // B ∈ P}) → Finset X := fun b =>
+    if (b.val ∩ q).Nonempty then b.val ∩ q else b.val
+  have hfil : (univ : Finset ({B // B ∈ P} → X)).filter
+      (fun x => (∀ B, x B ∈ B.val) ∧ q ⊆ univ.image x) = Fintype.piFinset F := by
+    ext x
+    simp only [mem_filter, mem_univ, true_and, Fintype.mem_piFinset]
+    constructor
+    · rintro ⟨hrep, hsub⟩ b
+      by_cases hb : (b.val ∩ q).Nonempty
+      · simp only [F, ite_eq_left hb]
+        obtain ⟨y, hy⟩ := hb
+        obtain ⟨hyb, hyq⟩ := mem_inter.1 hy
+        obtain ⟨c, -, rfl⟩ := mem_image.1 (hsub hyq)
+        have : c = b := block_eq_of_mem hdisj (hrep c) hyb
+        exact this ▸ hy
+      · simp only [F, ite_eq_right hb]
+        exact hrep b
+    · intro h
+      have hrep : ∀ b, x b ∈ b.val := by
+        intro b
+        have := h b
+        by_cases hb : (b.val ∩ q).Nonempty
+        · simp only [F, ite_eq_left hb] at this
+          exact (mem_inter.1 this).1
+        · simpa only [F, ite_eq_right hb] using this
+      refine ⟨hrep, fun y hy => ?_⟩
+      obtain ⟨b, hb⟩ := exists_block hcover y
+      have hne' : (b.val ∩ q).Nonempty := ⟨y, mem_inter.2 ⟨hb, hy⟩⟩
+      have hxb := h b
+      simp only [F, ite_eq_left hne'] at hxb
+      have : x b = y := card_le_one.1 (hI b.val b.property) _ hxb _ (mem_inter.2 ⟨hb, hy⟩)
+      exact mem_image.2 ⟨b, mem_univ b, this⟩
+  rw [hfil, Fintype.card_piFinset, blockWeight, prod_filter]
+  push_cast
+  have hcoe : ∏ b : {B // B ∈ P}, ((F b).card : ℝ) =
+      ∏ B ∈ P, ((if (B ∩ q).Nonempty then B ∩ q else B).card : ℝ) :=
+    prod_coe_sort P fun B => ((if (B ∩ q).Nonempty then B ∩ q else B).card : ℝ)
+  rw [hcoe, ← prod_mul_distrib]
+  refine prod_congr rfl fun B hB => ?_
+  by_cases hb : (B ∩ q).Nonempty
+  · have h1 : (B ∩ q).card = 1 := le_antisymm (hI B hB) (card_pos.2 hb)
+    rw [ite_eq_left hb, ite_eq_left hb, h1]
+    simp
+  · rw [ite_eq_right hb, ite_eq_right hb, mul_one]
+
+/-- The sum at the representative tuple `x`, weighted by the block sizes, of `w` over the quartet trees
+that `T` displays on taxa among the representatives. -/
+def innerSum (P : Finset (Finset X)) (w : QuartetTree X → ℝ) (T : Finset (Finset X))
+    (x : {B // B ∈ P} → X) : ℝ :=
+  ∑ s, if InDistinctBlocks P s.taxa ∧ Displays T s ∧ s.taxa ⊆ univ.image x then
+    blockWeight P s * w s else 0
+
+/-- A score over quartet trees in distinct blocks, multiplied by the number of representative tuples,
+is the sum of the inner sums over the tuples. A quartet tree occurs once for each choice of
+representatives of the blocks it does not use, which the block weights compensate. -/
+theorem prod_card_mul_sum_eq_sum_innerSum (hdisj : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C)
+    (hcover : P.sup id = univ) (w : QuartetTree X → ℝ) (T : Finset (Finset X)) :
+    (∏ B ∈ P, (B.card : ℝ)) * (∑ s, if InDistinctBlocks P s.taxa ∧ Displays T s then w s else 0) =
+      ∑ x ∈ (univ : Finset ({B // B ∈ P} → X)).filter (fun x => ∀ B, x B ∈ B.val),
+        innerSum P w T x := by
+  simp only [innerSum]
+  rw [sum_comm, mul_sum]
+  refine sum_congr rfl fun s _ => ?_
+  by_cases hID : InDistinctBlocks P s.taxa ∧ Displays T s
+  · rw [ite_eq_left hID]
+    have hstep : ∀ x : {B // B ∈ P} → X,
+        (if InDistinctBlocks P s.taxa ∧ Displays T s ∧ s.taxa ⊆ univ.image x then
+          blockWeight P s * w s else 0) =
+        if s.taxa ⊆ univ.image x then blockWeight P s * w s else 0 := by
+      intro x
+      by_cases hc : s.taxa ⊆ univ.image x
+      · rw [ite_eq_left ⟨hID.1, hID.2, hc⟩, ite_eq_left hc]
+      · rw [ite_eq_right fun h => hc h.2.2, ite_eq_right hc]
+    simp only [hstep]
+    rw [← sum_filter, filter_filter, sum_const, nsmul_eq_mul, ← mul_assoc,
+      card_rep_mul_blockWeight hdisj hcover hID.1]
+  · rw [ite_eq_right hID, mul_zero]
+    exact (sum_eq_zero fun x _ => ite_eq_right fun h => hID ⟨h.1, h.2.1⟩).symm
+
+/-- The product of the sizes of the blocks of a quartet tree on the blocks. -/
+def blockSizeProd (s₀ : QuartetTree {B // B ∈ P}) : ℝ :=
+  ∏ b ∈ s₀.taxa, (b.val.card : ℝ)
+
+omit [Fintype X] in
+theorem blockSizeProd_pos (hne : ∀ B ∈ P, B.Nonempty) (s₀ : QuartetTree {B // B ∈ P}) :
+    0 < blockSizeProd s₀ :=
+  prod_pos fun b _ => by exact_mod_cast card_pos.2 (hne b.val b.property)
+
+omit [Fintype X] in
+theorem blockWeight_map (hd : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C)
+    {x : {B // B ∈ P} → X} (hx : IsRepTuple P x) (s₀ : QuartetTree {B // B ∈ P}) :
+    blockWeight P (s₀.map (hx.injective hd)) = blockSizeProd s₀ := by
+  have hfil : (P.filter fun B => (B ∩ (s₀.map (hx.injective hd)).taxa).Nonempty) =
+      s₀.taxa.image Subtype.val := by
+    ext B
+    simp only [mem_filter, mem_image, QuartetTree.map_taxa]
+    constructor
+    · rintro ⟨hB, y, hy⟩
+      obtain ⟨hyB, hyt⟩ := mem_inter.1 hy
+      obtain ⟨b, hb, rfl⟩ := mem_image.1 hyt
+      have : b = ⟨B, hB⟩ := block_eq_of_mem hd (hx b) hyB
+      exact ⟨b, hb, by rw [this]⟩
+    · rintro ⟨b, hb, rfl⟩
+      exact ⟨b.property, x b, mem_inter.2 ⟨hx b, mem_image_of_mem _ hb⟩⟩
+  rw [blockWeight, hfil, prod_image fun a _ b _ h => Subtype.ext h, blockSizeProd]
+
+/-- The inner sum at the representative tuple `x` is a score of the restriction of the tree to `x`. -/
+theorem innerSum_eq_quartetScore_pullTree (hd : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C)
+    {x : {B // B ∈ P} → X} (hx : IsRepTuple P x) (w : QuartetTree X → ℝ) (T : Finset (Finset X)) :
+    innerSum P w T x = quartetScore (fun s₀ => blockSizeProd s₀ * w (s₀.map (hx.injective hd)))
+      (pullTree x T) := by
+  have hstep : ∀ s : QuartetTree X,
+      (if InDistinctBlocks P s.taxa ∧ Displays T s ∧ s.taxa ⊆ univ.image x then
+        blockWeight P s * w s else 0) =
+      if s.taxa ⊆ univ.image x then (if Displays T s then blockWeight P s * w s else 0) else 0 := by
+    intro s
+    by_cases hc : s.taxa ⊆ univ.image x
+    · have hI := hx.inDistinctBlocks hd hc
+      simp only [hI, hc, true_and, and_true, ↓reduceIte]
+    · simp only [hc, and_false, ↓reduceIte]
+  simp only [innerSum, hstep]
+  rw [sum_ite_taxa_subset_image (hx.injective hd), quartetScore]
+  refine sum_congr rfl fun s₀ _ => ?_
+  simp only [displays_pullTree_iff (hx.injective hd), blockWeight_map hd hx]
+
+end RepSum
 
 /-- If there is a tree, the score of any weights has a maximizing tree. -/
 theorem exists_max_quartetScore {T₀ : Finset (Finset X)} (hT₀ : IsUnrootedTree T₀)

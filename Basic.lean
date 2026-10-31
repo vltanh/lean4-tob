@@ -1,6 +1,8 @@
 module
 
+public import Basic.Analysis.AnalyticZeroSet
 public import Basic.Analysis.FiniteOptimization
+public import Basic.Analysis.MatrixExponential
 public import Basic.Analysis.SpecialFunctions.EntropyExcess
 public import Basic.Analysis.SpecialFunctions.Erf
 public import Basic.Analysis.SpecialFunctions.GibbsInequality
@@ -29,6 +31,7 @@ public import Basic.Phylogenetics.Hierarchy
 public import Basic.Phylogenetics.HierarchyGraph
 public import Basic.Phylogenetics.HierarchyParents
 public import Basic.Phylogenetics.InducedNetwork
+public import Basic.Phylogenetics.NMSC.Analytic
 public import Basic.Phylogenetics.NMSC.Basic
 public import Basic.Phylogenetics.NMSC.Exchangeability
 public import Basic.Phylogenetics.NMSC.Factor
@@ -36,6 +39,8 @@ public import Basic.Phylogenetics.NMSC.History
 public import Basic.Phylogenetics.NMSC.Inheritance
 public import Basic.Phylogenetics.NMSC.Marginal
 public import Basic.Phylogenetics.NMSC.Symmetry
+public import Basic.Phylogenetics.NMSC.TreeCF
+public import Basic.Phylogenetics.NMSC.Witness
 public import Basic.Phylogenetics.Network
 public import Basic.Phylogenetics.NetworkCuts
 public import Basic.Phylogenetics.PendantCuts

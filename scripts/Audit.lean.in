@@ -47,10 +47,12 @@ or, when general, in `Basic/`, and, in a conditional formalization, the proposit
 hypotheses. The traversal
 stops at them. -/
 meta def externalResults : List (String × Name) :=
-  [("Allman et al. 2023, Corollary 1 (assumed)", ``External.AllmanEtAl2023.Corollary1),
+  [("Allman et al. 2023, Theorem 1", ``External.AllmanEtAl2023.theorem1),
+   ("Allman et al. 2023, Corollary 1", ``External.AllmanEtAl2023.corollary1),
+   ("Allman et al. 2023, Lemma 2", ``External.AllmanEtAl2023.lemma2),
    ("CF-detectability at given parameters (assumed in the consistency claim)",
     ``External.AllmanEtAl2023.CFDetectable),
-   ("Adaptation of Allman et al. 2023, Theorem 1 (assumed)", ``ECToBlob.AdaptedAllmanTheorem1),
+   ("ECToBlob's adaptation of Allman et al. 2023, Theorem 1", ``ECToBlob.adaptedAllmanTheorem1),
    ("Ané et al. 2024, exchangeability", ``External.AneEtAl2024.exchangeability),
    ("Allman et al. 2023, Theorem 2", ``External.AllmanEtAl2023.theorem2),
    ("Allman et al. 2023, Theorem 3, combinatorial part", ``External.AllmanEtAl2023.closure_complete),

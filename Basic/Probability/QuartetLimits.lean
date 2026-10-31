@@ -9,9 +9,9 @@ public import Basic.Probability.Trinomial.Tests
 For a sample of `n` gene trees whose displayed quartet trees on a set of four taxa have the null
 probabilities `p`, the p-values of the star test and the T1 test are asymptotically uniform, as ECToBlob §8
 takes "from well-known properties of likelihood ratio tests" and Mitchell, Allman, Rhodes 2019; the T1 p-value
-at its boundary stays away from `0` and `1`; and the cut test does not reject a strictly cut concordance
-factor, as in TINNiK's proof of Theorem 4. These come from Mathlib's central limit theorem, through
-`Basic/Probability/Trinomial/`.
+at its boundary stays away from `0` and `1`; and the p-value of the cut test at a strictly cut concordance
+factor is asymptotically uniform, so that the test does not reject at levels tending to `0`, as in TINNiK's
+proof of Theorem 4. These come from Mathlib's central limit theorem, through `Basic/Probability/Trinomial/`.
 -/
 
 @[expose] public noncomputable section
@@ -370,9 +370,62 @@ theorem t1PValue_centroid_tight (hd : IsDist dist) (hs : DisplaysOne dist sides)
     (fun a b c ↦ δ ≤ t1PValueR a b c ∧ t1PValueR a b c ≤ 1 - δ)] at hn
   simpa only [t1PValue_eq_t1PValueR _ hne hr] using hn
 
+/-- A strictly cut, positive concordance factor, through the three classes: the law is `cutPoint φ` for a
+`φ` off the singularity and off the edges of the simplex. -/
+private theorem strictlyCut_facts (hd : IsDist dist) (hs : DisplaysOne dist sides) {s r₁ r₂ : QuartetTree X}
+    (hrr : r₁ ≠ r₂) (hr : s.alternatives = {r₁, r₂})
+    (hne : ∀ r ∈ s.alternatives, displayCF dist sides r ≠ displayCF dist sides s)
+    (heq : ∀ r ∈ s.alternatives, ∀ r' ∈ s.alternatives,
+      displayCF dist sides r = displayCF dist sides r')
+    (hpos : ∀ r ∈ treesOn s.taxa, 0 < displayCF dist sides r) :
+    pushDist dist (label sides s r₁) = cutPoint (3 * displayCF dist sides r₁) ∧
+      (0 < 3 * displayCF dist sides r₁ ∧ 3 * displayCF dist sides r₁ < 3 / 2) ∧
+      3 * displayCF dist sides r₁ ≠ 1 := by
+  have hT := treesOn_taxa_eq hr
+  have hmem₁ : r₁ ∈ s.alternatives := by rw [hr]; simp
+  have hmem₂ : r₂ ∈ s.alternatives := by rw [hr]; simp
+  have heq' := heq r₁ hmem₁ r₂ hmem₂
+  have hsum := sum_displayCF_treesOn hd hs s.card_taxa
+  rw [sum_treesOn _ hrr hr, ← heq'] at hsum
+  have h₀ := hpos s (by rw [hT]; simp)
+  have h₁ := hpos r₁ (by rw [hT]; simp)
+  refine ⟨pushDist_eq_cutPoint hd hs hrr hr heq', by constructor <;> linarith, fun hone ↦ ?_⟩
+  apply hne r₁ hmem₁
+  linarith
+
+/-- Under the null of the cut test, off its singularity, with positive probabilities, its p-value is
+asymptotically uniform: as `m → ∞` the test distribution at the estimated parameter tends to `χ²₁`, as
+TINNiK's proof of Theorem 4 says (`Trinomial.eventually_abs_cutTail_estimate_sub_lt`), and the statistic
+tends to `Z²`. -/
+theorem cutPValue_asymptoticallyUniform (hd : IsDist dist) (hs : DisplaysOne dist sides)
+    {s : QuartetTree X}
+    (hne : ∀ r ∈ s.alternatives, displayCF dist sides r ≠ displayCF dist sides s)
+    (heq : ∀ r ∈ s.alternatives, ∀ r' ∈ s.alternatives,
+      displayCF dist sides r = displayCF dist sides r')
+    (hpos : ∀ r ∈ treesOn s.taxa, 0 < displayCF dist sides r) :
+    AsymptoticallyUniform dist fun _ ω => cutPValue (quartetCount sides ω) s := by
+  obtain ⟨r₁, r₂, hrr, hr⟩ := QuartetTree.exists_alternatives s
+  obtain ⟨hp, hφ, hφ1⟩ := strictlyCut_facts hd hs hrr hr hne heq hpos
+  intro x hx0 hx1
+  have := tendsto_cut hφ hφ1 hx0 hx1
+  rw [← hp] at this
+  refine this.congr fun n ↦ ?_
+  rw [← iidProb_counts hs hrr hr n (fun a b c ↦ cutPValueR a b c ≤ x)]
+  simp only [cutPValue_eq_cutPValueR _ hrr hr]
+
 /-- The cut test on a strictly cut, positive concordance factor (the null, off its singularity): the
 line of the true topology has the least statistic with probability tending to one, and for any levels
-`α_m → 0` the test does not reject. -/
+`α_m → 0` the test does not reject.
+
+This is TINNiK's proof of Theorem 4: "If a true CF is cut, then as `m → ∞`, the parameter `μ₀` of that
+distribution goes to `∞` and the distribution converges to the `χ²₁`. This holds even using the MLE in place of
+the true parameter. To ensure that the probability of failing to reject the null hypothesis approaches 1 as
+`m → ∞`, it is enough to choose any sequence of significance levels `α_m → 0`." The p-value is
+asymptotically uniform (`cutPValue_asymptoticallyUniform`, through `Trinomial.tendsto_cut`), so
+`P(p < α_m) → 0`. Read `μ₀ → ∞` there as `|μ₀| → ∞`, since anomalous strictly cut concordance factors have
+`μ₀ → -∞`: the two signs behave alike. The limit is uniform once `cos α₀ |μ₀|` is large
+(`Trinomial.abs_cutTail_sub_chiSqOneTail_lt`); `|μ₀|` large is not enough near `φ = 3/2`, where `α₀ → π/2`,
+but positivity keeps the estimate of `φ` away from `3/2` in probability. -/
 theorem cutTest_null (hd : IsDist dist) (hs : DisplaysOne dist sides) {s : QuartetTree X}
     (hne : ∀ r ∈ s.alternatives, displayCF dist sides r ≠ displayCF dist sides s)
     (heq : ∀ r ∈ s.alternatives, ∀ r' ∈ s.alternatives,
@@ -384,21 +437,7 @@ theorem cutTest_null (hd : IsDist dist) (hs : DisplaysOne dist sides) {s : Quart
         α n ≤ cutPValue (quartetCount sides ω) s) atTop (𝓝 1) := by
   obtain ⟨r₁, r₂, hrr, hr⟩ := QuartetTree.exists_alternatives s
   obtain ⟨hs₁, hs₂, ha₁, ha₂⟩ := alternatives_facts hrr hr
-  have hT := treesOn_taxa_eq hr
-  have hmem₁ : r₁ ∈ s.alternatives := by rw [hr]; simp
-  have hmem₂ : r₂ ∈ s.alternatives := by rw [hr]; simp
-  have heq' := heq r₁ hmem₁ r₂ hmem₂
-  have hp := pushDist_eq_cutPoint hd hs hrr hr heq'
-  have hsum := sum_displayCF_treesOn hd hs s.card_taxa
-  rw [sum_treesOn _ hrr hr, ← heq'] at hsum
-  have h₀ := hpos s (by rw [hT]; simp)
-  have h₁ := hpos r₁ (by rw [hT]; simp)
-  have hφ : 0 < 3 * displayCF dist sides r₁ ∧ 3 * displayCF dist sides r₁ < 3 / 2 := by
-    constructor <;> linarith
-  have hφ1 : 3 * displayCF dist sides r₁ ≠ 1 := by
-    intro hone
-    apply hne r₁ hmem₁
-    linarith
+  obtain ⟨hp, hφ, hφ1⟩ := strictlyCut_facts hd hs hrr hr hne heq hpos
   have := tendsto_cut_null hφ hφ1 hα
   rw [← hp] at this
   refine this.congr fun n ↦ ?_

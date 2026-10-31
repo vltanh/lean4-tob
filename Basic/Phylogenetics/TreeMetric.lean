@@ -12,7 +12,9 @@ quartet trees displayed on `T`, and so `T` and `w`, can be read off from the met
 
 API (namespace `Phylogenetics.TreeMetric`): `ne_of_card_four`, `card_four_of_ne`,
 `exists_eq_quartetTree`, `taxa_quartetTree`, `displays_quartetTree_iff`, `fourPoint_treeMetric`,
-`displays_iff_fourPoint`, `exists_pair_not_in_proper`, `eq_of_treeMetric_eq`.
+`displays_iff_fourPoint`, `exists_pair_not_in_proper`, `eq_of_treeMetric_eq`; for the nodes on the path
+between two taxa, `blockOf`, `pathNodes`, `otherBlocks`, `JoinsAt`, `pathNodes_order`, `JoinsAt.unique`,
+`exists_joinsAt`, `sum_card_otherBlocks`, `nodeOfSide`, `nodeOfSide_compl_block`.
 -/
 
 @[expose] public noncomputable section
@@ -419,6 +421,311 @@ theorem eq_empty_of_card_lt_two (hX : Fintype.card X < 2) {T : Finset (Finset X)
     simp only [mem_erase, notMem_empty, iff_false, not_and]
     exact fun h hA => h (huniv A hA)
   simp [unroot, this]
+
+/-! ### The nodes on the path between two taxa
+
+A vertex of a tree of degree at least three is a `IsVertexPartition`. The nodes other than `x, y` on the
+path between the taxa `x` and `y` are the vertices with `x, y` in distinct blocks (`pathNodes`); at such
+a node the other blocks hold the taxa whose paths to `x` or `y` join the path there (`JoinsAt`). -/
+
+/-- The block of `P` containing the taxon `z`. -/
+def blockOf (P : Finset (Finset X)) (z : X) : Finset X := (P.filter (z ∈ ·)).sup id
+
+theorem eq_of_mem_block {T P : Finset (Finset X)} (hP : IsVertexPartition T P) {B C : Finset X}
+    {z : X} (hB : B ∈ P) (hC : C ∈ P) (hzB : z ∈ B) (hzC : z ∈ C) : B = C := by
+  by_contra hne
+  exact Finset.disjoint_left.mp (hP.pairwiseDisjoint B hB C hC hne) hzB hzC
+
+theorem blockOf_eq {T P : Finset (Finset X)} (hP : IsVertexPartition T P) {B : Finset X}
+    {z : X} (hB : B ∈ P) (hz : z ∈ B) : blockOf P z = B := by
+  have : P.filter (z ∈ ·) = {B} := by
+    refine Finset.eq_singleton_iff_unique_mem.mpr ⟨Finset.mem_filter.mpr ⟨hB, hz⟩, fun C hC => ?_⟩
+    obtain ⟨hCP, hzC⟩ := Finset.mem_filter.mp hC
+    exact eq_of_mem_block hP hCP hB hzC hz
+  simp [blockOf, this]
+
+theorem blockOf_mem {T P : Finset (Finset X)} (hP : IsVertexPartition T P) (z : X) :
+    blockOf P z ∈ P := by
+  obtain ⟨B, hB, hz⟩ := hP.exists_mem_block z
+  rwa [blockOf_eq hP hB hz]
+
+theorem mem_blockOf {T P : Finset (Finset X)} (hP : IsVertexPartition T P) (z : X) :
+    z ∈ blockOf P z := by
+  obtain ⟨B, hB, hz⟩ := hP.exists_mem_block z
+  rwa [blockOf_eq hP hB hz]
+
+/-- The nodes other than `x, y` on the path between `x` and `y`: the vertices of the tree whose
+deletion separates `x` from `y`, each given by the partition of the taxa it determines. -/
+def pathNodes (T : Finset (Finset X)) (x y : X) : Finset (Finset (Finset X)) :=
+  univ.filter fun P => IsVertexPartition T P ∧ ∀ B ∈ P, x ∈ B → y ∉ B
+
+theorem mem_pathNodes {T P : Finset (Finset X)} {x y : X} :
+    P ∈ pathNodes T x y ↔ IsVertexPartition T P ∧ ∀ B ∈ P, x ∈ B → y ∉ B := by
+  simp [pathNodes]
+
+theorem pathNodes_comm (T : Finset (Finset X)) (x y : X) : pathNodes T y x = pathNodes T x y := by
+  ext P
+  simp only [mem_pathNodes]
+  exact and_congr_right fun _ => forall₂_congr fun _ _ => by tauto
+
+/-- The blocks of `P` containing neither `x` nor `y`. -/
+def otherBlocks (P : Finset (Finset X)) (x y : X) : Finset (Finset X) :=
+  P.filter fun B => x ∉ B ∧ y ∉ B
+
+omit [Fintype X] in
+theorem otherBlocks_comm (P : Finset (Finset X)) (x y : X) :
+    otherBlocks P y x = otherBlocks P x y := by
+  simp only [otherBlocks, and_comm]
+
+/-- The path from the taxon `z` to `x` or `y` joins the path between `x` and `y` at the node `P`:
+`z` is in neither the block of `x` nor that of `y`. -/
+def JoinsAt (P : Finset (Finset X)) (x y z : X) : Prop :=
+  z ∉ blockOf P x ∧ z ∉ blockOf P y
+
+theorem JoinsAt.not_mem {T P : Finset (Finset X)} {x y z : X} (hz : JoinsAt P x y z)
+    (hP : IsVertexPartition T P) {B : Finset X} (hB : B ∈ P) (hzB : z ∈ B) : x ∉ B ∧ y ∉ B := by
+  refine ⟨fun h => hz.1 ?_, fun h => hz.2 ?_⟩
+  · rwa [blockOf_eq hP hB h]
+  · rwa [blockOf_eq hP hB h]
+
+theorem mem_sup_otherBlocks {T P : Finset (Finset X)} (hP : IsVertexPartition T P)
+    {x y z : X} : z ∈ (otherBlocks P x y).sup id ↔ JoinsAt P x y z := by
+  constructor
+  · intro h
+    obtain ⟨C, hC, hzC⟩ := Finset.mem_sup.mp h
+    obtain ⟨hCP, hxC, hyC⟩ := Finset.mem_filter.mp hC
+    refine ⟨fun hz => hxC ?_, fun hz => hyC ?_⟩
+    · rw [eq_of_mem_block hP hCP (blockOf_mem hP x) hzC hz]
+      exact mem_blockOf hP x
+    · rw [eq_of_mem_block hP hCP (blockOf_mem hP y) hzC hz]
+      exact mem_blockOf hP y
+  · intro hz
+    exact Finset.mem_sup.mpr ⟨blockOf P z, Finset.mem_filter.mpr ⟨blockOf_mem hP z,
+      hz.not_mem hP (blockOf_mem hP z) (mem_blockOf hP z)⟩, mem_blockOf hP z⟩
+
+/-- A taxon in the block of `y` at a node on the path is not in the block of `x`. -/
+theorem not_mem_blockOf_of_mem {T P : Finset (Finset X)} {x y z : X}
+    (hP : P ∈ pathNodes T x y) (hz : z ∈ blockOf P y) : z ∉ blockOf P x := by
+  obtain ⟨hV, hd⟩ := mem_pathNodes.1 hP
+  intro hz'
+  have e := eq_of_mem_block hV (blockOf_mem hV x) (blockOf_mem hV y) hz' hz
+  exact hd _ (blockOf_mem hV x) (mem_blockOf hV x) (e ▸ mem_blockOf hV y)
+
+/-- Two distinct nodes on the path are ordered: if `u` joins the path at `P` and `z` at `P'`, then
+either `P` comes first from `x`, so that `z` lies beyond `P` towards `y` and `u` before `P'` towards
+`x`, or `P'` does. -/
+theorem pathNodes_order {T P P' : Finset (Finset X)} (hT : IsUnrootedTree T) {x y u z : X}
+    (hP : P ∈ pathNodes T x y) (hP' : P' ∈ pathNodes T x y) (hne : P ≠ P')
+    (hu : JoinsAt P x y u) (hz : JoinsAt P' x y z) :
+    (z ∈ blockOf P y ∧ u ∈ blockOf P' x) ∨ (z ∈ blockOf P x ∧ u ∈ blockOf P' y) := by
+  obtain ⟨hV, hd⟩ := mem_pathNodes.1 hP
+  obtain ⟨hV', hd'⟩ := mem_pathNodes.1 hP'
+  obtain ⟨B, hB, B', hB', hun⟩ := hV.exists_union_eq_univ hT hV' hne
+  have hm : ∀ t, t ∈ B ∨ t ∈ B' := fun t => Finset.mem_union.1 (hun ▸ Finset.mem_univ t)
+  rcases hm x with hxB | hxB'
+  · have hyB' : y ∈ B' := (hm y).resolve_left (hd B hB hxB)
+    have e1 := blockOf_eq hV hB hxB
+    have e2 := blockOf_eq hV' hB' hyB'
+    have hu1 := hu.1
+    have hz2 := hz.2
+    rw [e1] at hu1
+    rw [e2] at hz2
+    right
+    rw [e1, e2]
+    exact ⟨(hm z).resolve_right hz2, (hm u).resolve_left hu1⟩
+  · have hyB : y ∈ B := (hm y).resolve_right (hd' B' hB' hxB')
+    have e1 := blockOf_eq hV hB hyB
+    have e2 := blockOf_eq hV' hB' hxB'
+    have hu2 := hu.2
+    have hz1 := hz.1
+    rw [e1] at hu2
+    rw [e2] at hz1
+    left
+    rw [e1, e2]
+    exact ⟨(hm z).resolve_right hz1, (hm u).resolve_left hu2⟩
+
+/-- A taxon joins the path at one node only. -/
+theorem JoinsAt.unique {T P P' : Finset (Finset X)} (hT : IsUnrootedTree T) {x y u : X}
+    (hP : P ∈ pathNodes T x y) (hP' : P' ∈ pathNodes T x y)
+    (hu : JoinsAt P x y u) (hu' : JoinsAt P' x y u) : P = P' := by
+  by_contra hne
+  rcases pathNodes_order hT hP hP' hne hu hu' with h | h
+  · exact hu.2 h.1
+  · exact hu.1 h.1
+
+/-- A vertex has a block other than two given sets. -/
+theorem exists_block_ne {T P : Finset (Finset X)} (hP : IsVertexPartition T P)
+    (B D : Finset X) : ∃ E ∈ P, E ≠ B ∧ E ≠ D := by
+  have h0 : 0 < ((P.erase B).erase D).card := by
+    have h1 := Finset.pred_card_le_card_erase (s := P) (a := B)
+    have h2 := Finset.pred_card_le_card_erase (s := P.erase B) (a := D)
+    have h3 := hP.three_le
+    omega
+  obtain ⟨E, hE⟩ := Finset.card_pos.mp h0
+  obtain ⟨hED, hEB, hEP⟩ := by simpa only [Finset.mem_erase] using hE
+  exact ⟨E, hEP, hEB, hED⟩
+
+/-- A block is properly inside the complement of another. -/
+theorem block_ssubset_compl {T P : Finset (Finset X)} (hS : IsSplitFamily T)
+    (hP : IsVertexPartition T P) {B D : Finset X} (hB : B ∈ P) (hD : D ∈ P) (hne : D ≠ B) :
+    D ⊂ Bᶜ := by
+  have hdis := hP.pairwiseDisjoint D hD B hB hne
+  refine ⟨fun t ht => Finset.mem_compl.mpr (Finset.disjoint_left.mp hdis ht), fun h => ?_⟩
+  obtain ⟨E, hE, hEB, hED⟩ := exists_block_ne hP B D
+  obtain ⟨t, ht⟩ := hS.nonempty E (hP.mem E hE)
+  have htD : t ∈ D := h (Finset.mem_compl.mpr
+    (Finset.disjoint_left.mp (hP.pairwiseDisjoint E hE B hB hEB) ht))
+  exact Finset.disjoint_left.mp (hP.pairwiseDisjoint E hE D hD hED) ht htD
+
+/-- The node at the end, on the side `A`, of the edge with side `A`, where `y ∉ A`: the blocks are
+`Aᶜ` and the maximal sides properly inside `A`. -/
+def nodeOfSide (T : Finset (Finset X)) (y : X) (A : Finset X) : Finset (Finset X) :=
+  insert Aᶜ (childClusters (rootedAt T y) A)
+
+theorem isVertexPartition_nodeOfSide {T : Finset (Finset X)} (hS : IsSplitFamily T)
+    {y : X} {A : Finset X} (hA : A ∈ T) (hy : y ∉ A) (h2 : 2 ≤ A.card) :
+    IsVertexPartition T (nodeOfSide T y A) := by
+  have h := (rootedAt_isHierarchy hS y).isVertexPartition_insert_compl (K := A)
+    (mem_rootedAt.2 (Or.inr (Or.inr ⟨hA, hy⟩))) (fun h => hy (h ▸ Finset.mem_univ y)) h2
+  rwa [unroot_rootedAt hS y] at h
+
+theorem nodeOfSide_mem_pathNodes {T : Finset (Finset X)} (hS : IsSplitFamily T)
+    {x y : X} {A : Finset X} (hA : A ∈ T) (hxA : x ∈ A) (hyA : y ∉ A) (h2 : 2 ≤ A.card) :
+    nodeOfSide T y A ∈ pathNodes T x y := by
+  refine mem_pathNodes.2 ⟨isVertexPartition_nodeOfSide hS hA hyA h2, fun B hB hxB hyB => ?_⟩
+  rcases Finset.mem_insert.1 hB with rfl | hB
+  · exact Finset.mem_compl.mp hxB hxA
+  · exact hyA ((mem_childClusters.1 hB).2.1.1 hyB)
+
+/-- A cluster of the rooting at `y` that avoids `y` is a side of the tree. -/
+theorem mem_of_mem_rootedAt {T : Finset (Finset X)} {y : X} {D : Finset X}
+    (hD : D ∈ rootedAt T y) (hy : y ∉ D) : D ∈ T := by
+  rcases mem_rootedAt.1 hD with rfl | rfl | ⟨h, -⟩
+  · exact absurd (Finset.mem_univ y) hy
+  · exact absurd (Finset.mem_singleton_self y) hy
+  · exact h
+
+/-- A node is recovered from its block containing `y`. -/
+theorem nodeOfSide_compl_block {T P : Finset (Finset X)} (hS : IsSplitFamily T)
+    (hP : IsVertexPartition T P) {y : X} {B : Finset X} (hB : B ∈ P) (hy : y ∈ B) :
+    nodeOfSide T y Bᶜ = P := by
+  have hnot : ∀ {D}, D ∈ P → D ≠ B → y ∉ D := fun hD hne hyD =>
+    Finset.disjoint_left.mp (hP.pairwiseDisjoint _ hD B hB hne) hyD hy
+  -- a set `E` properly inside `Bᶜ` does not have `Eᶜ` inside a block
+  have hcompl : ∀ {E F}, E ⊂ Bᶜ → F ∈ P → Eᶜ ⊆ F → False := by
+    intro E F hEB hF hsub
+    have hBE : B ⊆ Eᶜ := fun t ht => Finset.mem_compl.mpr fun h =>
+      Finset.mem_compl.mp (hEB.1 h) ht
+    have hFB : F = B := eq_of_mem_block hP hF hB (hsub (hBE hy)) hy
+    subst hFB
+    exact not_subset_of_ssubset hEB (fun t ht => by
+      by_contra hn
+      exact Finset.mem_compl.mp ht (hsub (Finset.mem_compl.mpr hn)))
+  ext D
+  simp only [nodeOfSide, compl_compl, Finset.mem_insert, mem_childClusters]
+  constructor
+  · rintro (rfl | ⟨hDH, hDlt, hmax⟩)
+    · exact hB
+    · have hyD : y ∉ D := fun h => Finset.mem_compl.mp (hDlt.1 h) hy
+      have hDT : D ∈ T := mem_of_mem_rootedAt hDH hyD
+      rcases hP.edge_in_block D hDT with ⟨F, hF, hsub⟩ | ⟨F, hF, hsub⟩
+      · have hne : F ≠ B := by
+          rintro rfl
+          obtain ⟨t, ht⟩ := hS.nonempty D hDT
+          exact Finset.mem_compl.mp (hDlt.1 ht) (hsub ht)
+        have hFlt := block_ssubset_compl hS hP hB hF hne
+        have hFH : F ∈ rootedAt T y :=
+          mem_rootedAt.2 (Or.inr (Or.inr ⟨hP.mem F hF, hnot hF hne⟩))
+        by_cases hDF : D = F
+        · exact hDF ▸ hF
+        · exact absurd hFlt (hmax F hFH (Finset.ssubset_iff_subset_ne.mpr ⟨hsub, hDF⟩))
+      · exact (hcompl hDlt hF hsub).elim
+  · intro hD
+    by_cases hDB : D = B
+    · exact Or.inl hDB
+    · refine Or.inr ⟨mem_rootedAt.2 (Or.inr (Or.inr ⟨hP.mem D hD, hnot hD hDB⟩)),
+        block_ssubset_compl hS hP hB hD hDB, fun E hE hDE hEB => ?_⟩
+      have hyE : y ∉ E := fun h => Finset.mem_compl.mp (hEB.1 h) hy
+      rcases hP.edge_in_block E (mem_of_mem_rootedAt hE hyE) with ⟨F, hF, hsub⟩ | ⟨F, hF, hsub⟩
+      · obtain ⟨t, ht⟩ := hS.nonempty D (hP.mem D hD)
+        have hFD : F = D := eq_of_mem_block hP hF hD (hsub (hDE.1 ht)) ht
+        subst hFD
+        exact not_subset_of_ssubset hDE hsub
+      · exact hcompl hEB hF hsub
+
+/-- Every taxon `z` other than `x, y` joins the path at some node: root the tree at `y`, and take the
+node at the least cluster containing `x, z`. -/
+theorem exists_joinsAt {T : Finset (Finset X)} (hS : IsSplitFamily T) {x y z : X}
+    (hxy : x ≠ y) (hzx : z ≠ x) (hzy : z ≠ y) : ∃ P ∈ pathNodes T x y, JoinsAt P x y z := by
+  obtain ⟨K, hK, hxzK, hleast⟩ := (rootedAt_isHierarchy hS y).exists_least (A := {x, z}) ⟨x, by simp⟩
+  have hyc : ({y} : Finset X)ᶜ ∈ rootedAt T y :=
+    mem_rootedAt.2 (Or.inr (Or.inr ⟨hS.compl_mem _ (hS.singleton_mem y), by simp⟩))
+  have hKy : K ⊆ {y}ᶜ := hleast _ hyc (fun t ht => by
+    simp only [Finset.mem_insert, Finset.mem_singleton] at ht
+    rcases ht with rfl | rfl <;> simpa)
+  have hyK : y ∉ K := fun h => by simpa using hKy h
+  have hxK : x ∈ K := hxzK (by simp)
+  have hzK : z ∈ K := hxzK (by simp)
+  have hKT : K ∈ T := mem_of_mem_rootedAt hK hyK
+  have h2 : 2 ≤ K.card := Finset.one_lt_card.2 ⟨x, hxK, z, hzK, hzx.symm⟩
+  have hP := nodeOfSide_mem_pathNodes hS hKT hxK hyK h2
+  have hV := (mem_pathNodes.1 hP).1
+  refine ⟨_, hP, fun hzA => ?_, fun hzB => ?_⟩
+  · have hxA := mem_blockOf hV x
+    rcases Finset.mem_insert.1 (blockOf_mem hV x) with hh | hh
+    · rw [hh] at hxA
+      exact Finset.mem_compl.1 hxA hxK
+    · obtain ⟨hAH, hAlt, -⟩ := mem_childClusters.1 hh
+      refine not_subset_of_ssubset hAlt (hleast _ hAH fun t ht => ?_)
+      simp only [Finset.mem_insert, Finset.mem_singleton] at ht
+      rcases ht with rfl | rfl
+      · exact hxA
+      · exact hzA
+  · rw [blockOf_eq hV (Finset.mem_insert_self _ _) (Finset.mem_compl.2 hyK)] at hzB
+    exact Finset.mem_compl.1 hzB hzK
+
+omit [Fintype X] in
+theorem card_sup_eq_sum {F : Finset (Finset X)}
+    (hF : ∀ B ∈ F, ∀ C ∈ F, B ≠ C → Disjoint B C) : (F.sup id).card = ∑ C ∈ F, C.card := by
+  rw [Finset.sup_eq_biUnion, Finset.card_biUnion]
+  · rfl
+  · exact fun B hB C hC hBC => hF B hB C hC hBC
+
+/-- Every taxon other than `x, y` lies in the other blocks of exactly one node on the path, so the
+sizes of these blocks add up to `N - 2`. -/
+theorem sum_card_otherBlocks {T : Finset (Finset X)} (hT : IsUnrootedTree T)
+    (hS : IsSplitFamily T) {x y : X} (hxy : x ≠ y) :
+    ∑ P ∈ pathNodes T x y, ∑ C ∈ otherBlocks P x y, C.card + 2 = Fintype.card X := by
+  have hdis : ∀ P ∈ pathNodes T x y, ∀ C ∈ otherBlocks P x y, ∀ D ∈ otherBlocks P x y, C ≠ D →
+      Disjoint C D := fun P hP C hC D hD =>
+    (mem_pathNodes.1 hP).1.pairwiseDisjoint C (Finset.mem_filter.mp hC).1 D (Finset.mem_filter.mp hD).1
+  have hun : (pathNodes T x y).biUnion (fun P => (otherBlocks P x y).sup id) =
+      (univ.erase x).erase y := by
+    ext z
+    simp only [Finset.mem_biUnion, Finset.mem_erase, Finset.mem_univ, and_true]
+    constructor
+    · rintro ⟨P, hP, hz⟩
+      obtain ⟨hV, -⟩ := mem_pathNodes.1 hP
+      have hJ := (mem_sup_otherBlocks hV).1 hz
+      exact ⟨fun e => hJ.2 (e ▸ mem_blockOf hV y), fun e => hJ.1 (e ▸ mem_blockOf hV x)⟩
+    · rintro ⟨hzy, hzx⟩
+      obtain ⟨P, hP, hJ⟩ := exists_joinsAt hS hxy hzx hzy
+      exact ⟨P, hP, (mem_sup_otherBlocks (mem_pathNodes.1 hP).1).2 hJ⟩
+  have hcard : ((pathNodes T x y).biUnion (fun P => (otherBlocks P x y).sup id)).card =
+      ∑ P ∈ pathNodes T x y, ∑ C ∈ otherBlocks P x y, C.card := by
+    rw [Finset.card_biUnion]
+    · exact Finset.sum_congr rfl fun P hP => card_sup_eq_sum (hdis P hP)
+    · intro P hP P' hP' hne
+      refine Finset.disjoint_left.mpr fun z hz hz' => hne ?_
+      exact JoinsAt.unique hT hP hP'
+        ((mem_sup_otherBlocks (mem_pathNodes.1 hP).1).1 hz)
+        ((mem_sup_otherBlocks (mem_pathNodes.1 hP').1).1 hz')
+  rw [← hcard, hun, Finset.card_erase_of_mem (Finset.mem_erase.mpr ⟨hxy.symm, Finset.mem_univ y⟩),
+    Finset.card_erase_of_mem (Finset.mem_univ x), Finset.card_univ]
+  have h1 : 2 ≤ Fintype.card X := by
+    have := Finset.card_le_univ ({x, y} : Finset X)
+    rwa [Finset.card_pair hxy] at this
+  omega
 
 end
 
