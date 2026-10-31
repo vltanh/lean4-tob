@@ -130,6 +130,7 @@ theorem hasCutSplitOn_of_isCutOn (hN : N.IsPhylogenetic) {Y : Finset X} {e : E}
 
 variable [Fintype X]
 
+omit [Fintype X] in
 /-- A 4-taxon set has at most one quartet tree that is a cut-edge split of its induced network. -/
 theorem inducedCutSplit_unique (hN : N.IsPhylogenetic) {s s' : QuartetTree X}
     (hs : InducedCutSplit N s) (hs' : InducedCutSplit N s') (h : s.taxa = s'.taxa) : s = s' := by

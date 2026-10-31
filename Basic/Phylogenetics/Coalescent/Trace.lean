@@ -17,9 +17,9 @@ public import Mathlib.Analysis.Matrix.Normed
 distribution of unrooted gene trees under the coalescent*, J. Math. Biol. 62 (2011) 833–862]
 
 Kingman's coalescent is consistent: restricting a forest to a subset `Z` of the lineages lumps the
-chain into Kingman's coalescent on `Z`. The generators intertwine, `Q M = M Q` on the rows of forests,
-where `M` is the restriction map: merging two roots that both meet `Z` merges their traces, and the
-other merges do not change the restriction.
+chain into Kingman's coalescent on `Z`. The generators intertwine, `Q M = M Q` on the rows of
+forests, where `M` is the restriction map: merging two roots that both meet `Z` merges their traces,
+and the other merges do not change the restriction.
 
 * `traceForest Z F`: the restriction of a forest to the lineages `Z`, the nonempty traces of its
   clusters, as a forest on the same type of lineages.

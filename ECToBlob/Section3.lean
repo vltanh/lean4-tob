@@ -138,7 +138,7 @@ block sizes and divided by the product of all block sizes, the representative su
 representative tuple `x` chooses a taxon in each block. The `X_i` of the paper partition the taxa:
 without `hcover`, a quartet with a taxon in no block counts on the left only. -/
 theorem equation3_3 {P : Finset (Finset X)} (hdisj : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C)
-    (hne : ∀ B ∈ P, B.Nonempty) (hcover : P.sup id = univ) (w : QuartetTree X → ℝ)
+    (hcover : P.sup id = univ) (w : QuartetTree X → ℝ)
     (T : Finset (Finset X)) :
     (∏ B ∈ P, (B.card : ℝ)) * starPart P w T =
       ∑ x ∈ (univ : Finset ({B // B ∈ P} → X)).filter (fun x => ∀ B, x B ∈ B.val),
@@ -257,6 +257,7 @@ blocks. -/
 def blockSizeProd {P : Finset (Finset X)} (s₀ : QuartetTree {B // B ∈ P}) : ℝ :=
   ∏ b ∈ s₀.taxa, (b.val.card : ℝ)
 
+omit [Fintype X] in
 theorem blockWeight_map {P : Finset (Finset X)} (hd : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C)
     {x : {B // B ∈ P} → X} (hx : IsRepTuple P x) (s₀ : QuartetTree {B // B ∈ P}) :
     blockWeight P (s₀.map (hx.injective hd)) = blockSizeProd s₀ := by
@@ -346,7 +347,7 @@ theorem starPart_le_splice {TB : Finset (Finset X)} (hTB : IsUnrootedTree TB)
     rw [innerSum_eq_quartetScore h₂ hd hcut hx₀ hx']
     exact hmax _ (pullTree_isUnrootedTree (hx'.injective hd) T.property hY)
   have hsum := (lemma3_5 _ F Tstar hsimul).1 ⟨T', hT'⟩
-  have h33 := fun T => equation3_3 hd hne hV.cover p T
+  have h33 := fun T => equation3_3 hd hV.cover p T
   have h1 := h33 T'
   have h2 := h33 (splice TB L)
   simp only [F, innerSum, Tstar] at hsum
@@ -725,6 +726,7 @@ theorem avoid_prefix {v : V} (hW : ∀ f, N.graph.Crosses f W ↔ f = g) (hroot 
       subst hf
       exact ⟨hs ▸ hab, hs ▸ hne⟩
 
+omit [Fintype X] [DecidableEq X] in
 /-- A path inside the side `W` avoids every vertex outside. -/
 theorem avoid_in_cut (hN : N.IsPhylogenetic) (hW : ∀ f, N.graph.Crosses f W ↔ f = g)
     (hroot : N.root ∉ W) {v p t : V} (hv : v ∉ W) (hp : p ∈ W) (h : N.graph.Reaches p t) :
@@ -765,6 +767,7 @@ theorem stable_reaches (hN : N.IsPhylogenetic) {Y : Set X} {v : V} (hv : N.IsSta
   refine hv y hy ⟨fun e => hnot (e ▸ hN.root_reaches _), fun e => hnot (e ▸ Relation.ReflTransGen.refl),
     avoid_of_not_reaches hnot (hN.root_reaches _)⟩
 
+omit [Fintype X] [DecidableEq X] in
 /-- The least stable ancestor of a nonempty set of taxa exists. -/
 theorem exists_leastStableAncestor (hN : N.IsPhylogenetic) {Y : Set X} (hY : Y.Nonempty) :
     ∃ v, N.IsLeastStableAncestor Y v := by
@@ -824,6 +827,7 @@ theorem SideFacts.compl {Y : Set X} {Z : Set V} {g : E} (h : SideFacts N Y Z g) 
     h.conn_in S (fun f hf h3 h4 => hS f hf (not_not.2 h3) (not_not.2 h4)) t ht t' ht'
       (not_not.1 h1) (not_not.1 h2)
 
+omit [Fintype X] [DecidableEq X] in
 /-- A stable ancestor outside the side `W` of a cut edge, for a taxon in `W`, reaches the cut edge. -/
 theorem stable_reaches_source (hN : N.IsPhylogenetic) {W : Set V} {g : E}
     (hW : ∀ f, N.graph.Crosses f W ↔ f = g) (hroot : N.root ∉ W) {Y : Set X} {v : V}
@@ -838,6 +842,7 @@ theorem stable_reaches_source (hN : N.IsPhylogenetic) {W : Set V} {g : E}
     (Relation.ReflTransGen.head ⟨⟨g, rfl, rfl⟩, fun e => hnot (e ▸ Relation.ReflTransGen.refl),
       fun e => hvW (e ▸ hgW.2)⟩ h3)⟩
 
+omit [Fintype X] [DecidableEq X] in
 /-- The facts on the side `W` of the cut edge avoiding the root. -/
 theorem sideFacts_of_cut (hN : N.IsPhylogenetic) {W : Set V} {g : E}
     (hW : ∀ f, N.graph.Crosses f W ↔ f = g) (hroot : N.root ∉ W) {Y : Set X} {y₁ y₂ : X}
@@ -905,6 +910,7 @@ section Exchange
 
 variable {a a' : X} {Q : Set X} {W : Set V} {g : E}
 
+omit [Fintype X] [DecidableEq X] in
 /-- Below the cut edge: the stable ancestors do not see which of the two taxa is below it. -/
 theorem stable_insert_of_low (hN : N.IsPhylogenetic) (hW : ∀ f, N.graph.Crosses f W ↔ f = g)
     (hroot : N.root ∉ W) (haW : N.leaf a ∈ W) (ha'W : N.leaf a' ∈ W) {b : X} (hb : b ∈ Q)
@@ -923,6 +929,7 @@ theorem stable_insert_of_low (hN : N.IsPhylogenetic) (hW : ∀ f, N.graph.Crosse
         (avoid_in_cut hN hW hroot hvW hg.2 htarget))⟩
   · exact hv y (Set.mem_insert_of_mem _ hy)
 
+omit [Fintype X] [DecidableEq X] in
 theorem inducedVertices_of_low (hN : N.IsPhylogenetic) (hW : ∀ f, N.graph.Crosses f W ↔ f = g)
     (hroot : N.root ∉ W) (haW : N.leaf a ∈ W) (ha'W : N.leaf a' ∈ W) {b : X} (hb : b ∈ Q)
     (hbW : N.leaf b ∉ W) {t : V} (ht : t ∉ W) (h : t ∈ inducedVertices N (insert a Q)) :
@@ -938,6 +945,7 @@ theorem inducedVertices_of_low (hN : N.IsPhylogenetic) (hW : ∀ f, N.graph.Cros
       (cut_entry hW hroot (hN.root_reaches _) ha'W).2
   · exact ⟨y, Set.mem_insert_of_mem _ hy, hty⟩
 
+omit [Fintype X] [DecidableEq X] in
 theorem inducedVertices_of_high (hN : N.IsPhylogenetic) (hW : ∀ f, N.graph.Crosses f W ↔ f = g)
     (hroot : N.root ∉ W) (haW : N.leaf a ∉ W) (ha'W : N.leaf a' ∉ W) (hQ : ∀ y ∈ Q, N.leaf y ∈ W)
     {b : X} (hb : b ∈ Q) {t : V} (ht : t ∈ W) (h : t ∈ inducedVertices N (insert a Q)) :
@@ -973,6 +981,7 @@ theorem PendantSetting.symm {Z : Set V} (h : PendantSetting N Z g a a' Q) :
     PendantSetting N Z g a' a Q :=
   ⟨h.hZ, h.ha', h.ha, h.hQ, h.two, h.facts', h.facts, fun t ht => (h.hV t ht).symm⟩
 
+omit [Fintype X] [DecidableEq X] in
 theorem pendantSetting_of_cut (hN : N.IsPhylogenetic) {Z : Set V}
     (hZ : ∀ f, N.graph.Crosses f Z ↔ f = g) (ha : N.leaf a ∈ Z) (ha' : N.leaf a' ∈ Z)
     (hQ : ∀ y ∈ Q, N.leaf y ∉ Z) (two : ∃ b ∈ Q, ∃ c ∈ Q, b ≠ c) :
@@ -1022,6 +1031,7 @@ theorem PendantSetting.mem_arcs_of_off (hs : PendantSetting N Z g a a' Q) {f : E
   have := mem_inducedArcs_iff.1 hf
   exact mem_inducedArcs_iff.2 ⟨(hs.hV _ h₁).1 this.1, (hs.hV _ h₂).1 this.2⟩
 
+omit [Fintype X] [DecidableEq X] in
 /-- `Z` is a pendant cut for `a`. -/
 theorem PendantSetting.pendant_side (hs : PendantSetting N Z g a a' Q) :
     IsPendantCut N (insert a Q) a g Z := by
@@ -1030,6 +1040,7 @@ theorem PendantSetting.pendant_side (hs : PendantSetting N Z g a a' Q) :
   · exact ⟨fun _ => rfl, fun _ => hs.ha⟩
   · refine ⟨fun h => absurd h (hs.hQ y hy), fun e => absurd (e ▸ hs.ha) (hs.hQ y hy)⟩
 
+omit [Fintype X] in
 /-- A pendant cut for a taxon of `Q` lies off `Z` and is a pendant cut of the other network. -/
 theorem pendant_other (hs : PendantSetting N Z g a a' Q) {b : X} {e : E} {S : Set V} (hb : b ∈ Q)
     (h : IsPendantCut N (insert a Q) b e S) :
@@ -1094,6 +1105,7 @@ theorem pendant_other (hs : PendantSetting N Z g a a' Q) {b : X} {e : E} {S : Se
       · exact fun h' => absurd (h' ▸ hs.ha') (hs.hQ _ hb)
     · exact (hoff _ (hs.hQ y hy)).trans (hleaf y (Set.mem_insert_of_mem _ hy))
 
+omit [Fintype X] [DecidableEq X] in
 /-- A pendant cut for `a` gives one for `a'`, with the side `Z` added. -/
 theorem pendant_self (hs : PendantSetting N Z g a a' Q) {e : E} {S : Set V}
     (h : IsPendantCut N (insert a Q) a e S) :
@@ -1175,6 +1187,7 @@ theorem pendant_self (hs : PendantSetting N Z g a a' Q) {e : E} {S : Set V}
         have hfV := mem_inducedArcs_iff.1 hfY
         exact (crosses_congr (hcong _ hfV.1) (hcong _ hfV.2)).trans (hcr f hfY)
 
+omit [Fintype X] in
 /-- What remains without the pendant chains is the same in both induced networks. -/
 theorem coreArcs_subset (hs : PendantSetting N Z g a a' Q) :
     coreArcs N (insert a Q) ⊆ coreArcs N (insert a' Q) := by
@@ -1199,6 +1212,7 @@ theorem coreArcs_subset (hs : PendantSetting N Z g a a' Q) :
     exact hnot ⟨x, Set.mem_insert_of_mem _ hx, e, S \ Z, hp',
       hcov.imp id fun h => ⟨⟨h.1, hf'.1⟩, ⟨h.2, hf'.2⟩⟩⟩
 
+omit [Fintype X] [DecidableEq X] in
 /-- The attachment point of the chain to `a` is that of the chain to `a'`. -/
 theorem attaches_self (hN : N.IsPhylogenetic) (hs : PendantSetting N Z g a a' Q) {v : V}
     (h : AttachesAt N (insert a Q) a v) : AttachesAt N (insert a' Q) a' v := by
@@ -1215,6 +1229,7 @@ theorem attaches_self (hN : N.IsPhylogenetic) (hs : PendantSetting N Z g a a' Q)
   obtain ⟨e₃, hp₃, -, -⟩ := pendant_self hs.symm hp₂
   exact htop e₃ (S₂ ∪ Z) hp₃ u (Or.inl hu) (hN.root_reaches u)
 
+omit [Fintype X] in
 /-- The attachment point of the chain to a taxon of `Q` is the same in both induced networks. -/
 theorem attaches_other (hN : N.IsPhylogenetic) (hs : PendantSetting N Z g a a' Q) {b : X} {v : V}
     (hb : b ∈ Q) (h : AttachesAt N (insert a Q) b v) : AttachesAt N (insert a' Q) b v := by
@@ -1246,6 +1261,7 @@ end Exchange
 end PendantChain
 
 open PendantChain in
+omit [Fintype X] in
 /-- The printed condition 2 implies the form used in `theorem3_1`: if a cut edge groups `a, a'` away
 from `b, c, d`, then the induced networks on `a, b, c, d` and on `a', b, c, d` differ only in the
 pendant chain to `a` or `a'`. -/

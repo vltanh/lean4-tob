@@ -15,8 +15,8 @@ vertex at a time.
 
 We work with the process in which arbitrary forests are injected at the vertices (`arriving`,
 `injWeight`, `injDist`). `geneTreeDist` is the case of the singleton lineages of all taxa at their
-leaves (`taxaInj`, `geneTreeDist_eq_injDist`), and the injected forests also describe the part of the
-process above an arc (`Basic/Phylogenetics/NMSC/Factor.lean`).
+leaves (`taxaInj`, `geneTreeDist_eq_injDist`), and the injected forests also describe the part of
+the process above an arc (`Basic/Phylogenetics/NMSC/Factor.lean`).
 
 Going up through a set `D` of vertices closed under children, with `vertexWeight` the factor of a
 vertex:
@@ -86,7 +86,7 @@ theorem sum_prod_of_sum_eq_one (S : Finset ι) (φ : ι → β → ℝ) (h : ∀
   rw [sum_prod_mem, prod_eq_one h, one_mul]
 
 /-- The number of functions with given values on `S`, times `w`. -/
-theorem sum_ite_forall_eq (S : Finset ι) (C : ι → β) (w : ℝ) :
+theorem sum_ite_forall_eq [DecidableEq β] (S : Finset ι) (C : ι → β) (w : ℝ) :
     ∑ y : ι → β, (if ∀ i ∈ S, y i = C i then w else 0) = w * (Fintype.card β : ℝ) ^ #Sᶜ := by
   have h := sum_prod_of_sum_eq_one S (fun i t => if t = C i then (1 : ℝ) else 0)
     (fun i _ => by simp)
@@ -97,7 +97,7 @@ theorem sum_ite_forall_eq (S : Finset ι) (C : ι → β) (w : ℝ) :
   split_ifs <;> simp
 
 /-- The functions with given values on `S`, for a function `Θ` of those values only. -/
-theorem sum_ite_forall_mul (S : Finset ι) (C : ι → β) (Θ : (ι → β) → ℝ)
+theorem sum_ite_forall_mul [DecidableEq β] (S : Finset ι) (C : ι → β) (Θ : (ι → β) → ℝ)
     (hΘ : ∀ y y', (∀ i ∈ S, y i = y' i) → Θ y = Θ y') :
     ∑ y : ι → β, (if ∀ i ∈ S, y i = C i then Θ y else 0) =
       Θ C * (Fintype.card β : ℝ) ^ #Sᶜ := by
@@ -113,9 +113,10 @@ theorem overwrite_involutive (S : Finset ι) (x y : ι → β) :
   funext i
   by_cases hi : i ∈ S <;> simp [overwrite, hi]
 
-/-- **Summing out the coordinates in `S`.** A sum over all functions of `g h`, with `g` not depending
-on the coordinates in `S`: the factor `h` can be averaged over those coordinates. The proof applies to
-the sum over pairs of functions the involution `(x, y) ↦ (overwrite S x y, overwrite S y x)`. -/
+/-- **Summing out the coordinates in `S`.** A sum over all functions of `g h`, with `g` not
+depending on the coordinates in `S`: the factor `h` can be averaged over those coordinates. The proof
+applies to the sum over pairs of functions the involution
+`(x, y) ↦ (overwrite S x y, overwrite S y x)`. -/
 theorem card_mul_sum_mul (S : Finset ι) (g h : (ι → β) → ℝ)
     (hg : ∀ x y, g (overwrite S x y) = g x) :
     (Fintype.card (ι → β) : ℝ) * ∑ x, g x * h x = ∑ x, g x * ∑ y, h (overwrite S x y) := by
@@ -856,8 +857,8 @@ theorem sum_step (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ �
           allocationFactor N θ ρ (arriving N inj top v) v bot =
         ∑ bot : E → Finset (Finset X), ∏ u ∈ D, vertexWeight N θ ρ inj u bot top := by
     intro top
-    refine card_pow_mul_sum_mul_eq S _ _ (fun bot y => prod_vertexWeight_overwrite_bot hvD top bot y)
-      fun bot _ => ?_
+    refine card_pow_mul_sum_mul_eq S _ _
+      (fun bot y => prod_vertexWeight_overwrite_bot hvD top bot y) fun bot _ => ?_
     have hsimp : ∀ y : E → Finset (Finset X),
         allocationFactor N θ ρ (arriving N inj top v) v (overwrite S bot y) =
           allocationFactor N θ ρ (arriving N inj top v) v y := fun y =>

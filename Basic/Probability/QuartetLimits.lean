@@ -313,10 +313,9 @@ theorem t1PValue_asymptoticallyUniform (hd : IsDist dist) (hs : DisplaysOne dist
 
 /-- The null of the T1 test with an alternative of probability zero: the alternatives have count zero,
 so the p-value is `1`. -/
-theorem t1PValue_degenerate (hd : IsDist dist) (hs : DisplaysOne dist sides) {s : QuartetTree X}
+theorem t1PValue_degenerate (hd : IsDist dist) {s : QuartetTree X}
     (h : ∀ r ∈ s.alternatives, displayCF dist sides r = 0) {n : ℕ} (ω : Fin n → Γ)
     (hω : ∏ i, dist (ω i) ≠ 0) : t1PValue (quartetCount sides ω) s = 1 := by
-  have _ := hs
   obtain ⟨r₁, r₂, hne, hr⟩ := QuartetTree.exists_alternatives s
   have hpos : ∀ i, dist (ω i) ≠ 0 :=
     Finset.prod_ne_zero_iff.1 hω |> fun h' i ↦ h' i (Finset.mem_univ i)

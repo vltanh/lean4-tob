@@ -48,6 +48,7 @@ theorem not_reaches_source (hN : N.IsPhylogenetic) (e : E) :
     ¬ N.graph.Reaches (N.graph.target e) (N.graph.source e) :=
   fun h => hN.acyclic _ (transGen_of_arc_reaches h)
 
+omit [Fintype X] [DecidableEq X] in
 theorem target_ne_source (hN : N.IsPhylogenetic) (e : E) : N.graph.target e ≠ N.graph.source e := by
   intro h
   apply not_reaches_source hN e
@@ -201,6 +202,7 @@ theorem exists_oriented_cut {e : E} (he : IsBridge N e) :
   · exact ⟨Sᶜ, fun f => (crosses_compl_iff f S).trans (hS f), ht, not_not.mpr hs⟩
   · exact ⟨S, hS, ht, hs⟩
 
+omit [Fintype X] [DecidableEq X] in
 /-- **An arc is a bridge exactly when no other arc enters the descendants of its target.** -/
 theorem isBridge_iff_reaches (hN : N.IsPhylogenetic) (e : E) :
     IsBridge N e ↔ ∀ f, f ≠ e → N.graph.Reaches (N.graph.target e) (N.graph.target f) →
@@ -222,6 +224,7 @@ theorem isBridge_iff_reaches (hN : N.IsPhylogenetic) (e : E) :
     · rintro rfl
       exact Or.inr ⟨.refl, not_reaches_source hN _⟩
 
+omit [Fintype X] [DecidableEq X] in
 /-- A bridge is the only arc crossing the descendants of its target. -/
 theorem isBridge_crosses_iff (hN : N.IsPhylogenetic) {e : E} (he : IsBridge N e) (f : E) :
     N.graph.Crosses f {u | N.graph.Reaches (N.graph.target e) u} ↔ f = e := by
@@ -263,6 +266,7 @@ theorem eq_of_indegree_le_one (hN : N.IsPhylogenetic) {e f : E}
   rw [hfe] at this
   omega
 
+omit [Fintype X] [DecidableEq X] in
 /-- **Arcs entering a reticulation are not bridges.** -/
 theorem not_isBridge_of_two_le_indegree (hN : N.IsPhylogenetic) {e : E}
     (he : 2 ≤ N.graph.indegree (N.graph.target e)) : ¬ IsBridge N e := by
@@ -272,6 +276,7 @@ theorem not_isBridge_of_two_le_indegree (hN : N.IsPhylogenetic) {e : E}
   rw [← hf] at this
   exact not_reaches_source hN f this
 
+omit [Fintype X] [DecidableEq X] in
 /-- If every arc leaving a vertex with at most one incoming arc is a bridge, so is the incoming arc. -/
 theorem isBridge_of_indegree_le_one (hN : N.IsPhylogenetic) {f : E}
     (hin : N.graph.indegree (N.graph.target f) ≤ 1)
@@ -322,12 +327,14 @@ theorem mem_iff_of_sameBlob {e : E} {S : Set V} (hS : ∀ f, N.graph.Crosses f S
     · exact ih.trans heq
     · exact ih.trans heq.symm
 
+omit [Fintype X] [DecidableEq X] in
 /-- Below a bridge, a whole blob is below it or none of it is. -/
 theorem reaches_iff_of_sameBlob (hN : N.IsPhylogenetic) {e : E} (he : IsBridge N e)
     {u w : V} (h : SameBlob N u w) :
     N.graph.Reaches (N.graph.target e) u ↔ N.graph.Reaches (N.graph.target e) w :=
   mem_iff_of_sameBlob (isBridge_crosses_iff hN he) h
 
+omit [Fintype X] [DecidableEq X] in
 /-- A bridge entering a blob has the whole blob below it. -/
 theorem reaches_of_sameBlob (hN : N.IsPhylogenetic) {e : E} (he : IsBridge N e)
     {u : V} (h : SameBlob N (N.graph.target e) u) : N.graph.Reaches (N.graph.target e) u :=
@@ -347,6 +354,7 @@ theorem eq_of_sameBlob_of_forall_isBridge {u w : V}
     · exact Or.inl h
     · exact Or.inr h
 
+omit [Fintype X] [DecidableEq X] in
 /-- All arcs at a vertex are bridges when it has at most one incoming arc and its outgoing arcs are
 bridges. -/
 theorem forall_isBridge_of_indegree_le_one (hN : N.IsPhylogenetic) {u : V}
@@ -356,6 +364,7 @@ theorem forall_isBridge_of_indegree_le_one (hN : N.IsPhylogenetic) {u : V}
   · exact hout f hf
   · exact isBridge_of_indegree_le_one hN hin hout
 
+omit [Fintype X] [DecidableEq X] in
 /-- **A blob with a non-bridge arc has a reticulation**: take a sink of the blob. -/
 theorem exists_reticulation_or_forall_isBridge (hN : N.IsPhylogenetic) (v : V) :
     (∃ h, SameBlob N v h ∧ 2 ≤ N.graph.indegree h) ∨
@@ -393,6 +402,7 @@ theorem eq_root_of_reaches_root (hN : N.IsPhylogenetic) {u : V} (h : N.graph.Rea
   · exact heq.symm
   · exact absurd hg (target_ne_root hN g)
 
+omit [Fintype X] [DecidableEq X] in
 /-- A vertex with no outgoing arc other than the taxa: all arcs at a taxon are bridges. -/
 theorem forall_isBridge_leaf (hN : N.IsPhylogenetic) (x : X) :
     ∀ f, (N.graph.source f = N.leaf x ∨ N.graph.target f = N.leaf x) → IsBridge N f := by
@@ -402,6 +412,7 @@ theorem forall_isBridge_leaf (hN : N.IsPhylogenetic) (x : X) :
   have h0 := (hN.leaves (N.leaf x)).mpr ⟨x, rfl⟩
   exact absurd hg ((DirectedMultigraph.outdegree_eq_zero_iff _ _).mp h0 g)
 
+omit [Fintype X] [DecidableEq X] in
 /-- A blob with a reticulation contains no taxon. -/
 theorem leaf_not_sameBlob (hN : N.IsPhylogenetic) {v h : V} (hh : SameBlob N v h)
     (hh₂ : 2 ≤ N.graph.indegree h) (x : X) : ¬ SameBlob N v (N.leaf x) := by
@@ -450,6 +461,7 @@ section LevelOne
 
 variable [Fintype V] [Fintype E]
 
+omit [Fintype X] [DecidableEq X] in
 /-- **A level-1 blob has at most one reticulation**: a blob with `k` reticulations has at least `2k`
 reticulation arcs, none of them a bridge. -/
 theorem reticulation_unique (hN : N.IsPhylogenetic) (hLevel : IsLevelOne N) {v h h' : V}
@@ -484,6 +496,7 @@ theorem reticulation_unique (hN : N.IsPhylogenetic) (hLevel : IsLevelOne N) {v h
   have hR1 : R.card ≤ 1 := by omega
   exact card_le_one.mp hR1 h (by simp [hR, hh₂, hh]) h' (by simp [hR, hh'₂, hh'])
 
+omit [Fintype X] [DecidableEq X] in
 /-- **Every vertex of a blob reaches its reticulation.** -/
 theorem reaches_reticulation (hN : N.IsPhylogenetic) (hLevel : IsLevelOne N) {v h u : V}
     (hh : SameBlob N v h) (hh₂ : 2 ≤ N.graph.indegree h) (hu : SameBlob N v u) :
@@ -510,6 +523,7 @@ theorem reaches_reticulation (hN : N.IsPhylogenetic) (hLevel : IsLevelOne N) {v 
 
 end LevelOne
 
+omit [Fintype X] [DecidableEq X] in
 /-- If `f` enters the descendants of `t`, then the path from `t` to its target uses no bridge. -/
 theorem sameBlob_of_entering (hN : N.IsPhylogenetic) {t : V} {f : E}
     (hR : N.graph.Reaches t (N.graph.target f)) (hnot : ¬ N.graph.Reaches t (N.graph.source f)) :
@@ -535,6 +549,7 @@ section LevelOne
 
 variable [Fintype V] [Fintype E]
 
+omit [Fintype X] [DecidableEq X] in
 /-- An arc other than `e` that enters the descendants of the target of `e`, a vertex of the blob,
 enters the reticulation of the blob. -/
 theorem target_eq_reticulation (hN : N.IsPhylogenetic) (hLevel : IsLevelOne N) {v h : V}
@@ -552,6 +567,7 @@ theorem target_eq_reticulation (hN : N.IsPhylogenetic) (hLevel : IsLevelOne N) {
       exact two_le_indegree_of_ne hN hgf hg.symm
   exact reticulation_unique hN hLevel hsb h2 hh hh₂
 
+omit [Fintype X] [DecidableEq X] in
 /-- **A non-bridge arc of the blob does not dominate the reticulation.** -/
 theorem avoidingReach_root_reticulation (hN : N.IsPhylogenetic) (hLevel : IsLevelOne N) {v h : V}
     (hh : SameBlob N v h) (hh₂ : 2 ≤ N.graph.indegree h) {e : E}
@@ -566,6 +582,7 @@ theorem avoidingReach_root_reticulation (hN : N.IsPhylogenetic) (hLevel : IsLeve
   rw [← hfh]
   exact hsf.tail ⟨f, hfe, rfl, rfl⟩
 
+omit [Fintype X] [DecidableEq X] in
 /-- An arc into a vertex of the blob dominates the taxa below it that are not below the
 reticulation. -/
 theorem dominates_of_below (hN : N.IsPhylogenetic) (hLevel : IsLevelOne N) {v h : V}
@@ -584,6 +601,7 @@ end LevelOne
 
 /-! ### Entering a blob -/
 
+omit [Fintype X] [DecidableEq X] in
 /-- A vertex outside a blob with a descendant in the blob reaches the whole blob. -/
 theorem reaches_of_reaches_blob (hN : N.IsPhylogenetic) {v t b u : V} (ht : ¬ SameBlob N v t)
     (hb : SameBlob N v b) (hR : N.graph.Reaches t b) (hu : SameBlob N v u) :
@@ -604,6 +622,7 @@ theorem reaches_of_reaches_blob (hN : N.IsPhylogenetic) {v t b u : V} (ht : ¬ S
   exact (hg1.trans (reaches_of_arc N g)).trans
     (reaches_of_sameBlob hN hgb (sameBlob_trans (sameBlob_symm hg3) hu))
 
+omit [Fintype X] [DecidableEq X] in
 /-- Every blob has a top vertex, reaching the whole blob. -/
 theorem exists_top (hN : N.IsPhylogenetic) (v : V) :
     ∃ T, SameBlob N v T ∧ ∀ u, SameBlob N v u → N.graph.Reaches T u := by
@@ -626,6 +645,7 @@ theorem exists_top (hN : N.IsPhylogenetic) (v : V) :
         (.single ⟨g, rfl, rfl⟩)
     exact reaches_of_sameBlob hN hgb (sameBlob_trans (sameBlob_symm hT) hu)
 
+omit [Fintype X] [DecidableEq X] in
 /-- A bridge leaving a blob has no vertex of the blob below it. -/
 theorem not_sameBlob_of_reaches_exit (hN : N.IsPhylogenetic) {v : V} {k : E} (hk : IsBridge N k)
     (hs : SameBlob N v (N.graph.source k)) {w : V} (hw : N.graph.Reaches (N.graph.target k) w) :
@@ -775,6 +795,7 @@ theorem exists_blockWalk_cut (hN : N.IsPhylogenetic) {v a : V} (ha : ¬ SameBlob
   rintro rfl
   exact he
 
+omit [Fintype X] [DecidableEq X] in
 /-- The far side of a cut edge from the blob, when the edge leaves the blob: it is below the edge. -/
 theorem reaches_of_blockWalk_of_exit (hN : N.IsPhylogenetic) {v a : V} {e : E} (ha : ¬ SameBlob N v a)
     (hS : ∀ f, N.graph.Crosses f {u | BlockWalk N v a u} ↔ f = e)
@@ -795,6 +816,7 @@ theorem not_reaches_of_blockWalk_of_entry {v a : V} {e : E}
     fun f => (crosses_compl_iff f _).trans (hS f)
   exact mem_of_reaches_of_cut hS' (not_not.mpr hs) ht hu
 
+omit [Fintype X] [DecidableEq X] in
 /-- With the cut edge entering the blob, the root is on the far side. -/
 theorem blockWalk_root_of_entry {v a : V} {e : E} (hN : N.IsPhylogenetic)
     (hS : ∀ f, N.graph.Crosses f {u | BlockWalk N v a u} ↔ f = e)
@@ -815,6 +837,7 @@ theorem mem_below {Y : Finset X} {u : V} {x : X} :
     x ∈ below N Y u ↔ x ∈ Y ∧ N.graph.Reaches u (N.leaf x) := by
   simp [below]
 
+omit [Fintype X] [DecidableEq X] in
 /-- Taxa below a common vertex with no blob vertex below it are in one block. -/
 theorem blockWalk_of_both_below {v c : V} {x y : X}
     (hav : ∀ w, N.graph.Reaches c w → ¬ SameBlob N v w)
@@ -824,6 +847,7 @@ theorem blockWalk_of_both_below {v c : V} {x y : X}
     (blockWalk_symm (blockWalk_of_reaches hx fun w hw _ => hav w hw))
     (blockWalk_of_reaches hy fun w hw _ => hav w hw)
 
+omit [Fintype X] [DecidableEq X] in
 /-- At most one of two taxa in distinct blocks is not below the blob. -/
 theorem reaches_top_of_not_blockWalk (hN : N.IsPhylogenetic) {v T : V} {x y : X}
     (hT : ∀ u, SameBlob N v u → N.graph.Reaches T u)
@@ -838,6 +862,7 @@ theorem reaches_top_of_not_blockWalk (hN : N.IsPhylogenetic) {v T : V} {x y : X}
       fun w _ hwx hb => hx ((hT w hb).trans hwx)))
     (blockWalk_of_reaches (hN.root_reaches _) fun w _ hwy hb => hy ((hT w hb).trans hwy))
 
+omit [Fintype X] in
 /-- **Four taxa in distinct blocks at a blob of a binary network: some arc inside the blob has exactly
 two of them below it.** Descend in the blob from its top, where at least three of the taxa are below,
 using that a vertex has at most two children. -/
@@ -924,6 +949,7 @@ theorem exists_arc_two_below [Fintype E] (hN : N.IsPhylogenetic) (hBin : N.IsBin
     exact hall k (by simpa [hOut] using hk)
   omega
 
+omit [Fintype X] [DecidableEq X] in
 /-- Taxa below the reticulation are in one block. -/
 theorem blockWalk_of_below_reticulation [Fintype V] [Fintype E] (hN : N.IsPhylogenetic)
     (hBin : N.IsBinary) (hLevel : IsLevelOne N) {v h : V}

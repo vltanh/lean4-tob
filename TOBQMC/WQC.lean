@@ -10,8 +10,8 @@ public import Mathlib.Probability.StrongLaw
 # TOB-QMC §4.1–4.2: quartet-based species tree methods give a refinement of the tree of blobs
 
 Definition 1, Equations (1)–(4), Lemma 3, the perturbation Lemma 4 of the Supplement, Theorem 1 and the
-ASTRAL corollary. These results take the exchangeability of taxa on one side of a cut edge from the
-literature (`External.AneEtAl2024.Exchangeability`), so they are conditional on it.
+ASTRAL corollary. These results use the exchangeability of taxa on one side of a cut edge
+(`External.AneEtAl2024.exchangeability`).
 
 The route of Lemma 3 is the paper's. A maximizer of the blob `v` part of the score is changed, by
 detaching taxa and reattaching them to a best taxon of their block (`detachReattach`,
@@ -234,6 +234,7 @@ theorem swap_mem_block_iff (hd : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint 
       simp [haC, hbC]
     rw [Equiv.swap_apply_of_ne_of_ne hxa hxb]
 
+omit [Fintype X] in
 /-- Exchanging two taxa of a block keeps quartets in distinct blocks. -/
 theorem inDistinctBlocks_map_swap (hd : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C) (hB₀ : B₀ ∈ P)
     (ha : a ∈ B₀) (hb : b ∈ B₀) (s : QuartetTree X) :
@@ -251,6 +252,7 @@ theorem inDistinctBlocks_map_swap (hd : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Di
       exact ⟨(swap_mem_block_iff hd hB₀ ha hb hC x).2 h1, x, h2, rfl⟩
   rw [this, card_image_of_injective _ (Equiv.swap a b).injective]
 
+omit [Fintype X] in
 /-- Taxa of a block are exchangeable (ii of the paper's lines 480-482): the block is a cut side, with
 `a`, `b` on it and the other three taxa off it. -/
 theorem cutExchangeable_map_swap {N : RootedNetwork V E X} {F : QuartetTree X → ℝ}
@@ -592,17 +594,18 @@ theorem lemma3_of_properties {V E : Type*} {N : RootedNetwork V E X} (hN : N.IsP
   exact add_lt_add_of_lt_of_le (equation2 hN hF hNon hBtree (subset_splice TN L) hT hne)
     (hstarle T hT)
 
-/-- **Lemma 3** (`tob2025:lemma3`), conditional on exchangeability. For a network under the standard
+/-- **Lemma 3** (`tob2025:lemma3`). For a network under the standard
 assumptions that is T-quartet-nonanomalous, with the exact expected concordance factors, there is a
 binary refinement of the tree of blobs with higher quartet score than every binary tree that does
 not refine it. -/
 theorem lemma3 [Fintype V] [Fintype E] {N : RootedNetwork V E X} {θ : MetricData E} {ρ : ℝ}
-    (hStd : StandardAssumptions N θ ρ) (hEx : External.AneEtAl2024.Exchangeability N θ ρ)
+    (hStd : StandardAssumptions N θ ρ)
     (hNon : IsTQuartetNonanomalous N (nmscCF N θ ρ)) (hX : 4 ≤ Fintype.card X) :
     ∃ B, IsBinaryTree B ∧ treeOfBlobs N ⊆ B ∧ ∀ T, IsBinaryTree T → ¬ treeOfBlobs N ⊆ T →
       quartetScore (nmscCF N θ ρ) T < quartetScore (nmscCF N θ ρ) B := by
   obtain ⟨B, hB, hBT, -, hlt⟩ := lemma3_of_properties hStd.phylogenetic
-    (nmscCF_pos hStd.phylogenetic hStd.metric hStd.rho) hEx hNon hX
+    (nmscCF_pos hStd.phylogenetic hStd.metric hStd.rho)
+    (External.AneEtAl2024.exchangeability hStd.phylogenetic hStd.metric hStd.rho) hNon hX
   exact ⟨B, hB, hBT, hlt⟩
 
 /-- The margin `π` of the perturbation lemma: the least difference, over the 4-taxon sets that `T_N`
@@ -889,14 +892,14 @@ theorem geneCount_score_lt {N : RootedNetwork V E X} (hN : N.IsPhylogenetic)
   rw [quartetScore_div, quartetScore_div] at this
   exact (div_lt_div_iff_of_pos_right (by exact_mod_cast hk)).1 this
 
-/-- **Theorem 1** (`tob2025:theorem1`), conditional on exchangeability. For a network under the
+/-- **Theorem 1** (`tob2025:theorem1`). For a network under the
 standard assumptions that is T-quartet-nonanomalous and independent gene trees from the NMSC, for any
 binary tree `T` not refining the tree of blobs and any `ε > 0` there are a binary refinement `B` and
 `K` such that `QS_k(B) > QS_k(T)` for all `k ≥ K` with probability at least `1 - ε`. The strong law of
 large numbers gives almost sure convergence of the observed concordance factors (`ae_eventually_abs_lt`);
 the deterministic `K` comes from continuity of the measure along the increasing events. -/
 theorem theorem1 [Fintype V] [Fintype E] {N : RootedNetwork V E X} {θ : MetricData E} {ρ : ℝ}
-    (hStd : StandardAssumptions N θ ρ) (hEx : External.AneEtAl2024.Exchangeability N θ ρ)
+    (hStd : StandardAssumptions N θ ρ)
     (hNon : IsTQuartetNonanomalous N (nmscCF N θ ρ)) (hX : 4 ≤ Fintype.card X)
     {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) [IsProbabilityMeasure P]
     (G : ℕ → Ω → Finset (Finset X)) (hG : IsGeneTreeSample P N θ ρ G)
@@ -905,7 +908,8 @@ theorem theorem1 [Fintype V] [Fintype E] {N : RootedNetwork V E X} {θ : MetricD
       1 - ε ≤ P.real {ω | ∀ k, K ≤ k → quartetScore (geneCount G k ω) T < quartetScore (geneCount G k ω) B} := by
   have hN := hStd.phylogenetic
   obtain ⟨B, hB, hBT, hstar, -⟩ := lemma3_of_properties hN
-    (nmscCF_pos hN hStd.metric hStd.rho) hEx hNon hX
+    (nmscCF_pos hN hStd.metric hStd.rho)
+    (External.AneEtAl2024.exchangeability hStd.phylogenetic hStd.metric hStd.rho) hNon hX
   obtain ⟨π, hπ, hmargin⟩ := exists_margin hNon
   have hC : (0 : ℝ) < ((Fintype.card X).choose 4 : ℝ) := by
     exact_mod_cast Nat.choose_pos hX
@@ -935,7 +939,7 @@ theorem theorem1 [Fintype V] [Fintype E] {N : RootedNetwork V E X} {θ : MetricD
 /-- **Theorem 1** (`tob2025:theorem1`), "put simply": almost surely, for all large `k`, every optimal
 solution of Weighted Quartet Consensus is a refinement of the tree of blobs. -/
 theorem theorem1_optimal [Fintype V] [Fintype E] {N : RootedNetwork V E X} {θ : MetricData E} {ρ : ℝ}
-    (hStd : StandardAssumptions N θ ρ) (hEx : External.AneEtAl2024.Exchangeability N θ ρ)
+    (hStd : StandardAssumptions N θ ρ)
     (hNon : IsTQuartetNonanomalous N (nmscCF N θ ρ)) (hX : 4 ≤ Fintype.card X)
     {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) [IsProbabilityMeasure P]
     (G : ℕ → Ω → Finset (Finset X)) (hG : IsGeneTreeSample P N θ ρ G) :
@@ -944,7 +948,8 @@ theorem theorem1_optimal [Fintype V] [Fintype E] {N : RootedNetwork V E X} {θ :
       treeOfBlobs N ⊆ B := by
   have hN := hStd.phylogenetic
   obtain ⟨Bs, hBs, hBsT, hstar, -⟩ := lemma3_of_properties hN
-    (nmscCF_pos hN hStd.metric hStd.rho) hEx hNon hX
+    (nmscCF_pos hN hStd.metric hStd.rho)
+    (External.AneEtAl2024.exchangeability hStd.phylogenetic hStd.metric hStd.rho) hNon hX
   obtain ⟨π, hπ, hmargin⟩ := exists_margin hNon
   have hC : (0 : ℝ) < ((Fintype.card X).choose 4 : ℝ) := by
     exact_mod_cast Nat.choose_pos hX
@@ -963,13 +968,13 @@ def AstralSpace {Ω : Type*} (G : ℕ → Ω → Finset (Finset X)) (k : ℕ) (�
     Prop :=
   IsBinaryTree B ∧ ∀ A ∈ B, ∃ i < k, A ∈ unroot (G i ω)
 
-/-- **Corollary of Theorem 1** (`tob2025:astral_corollary`), conditional on exchangeability: almost
+/-- **Corollary of Theorem 1** (`tob2025:astral_corollary`): almost
 surely, for all large `k`, every optimum of the score in ASTRAL's search space is a refinement of the
 tree of blobs, since every split has positive probability under the NMSC: every binary gene tree has
 positive probability (`geneTreeDist_pos`), so it occurs almost surely (the paper cites Mirarab et al.),
 and then ASTRAL's search space contains all binary trees. -/
 theorem astral_corollary [Fintype V] [Fintype E] {N : RootedNetwork V E X} {θ : MetricData E} {ρ : ℝ}
-    (hStd : StandardAssumptions N θ ρ) (hEx : External.AneEtAl2024.Exchangeability N θ ρ)
+    (hStd : StandardAssumptions N θ ρ)
     (hNon : IsTQuartetNonanomalous N (nmscCF N θ ρ)) (hX : 4 ≤ Fintype.card X)
     {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) [IsProbabilityMeasure P]
     (G : ℕ → Ω → Finset (Finset X)) (hG : IsGeneTreeSample P N θ ρ G) :
@@ -998,7 +1003,7 @@ theorem astral_corollary [Fintype V] [Fintype E] {N : RootedNetwork V E X} {θ :
       push Not at hcon
       simp [hcon] at hk
     · exact ae_of_all _ fun _ h => absurd h hH
-  filter_upwards [theorem1_optimal hStd hEx hNon hX P G hG, hocc] with ω ⟨K₀, hK₀⟩ hω
+  filter_upwards [theorem1_optimal hStd hNon hX P G hG, hocc] with ω ⟨K₀, hK₀⟩ hω
   -- from some point on, ASTRAL's search space contains all binary trees
   obtain ⟨K₁, hK₁⟩ : ∃ K₁, ∀ H : Finset (Finset X), IsBinaryHierarchy H → ∃ i < K₁, G i ω = H := by
     classical

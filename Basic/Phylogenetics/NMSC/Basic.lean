@@ -61,8 +61,8 @@ theorem sum_geneTreeDist (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 
   · rw [kingmanAbsorption_sum (good_arrivingForest_root hN h).1.1, mul_one]
 
 /-- Gene trees are binary rooted trees on all the taxa. -/
-theorem geneTreeDist_support (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
-    [Nonempty X] {G : Finset (Finset X)} (hG : geneTreeDist N θ ρ G ≠ 0) : IsBinaryHierarchy G := by
+theorem geneTreeDist_support (hN : N.IsPhylogenetic) [Nonempty X] {G : Finset (Finset X)}
+    (hG : geneTreeDist N θ ρ G ≠ 0) : IsBinaryHierarchy G := by
   obtain ⟨bot, -, hbot⟩ := exists_ne_zero_of_sum_ne_zero hG
   obtain ⟨top, -, htop⟩ := exists_ne_zero_of_sum_ne_zero hbot
   obtain ⟨hgood, hlin⟩ := good_arrivingForest_root hN (left_ne_zero_of_mul htop)
@@ -144,7 +144,7 @@ theorem sum_nmscCF (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ
   refine sum_congr rfl fun G _ => ?_
   by_cases hd : geneTreeDist N θ ρ G = 0
   · simp [hd]
-  · obtain ⟨hH, hbin⟩ := geneTreeDist_support hN hθ hρ hd
+  · obtain ⟨hH, hbin⟩ := geneTreeDist_support hN hd
     obtain ⟨r₀, hr₀, hdisp⟩ := IsBinaryTree.exists_displays ⟨G, hH, rfl, hbin⟩ hq
     rw [sum_eq_single r₀]
     · simp only [hdisp, ↓reduceIte]

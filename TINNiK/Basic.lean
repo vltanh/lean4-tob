@@ -279,10 +279,10 @@ theorem tendsto_iidProb_and {Γ : Type*} [Fintype Γ] {dist : Γ → ℝ} (hd : 
 
 /-- Gene trees under the NMSC are binary, so they display one quartet tree on each set of four taxa. -/
 private theorem displaysOne_nmsc {V E : Type*} [Fintype V] [Fintype E] [Nonempty X]
-    {N : RootedNetwork V E X} (hN : N.IsPhylogenetic) {θ : MetricData E} (hθ : N.IsMetric θ) {ρ : ℝ}
-    (hρ : 0 ≤ ρ ∧ ρ ≤ 1) : QuartetTests.DisplaysOne (geneTreeDist N θ ρ) (unroot (L := X)) := by
+    {N : RootedNetwork V E X} (hN : N.IsPhylogenetic) {θ : MetricData E} {ρ : ℝ} :
+    QuartetTests.DisplaysOne (geneTreeDist N θ ρ) (unroot (L := X)) := by
   intro g hg q hq
-  obtain ⟨hH, hbin⟩ := geneTreeDist_support hN hθ hρ hg
+  obtain ⟨hH, hbin⟩ := geneTreeDist_support hN hg
   have hbt : IsBinaryTree (unroot g) := ⟨g, hH, rfl, hbin⟩
   obtain ⟨s, hs, hd⟩ := hbt.exists_displays hq
   refine ⟨s, ⟨hs, hd⟩, fun s' h' => ?_⟩
@@ -320,6 +320,106 @@ private theorem tendsto_star {Γ : Type*} [Fintype Γ] {dist : Γ → ℝ} {side
   rw [he] at hω
   exact hω
 
+/-- At a strictly cut CF the star test rejects, the maximum likelihood topology is the cut split, and the
+cut test does not reject. A strictly cut CF is off the centroid, without genericity (departure from the
+paper's proof of Theorem 4; see `theorem4_of_detectable`). -/
+private theorem tendsto_good_cut {V E : Type*} [Fintype V] [Fintype E] [Nonempty X]
+    {N : RootedNetwork V E X} (hN : N.IsPhylogenetic) {θ : MetricData E} (hθ : N.IsMetric θ)
+    {ρ : ℝ} (hρ : 0 ≤ ρ ∧ ρ ≤ 1) {α : ℕ → ℝ} (hα₀ : Tendsto α atTop (𝓝 0))
+    {β : ℝ} (hβ : 0 < β) {ml : (QuartetTree X → ℝ) → Finset X → QuartetTree X}
+    (hml : IsMLSelection ml) {s₀ : QuartetTree X}
+    (hc : External.AllmanEtAl2023.IsStrictlyCut (nmscCF N θ ρ) s₀) :
+    Tendsto (fun m => iidProb (geneTreeDist N θ ρ) m fun ω =>
+      starPValue .lrt (quartetCount unroot ω) s₀.taxa < β ∧
+        ml (quartetCount unroot ω) s₀.taxa = s₀ ∧
+        α m ≤ cutPValue (quartetCount unroot ω) s₀) atTop (𝓝 1) := by
+  have hd : IsDist (geneTreeDist N θ ρ) :=
+    ⟨geneTreeDist_nonneg hN hθ hρ, sum_geneTreeDist hN hθ hρ⟩
+  have hs := displaysOne_nmsc (θ := θ) (ρ := ρ) hN
+  obtain ⟨hcne, hceq⟩ := hc
+  have hq := QuartetTree.card_taxa s₀
+  have hs₀ : s₀ ∈ treesOn s₀.taxa := Finset.mem_filter.mpr ⟨Finset.mem_univ _, rfl⟩
+  have hcentroid : ¬ ∀ r ∈ treesOn s₀.taxa, displayCF (geneTreeDist N θ ρ) unroot r = 1 / 3 := by
+    intro hall
+    obtain ⟨r, hr⟩ := Finset.card_pos.mp
+      (by rw [QuartetTree.card_alternatives]; norm_num : 0 < s₀.alternatives.card)
+    obtain ⟨-, hrt, -⟩ := Finset.mem_filter.mp hr
+    refine hcne r hr ?_
+    have h1 := hall r (Finset.mem_filter.mpr ⟨Finset.mem_univ _, hrt⟩)
+    have h2 := hall s₀ hs₀
+    exact h1.trans h2.symm
+  have hnull := QuartetTests.cutTest_null hd hs (s := s₀) hcne hceq
+    (fun r _ => nmscCF_pos hN hθ hρ r) hα₀
+  refine tendsto_iidProb_of_imp hd (Eventually.of_forall fun m ω hω => ?_)
+    (tendsto_iidProb_and hd (tendsto_star hd hs hq hcentroid hβ) hnull)
+  obtain ⟨h1, h2, h3⟩ := hω
+  refine ⟨h1, ?_, h3⟩
+  obtain ⟨hm1, hm2⟩ := hml (quartetCount unroot ω) s₀.taxa hq
+  by_contra hneq
+  have halt : ml (quartetCount unroot ω) s₀.taxa ∈ s₀.alternatives :=
+    Finset.mem_filter.mpr ⟨Finset.mem_univ _, (Finset.mem_filter.mp hm1).2, hneq⟩
+  exact absurd (hm2 s₀ hs₀) (not_le.mpr (h2 _ halt))
+
+/-- At a non-cut CF the star test rejects, and the cut test rejects at the maximum likelihood topology. -/
+private theorem tendsto_good_blob {V E : Type*} [Fintype V] [Fintype E] [Nonempty X]
+    {N : RootedNetwork V E X} (hN : N.IsPhylogenetic) {θ : MetricData E} (hθ : N.IsMetric θ)
+    {ρ : ℝ} (hρ : 0 ≤ ρ ∧ ρ ≤ 1) {α : ℕ → ℝ} (hα : ∀ m, 0 < α m)
+    (hαlog : Tendsto (fun m : ℕ => Real.log (α m) / m) atTop (𝓝 0))
+    {β : ℝ} (hβ : 0 < β) {ml : (QuartetTree X → ℝ) → Finset X → QuartetTree X}
+    (hml : IsMLSelection ml) {q : Finset X} (hq : q.card = 4)
+    (hnc : External.AllmanEtAl2023.IsNonCut (nmscCF N θ ρ) q) :
+    Tendsto (fun m => iidProb (geneTreeDist N θ ρ) m fun ω =>
+      starPValue .lrt (quartetCount unroot ω) q < β ∧
+        cutPValue (quartetCount unroot ω) (ml (quartetCount unroot ω) q) < α m) atTop (𝓝 1) := by
+  have hd : IsDist (geneTreeDist N θ ρ) :=
+    ⟨geneTreeDist_nonneg hN hθ hρ, sum_geneTreeDist hN hθ hρ⟩
+  have hs := displaysOne_nmsc (θ := θ) (ρ := ρ) hN
+  have hcentroid : ¬ ∀ r ∈ treesOn q, displayCF (geneTreeDist N θ ρ) unroot r = 1 / 3 := by
+    intro hall
+    obtain ⟨r, hr, r', hr', hrr⟩ := Finset.one_lt_card.mp
+      (by rw [card_treesOn hq]; norm_num : 1 < (treesOn q).card)
+    exact hnc r hr r' hr' hrr ((hall r hr).trans (hall r' hr').symm)
+  obtain ⟨d, hd0, halt⟩ := QuartetTests.cutTest_alternative hd hq hnc
+  refine tendsto_iidProb_of_imp hd
+    ((eventually_chiSqOneTail_le hα hαlog hd0).mono fun m hm ω hω => ?_)
+    (tendsto_iidProb_and hd (tendsto_star hd hs hq hcentroid hβ) halt)
+  obtain ⟨h1, h2⟩ := hω
+  exact ⟨h1, (h2 _ (hml (quartetCount unroot ω) q hq).1).trans_le hm⟩
+
+/-- At a strictly cut CF, the tests do not judge the taxa a B-quartet, with probability tending to one. -/
+theorem tendsto_not_testedB {V E : Type*} [Fintype V] [Fintype E] [Nonempty X]
+    {N : RootedNetwork V E X} (hN : N.IsPhylogenetic) {θ : MetricData E} (hθ : N.IsMetric θ)
+    {ρ : ℝ} (hρ : 0 ≤ ρ ∧ ρ ≤ 1) {α : ℕ → ℝ} (hα₀ : Tendsto α atTop (𝓝 0))
+    {β : ℝ} (hβ : 0 < β) {ml : (QuartetTree X → ℝ) → Finset X → QuartetTree X}
+    (hml : IsMLSelection ml) {s₀ : QuartetTree X}
+    (hc : External.AllmanEtAl2023.IsStrictlyCut (nmscCF N θ ρ) s₀) :
+    Tendsto (fun m => iidProb (geneTreeDist N θ ρ) m fun ω =>
+      s₀.taxa ∉ testedB ml (α m) β (quartetCount unroot ω)) atTop (𝓝 1) := by
+  have hd : IsDist (geneTreeDist N θ ρ) :=
+    ⟨geneTreeDist_nonneg hN hθ hρ, sum_geneTreeDist hN hθ hρ⟩
+  refine tendsto_iidProb_of_imp hd (Eventually.of_forall fun m ω hω hB => ?_)
+    (tendsto_good_cut hN hθ hρ hα₀ hβ hml hc)
+  obtain ⟨h1, h2, h3⟩ := hω
+  rcases hB.2 with h | h
+  · exact absurd h (not_le.mpr h1)
+  · rw [h2] at h
+    exact absurd h (not_lt.mpr h3)
+
+/-- At a non-cut CF, the tests judge the taxa a B-quartet, with probability tending to one. -/
+theorem tendsto_testedB {V E : Type*} [Fintype V] [Fintype E] [Nonempty X]
+    {N : RootedNetwork V E X} (hN : N.IsPhylogenetic) {θ : MetricData E} (hθ : N.IsMetric θ)
+    {ρ : ℝ} (hρ : 0 ≤ ρ ∧ ρ ≤ 1) {α : ℕ → ℝ} (hα : ∀ m, 0 < α m)
+    (hαlog : Tendsto (fun m : ℕ => Real.log (α m) / m) atTop (𝓝 0))
+    {β : ℝ} (hβ : 0 < β) {ml : (QuartetTree X → ℝ) → Finset X → QuartetTree X}
+    (hml : IsMLSelection ml) {q : Finset X} (hq : q.card = 4)
+    (hnc : External.AllmanEtAl2023.IsNonCut (nmscCF N θ ρ) q) :
+    Tendsto (fun m => iidProb (geneTreeDist N θ ρ) m fun ω =>
+      q ∈ testedB ml (α m) β (quartetCount unroot ω)) atTop (𝓝 1) := by
+  have hd : IsDist (geneTreeDist N θ ρ) :=
+    ⟨geneTreeDist_nonneg hN hθ hρ, sum_geneTreeDist hN hθ hρ⟩
+  exact tendsto_iidProb_of_imp hd (Eventually.of_forall fun m ω hω => ⟨hq, Or.inr hω.2⟩)
+    (tendsto_good_blob hN hθ hρ hα hαlog hβ hml hq hnc)
+
 /-- On each set of four taxa, the tests give the wanted answers with probability tending to one. -/
 private theorem tendsto_qGood {V E : Type*} [Fintype V] [Fintype E] {N : RootedNetwork V E X}
     (hN : N.IsPhylogenetic) (hX : 4 ≤ Fintype.card X) {θ : MetricData E} (hθ : N.IsMetric θ)
@@ -333,51 +433,24 @@ private theorem tendsto_qGood {V E : Type*} [Fintype V] [Fintype E] {N : RootedN
   have hne : Nonempty X := Fintype.card_pos_iff.mp (by omega)
   have hd : IsDist (geneTreeDist N θ ρ) :=
     ⟨geneTreeDist_nonneg hN hθ hρ, sum_geneTreeDist hN hθ hρ⟩
-  have hs := displaysOne_nmsc hN hθ hρ
   by_cases htl : IsTreelike N q
   · -- a cut-edge split on the induced network: the cut test does not reject
     obtain ⟨s₀, hs₀, hc₀⟩ := htl
     have hst : s₀.taxa = q := (Finset.mem_filter.mp hs₀).2
-    obtain ⟨hcne, hceq⟩ := hdet.cut s₀ hc₀
-    -- Departure from the paper: a strictly cut CF is off the centroid, without genericity
-    have hcentroid : ¬ ∀ r ∈ treesOn q, displayCF (geneTreeDist N θ ρ) unroot r = 1 / 3 := by
-      intro hall
-      obtain ⟨r, hr⟩ := Finset.card_pos.mp
-        (by rw [QuartetTree.card_alternatives]; norm_num : 0 < s₀.alternatives.card)
-      obtain ⟨-, hrt, -⟩ := Finset.mem_filter.mp hr
-      refine hcne r hr ?_
-      have h1 := hall r (Finset.mem_filter.mpr ⟨Finset.mem_univ _, hrt.trans hst⟩)
-      have h2 := hall s₀ hs₀
-      exact h1.trans h2.symm
-    have hnull := QuartetTests.cutTest_null hd hs (s := s₀) hcne hceq
-      (fun r _ => nmscCF_pos hN hθ hρ r) hα₀
+    subst hst
     refine tendsto_iidProb_of_imp hd (Eventually.of_forall fun m ω hω => ?_)
-      (tendsto_iidProb_and hd (tendsto_star hd hs hq hcentroid hβ) hnull)
+      (tendsto_good_cut hN hθ hρ hα₀ hβ hml (hdet.cut s₀ hc₀))
     obtain ⟨h1, h2, h3⟩ := hω
     refine ⟨h1, fun s hsq hcs => ?_, fun hnt => absurd ⟨s₀, hs₀, hc₀⟩ hnt⟩
     have hss : s = s₀ := External.AllmanEtAl2023.inducedCutSplit_unique hN hcs hc₀
-      ((Finset.mem_filter.mp hsq).2.trans hst.symm)
+      (Finset.mem_filter.mp hsq).2
     subst hss
-    refine ⟨?_, h3⟩
-    obtain ⟨hm1, hm2⟩ := hml (quartetCount unroot ω) q hq
-    by_contra hneq
-    have halt : ml (quartetCount unroot ω) q ∈ s.alternatives :=
-      Finset.mem_filter.mpr ⟨Finset.mem_univ _, (Finset.mem_filter.mp hm1).2.trans hst.symm, hneq⟩
-    exact absurd (hm2 s hsq) (not_le.mpr (h2 _ halt))
+    exact ⟨h2, h3⟩
   · -- no cut-edge split: the cut test rejects
-    have hnc := hdet.blob q hq htl
-    have hcentroid : ¬ ∀ r ∈ treesOn q, displayCF (geneTreeDist N θ ρ) unroot r = 1 / 3 := by
-      intro hall
-      obtain ⟨r, hr, r', hr', hrr⟩ := Finset.one_lt_card.mp
-        (by rw [card_treesOn hq]; norm_num : 1 < (treesOn q).card)
-      exact hnc r hr r' hr' hrr ((hall r hr).trans (hall r' hr').symm)
-    obtain ⟨d, hd0, halt⟩ := QuartetTests.cutTest_alternative hd hq hnc
-    refine tendsto_iidProb_of_imp hd
-      ((eventually_chiSqOneTail_le hα hαlog hd0).mono fun m hm ω hω => ?_)
-      (tendsto_iidProb_and hd (tendsto_star hd hs hq hcentroid hβ) halt)
+    refine tendsto_iidProb_of_imp hd (Eventually.of_forall fun m ω hω => ?_)
+      (tendsto_good_blob hN hθ hρ hα hαlog hβ hml hq (hdet.blob q hq htl))
     obtain ⟨h1, h2⟩ := hω
-    refine ⟨h1, fun s hsq hcs => absurd ⟨s, hsq, hcs⟩ htl, fun _ => ?_⟩
-    exact (h2 _ (hml (quartetCount unroot ω) q hq).1).trans_le hm
+    exact ⟨h1, fun s hsq hcs => absurd ⟨s, hsq, hcs⟩ htl, fun _ => h2⟩
 
 /-- **The test-correctness step of the proof of Theorem 4**, for any inheritance correlation `ρ`: at
 parameters satisfying CF-detectability, for levels `α_m → 0` with `log(1/α_m) = o(m)` and any `β > 0`, TINNiK's
@@ -425,11 +498,11 @@ follow from weak convergence (E10 of the report), and it says `μ₀ → ∞` wh
 have `μ₀ → -∞`. It is repaired in `QuartetTests.cutTest_alternative`, by the pointwise domination of the
 test distribution by `Z²`, and in `QuartetTests.cutTest_null`. -/
 theorem theorem4_of_detectable [Fintype V] [Fintype E] {N : RootedNetwork V E X}
-    (hN : N.IsPhylogenetic) (hBin : N.IsBinary) (hX : 4 ≤ Fintype.card X) {θ : MetricData E}
+    (hN : N.IsPhylogenetic) (hX : 4 ≤ Fintype.card X) {θ : MetricData E}
     (hθ : N.IsMetric θ) (hdet : External.AllmanEtAl2023.CFDetectable N (nmscCF N θ 0))
     {α : ℕ → ℝ} (hα : ∀ m, 0 < α m) (hα₀ : Tendsto α atTop (𝓝 0))
     (hαlog : Tendsto (fun m : ℕ => Real.log (α m) / m) atTop (𝓝 0))
-    {β δ : ℝ} (hβ : 0 < β) (hδ : 0 ≤ δ) (hδ₂ : δ < 2) {M : TreeBuilder X} (hM : IsExactBuilder M)
+    {β δ : ℝ} (hβ : 0 < β) (hδ₂ : δ < 2) {M : TreeBuilder X} (hM : IsExactBuilder M)
     {ml : (QuartetTree X → ℝ) → Finset X → QuartetTree X} (hml : IsMLSelection ml) :
     Tendsto (fun m => iidProb (geneTreeDist N θ 0) m fun ω =>
       tinnik ml (α m) β δ M (quartetCount unroot ω) = treeOfBlobs N) atTop (𝓝 1) := by
@@ -448,9 +521,10 @@ sequence `α_m → 0` such that for any `β > 0` and `2 > δ ≥ 0`, the TINNiK 
 
 The sequence `α_m` is the upper tail of `χ²₁` at `log m`, which does not depend on the network or the
 parameters: this is stronger than the statement of the paper, whose `α_m` is built from the unknown limits
-`d` of the statistics. ECToBlob's Remark 8.3 makes the same observation. -/
+`d` of the statistics. ECToBlob's Remark 8.3 makes the same observation. That `N` is binary is needed only
+for the hypothesis `Corollary1` to hold, not by this proof. -/
 theorem theorem4 [Fintype V] [Fintype E] {N : RootedNetwork V E X}
-    (hN : N.IsPhylogenetic) (hBin : N.IsBinary) (hX : 4 ≤ Fintype.card X)
+    (hN : N.IsPhylogenetic) (hX : 4 ≤ Fintype.card X)
     (hCor : External.AllmanEtAl2023.Corollary1 N) :
     ∃ A : Set (MetricData E), External.AllmanEtAl2023.IsGenericNull N A ∧
       ∀ θ, N.IsMetric θ → θ ∉ A →
@@ -467,7 +541,7 @@ theorem theorem4 [Fintype V] [Fintype E] {N : RootedNetwork V E X}
     exact hA ⟨hθ, hn⟩
   refine ⟨fun m => chiSqOneTail (Real.log m), QuartetTests.tendsto_chiSqOneTail_log,
     fun m => QuartetTests.chiSqOneTail_pos _, fun β δ hβ hδ hδ₂ M hM ml hml => ?_⟩
-  exact theorem4_of_detectable hN hBin hX hθ hdet (fun m => QuartetTests.chiSqOneTail_pos _)
-    QuartetTests.tendsto_chiSqOneTail_log QuartetTests.tendsto_log_chiSqOneTail_log hβ hδ hδ₂ hM hml
+  exact theorem4_of_detectable hN hX hθ hdet (fun m => QuartetTests.chiSqOneTail_pos _)
+    QuartetTests.tendsto_chiSqOneTail_log QuartetTests.tendsto_log_chiSqOneTail_log hβ hδ₂ hM hml
 
 end TINNiK

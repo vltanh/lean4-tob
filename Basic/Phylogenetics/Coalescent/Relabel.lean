@@ -22,8 +22,8 @@ Kingman's coalescent is natural with respect to bijections of the lineages.
 * `kingmanGenerator_relabelFamily`, `kingmanTransition_relabelFamily`,
   `kingmanAbsorption_relabelFamily`: Kingman's coalescent is invariant under relabelling the
   lineages.
-* `forestBelow_relabelFamily`, `isGoodForest_relabelFamily`, `lineages_relabelFamily`: the operations
-  of the network multispecies coalescent are too.
+* `forestBelow_relabelFamily`, `isGoodForest_relabelFamily`, `lineages_relabelFamily`: the
+  operations of the network multispecies coalescent are too.
 -/
 
 @[expose] public section

@@ -219,6 +219,7 @@ theorem QuartetTree.eq_pair_of_mem (s : QuartetTree X) {B : Finset X} (hB : B �
     subst h
     rw [union_sdiff_cancel_right hd, pair_comm]
 
+omit [Fintype X] in
 /-- Quartet trees on the same taxa sharing a cherry are equal. -/
 theorem QuartetTree.eq_of_taxa_eq_of_mem {r s : QuartetTree X} (h : r.taxa = s.taxa) {B : Finset X}
     (hr : B ∈ r.val) (hs : B ∈ s.val) : r = s := by

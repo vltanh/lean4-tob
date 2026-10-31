@@ -23,8 +23,9 @@ import all Basic.Phylogenetics.Coalescent.Factorization
 import all Basic.Phylogenetics.Coalescent.Forest
 import all Basic.Phylogenetics.Coalescent.Outcome
 import all Basic.Phylogenetics.Coalescent.PMF
+import all Basic.Phylogenetics.Coalescent.Relabel
 import all Basic.Phylogenetics.Coalescent.Tavare
-import all Basic.Phylogenetics.ConcordanceFactor
+import all Basic.Phylogenetics.Coalescent.Trace
 import all Basic.Phylogenetics.CutHierarchy
 import all Basic.Phylogenetics.Defs
 import all Basic.Phylogenetics.Hierarchy
@@ -32,20 +33,21 @@ import all Basic.Phylogenetics.HierarchyGraph
 import all Basic.Phylogenetics.HierarchyParents
 import all Basic.Phylogenetics.InducedNetwork
 import all Basic.Phylogenetics.NMSC.Basic
+import all Basic.Phylogenetics.NMSC.Exchangeability
+import all Basic.Phylogenetics.NMSC.Factor
 import all Basic.Phylogenetics.NMSC.History
 import all Basic.Phylogenetics.NMSC.Inheritance
+import all Basic.Phylogenetics.NMSC.Marginal
+import all Basic.Phylogenetics.NMSC.Symmetry
 import all Basic.Phylogenetics.Network
 import all Basic.Phylogenetics.NetworkCuts
 import all Basic.Phylogenetics.PendantCuts
 import all Basic.Phylogenetics.Quartet
-import all Basic.Phylogenetics.QuartetScore
-import all Basic.Phylogenetics.Star
 import all Basic.Phylogenetics.TreeDetach
 import all Basic.Phylogenetics.TreeMetric
 import all Basic.Phylogenetics.TreeOfBlobs
 import all Basic.Phylogenetics.TreeSplice
 import all Basic.Phylogenetics.TreeSplits
-import all Basic.Phylogenetics.TreeTopology
 import all Basic.Probability.GaussianPlane
 import all Basic.Probability.GaussianTail
 import all Basic.Probability.IID
@@ -127,7 +129,7 @@ meta def externalResults : List (String × Name) :=
    ("CF-detectability at given parameters (assumed in the consistency claim)",
     ``External.AllmanEtAl2023.CFDetectable),
    ("Adaptation of Allman et al. 2023, Theorem 1 (assumed)", ``ECToBlob.AdaptedAllmanTheorem1),
-   ("Ané et al. 2024, exchangeability", ``External.AneEtAl2024.Exchangeability),
+   ("Ané et al. 2024, exchangeability", ``External.AneEtAl2024.exchangeability),
    ("Allman et al. 2023, Theorem 2", ``External.AllmanEtAl2023.theorem2),
    ("Allman et al. 2023, Theorem 3, combinatorial part", ``External.AllmanEtAl2023.closure_complete),
    ("Allman et al. 2023, Theorem 3, soundness", ``External.AllmanEtAl2023.closure_sound),

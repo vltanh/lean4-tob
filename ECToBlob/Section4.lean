@@ -217,7 +217,7 @@ set remains a cut edge. The paper's "reasoning similarly" is `separates_of_foral
 taxon by taxon. The disjointness of `A₁, A₂` and of `B₁, B₂` is not used. -/
 theorem theorem4_1 (hN : N.IsPhylogenetic) (A₁ A₂ B₁ B₂ : Finset X)
     (hA₁ : A₁.Nonempty) (hA₂ : A₂.Nonempty) (hB₁ : B₁.Nonempty) (hB₂ : B₂.Nonempty)
-    (hA : Disjoint A₁ A₂) (hB : Disjoint B₁ B₂) (hAB : Disjoint (A₁ ∪ A₂) (B₁ ∪ B₂))
+    (hAB : Disjoint (A₁ ∪ A₂) (B₁ ∪ B₂))
     (hcover : (A₁ ∪ A₂) ∪ (B₁ ∪ B₂) = Finset.univ)
     (h : ∀ a₁ ∈ A₁, ∀ a₂ ∈ A₂, ∀ b₁ ∈ B₁, ∀ b₂ ∈ B₂,
       N.HasCutSplitOn (({a₁, a₂, b₁, b₂} : Finset X) : Set X) (({a₁, a₂} : Finset X) : Set X)) :
@@ -308,8 +308,6 @@ theorem corollary4_2 (hN : N.IsPhylogenetic) (A : Finset X) (hA : 2 ≤ A.card) 
     rw [← Finset.insert_eq, Finset.insert_erase hb₁]
   have key := theorem4_1 hN {a₁} (A.erase a₁) {b₁} (Aᶜ.erase b₁)
     (Finset.singleton_nonempty _) (herase ha₁ hA) (Finset.singleton_nonempty _) (herase hb₁ hB)
-    (Finset.disjoint_singleton_left.mpr (Finset.notMem_erase _ _))
-    (Finset.disjoint_singleton_left.mpr (Finset.notMem_erase _ _))
     (by rw [hcoverA, hcoverB]; exact disjoint_compl_right)
     (by rw [hcoverA, hcoverB]; exact Finset.union_compl A)
     (fun a ha a₂ ha₂ b hb b₂ hb₂ => by
@@ -361,7 +359,6 @@ theorem corollary4_3 (hN : N.IsPhylogenetic) (A : Finset X) {na nb : ℕ}
   have key := theorem4_1 hN (Ablock i) (A \ Ablock i) (Bblock j) (Aᶜ \ Bblock j)
     (hAne i) (hrest Ablock A i hna hAne hAdisj hAcover)
     (hBne j) (hrest Bblock Aᶜ j hnb hBne hBdisj hBcover)
-    Finset.disjoint_sdiff Finset.disjoint_sdiff
     (by rw [hcoverA, hcoverB]; exact disjoint_compl_right)
     (by rw [hcoverA, hcoverB]; exact Finset.union_compl A)
     hall

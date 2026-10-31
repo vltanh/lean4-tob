@@ -1,0 +1,237 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/mathlib-initiative/formalization.yaml/main/schema/formalization.schema.json
+version: "v0.4"
+
+project:
+  name: "Tree of blobs inference from quartet concordance factors"
+  description: >-
+    Conditional on one result of the literature: Corollary 1 of Allman, Baños, Mitchell, Rhodes 2023 (the
+    CF-detectability of 4-blobs for generic parameters), in its original form and in the form ECToBlob adapts.
+
+
+    A Lean formalization of three papers on inferring the tree of blobs of a phylogenetic network from gene trees under
+    the network multispecies coalescent: ECToBlob (Rhodes, Allman, Ané, Baños 2026), TOB-QMC (Dai, Han, Molloy 2026) and
+    TINNiK (Allman, Baños, Mitchell, Rhodes 2024).
+
+
+    Proved: optimal trees of the maximum quartet support criterion resolve the tree of blobs; if every quartet across a
+    quadripartition has the split as a cut-edge split then the network has that cut edge (ECToBlob Theorem 4.1);
+    statistical consistency of the ECToBlob algorithm for all its variants, with sequences of levels independent of the
+    network; a disjoint cover of quartets around each edge detects false edges at level 1, and its statistical
+    consistency; statistical consistency of the TINNiK algorithm; the limit laws of the star, T1 and cut tests from the
+    central limit theorem; the density of the cut test; and the network multispecies coalescent on arbitrary networks with
+    correlated inheritance, with exchangeability across cut edges.
+
+
+    The audit records 34 findings in the papers, including a counterexample to a boundary case of ECToBlob's Theorem 8.2
+    and a gap in its proof that needed a new argument.
+  authors:
+    - "The-Anh Vu-Le"
+  license: "Apache-2.0"
+  responsible_maintainers:
+    - "The-Anh Vu-Le"
+
+classification:
+  arxiv: ["q-bio.PE", "math.ST"]
+  msc2020: ["92D15", "92B10", "05C90", "62F03", "60J28", "68V20"]
+
+sources:
+  - title: "Statistical inference of the Tree of Blobs of a phylogenetic network from quartet concordance factors"
+    authors:
+      - "John A. Rhodes"
+      - "Elizabeth S. Allman"
+      - "Cécile Ané"
+      - "Hector Baños"
+    id: "doi:10.64898/2026.05.28.728501v1"
+    type: "preprint"
+    location: "https://www.biorxiv.org/content/10.64898/2026.05.28.728501v1"
+    relationship: "formalizes"
+    author_endorsement: "not-contacted"
+  - title: "Quartet-based species tree methods enable fast and consistent tree of blobs reconstruction under the network multispecies coalescent"
+    authors:
+      - "Junyan Dai"
+      - "Yunheng Han"
+      - "Erin K. Molloy"
+    id: "doi:10.1101/2025.11.05.686850v5"
+    type: "preprint"
+    location: "https://www.biorxiv.org/content/10.1101/2025.11.05.686850v5"
+    relationship: "formalizes"
+    note: "bioRxiv v5 with its supplement. A later journal version, doi:10.1101/gr.282203.126, could not be retrieved in full."
+    author_endorsement: "not-contacted"
+  - title: "TINNiK: inference of the tree of blobs of a species network under the coalescent model"
+    authors:
+      - "Elizabeth S. Allman"
+      - "Hector Baños"
+      - "Jonathan D. Mitchell"
+      - "John A. Rhodes"
+    id: "doi:10.1186/s13015-024-00266-2"
+    type: "article"
+    location: "https://doi.org/10.1186/s13015-024-00266-2"
+    relationship: "formalizes"
+    author_endorsement: "not-contacted"
+  - title: "The tree of blobs of a species network: identifiability under the coalescent"
+    authors:
+      - "Elizabeth S. Allman"
+      - "Hector Baños"
+      - "Jonathan D. Mitchell"
+      - "John A. Rhodes"
+    id: "doi:10.1007/s00285-022-01838-9"
+    type: "article"
+    location: "https://doi.org/10.1007/s00285-022-01838-9"
+    relationship: "background"
+    note: "Theorem 2 and Lemma 3 are proved in External/AllmanEtAl2023. Theorem 1 and Corollary 1 are assumed, as the named hypothesis External.AllmanEtAl2023.Corollary1."
+  - title: "Topological metrizations of trees, and new quartet methods of tree inference"
+    authors:
+      - "John A. Rhodes"
+    id: "doi:10.1109/TCBB.2019.2917204"
+    type: "article"
+    location: "https://doi.org/10.1109/TCBB.2019.2917204"
+    relationship: "background"
+    note: "Theorem 2 is proved in External/Rhodes2020."
+  - title: "Hypothesis testing near singularities and boundaries"
+    authors:
+      - "Jonathan D. Mitchell"
+      - "Elizabeth S. Allman"
+      - "John A. Rhodes"
+    id: "doi:10.1214/19-EJS1576"
+    type: "article"
+    location: "https://doi.org/10.1214/19-EJS1576"
+    relationship: "background"
+    note: "The conclusion of Theorem 3.1 is proved for the trinomial cut model in External/MitchellAllmanRhodes2019, by a direct argument."
+  - title: "When are quarnets sufficient to reconstruct semi-directed phylogenetic networks?"
+    authors:
+      - "Katharina T. Huber"
+      - "Leo van Iersel"
+      - "Mark Jones"
+      - "Vincent Moulton"
+      - "Leonie Veenema-Nipius"
+    id: "doi:10.1007/s11538-025-01510-5"
+    type: "article"
+    location: "https://doi.org/10.1007/s11538-025-01510-5"
+    relationship: "background"
+    note: "The forward direction of Theorem 5.1 is proved in External/HuberEtAl2025."
+  - title: "Anomalous networks under the multispecies coalescent: theory and prevalence"
+    authors:
+      - "Cécile Ané"
+      - "John Fogg"
+      - "Elizabeth S. Allman"
+      - "Hector Baños"
+      - "John A. Rhodes"
+    id: "doi:10.1007/s00285-024-02050-7"
+    type: "article"
+    location: "https://doi.org/10.1007/s00285-024-02050-7"
+    relationship: "background"
+    note: "Exchangeability across a cut edge is proved in External/AneEtAl2024 for arbitrary networks with correlated inheritance."
+
+related_formalizations:
+  - id: "https://github.com/vltanh/lean4-phylogenetics"
+    relationship: "adapts"
+    note: "Finite Kingman coalescent and hierarchy modules are adapted from commit 06f684e5 under Apache-2.0 (docs/ADAPTED_SOURCES.md, docs/COALESCENT_SOURCES.md). Its level-1 network syntax and NMSC are not used; the NMSC here is new."
+  - id: "https://github.com/vltanh/lean4-camus"
+    relationship: "independent"
+    note: "Surveyed; no code used."
+
+status:
+  scope: >-
+    Conditional formalization. It assumes Corollary 1 of Allman et al. 2023 (External.AllmanEtAl2023.Corollary1), and the
+    adaptation that ECToBlob's Proposition 5.1 makes of it (ECToBlob.AdaptedAllmanTheorem1, its generic clause), as named
+    hypotheses. TINNiK Theorem 4 and ECToBlob Proposition 5.1 are conditional on them. All other numbered results of the
+    three papers and the results they cite are proved. Theorem 8.2 of ECToBlob is proved under two corrections, for
+    parameters meeting both directions of Assumption 1, and, for two variants of the algorithm, positive alternatives on
+    quartets strictly in the T1 null; the second correction has a counterexample and awaits the requester's agreement.
+    Not formalized: simulations, running times, neighbor joining as an exact tree builder, the T3 test, heuristic
+    optimizers, and Remarks 8.3 and 8.4 of ECToBlob as theorems. See REPORT.md, Section 9.
+  sorry_count: 0
+  sorry_in_definitions: 0
+  axioms: []
+
+automation:
+  methods:
+    - method: "agent"
+      models: ["GPT-6 family (exact revision not exposed)"]
+      framework: "Codex"
+      tool_setup: "formalize-math-paper skill; three sub-agents; shared local workspace. Source audit and foundations, no numbered paper result."
+      cost:
+        wall_time: "CODEX_WALL"
+        spend_usd: "not tracked"
+        hardware: "local machine"
+      prompting_notes: "Slash command with the three paper links; statement corrections asked of the user and approved."
+    - method: "agent"
+      models: ["claude-opus-5-5"]
+      framework: "Claude Code (VS Code extension)"
+      tool_setup: "formalize-math-paper skill, repository vltanh/formalize-math-paper, commit e339f64; CLAUDE_AGENTS sub-agents."
+      cost:
+        wall_time: "CLAUDE_WALL"
+        spend_usd: "not tracked"
+        hardware: "local machine"
+      prompting_notes: "Slash command with the three paper links, continuing from the earlier handoff."
+  spend_usd: "not tracked"
+  notes: >-
+    The user chose the papers and the source versions and agreed to the statement corrections, except for E11 of the report,
+    which awaits their agreement. AI systems wrote the code, the statements, the audit and the documents. See CREDITS.md.
+
+fidelity:
+  divergences: >-
+    Statements corrected (REPORT.md, Section 4): ECToBlob Theorem 8.2 for parameters meeting Assumption 1, as agreed with
+    the user (E10); ECToBlob Theorem 8.2 with positive alternatives for the Cauchy and CBC variants, not yet agreed (E11);
+    ECToBlob equation (3.3) weighted by block sizes (E2); TINNiK's maximum likelihood estimate on the closed simplex
+    (E31); TOB-QMC's supplement Lemma 2, forward direction only (E23). Library statements omit hypotheses that the proofs
+    do not use (REPORT.md, Section 5); Challenge.lean keeps them. Readings: REPORT.md, Section 6. Departures from the papers'
+    proofs: ECToBlob Theorem 3.1 (E2), Corollary 3.6 (E3), Lemma 6.1 (E8), Theorem 8.2 (E12–E17), each repairing a gap;
+    TOB-QMC Lemma 3 (E18) and consistency (E21), repairing gaps; TOB-QMC Lemma 4's converse and cited results of Allman et al.
+    and Rhodes, because wedge paths and components have no counterpart in the representation; TINNiK Proposition 5, by a
+    direct central limit argument, because Lean lacks van der Vaart's Theorem 16.7; TINNiK Proposition 6, by Cartesian
+    coordinates and Fubini; TINNiK Theorem 4, without analyticity. REPORT.md, Section 7, gives each.
+
+review:
+  status: "agent-reviewed"
+  reviewers:
+    - "none (no human review)"
+  notes: >-
+    Independent AI agents reviewed the statements against the sources and compared the formal proofs with the papers'; a
+    separate agent checked the findings. The route check and Comparator ran locally.
+
+alignment:
+  namespace: "Challenge"
+  statements:
+    - source: "ECToBlob, Theorem 3.1"
+      lean: "Challenge.theorem3_1"
+      module: "Challenge"
+      status: "proved"
+      note: "Condition 2 in the form the proof uses; ECToBlob.pendantChainInvariant_cutExchangeable derives it from the literal form."
+    - source: "ECToBlob, Theorem 4.1"
+      lean: "Challenge.theorem4_1"
+      module: "Challenge"
+      status: "proved"
+      note: "As printed."
+    - source: "ECToBlob, Theorem 8.2"
+      lean: "Challenge.theorem8_2"
+      module: "Challenge"
+      status: "proved, corrected"
+      note: "Corrections E10 (agreed) and E11 (not yet agreed). Binary gene trees."
+    - source: "TOB-QMC v5, Theorem 1"
+      lean: "Challenge.theorem1"
+      module: "Challenge"
+      status: "proved"
+      note: "With deterministic K, as printed."
+    - source: "TOB-QMC v5, Theorem 1, the 'put simply' form"
+      lean: "Challenge.theorem1_optimal"
+      module: "Challenge"
+      status: "proved"
+      note: "Almost surely, for all large k, every optimal solution refines the tree of blobs."
+    - source: "TOB-QMC v5, Theorem 2"
+      lean: "Challenge.theorem2"
+      module: "Challenge"
+      status: "proved"
+      note: "Binary B is not needed; the Challenge keeps it unrequired, for any tree refinement, by the multipartition reading of Definition 2."
+    - source: "TOB-QMC v5, consistency claim of §4.3"
+      lean: "Challenge.consistency"
+      module: "Challenge"
+      status: "proved"
+      note: "Under the printed assumptions, with TINNiK's cut test (assumption 6a). The T3 option is not treated."
+    - source: "TINNiK, Theorem 4"
+      lean: "Challenge.theorem4"
+      module: "Challenge"
+      status: "conditional"
+      note: "Conditional on External.AllmanEtAl2023.Corollary1. One level sequence for all networks and parameters."
+
+acknowledgements: "Lean, Mathlib; the Phylogenetics library of the requester (lean4-phylogenetics), for adapted Kingman coalescent modules; the authors of the three papers."

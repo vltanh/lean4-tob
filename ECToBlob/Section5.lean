@@ -1,6 +1,6 @@
 module
 
-public import Basic.Phylogenetics.NMSC.Basic
+public import Basic.Phylogenetics.NMSC.Exchangeability
 public import Mathlib.MeasureTheory.Constructions.Pi
 public import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 public import Mathlib.MeasureTheory.Measure.Dirac.Basic
@@ -76,20 +76,12 @@ variable {N}
 
 /-- **Assumed result: the adaptation of Theorem 1 of Allman et al. 2023 in ECToBlob's proof of Proposition
 5.1**, for a network whose vertices in non-trivial blobs have degree two or three, under the NMSC with
-independent inheritance:
-
-* a cut-edge split of the induced 4-taxon network makes the two alternatives equally probable
-  ("follows with no change"), and a trivial 4-blob makes all three probabilities equal ("exchangeability of
-  lineages at that node");
-* for parameters outside a null set of ECToBlob's measure, an induced network without a cut-edge split and
-  without a trivial 4-blob has three distinct probabilities ("checking the argument ... shows that generically,
-  no two gene quartet probabilities are equal"). -/
-structure AdaptedAllmanTheorem1 (N : RootedNetwork V E X) : Prop where
-  cut_alternatives : ∀ θ, N.IsMetric θ → ∀ s, InducedCutSplit N s →
-    ∀ r ∈ s.alternatives, ∀ r' ∈ s.alternatives, nmscCF N θ 0 r = nmscCF N θ 0 r'
-  trivial_uniform : ∀ θ, N.IsMetric θ → ∀ q : Finset X, q.card = 4 → HasTrivialFourBlob N q →
-    IsUniformOn (nmscCF N θ 0) q
-  generic_distinct : IsNullParams N {θ | N.IsMetric θ ∧ ∃ q : Finset X, q.card = 4 ∧
+independent inheritance: for parameters outside a null set of ECToBlob's measure, an induced network without a
+cut-edge split and without a trivial 4-blob has three distinct probabilities ("checking the argument ... shows
+that generically, no two gene quartet probabilities are equal"). The paper's other two facts for this proof are
+proved: `NMSC.cut_alternatives`, `NMSC.trivial_uniform`. -/
+def AdaptedAllmanTheorem1 (N : RootedNetwork V E X) : Prop :=
+  IsNullParams N {θ | N.IsMetric θ ∧ ∃ q : Finset X, q.card = 4 ∧
     ¬ IsTreelike N q ∧ ¬ HasTrivialFourBlob N q ∧
     ¬ ∀ r ∈ treesOn q, ∀ r' ∈ treesOn q, r ≠ r' → nmscCF N θ 0 r ≠ nmscCF N θ 0 r'}
 
@@ -115,17 +107,18 @@ private theorem mem_treesOn_taxa (s : QuartetTree X) : s ∈ treesOn s.taxa := b
 /-- **Proposition 5.1** (`ecto:prop5_1`), conditional on `AdaptedAllmanTheorem1`. Let `N`
 be a rooted network whose vertices in non-trivial blobs have degree two or three. Then Assumption 1 holds under
 the NMSC, for the numerical parameters with no anomalous quartets. The degree condition is used only through
-the hypothesis, which the source's proof gives under it. -/
-theorem proposition5_1 (N : RootedNetwork V E X) (_hdeg : BlobDegreeAtMostThree N)
+the hypothesis, which the source's proof gives under it, so it is not a hypothesis here. -/
+theorem proposition5_1 {N : RootedNetwork V E X} (hN : N.IsPhylogenetic)
     (hA : AdaptedAllmanTheorem1 N) :
     (∀ θ, N.IsMetric θ → NoAnomalousQuartets N (nmscCF N θ 0) →
       Assumption1Forward N (nmscCF N θ 0)) ∧
     IsNullParams N {θ | N.IsMetric θ ∧ NoAnomalousQuartets N (nmscCF N θ 0) ∧
       ¬ Assumption1Converse N (nmscCF N θ 0)} := by
-  refine ⟨fun θ hθ hano => ⟨hA.trivial_uniform θ hθ, fun s hs => ⟨hano s hs, hA.cut_alternatives θ hθ s hs⟩⟩,
-    ?_⟩
+  have hρ : (0 : ℝ) ≤ 0 ∧ (0 : ℝ) ≤ 1 := ⟨le_rfl, zero_le_one⟩
+  refine ⟨fun θ hθ hano => ⟨fun q hq ht => NMSC.trivial_uniform hN hθ hρ q hq ht,
+    fun s hs => ⟨hano s hs, NMSC.cut_alternatives hN hθ hρ s hs⟩⟩, ?_⟩
   intro d hd
-  refine measure_mono_null ?_ (hA.generic_distinct d hd)
+  refine measure_mono_null ?_ (hA d hd)
   rintro x ⟨hval, hθ, hano, hnot⟩
   refine ⟨hval, hval, ?_⟩
   -- A parameter failing a converse has a set of four taxa as in the hypothesis.
@@ -178,7 +171,7 @@ theorem proposition5_1 (N : RootedNetwork V E X) (_hdeg : BlobDegreeAtMostThree 
           rw [← Finset.card_pos, QuartetTree.card_alternatives]; norm_num
         have hlt := hstrict.1 r hr
         have hq := s.card_taxa
-        have huni := hA.trivial_uniform _ hval s.taxa hq htr
+        have huni := NMSC.trivial_uniform hN hval hρ s.taxa hq htr
         have hrq : r ∈ treesOn s.taxa := by
           have : r.taxa = s.taxa := by
             have := hr

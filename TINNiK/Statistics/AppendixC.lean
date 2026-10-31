@@ -263,13 +263,12 @@ theorem line_projection_minimizes (γ z₁ z₂ : ℝ) :
   linarith
 
 /-- The squared distance to the line `y = tan α₀ · x`, in the proof of Proposition 5. -/
-theorem line_projection_distance (φ : ℝ) (hφ : 0 < φ ∧ φ < 3 / 2) (z₁ z₂ : ℝ) :
+theorem line_projection_distance (φ : ℝ) (z₁ z₂ : ℝ) :
     let γ := Real.tan (alpha0 φ)
     let x₀ := (z₁ + γ * z₂) / (1 + γ ^ 2)
     (z₁ - x₀) ^ 2 + (z₂ - γ * x₀) ^ 2 =
       (Real.sin (alpha0 φ) * z₁ - Real.cos (alpha0 φ) * z₂) ^ 2 := by
   intro γ x₀
-  have _ := hφ
   have hc : Real.cos (alpha0 φ) ≠ 0 := (Real.cos_arctan_pos _).ne'
   have hs : Real.cos (alpha0 φ) ^ 2 + Real.sin (alpha0 φ) ^ 2 = 1 := Real.cos_sq_add_sin_sq _
   have hγ : γ = Real.sin (alpha0 φ) / Real.cos (alpha0 φ) := Real.tan_eq_sin_div_cos _
@@ -300,18 +299,18 @@ private lemma iInf_eq_of_minimizes {f : ℝ → ℝ} {x₀ : ℝ} (h : ∀ x, f 
 open External.MitchellAllmanRhodes2019 in
 /-- The distances of the proof of Proposition 5: the squared distances from the sample point to the
 three lines are the three terms of `Λ_n`, by the projections. -/
-private theorem threeLineDistSq_eq_lambdaCandidate (φ : ℝ) (hφ : 0 < φ ∧ φ < 3 / 2) (z : ℝ × ℝ) :
+private theorem threeLineDistSq_eq_lambdaCandidate (φ : ℝ) (z : ℝ × ℝ) :
     threeLineDistSq (Real.tan (alpha0 φ)) z = lambdaCandidate φ z := by
   have h₁ : lineDistSq (Real.tan (alpha0 φ)) z =
       (Real.sin (alpha0 φ) * z.1 - Real.cos (alpha0 φ) * z.2) ^ 2 := by
     unfold lineDistSq
     rw [iInf_eq_of_minimizes (line_projection_minimizes (Real.tan (alpha0 φ)) z.1 z.2)]
-    exact line_projection_distance φ hφ z.1 z.2
+    exact line_projection_distance φ z.1 z.2
   have h₂ : lineDistSq (-Real.tan (alpha0 φ)) z =
       (Real.sin (alpha0 φ) * z.1 + Real.cos (alpha0 φ) * z.2) ^ 2 := by
     unfold lineDistSq
     rw [iInf_eq_of_minimizes (line_projection_minimizes (-Real.tan (alpha0 φ)) z.1 z.2)]
-    have h₃ := line_projection_distance φ hφ (-z.1) z.2
+    have h₃ := line_projection_distance φ (-z.1) z.2
     simp only at h₃
     have e : (-z.1 + Real.tan (alpha0 φ) * z.2) / (1 + Real.tan (alpha0 φ) ^ 2) =
         -((z.1 + -Real.tan (alpha0 φ) * z.2) / (1 + (-Real.tan (alpha0 φ)) ^ 2)) := by
@@ -368,7 +367,7 @@ theorem proposition5 (φ : ℝ) (hφ : 0 < φ ∧ φ < 3 / 2) : ∃ ν : Probabi
       unfold lambdaLaw
       have hfun : External.MitchellAllmanRhodes2019.threeLineDistSq
           (Real.tan (Phylogenetics.alphaZero φ)) = lambdaCandidate φ :=
-        funext (threeLineDistSq_eq_lambdaCandidate φ hφ)
+        funext (threeLineDistSq_eq_lambdaCandidate φ)
       rw [hfun]
       rfl
     rw [hlaw]

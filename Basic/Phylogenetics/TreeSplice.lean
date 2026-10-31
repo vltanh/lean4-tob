@@ -228,6 +228,7 @@ theorem mem_liftBlocks_of_mem {A : Finset {B // B ∈ P}} {b : {B // B ∈ P}} {
     exact block_eq_of_mem hd hx hxc ▸ hc
   · exact fun hb => ⟨b, hb, hx⟩
 
+omit [Fintype X] in
 theorem isBlockUnion_liftBlocks (A : Finset {B // B ∈ P}) : IsBlockUnion P (liftBlocks P A) := by
   intro B hB
   by_cases h : (⟨B, hB⟩ : {B // B ∈ P}) ∈ A
@@ -342,6 +343,7 @@ theorem QuartetTree.map_injective : Function.Injective (QuartetTree.map (X := X)
   exact image_injective (image_injective hι) (congrArg Subtype.val h)
 
 include hι in
+omit [Fintype X] in
 /-- A quartet tree on the image of an injection comes from its domain. -/
 theorem QuartetTree.exists_map_eq (s : QuartetTree X) (h : s.taxa ⊆ univ.image ι) :
     ∃ s₀ : QuartetTree Y, s₀.map hι = s := by
@@ -516,6 +518,7 @@ theorem IsRepTuple.inDistinctBlocks {q : Finset X} (hq : q ⊆ univ.image x) :
   have h2 : c = ⟨B, hB⟩ := block_eq_of_mem hd (hx c) hzB
   rw [h1, h2]
 
+omit [Fintype X] in
 /-- On the representatives, a lift traces the corresponding set of blocks. -/
 theorem IsRepTuple.liftBlocks_inter_image (A D : Finset {B // B ∈ P}) :
     liftBlocks P A ∩ D.image x = (A ∩ D).image x := by
@@ -566,6 +569,7 @@ section Exchange
 
 variable {V E : Type*} {N : RootedNetwork V E X} {p : QuartetTree X → ℝ} {P : Finset (Finset X)}
 
+omit [Fintype X] in
 /-- A weight that is exchangeable across cut edges, on a quartet tree with taxa in distinct blocks that
 are cut sides, depends only on the blocks. -/
 theorem map_eq_of_cutExchangeable (h₂ : CutExchangeable N p)

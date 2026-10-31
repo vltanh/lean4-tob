@@ -10,13 +10,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 PROOFS = {
     'theorem3_1': 'ECToBlob.theorem3_1 hN p hp h₁ h₂ hT hmax',
-    'theorem4_1': 'ECToBlob.theorem4_1 hN A₁ A₂ B₁ B₂ hA₁ hA₂ hB₁ hB₂ hA hB hAB hcover h',
+    'theorem4_1': 'ECToBlob.theorem4_1 hN A₁ A₂ B₁ B₂ hA₁ hA₂ hB₁ hB₂ hAB hcover h',
     'theorem8_2': 'ECToBlob.theorem8_2',
-    'theorem1': 'TOBQMC.theorem1 hStd hEx hNon hX P G hG T hT hTN hε',
-    'theorem1_optimal': 'TOBQMC.theorem1_optimal hStd hEx hNon hX P G hG',
+    'theorem1': 'TOBQMC.theorem1 hStd hNon hX P G hG T hT hTN hε',
+    'theorem1_optimal': 'TOBQMC.theorem1_optimal hStd hNon hX P G hG',
     'theorem2': 'TOBQMC.theorem2 hN hBin hLevel hB hTB Q hQ',
-    'consistency': 'TOBQMC.consistency hStd hLevel hEx hNon hdet hX',
-    'theorem4': 'TINNiK.theorem4 hN hBin hX hCor',
+    'consistency': 'TOBQMC.consistency hStd hLevel hNon hBlob hX',
+    'theorem4': 'TINNiK.theorem4 hN hX hCor',
 }
 
 HEADER = """module

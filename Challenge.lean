@@ -17,12 +17,9 @@ Main results of three papers: **ECToBlob** (Rhodes, Allman, Ané, Baños, bioRxi
 **TINNiK** (Allman, Baños, Mitchell, Rhodes, Algorithms Mol. Biol. 19, 2024), Theorem 4. `REPORT.md` lists every
 correction and departure.
 
-The formalization is **conditional** on two results of the literature, stated as named hypotheses:
-
-* `External.AllmanEtAl2023.Corollary1` (TINNiK's Theorem 1): 4-blobs are CF-detectable for generic parameters.
-  `CFDetectable` is the pointwise property of one parameter value. Used by `theorem4`.
-* `External.AneEtAl2024.Exchangeability`: under the NMSC, taxa on one side of a cut edge are exchangeable for
-  quartets with the other three taxa on the other side. Used by `theorem1`, `theorem1_optimal`, `consistency`.
+The only theorem here that is **conditional** is `theorem4`, on one result of the literature, stated as a named
+hypothesis: `External.AllmanEtAl2023.Corollary1` (Allman et al. 2023, Theorem 1 and Corollary 1; TINNiK's Theorem 1): 4-blobs
+are CF-detectable for generic parameters. `CFDetectable` is the pointwise property of one parameter value.
 
 The definitions are copied word for word from `Basic/Phylogenetics/Defs.lean`. A network is a directed multigraph
 with named arcs; the sides of its splits represent an unrooted tree; the tree of blobs is the family of nonempty
@@ -801,21 +798,6 @@ def IsWQCOptimal (c : QuartetTree X → ℝ) (B : Finset (Finset X)) : Prop :=
 
 end TOBQMC
 
-namespace External.AneEtAl2024
-
-open Phylogenetics Phylogenetics.RootedNetwork
-
-variable {V E X : Type*} [Fintype V] [Fintype E] [Fintype X] [DecidableEq X]
-
-/-- **Assumed result: exchangeability under the NMSC.** Concordance factors do not change when
-a taxon of a quartet tree is replaced by one that a cut edge groups with it, away from the other three
-taxa: below that cut edge (or beyond it, when the root is on the side of those taxa) the two taxa
-contribute one lineage or a position in a chain, which the rest of the process cannot distinguish. -/
-def Exchangeability (N : RootedNetwork V E X) (θ : RootedNetwork.MetricData E) (ρ : ℝ) : Prop :=
-  CutExchangeable N (nmscCF N θ ρ)
-
-end External.AneEtAl2024
-
 namespace External.AllmanEtAl2023
 
 open Phylogenetics Phylogenetics.RootedNetwork MeasureTheory
@@ -884,7 +866,7 @@ of `X`, with partitions `A = A₁ ⊔ A₂`, `B = B₁ ⊔ B₂` into nonempty s
 theorem theorem4_1 {V E X : Type*} [Fintype X] [DecidableEq X] {N : RootedNetwork V E X}
     (hN : N.IsPhylogenetic) (A₁ A₂ B₁ B₂ : Finset X)
     (hA₁ : A₁.Nonempty) (hA₂ : A₂.Nonempty) (hB₁ : B₁.Nonempty) (hB₂ : B₂.Nonempty)
-    (hA : Disjoint A₁ A₂) (hB : Disjoint B₁ B₂) (hAB : Disjoint (A₁ ∪ A₂) (B₁ ∪ B₂))
+    (_ : Disjoint A₁ A₂) (_ : Disjoint B₁ B₂) (hAB : Disjoint (A₁ ∪ A₂) (B₁ ∪ B₂))
     (hcover : (A₁ ∪ A₂) ∪ (B₁ ∪ B₂) = Finset.univ)
     (h : ∀ a₁ ∈ A₁, ∀ a₂ ∈ A₂, ∀ b₁ ∈ B₁, ∀ b₂ ∈ B₂,
       N.HasCutSplitOn (({a₁, a₂, b₁, b₂} : Finset X) : Set X) (({a₁, a₂} : Finset X) : Set X)) :
@@ -917,13 +899,13 @@ theorem theorem8_2 : ∃ α β : ℕ → ℝ, Tendsto α atTop (𝓝 0) ∧ Tend
         ectoblob o (α n) (β n) (quartetCount Subtype.val ω) T₀ = treeOfBlobs N) atTop (𝓝 1) := by
   sorry
 
-/-- **TOB-QMC, Theorem 1**, conditional on exchangeability. For a network under the standard assumptions that
+/-- **TOB-QMC, Theorem 1**. For a network under the standard assumptions that
 is T-quartet-nonanomalous and independent gene trees from the NMSC, for any binary tree `T` not refining the
 tree of blobs and any `ε > 0` there are a binary refinement `B` and `K` such that `QS_k(B) > QS_k(T)` for all
 `k ≥ K` with probability at least `1 - ε`. -/
 theorem theorem1 {V E X : Type*} [Fintype V] [Fintype E] [Fintype X] [DecidableEq X]
     {N : RootedNetwork V E X} {θ : MetricData E} {ρ : ℝ}
-    (hStd : StandardAssumptions N θ ρ) (hEx : External.AneEtAl2024.Exchangeability N θ ρ)
+    (hStd : StandardAssumptions N θ ρ)
     (hNon : IsTQuartetNonanomalous N (nmscCF N θ ρ)) (hX : 4 ≤ Fintype.card X)
     {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) [IsProbabilityMeasure P]
     (G : ℕ → Ω → Finset (Finset X)) (hG : IsGeneTreeSample P N θ ρ G)
@@ -932,11 +914,11 @@ theorem theorem1 {V E X : Type*} [Fintype V] [Fintype E] [Fintype X] [DecidableE
       1 - ε ≤ P.real {ω | ∀ k, K ≤ k → quartetScore (geneCount G k ω) T < quartetScore (geneCount G k ω) B} := by
   sorry
 
-/-- **TOB-QMC, Theorem 1**, "put simply", conditional on exchangeability: almost surely, for all large `k`,
+/-- **TOB-QMC, Theorem 1**, "put simply": almost surely, for all large `k`,
 every optimal solution of Weighted Quartet Consensus on the first `k` gene trees refines the tree of blobs. -/
 theorem theorem1_optimal {V E X : Type*} [Fintype V] [Fintype E] [Fintype X] [DecidableEq X]
     {N : RootedNetwork V E X} {θ : MetricData E} {ρ : ℝ}
-    (hStd : StandardAssumptions N θ ρ) (hEx : External.AneEtAl2024.Exchangeability N θ ρ)
+    (hStd : StandardAssumptions N θ ρ)
     (hNon : IsTQuartetNonanomalous N (nmscCF N θ ρ)) (hX : 4 ≤ Fintype.card X)
     {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) [IsProbabilityMeasure P]
     (G : ℕ → Ω → Finset (Finset X)) (hG : IsGeneTreeSample P N θ ρ G) :
@@ -956,17 +938,17 @@ theorem theorem2 {V E X : Type*} [Fintype V] [Fintype E] [Fintype X] [DecidableE
     contractSides B ((internalSides B).filter fun A => ∃ Y ∈ Q A, ¬ IsTreelike N Y) = treeOfBlobs N := by
   sorry
 
-/-- **TOB-QMC, the consistency claim of §4.3**, conditional on exchangeability. For a binary level-1 network
-under the standard assumptions that is T-quartet-nonanomalous, at parameters where CF-detectability holds, there
-are levels `α_k → 0` such that for any `β > 0`, any selection of maximum likelihood topologies, any solver of
-Weighted Quartet Consensus and any selection of disjoint covers, the method on `k` independent gene trees
-returns the tree of blobs with probability tending to one. -/
+/-- **TOB-QMC, the consistency claim of §4.3**. For a binary level-1 network under the standard assumptions that is
+T-quartet-nonanomalous, whose non-treelike 4-taxon sets have distinct concordance factors (assumption 6a), there are levels
+`α_k → 0` such that for any `β > 0`, any selection of maximum likelihood topologies, any solver of Weighted Quartet Consensus
+and any selection of disjoint covers, the method on `k` independent gene trees returns the tree of blobs with probability
+tending to one. The tests are TINNiK's star and cut tests; the T3 option is not treated. -/
 theorem consistency {V E X : Type*} [Fintype V] [Fintype E] [Fintype X] [DecidableEq X]
     {N : RootedNetwork V E X} {θ : MetricData E} {ρ : ℝ}
     (hStd : StandardAssumptions N θ ρ) (hLevel : IsLevelOne N)
-    (hEx : External.AneEtAl2024.Exchangeability N θ ρ)
     (hNon : IsTQuartetNonanomalous N (nmscCF N θ ρ))
-    (hdet : External.AllmanEtAl2023.CFDetectable N (nmscCF N θ ρ)) (hX : 4 ≤ Fintype.card X) :
+    (hBlob : ∀ q : Finset X, q.card = 4 → ¬ IsTreelike N q →
+      External.AllmanEtAl2023.IsNonCut (nmscCF N θ ρ) q) (hX : 4 ≤ Fintype.card X) :
     ∃ α : ℕ → ℝ, Tendsto α atTop (𝓝 0) ∧ (∀ k, 0 < α k) ∧
       ∀ (β : ℝ), 0 < β →
       ∀ (ml : (QuartetTree X → ℝ) → Finset X → QuartetTree X), IsMLSelection ml →
@@ -984,7 +966,7 @@ theorem consistency {V E X : Type*} [Fintype V] [Fintype E] [Fintype X] [Decidab
 selection of maximum likelihood topologies, the TINNiK algorithm using the cut test on `m` independent gene trees
 from the NMSC infers the tree of blobs with probability tending to one. -/
 theorem theorem4 {V E X : Type*} [Fintype V] [Fintype E] [Fintype X] [DecidableEq X]
-    {N : RootedNetwork V E X} (hN : N.IsPhylogenetic) (hBin : N.IsBinary) (hX : 4 ≤ Fintype.card X)
+    {N : RootedNetwork V E X} (hN : N.IsPhylogenetic) (_ : N.IsBinary) (hX : 4 ≤ Fintype.card X)
     (hCor : External.AllmanEtAl2023.Corollary1 N) :
     ∃ A : Set (MetricData E), External.AllmanEtAl2023.IsGenericNull N A ∧
       ∀ θ, N.IsMetric θ → θ ∉ A →

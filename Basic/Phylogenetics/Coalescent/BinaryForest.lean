@@ -23,6 +23,8 @@ forest stays on binary forests, and above the root it ends in a binary rooted tr
   `kingmanAbsorption_support_good`: the supports of the coalescent.
 * `IsGoodForest.biUnion`, `isGoodForest_singletons`, `isGoodForest_forestBelow`: the operations of
   the network multispecies coalescent.
+* `IsGoodForest.exists_two`, `IsGoodForest.eq_singletons`: a binary forest has a cluster of two
+  lineages, or is a forest of singletons.
 * `isGoodForest_iff_binaryHierarchy`: the binary rooted trees on `L` are the binary forests with one
   root and all lineages.
 * `kingmanAbsorption_singletons_pos`: from the forest of uncoalesced lineages, every binary rooted
@@ -198,6 +200,49 @@ theorem IsGoodForest.singleton_mem {F : Finset (Finset L)} (hF : IsGoodForest F)
       rwa [mem_singleton.1 hx]
 
 end Building
+
+omit [Fintype L] in
+/-- In a binary forest, a cluster of at least two lineages contains a cluster of two lineages. -/
+theorem IsGoodForest.exists_two {F : Finset (Finset L)} (hF : IsGoodForest F) :
+    ∀ A ∈ F, 2 ≤ #A → ∃ C ∈ F, C ⊆ A ∧ #C = 2 := by
+  intro A
+  induction A using Finset.strongInduction with
+  | H A ih =>
+    intro hA h2
+    obtain ⟨B, hB, C, hC, hBC, rfl⟩ := hF.2 A hA h2
+    have hB0 := (hF.1.1 B hB).card_pos
+    have hC0 := (hF.1.1 C hC).card_pos
+    have hcard : #(B ∪ C) = #B + #C := card_union_of_disjoint hBC
+    by_cases hB2 : 2 ≤ #B
+    · obtain ⟨D, hD, hDB, hDc⟩ := ih B (subset_union_left.ssubset_of_ne fun h => by
+        rw [← h] at hcard
+        omega) hB hB2
+      exact ⟨D, hD, hDB.trans subset_union_left, hDc⟩
+    by_cases hC2 : 2 ≤ #C
+    · obtain ⟨D, hD, hDC, hDc⟩ := ih C (subset_union_right.ssubset_of_ne fun h => by
+        rw [← h] at hcard
+        omega) hC hC2
+      exact ⟨D, hD, hDC.trans subset_union_right, hDc⟩
+    exact ⟨B ∪ C, hA, Subset.refl _, by omega⟩
+
+omit [Fintype L] in
+/-- A binary forest without a cluster of two lineages is a forest of singletons. -/
+theorem IsGoodForest.eq_singletons {F : Finset (Finset L)} (hF : IsGoodForest F)
+    (h : ¬ ∃ C ∈ F, #C = 2) : F = (lineages F).image fun x => ({x} : Finset L) := by
+  have h1 : ∀ A ∈ F, #A = 1 := by
+    intro A hA
+    have hpos := (hF.1.1 A hA).card_pos
+    by_contra hne
+    obtain ⟨C, hC, -, hC2⟩ := hF.exists_two A hA (by omega)
+    exact h ⟨C, hC, hC2⟩
+  ext A
+  simp only [mem_image, mem_lineages]
+  constructor
+  · intro hA
+    obtain ⟨x, rfl⟩ := card_eq_one.1 (h1 A hA)
+    exact ⟨x, ⟨{x}, hA, mem_singleton_self x⟩, rfl⟩
+  · rintro ⟨x, ⟨B, hB, hx⟩, rfl⟩
+    exact hF.singleton_mem hB hx
 
 /-- The lineages of the part of a forest below some of its roots: the union of those roots. -/
 theorem lineages_forestBelow {F A : Finset (Finset L)} (hA : A ⊆ roots F) :

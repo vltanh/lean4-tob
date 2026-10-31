@@ -26,8 +26,8 @@ used here (`urnStep_eq_concentration`).
 * `urnWeight`, `allocationWeight_eq_urn`, `allocationWeight_eq_urn_of_equiv`: the closed form of
   `allocationWeight` is the joint law of the urn, in any order of the lineages.
 * `allocationWeight_nonneg`, `sum_allocationWeight`: it is a probability distribution.
-* `sum_allocationWeight_marginal`, `sum_allocationWeight_mul_comp`: the urn is consistent, the law of
-  the assignment of a part of the lineages is `allocationWeight` on that part.
+* `sum_allocationWeight_marginal`, `sum_allocationWeight_mul_comp`: the urn is consistent, the law
+  of the assignment of a part of the lineages is `allocationWeight` on that part.
 * `allocationWeight_rho_zero`, `allocationWeight_rho_one`, `allocationWeight_rho_one_const`: the
   endpoints, independent and common inheritance.
 * `allocationWeight_const_pos`: an assignment of all lineages to a parent of positive inheritance

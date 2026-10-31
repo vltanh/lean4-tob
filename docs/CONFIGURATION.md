@@ -10,17 +10,19 @@ Recorded 2026-10-27 (America/Chicago).
 
 Downloads and working inventories are kept under ignored `notes/`; they are not distributed with the library. The TINNiK publisher XML includes TeX equations, but is not the authors' original TeX source.
 
+No author TeX source exists for any of the three papers, so `docs/paper_routes.tsv` is written by hand from these sources.
+
 The user supplied `ectob_supp.pdf` (6 pages) and `tob-qmc_supp.pdf` (43 pages) from Downloads on 2026-10-27. Both have been read and hashed. The ECToBlob supplement contains simulation appendices A/B. The TOB-QMC supplement is internally dated February 26, 2026 and uses some result numbers that differ from main v5. Its precise version linkage is unconfirmed; the internal date alone does not establish that a later supplement exists. Its mathematical claims are inventoried separately with a provisional crosswalk to the main text.
 
 ## Repository and toolchain
 
-- New local repository; branch `formalize/tree-of-blobs`. No draft existed.
+- New local repository; branch `formalize/tree-of-blobs`. No draft existed. The first rounds of work were made with Codex; `CREDITS.md` has the rounds.
 - Lean and Mathlib `v4.36.0-rc1`, Mathlib commit `625d8914199bc567cca9b91f90e8e5afafa5ae51`.
 - Lean `v4.36.0-rc2` was released on 2026-10-27, but the corresponding Mathlib release tag returned 404 during setup. Thus rc1 is the newest verified matched pair.
 - Palomar's current minimum is `v4.35.0-rc2`; the selected toolchain exceeds it.
 - Mathlib and Verso rc1 share `plausible` and `Cli`; both revisions match.
 - The initial dependency cache was copied into this checkout from an existing local checkout at the same pinned release. No symlinks or shared mutable build directory are used.
-- Compilation is enabled. Only the root agent runs Lake builds.
+- Compilation is enabled. Sub-agents check files against private snapshots of the build outputs; only the main session runs `lake build`.
 - Libraries: `Basic`, `External`, and one library for each paper. Additional proof dependencies will be pinned only after checking their scope and statements.
 
 ## Scope and provenance
@@ -37,8 +39,14 @@ No push, remote repository creation, publication, Palomar preflight, submission,
 
 ## Authorized corrections
 
-The user explicitly approved using the closed probability simplex for TINNiK maximum-likelihood estimation while keeping the generating distribution strictly positive. The open-domain counterexample and correction are checked in `scripts/BoundaryCheck.lean`. On 2026-10-27 the user also explicitly approved restricting ECToBlob Theorem 8.2 to generic numerical parameters, outside the exceptional sets in both converse clauses of Assumption 1 for every induced quartet. This is a correction to the printed theorem, justified by E7 in REPORT.md, not an inferred standing hypothesis. The model-level generic claim and the pointwise parameter restriction must be kept separate in Lean.
+The user explicitly approved using the closed probability simplex for TINNiK maximum-likelihood estimation while keeping the generating distribution strictly positive. The open-domain counterexample and correction are checked in `scripts/BoundaryCheck.lean`. On 2026-10-27 the user also explicitly approved restricting ECToBlob Theorem 8.2 to generic numerical parameters, outside the exceptional sets in both converse clauses of Assumption 1 for every induced quartet. This is a correction to the printed theorem, justified by E7 in REPORT.md, not an inferred standing hypothesis. The model-level generic claim and the pointwise parameter restriction are kept separate in Lean (`ECToBlob.theorem8_2_generic` and `ECToBlob.theorem8_2`).
 
 The user also approved retaining only the valid forward implication of supplied TOB-QMC supplement Lemma 2: a resolved quartet on the full tree of blobs implies that its induced subnetwork is treelike. The false converse is documented with a five-taxon sunlet counterexample (E11). The main v5 already distinguishes these two kinds of quartet.
 
 The user approved requiring a nontrivial blob in supplied TOB-QMC supplement Lemma 8 (E14). A singleton internal blob in a binary tree refutes the unrestricted statement. This correction uses the standard network convention that sinks are labelled leaves, explicit in main v5.
+
+## Readings not yet agreed
+
+The correction E11 of REPORT.md (positivity of alternatives on T1-strict quartets, for the Cauchy and CBC variants of ECToBlob's Theorem 8.2) was added on 2026-10-31 on the strength of a counterexample that an independent reader checked. The user has not yet agreed to it. Until they do, `ECToBlob.theorem8_2` and `Challenge.theorem8_2` carry it as a documented deviation.
+
+The tests are read as implemented in the sources: gene trees are binary in Theorem 8.2 (the models of ECToBlob §5 produce these), and the small-count procedures of MSCquartets are not modelled.

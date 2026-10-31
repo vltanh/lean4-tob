@@ -51,7 +51,7 @@ meta def externalResults : List (String × Name) :=
    ("CF-detectability at given parameters (assumed in the consistency claim)",
     ``External.AllmanEtAl2023.CFDetectable),
    ("Adaptation of Allman et al. 2023, Theorem 1 (assumed)", ``ECToBlob.AdaptedAllmanTheorem1),
-   ("Ané et al. 2024, exchangeability", ``External.AneEtAl2024.Exchangeability),
+   ("Ané et al. 2024, exchangeability", ``External.AneEtAl2024.exchangeability),
    ("Allman et al. 2023, Theorem 2", ``External.AllmanEtAl2023.theorem2),
    ("Allman et al. 2023, Theorem 3, combinatorial part", ``External.AllmanEtAl2023.closure_complete),
    ("Allman et al. 2023, Theorem 3, soundness", ``External.AllmanEtAl2023.closure_sound),

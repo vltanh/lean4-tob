@@ -1,46 +1,23 @@
 # Shared mathematical foundations
 
-These modules contain general definitions, representation bridges and helper
-lemmas. They do not count as proofs of the papers' numbered results.
+General definitions, representation bridges and helper lemmas. They do not count as proofs of the papers' numbered
+results, and they depend on Mathlib only.
 
-| Area | Content | Possible upstream home |
+| Module | Content | Possible home |
 | --- | --- | --- |
-| `Analysis/FiniteOptimization` | Strict finite-sum error bounds and stability of maximizers, including tied true optima | Mathlib finite ordered sums and extrema |
-| `Analysis/SpecialFunctions/Erf` | Integral definition of the real error function | Mathlib special functions |
-| `Combinatorics/DirectedMultigraph` | Individually identified directed arcs, degrees, and a bridge to Mathlib multigraph cuts | Mathlib graph theory |
-| `Combinatorics/MultigraphConnectivity` | Undirected walks with allowed arc sets; edge-deletion characterization of bridges | Mathlib graph connectivity |
-| `Combinatorics/MultigraphBlobs` | Actual bridge-component quotient, connectedness, retained bridges, and preservation of labelled cuts | Mathlib graph contraction |
-| `Combinatorics/MultigraphCutUniqueness` | Uniqueness of cut sides up to complement in a connected multigraph | Mathlib graph cuts |
-| `Combinatorics/BridgeCutLaminar` | Bridge-deletion components and laminar cut sides avoiding a fixed vertex | Mathlib graph cuts |
-| `Phylogenetics/Network` | Rooted multigraph data and separate finite network/metric laws | A phylogenetics library; a new Mathlib area would first need discussion on Lean Zulip |
-| `Phylogenetics/Quartet` | Unordered pair partitions, exactly three resolutions, and ordered-label bridges | A phylogenetics library |
-| `Phylogenetics/ConcordanceFactor` | Resolved/star probability laws, normalized CFs and coordinate relabeling | A phylogenetics library |
-| `Phylogenetics/AncestralRestriction` | Actual ancestral vertex/arc subtypes, exact reachability and inherited network validity | A phylogenetics library |
-| `Phylogenetics/Hierarchy` | Finite tree hierarchy laws, compatible split families and restrictions | Adapted from the public phylogenetics library; see [provenance](../docs/ADAPTED_SOURCES.md) |
-| `Phylogenetics/HierarchyParents` | The actual unique parent of each non-root cluster | Same public source and provenance |
-| `Phylogenetics/HierarchyGraph` | Concrete graph realization, exact degrees, descendants and cut-family correspondence | A phylogenetics library |
-| `Phylogenetics/TreeTopology` | Finite topology types and exactly one displayed quartet for every binary tree | A phylogenetics library; adapted proof provenance recorded |
-| `Phylogenetics/Star` | Concrete finite rooted stars witnessing network validity | A phylogenetics library |
-| `Phylogenetics/PendantCuts` | Singleton leaf cuts from the network degree laws | A phylogenetics library |
-| `Phylogenetics/CutHierarchy` | A valid network's cut hierarchy and exact graph realization of its split family | A phylogenetics library |
-| `Phylogenetics/QuartetScore` | Whole-tree PMF marginals, quartet counts and score identities | A phylogenetics library |
-| `Phylogenetics/Coalescent/{Defs,Forest,Factorization,Tavare}` | Finite Kingman kernels, probability laws and pure-death formula | Adapted from the public phylogenetics library; see [provenance](../docs/COALESCENT_SOURCES.md) |
-
-The graph model permits parallel arcs and nonbinary vertices. Forgetting
-multiplicity for cuts would be unsound: two parallel arcs are not bridges.
-Directed reachability may forget arc identity, while cuts and deletion retain it.
-
-The current network validity convention excludes a root-only single-taxon graph:
-labelled leaves have indegree one and the root has indegree zero. Any restriction
-construction used for single taxa must handle that degenerate case explicitly.
-The papers' quartet restrictions always have four distinct taxa.
-
-The bridge-component quotient is constructed and its cut correspondence is
-proved. Identification with maximal 2-edge-connected subgraphs and suppression
-of degree-two vertices are still separate obligations. No reduced tree of blobs
-is claimed merely from a data type bearing that name.
-
-The finite hierarchy now has a concrete rooted graph realization whose labelled
-cut family is exactly its unrooted split family. Binary topologies have exactly
-one displayed split on each quartet. The converse representation for arbitrary
-graph trees, and contraction/suppression equivalences, remain to be proved.
+| `Analysis/FiniteOptimization` | Perturbations of finite optimization problems: stability of maximizers, with ties | Mathlib, order or analysis |
+| `Analysis/SpecialFunctions/Erf` | The real error function: derivative, monotonicity, limits | Mathlib, special functions |
+| `Analysis/SpecialFunctions/EntropyExcess` | Second-order expansion of `x log x`, with an explicit error | Mathlib, special functions |
+| `Analysis/SpecialFunctions/GibbsInequality` | The maximum of a multinomial likelihood | Mathlib, information theory |
+| `Combinatorics/DirectedMultigraph`, `MultigraphDegree`, `MultigraphConnectivity`, `MultigraphCutUniqueness`, `MultigraphBlobs`, `MultigraphTree`, `BridgeCutLaminar` | Directed multigraphs with named arcs; connectivity and bridges; quotient by bridge components; blobs, trees, the bridge to `SimpleGraph.IsTree` | Mathlib, multigraphs |
+| `Phylogenetics/Defs` | **The shared definitions** of the statements, copied verbatim into `Challenge.lean` | This project |
+| `Phylogenetics/Network`, `PendantCuts`, `AncestralRestriction`, `NetworkCuts` | Rooted networks; ancestral subgraph; cut edges through domination | A phylogenetics library |
+| `Phylogenetics/InducedNetwork`, `TreeOfBlobs` | The induced network as an actual graph, by LSA and suppression; the tree of blobs as a graph; both agree with the split families of `Defs` | A phylogenetics library |
+| `Phylogenetics/Hierarchy`, `HierarchyParents`, `HierarchyGraph`, `CutHierarchy` | Finite hierarchies, their graphs, and the hierarchy of a network's cuts | A phylogenetics library |
+| `Phylogenetics/Quartet`, `TreeSplits`, `TreeSplice`, `TreeDetach`, `TreeMetric` | Quartet trees; unrooted trees as split families; splicing, detaching and reattaching; tree metrics | A phylogenetics library |
+| `Phylogenetics/Coalescent/*` | Kingman's coalescent on forests: transition, absorption, Tavaré's formula, jump chain, binary forests, relabelling, lumpability. Adapted, see `docs/COALESCENT_SOURCES.md` | A phylogenetics library |
+| `Phylogenetics/NMSC/*` | The network multispecies coalescent on arbitrary networks, with correlated inheritance: a probability law on binary trees; Markov property at an arc; marginals; symmetry; exchangeability | A phylogenetics library |
+| `Probability/IID`, `Trinomial/Bridge` | Independent samples from a finite distribution, as finite sums and as product measures | Mathlib, probability |
+| `Probability/GaussianPlane`, `GaussianTail` | Rotation invariance and strips of the standard Gaussian on the plane; `χ²` tails | Mathlib, probability |
+| `Probability/Trinomial/CLT`, `Transfer`, `Statistics`, `Whiten`, `Gaussian`, `Tests` | Limits of the likelihood ratio statistics of a trinomial, from the central limit theorem | Partly Mathlib (`Transfer`) |
+| `Probability/QuartetTails`, `QuartetLimits` | Quartet hypothesis tests: tail bounds, growth under the alternative, limits under the null | This project |

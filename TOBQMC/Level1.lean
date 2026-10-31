@@ -22,6 +22,7 @@ namespace TOBQMC
 
 variable {V E X : Type*} [Fintype X] [DecidableEq X] {N : RootedNetwork V E X}
 
+omit [Fintype X] in
 /-- **Lemma 2** (`tob2025:lemma2`, the forward direction of Huber et al. Theorem 5.1). If `A|B` is
 induced by a cut edge, then for all pairwise distinct `a₁, a₂ ∈ A`, `b₁, b₂ ∈ B`, the bipartition
 `a₁, a₂|b₁, b₂` is induced by a cut edge of the network restricted to these taxa. -/
@@ -64,6 +65,7 @@ theorem mem_block {z : X} : z ∈ block N v x ↔ SameBlock N v x z := by
   simp [block]
 
 omit [Fintype V] [Fintype E] in
+omit [DecidableEq X] in
 /-- A block at a blob is the side of a cut edge. -/
 theorem hasCutSplit_block (hN : N.IsPhylogenetic) (hx : ¬ SameBlob N v (N.leaf x)) :
     N.HasCutSplit (block N v x : Set X) := by
@@ -228,6 +230,7 @@ theorem isTreelike_of_cut_side (hN : N.IsPhylogenetic) {C P Y : Finset X}
   rw [hYeq] at hcut
   exact isTreelike_of_hasCutSplitOn hY hPY (card_pair hne) hcut
 
+omit [Fintype V] [Fintype E] in
 /-- **Lemma 2 applied to an edge of the tree of blobs**: all four-taxon sets around it are treelike. -/
 theorem isTreelike_of_hasCutSplit (hN : N.IsPhylogenetic) {A Y : Finset X}
     (hA : N.HasCutSplit (A : Set X)) (hY : Y.card = 4) (hYA : (A ∩ Y).card = 2) :
@@ -280,6 +283,7 @@ theorem not_isTreelike_of_distinct (hN : N.IsPhylogenetic) (hLevel : IsLevelOne 
       exact hdom d hdP (hav.trans (avoidingReach_of_not_reaches_source hdh hnh))
   · exact hnotT (reaches_of_reaches_blob hN htb' hb htb hT)
 
+omit [Fintype V] [Fintype E] in
 /-- Lemma 4, `⇒`, same block: two taxa in one block, with the other two on the other side of the edge,
 are separated by the cut edge of the block, so `Y` is treelike by **Lemma 2**. -/
 theorem isTreelike_of_sameBlock (hN : N.IsPhylogenetic) {A Y : Finset X} (hv : RefinesBlob N A v)
@@ -350,6 +354,7 @@ theorem isTreelike_of_not_below (hN : N.IsPhylogenetic) (hBin : N.IsBinary) (hLe
   · rintro a ⟨ha, haP⟩ hbelow
     exact haP (mem_coe.mpr (mem_below.mpr ⟨mem_coe.mp ha, hbelow⟩))
 
+omit [Fintype X] in
 /-- In distinct blocks, at most one taxon is below the reticulation. -/
 theorem existsUnique_below (hN : N.IsPhylogenetic) (hBin : N.IsBinary) (hLevel : IsLevelOne N)
     {h : V} (hh : SameBlob N v h) (hh₂ : 2 ≤ N.graph.indegree h) {Y : Finset X}
@@ -367,6 +372,7 @@ def Mixed (N : RootedNetwork V E X) (A : Finset X) (g : E) : Prop :=
   IsBridge N g ∧ (∃ a ∈ A, N.IsBelow g a) ∧ ∃ b, b ∉ A ∧ N.IsBelow g b
 
 omit [Fintype V] [Fintype E] in
+omit [Fintype X] [DecidableEq X] in
 /-- Two taxa in the same block: the block's cut edge either leaves the blob, with the taxa below it, or
 enters the blob, with the taxa and the root on its far side. -/
 theorem exit_or_entry_of_sameBlock (hN : N.IsPhylogenetic) (hxy : SameBlock N v x y) (hne : x ≠ y) :
@@ -388,6 +394,7 @@ theorem exit_or_entry_of_sameBlock (hN : N.IsPhylogenetic) (hxy : SameBlock N v 
     · exact not_reaches_of_blockWalk_of_entry hS h2 ht hc hxy
 
 omit [Fintype V] [Fintype E] in
+omit [Fintype X] [DecidableEq X] in
 /-- Two bridges entering one blob coincide. -/
 theorem eq_of_isBridge_of_sameBlob (hN : N.IsPhylogenetic) {e g : E} (he : IsBridge N e)
     (hg : IsBridge N g) (h : SameBlob N (N.graph.target g) (N.graph.target e)) : e = g := by
@@ -453,6 +460,8 @@ theorem exists_refinesBlob (hN : N.IsPhylogenetic) {B : Finset (Finset X)} (hfam
         not_sameBlob_of_blockWalk_of_ne hab (fun h => hne ha hb (hN.leaf_injective h))
       exact not_sameBlob_of_blockWalk hx hr .refl
 
+omit [Fintype V] [Fintype E] in
+omit [DecidableEq X] in
 /-- A side that is not a cut side, refining the blob, contains two blocks. -/
 theorem exists_not_sameBlock (hN : N.IsPhylogenetic) {C : Finset X} (hC : RefinesBlob N C v)
     (hcut : ¬ N.HasCutSplit (C : Set X)) (h2 : 2 ≤ C.card) {a : X} (ha : a ∈ C) :
@@ -471,6 +480,7 @@ theorem exists_not_sameBlock (hN : N.IsPhylogenetic) {C : Finset X} (hC : Refine
     rw [← hset]
     exact hasCutSplit_block hN hb
 
+omit [Fintype V] [Fintype E] in
 /-- Four taxa in distinct blocks, through a given taxon `d`, two on each side of a side `C` of a false
 positive (TOB-QMC, proof of Corollary 1: each side contains at least two blocks). -/
 theorem exists_quartet_through (hN : N.IsPhylogenetic) {C : Finset X} (hC : RefinesBlob N C v)
@@ -532,6 +542,7 @@ end Level1
 
 open Level1
 
+omit [Fintype V] in
 /-- An edge of a refinement of the tree of blobs of a binary network that is not in the tree of blobs
 refines a non-trivial blob, with a reticulation vertex (the premise of Lemma 4, which the paper takes
 "by the setting"). The blob is the one below a lowest bridge with taxa of both sides of the edge below
@@ -575,9 +586,7 @@ subgraph, so `⇐` shows directly that no arc of it separates two taxa from two 
 (`not_isTreelike_of_distinct`). The paper's `⇒` does not treat two taxa below `h` explicitly; they are
 in one block (`blockWalk_of_below_reticulation`), which distinct blocks exclude. Of the hypotheses
 on the refinement, only `RefinesBlob` is used. -/
-theorem lemma4 (hN : N.IsPhylogenetic) (hBin : N.IsBinary) (hLevel : IsLevelOne N)
-    {B : Finset (Finset X)} (hB : IsUnrootedTree B) (hTB : treeOfBlobs N ⊆ B) {A : Finset X}
-    (hA : A ∈ internalSides B) (hAT : A ∉ treeOfBlobs N)
+theorem lemma4 (hN : N.IsPhylogenetic) (hBin : N.IsBinary) (hLevel : IsLevelOne N) {A : Finset X}
     {v h : V} (hv : RefinesBlob N A v) (hh : SameBlob N v h) (hh₂ : 2 ≤ N.graph.indegree h)
     {Y : Finset X} (hY : Y.card = 4) (hYA : (A ∩ Y).card = 2) :
     ¬ IsTreelike N Y ↔
@@ -638,7 +647,7 @@ theorem corollary1 (hN : N.IsPhylogenetic) (hBin : N.IsBinary) (hLevel : IsLevel
         rw [h4, hY, hYA, inter_comm] at h3
         omega
     obtain ⟨Y, hdY, hY, hYA, hdist⟩ := hex
-    exact (lemma4 hN hBin hLevel hB' hTB hA hAT hv hh hh₂ hY hYA).mpr
+    exact (lemma4 hN hBin hLevel hv hh hh₂ hY hYA).mpr
       ⟨hdist, existsUnique_below hN hBin hLevel hh hh₂ hdist hdY hd⟩ (hall Y hY hYA)
 
 /-- The core of Theorem 2: a disjoint cover around a false positive contains a four-taxon set meeting
@@ -713,7 +722,7 @@ theorem Level1.exists_not_isTreelike (hN : N.IsPhylogenetic) (hBin : N.IsBinary)
     · refine key (refinesBlob_compl hv) hcut' (by rwa [compl_compl]) hYAc hm₂ x y
         (mem_inter.mpr ⟨mem_compl.mpr hxA, hx⟩)
         (mem_inter.mpr ⟨mem_compl.mpr fun hc => hxA (hside.mpr hc), hy⟩) hxy hsb
-  exact (lemma4 hN hBin hLevel hB hTB hA hAT hv hh hh₂ hYc hYA).mpr
+  exact (lemma4 hN hBin hLevel hv hh hh₂ hYc hYA).mpr
     ⟨hdist, existsUnique_below hN hBin hLevel hh hh₂ hdist hdY hd⟩
 
 /-- **Theorem 2** (`tob2025:theorem2`). For a binary level-1 network with tree of blobs `T_N`, and a

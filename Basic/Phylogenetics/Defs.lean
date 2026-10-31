@@ -807,21 +807,6 @@ def IsWQCOptimal (c : QuartetTree X → ℝ) (B : Finset (Finset X)) : Prop :=
 
 end TOBQMC
 
-namespace External.AneEtAl2024
-
-open Phylogenetics Phylogenetics.RootedNetwork
-
-variable {V E X : Type*} [Fintype V] [Fintype E] [Fintype X] [DecidableEq X]
-
-/-- **Assumed result: exchangeability under the NMSC.** Concordance factors do not change when
-a taxon of a quartet tree is replaced by one that a cut edge groups with it, away from the other three
-taxa: below that cut edge (or beyond it, when the root is on the side of those taxa) the two taxa
-contribute one lineage or a position in a chain, which the rest of the process cannot distinguish. -/
-def Exchangeability (N : RootedNetwork V E X) (θ : RootedNetwork.MetricData E) (ρ : ℝ) : Prop :=
-  CutExchangeable N (nmscCF N θ ρ)
-
-end External.AneEtAl2024
-
 namespace External.AllmanEtAl2023
 
 open Phylogenetics Phylogenetics.RootedNetwork MeasureTheory

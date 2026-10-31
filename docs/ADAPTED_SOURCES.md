@@ -46,21 +46,3 @@ from those clusters and parents. Its new proofs establish network validity when
 there are at least two taxa, bridges, descendant/cluster equivalence and exact
 labelled-cut correspondence with `unroot`. It does not claim an arc-to-unordered-
 split bijection: the two arcs at a binary root can carry the same split.
-
-## Finite tree topologies and unique quartet resolution
-
-Destination: `Basic/Phylogenetics/TreeTopology.lean`. Supporting source is the same Apache2.0 repository and commit above. The actual finite topology subtypes, restricted split families, and uniqueness/existence bridges are general representation mathematics, not numbered results of the three target papers. They do not assume graph realization, edge-contraction equivalence, NMSC behavior, or correct maximizers.
-
-Exact supporting regions, relative to that upstream repository:
-
-- `Phylogenetics/Hierarchy/Basic.lean`89–98: intersection closure helper, same proof with a local private name.
-- `Phylogenetics/Hierarchy/Basic.lean`102–117: `lca`, `subset_lca`, `lca_subset`, retaining the same definitions and proofs.
-- `Phylogenetics/Hierarchy/Basic.lean`135–141: `IsHierarchy.lca_mem`, with the same intersection-of-clusters argument.
-- `Phylogenetics/Hierarchy/Basic.lean`339–343: `map_subtype_eq_inter`, unchanged.
-- `Phylogenetics/Hierarchy/Basic.lean`351–365: `subtype_lca_eq`, unchanged least-containing-cluster trace argument.
-- `Phylogenetics/MSC/Basic.lean`742–746, within `SpeciesTree.isBinary_iff_card_childClusters`730–746: the cardinality-to-two-disjoint-parts direction becomes `RootedTopology.IsBinary.splits`. Metric tree fields are replaced by the actual hierarchy subtype; lengths play no role.
-- `Phylogenetics/Hierarchy/Basic.lean`508–551: the proof of `SpeciesTree.restrict_isBinary` becomes `RootedTopology.IsBinary.restrict_splits`. It retains the lifted taxon set, least containing cluster, two original children, nonempty-trace argument, and final subtype witnesses. Its conclusion states the two-part cluster splitting property actually proved, without silently asserting a new child-count equivalence.
-
-The at-most-one-resolution proof applies split compatibility after restriction. A kernel `decide` check establishes compatibility-forces-equality for the three pairings on `Fin 4`; finite-set equivalences transport this to any quartet. For existence in a binary topology, the adapted restriction proof gives a hierarchy where each internal cluster splits into two nonempty disjoint clusters. A new elementary cardinality argument shows that on four taxa the root splits as2+2 or1+3, and the latter3-cluster splits as1+2. This provides a pair cluster, whose complement gives the explicitly constructed `QuartetSplit.ofPair`. No large hierarchy classification is imported. `BinaryTopology.quartetSplit` selects the resolution from proved unique existence, with defining-property theorems.
-
-The module compiles on Lean/Mathlib v4.36.0-rc1 with no warnings. A copied-source diagnostic checked all29 public named definitions/theorems present at this milestone; only `propext`, `Classical.choice` and `Quot.sound` occur. The graph realization and contraction bridges remain separate work.

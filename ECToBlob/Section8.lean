@@ -392,7 +392,7 @@ private theorem run_of_events {N : RootedNetwork V E X} (hN : N.IsPhylogenetic)
         obtain ⟨r₀, hr₀, hr₀'⟩ := hp
         have hzero : ∀ r ∈ s.alternatives, displayCF dist Subtype.val r = 0 := fun r hr =>
           (hs.2 r hr r₀ hr₀).trans (le_antisymm hr₀' (hnn r₀))
-        rw [t1PValue_degenerate hd hone hzero ω hprod]
+        rw [t1PValue_degenerate hd hzero ω hprod]
         linarith
     · by_cases hu : IsUniformOn (displayCF dist Subtype.val) s.taxa
       · exact hαδ.trans_le (t1_u s hu).1
