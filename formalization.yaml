@@ -152,16 +152,16 @@ automation:
       framework: "Codex"
       tool_setup: "formalize-math-paper skill; three sub-agents; shared local workspace. Source audit and foundations, no numbered paper result."
       cost:
-        wall_time: "CODEX_WALL"
+        wall_time: "about 1 h 54 min, 2026-10-27"
         spend_usd: "not tracked"
         hardware: "local machine"
       prompting_notes: "Slash command with the three paper links; statement corrections asked of the user and approved."
     - method: "agent"
       models: ["claude-opus-5-5"]
       framework: "Claude Code (VS Code extension)"
-      tool_setup: "formalize-math-paper skill, repository vltanh/formalize-math-paper, commit e339f64; CLAUDE_AGENTS sub-agents."
+      tool_setup: "formalize-math-paper skill, repository vltanh/formalize-math-paper, commit e339f64; Claude Code 2.1.314; 17 sub-agents, at most 10 at once."
       cost:
-        wall_time: "CLAUDE_WALL"
+        wall_time: "3.43 h elapsed to the audited formalization, 2026-10-31; 10.6 h total sub-agent working time"
         spend_usd: "not tracked"
         hardware: "local machine"
       prompting_notes: "Slash command with the three paper links, continuing from the earlier handoff."

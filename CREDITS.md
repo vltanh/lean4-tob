@@ -1,87 +1,46 @@
 # Credits
 
-## Source audit and project setup, 2026-10-27
+How this formalization was made, from the run log and the session transcripts.
 
-- Requested by The-Anh Vu-Le, whose existing local Git identity was used for local
-  milestone commits. Public authorship and maintainership have not been finalized.
-- Procedure: [formalize-math-paper](https://github.com/vltanh/formalize-math-paper),
-  version 3.0.0. The installed skill has no Git metadata, so its commit is unknown.
-  Local commits follow the installed git-commit workflow.
-- System: Codex, GPT-6 family, using the shared local workspace and Lean compiler.
-  The exact model revision and harness version are not exposed by this session.
-- Three sub-agents read TINNiK, TOB-QMC and ECToBlob respectively. The TINNiK
-  reader subsequently checked the boundary and genericity counterexamples in Lean.
-  The TOB-QMC and ECToBlob readers independently reviewed the representative-tuple
-  counting error. The ECToBlob reader independently reviewed the two initial Lean
-  check files. Root integrated sources, wrote the finite counting checks and the
-  public preliminary report, and inspected the final genericity certificate.
-- No human review is claimed. Lean checks only the certificate statements; the
-  full graph/model counterexample remains a written argument, as the report states.
+## Who
 
-Timing from the untracked run log:
+- **Author and maintainer:** The-Anh Vu-Le, who asked for the formalization, chose the three papers and their versions, and agreed to the statement corrections listed in [`REPORT.md`](REPORT.md), except E11. Public authorship is theirs to confirm.
+- **Formalization:** Codex (GPT-6 family; exact revision and harness version not exposed), for the source audit and first foundations, in two rounds of one evening. Claude Code 2.1.314 (VS Code extension) with Claude Opus 5.5 (`claude-opus-5-5`), for the statements, proofs, audit, documents and packaging, in one session.
+- **Procedure:** the [formalize-math-paper](https://github.com/vltanh/formalize-math-paper) skill, version 3.0.0 in the first rounds, and checkout commit `e339f64` in the last.
+- **Review:** no person has reviewed the proofs. Independent agents, which didn't write what they checked, reviewed the statements, compared the proofs with the papers, and checked the audit's findings and its literature section. Comparator and the route check ran locally.
 
-- Start: 2026-10-27 21:09:21 America/Chicago (02:09:21 UTC the following day).
-- Initial scaffold build and configuration milestone: commit `0468633`.
-- Preliminary source-audit report assembled at approximately 21:31 America/Chicago,
-  about 22 minutes after start. This is **not** time to a completed formalization.
-- Three sub-agents; peak concurrency: three sub-agents plus root. The TINNiK
-  reader was resumed once and ECToBlob reader once. Agent wall spans overlap and
-  cannot be summed as CPU or model time; exact total active agent time is unavailable.
-- Input tokens, output tokens, cache reads, tool/model call totals and monetary
-  cost were not exposed in a reliable aggregate. They are not estimated here.
+## Source audit and project setup (2026-10-27)
 
-No paper-result baseline or completed proof corpus was produced in this round.
-The run's output is a compiled project scaffold, source inventories, independently
-reviewed findings and partial Lean counterexample certificates. No remote writes,
-publishing, Palomar preflight, submission or registration were performed.
+The user asked for the three papers to be formalized, then for a handoff before completion. No numbered result was proved in this round.
 
-## Supplement review and shared foundations, 2026-10-27
+How it was made:
 
-The second round began at 21:34:56 America/Chicago, after the user approved the
-ECToBlob genericity correction. During this round the user supplied both
-supplements and approved the TOB-QMC supplement's forward-only quartet lemma.
+- Codex and three sub-agents read TINNiK, TOB-QMC and ECToBlob, each paper by one agent, and checked each other's counterexamples. The user supplied the two supplements and agreed to the corrections E10, E23, E26 and E31.
+- The main session built the multigraph and network foundations, integrated the agents' work and wrote a preliminary audit. A tree-only hierarchy kernel and finite Kingman modules were adapted from the public [lean4-phylogenetics](https://github.com/vltanh/lean4-phylogenetics) library ([`docs/ADAPTED_SOURCES.md`](docs/ADAPTED_SOURCES.md), [`docs/COALESCENT_SOURCES.md`](docs/COALESCENT_SOURCES.md)).
 
-At the 22:13 checkpoint, about 39 minutes into this round and 64 minutes after
-initial setup, the full build passed. The declaration audit checked 388 library
-declarations, including private and generated declarations, using only Lean's
-three standard axioms. This count is **not** a count of paper theorems: none of
-the numbered paper results has been proved. The two new counterexample scripts
-also compiled with standard axioms only.
+Figures, from the run log (Codex exposes no totals):
 
-The same three agents were resumed for source review, statistics definitions,
-finite optimization, quartet and ancestral representations, and the finite
-sunlet certificate. Reviews were assigned to agents other than the respective
-authors. Root built the general multigraph, connectivity and bridge-contraction
-modules, integrated the work and performed the aggregate audit. The tree-only
-hierarchy kernel was adapted from the public phylogenetics library; its exact
-source and proof adaptations are recorded in [ADAPTED_SOURCES.md](docs/ADAPTED_SOURCES.md).
+- Two rounds, from 2026-10-27 21:09:21 to about 23:03 America/Chicago: about 1 h 54 min.
+- Three sub-agents; at most four agents at once, the main session included.
+- Tokens, tool calls, model calls and cost were not recorded. Overlapping agent time isn't summed.
+- Output: 24 modules of foundations, 815 declarations checked against the standard axioms, and the certificate scripts `scripts/*Check.lean`.
 
-Peak concurrency remained root plus three agents. One continuation briefly failed
-because the selected model was at capacity and was resumed without a model
-change. Active agent time, exact model revision, token totals and monetary cost
-remain unavailable; overlapping wall spans are not summed as compute time.
-Source/statement work continues. No publishing or registry action was taken.
+## Formalization (2026-10-31)
 
-At a further 22:42 checkpoint in the same round, the full build of 16 implemented
-modules passed and the aggregate audit checked 522 library declarations with
-standard axioms only. The sunlet certificate now includes the actual ancestral
-restriction and network validity. Added tree representations were independently
-reviewed, including exact quartet display and graph-to-cluster cut correspondence.
-This is approximately 68 minutes into the second round; paper-result statements
-and proofs remain unfinished.
+The user invoked the skill again with the three links, to continue from the handoff to the end.
 
-The user requested a handoff at approximately 22:52. New implementation stopped;
-the agents preserved unfinished work as ignored local drafts and wrote handoffs.
-At the final verification checkpoint, approximately 23:03 America/Chicago,
-the full build of 24 implemented modules passed, all five certificate scripts
-compiled, and the library audit checked 815 declarations with standard axioms
-only. This is about 114 minutes after initial setup and 88 minutes into the
-second round, including wrap-up; it is not time to a completed formalization.
-The selected finite Kingman extraction retains the source statements and proof
-bodies, with exact scope and attribution in
-[COALESCENT_SOURCES.md](docs/COALESCENT_SOURCES.md).
+How it was made:
 
-All three agents have stopped. No numbered paper theorem was proved, and no
-complete statement baseline or Palomar package was produced. The resumable state
-is recorded in [HANDOFF.md](docs/HANDOFF.md), including the distinction between
-committed verified code and untracked local drafts. No remote writes were made.
+- The main session designed the shared definitions ([`Basic/Phylogenetics/Defs.lean`](Basic/Phylogenetics/Defs.lean)), wrote every statement with `sorry`, and an independent agent reviewed them against the papers, finding one false definition ([`IsExactBuilder`](Challenge.lean#L675) excluded neighbor joining) and several readings.
+- Proof agents worked in parallel on private snapshots of the build, one set of files each: graphs and cut edges; trees and splits (ECToBlob §3, TOB-QMC §4.1–4.2); tails and combining p-values; limit laws from the central limit theorem; Proposition 6; the NMSC on arbitrary networks, resumed to prove exchangeability; the B-quartet rule, the quartet metrization and TINNiK's Theorem 4; level-1 blobs; and Theorem 8.2 with its false-edge repair.
+- The main session integrated the proofs, wrote the Challenge, Solution and audit scripts, and ran the route check, cleanup and Comparator.
+- Two independent agents compared the proofs with the papers, one agent checked every finding of the audit against the sources by script, one researched the literature and another checked that section and the section on what comes next. Their corrections are applied. Those that changed Lean: Theorem 4 of TINNiK uses the paper's levels, Lemma 6.1 the printed bound.
+
+Figures, from 2026-10-31 07:25:55 America/Chicago to commit `b2be3ef` at 10:51:30, the commit completing [`REPORT.md`](REPORT.md):
+
+- Elapsed time: 3.43 h.
+- Sub-agents: 17, of which at most 10 ran at once, with 4 resumptions; total working time 10.6 h. This includes two agents exploring follow-up papers, private to the user.
+- Tool calls: 1,182 for the sub-agents, 243 for the main session.
+- Tokens, sub-agents: 3.84M output, 10.05M input, 241M cache reads. Main session: 0.68M output, 1.51M input, 89M cache reads.
+- Model calls: 960 to `claude-opus-5-5` (189 main session, 771 sub-agents).
+- Cost was not tracked. The figures leave out the Codex rounds above and any work after that commit: the packaging checks, and this file.
