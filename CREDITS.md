@@ -66,4 +66,22 @@ Figures, from 2026-10-31 12:49:23 America/Chicago, the user's request, to the co
 - Model calls: 431 to `claude-opus-5-5` (43 main session, 388 sub-agents).
 - Cost was not tracked.
 
-Totals for the Claude Code session, both rounds and the private follow-up work: 7.06 h elapsed, 33 sub-agents, 18.5 h of sub-agent working time, 2,034 and 300 tool calls for the sub-agents and the main session.
+## Following the sources, and what the papers say in passing (2026-10-31)
+
+The user read the last report, and asked to match the sources closely, with any shorter proof that remains documented, and then to formalize as much as possible of what the report listed as not formalized, unless it's wrong.
+
+How it was made:
+
+- Six agents rewrote proofs along their sources: Allman et al.'s Theorem 1, its Lemma 3, ECToBlob's Theorem 8.2, and smaller items. One proved that concordance factors don't change on an induced network, and one carried null sets back, so that Corollary 1 goes through induced networks as in the source. The main session connected them. A further agent rewrote ECToBlob's Theorem 4.1 and Allman et al.'s Theorem 2 when the first pass flagged them.
+- Other agents formalized Section 9 of the report: neighbor joining, the T3 option, ECToBlob's remarks, TOB-QMC's Lemmas 1 and 8 and its bipartition search, counts of operations, ASTRAL's dynamic program, and NANUQ. Remark 8.4 and a reading of Remark 3.3 turned out false, with counterexamples in Lean.
+- Two independent agents compared the rewritten proofs with the sources, and one more checked the new findings against the sources. The main session and one agent fixed what they found.
+
+Figures, from 2026-10-31 14:51 America/Chicago, the user's request, to about 18:20:
+
+- Elapsed time: 3.36 h.
+- Sub-agents: 20 (20 launched by the main session; at most 11 running at once; 7 resumptions); total working time and tool calls: 13.7 h, 1,518 tool calls; tokens: 5.19M output, 15.61M input, 416M cache reads.
+- Main session: 115 tool calls; tokens: 0.23M output, 0.50M input, 45M cache reads.
+- Model calls: claude-opus-5-5 (114 main, 1154 sub-agents).
+- Cost was not tracked.
+
+Totals for the Claude Code session, all rounds and the private follow-up work: 10.79 h elapsed; sub-agents 53 (53 launched by the main session; at most 11 running at once; 12 resumptions); sub-agent work 32.2 h, 3,552 tool calls; tokens: 11.64M output, 33.50M input, 815M cache reads; main session 432 tool calls; tokens: 1.13M output, 2.45M input, 188M cache reads.

@@ -2,6 +2,7 @@ module
 
 public import TOBQMC.Astral
 public import TOBQMC.BipartitionSearch
+public import TOBQMC.BipartitionSearchT3
 public import TOBQMC.Consistency
 public import TOBQMC.ConsistencyT3
 public import TOBQMC.Counts

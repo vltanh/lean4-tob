@@ -152,12 +152,12 @@ automation:
     - method: "agent"
       models: ["claude-opus-5-5"]
       framework: "Claude Code (VS Code extension)"
-      tool_setup: "formalize-math-paper skill, repository vltanh/formalize-math-paper, commit e339f64; Claude Code 2.1.314; 33 sub-agents, at most 11 at once."
+      tool_setup: "formalize-math-paper skill, repository vltanh/formalize-math-paper, commit e339f64; Claude Code 2.1.314; 53 sub-agents, at most 11 at once."
       cost:
-        wall_time: "7.06 h elapsed, 2026-10-31, including 1.67 h for the second round that proved the assumed result; 18.5 h total sub-agent working time"
+        wall_time: "10.79 h elapsed, 2026-10-31, including 1.67 h for the round that proved the assumed result and 3.36 h for the round that followed the sources and formalized what the papers say in passing; sub-agent work 32.2 h"
         spend_usd: "not tracked"
         hardware: "local machine"
-      prompting_notes: "Slash command with the three paper links, continuing from the earlier handoff."
+      prompting_notes: "Slash command with the three paper links, continuing from the earlier handoff; later the user asked to match the sources closely, and to formalize what the report listed as not formalized."
   spend_usd: "not tracked"
   notes: >-
     The user chose the papers and the source versions and agreed to the statement corrections. AI systems wrote the code, the statements, the audit and the documents. See CREDITS.md.
@@ -177,7 +177,7 @@ fidelity:
     TOB-QMC Lemma 1, Lemma 4 (no suppression) and supplement Lemma 8 (a lowest reticulation, not disjoint paths); among cited results, Allman et al.'s Theorem 1 (no 2-blob step; Lemma 1 not stated; one argument across the rooted forms;
     deleted networks in the coordinates of the network; only part of strictly cut off a deletion) and Corollary 1 (the induced network cut at the LSA, not their Definition 6). Other cited results: neighbor joining
     (Studier and Keppler's Lemma fails at polytomies), NANUQ Theorem 36 (no centroid CF; levels), Ane et al. Proposition 12 (conditioning at the arc). NANUQ Proposition 9, Buneman's theorem, ASTRAL's dynamic program and the T3 theorems have
-    no printed proof that was followed. False claims found, not formalized as stated: ECToBlob Remark 8.4 for non-binary networks (E35), ECToBlob Remark 3.3 under the cited non-strict definition (E36), NANUQ Theorem 36 as printed.
+    no printed proof that was followed. False claims found, not formalized as stated: ECToBlob Remark 8.4 on a non-binary network (E35), ECToBlob Remark 3.3 under the cited non-strict definition (E36), NANUQ Theorem 36 as printed.
 
 review:
   status: "agent-reviewed"

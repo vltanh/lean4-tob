@@ -93,6 +93,7 @@ import all External.AneEtAl2024.Exchangeability
 import all External.HuberEtAl2025.Theorem51
 import all External.MitchellAllmanRhodes2019.CutModel
 import all External.Rhodes2020.Theorem2
+import all ECToBlob.Counts
 import all ECToBlob.Deterministic
 import all ECToBlob.FalseEdge
 import all ECToBlob.Lemma81
@@ -104,6 +105,7 @@ import all ECToBlob.Remark83
 import all ECToBlob.Remark84
 import all ECToBlob.Remarks
 import all ECToBlob.Section3
+import all ECToBlob.Section3Observations
 import all ECToBlob.Section4
 import all ECToBlob.Section4Funnels
 import all ECToBlob.Section5
@@ -111,6 +113,7 @@ import all ECToBlob.Section6
 import all ECToBlob.Section8
 import all TOBQMC.Astral
 import all TOBQMC.BipartitionSearch
+import all TOBQMC.BipartitionSearchT3
 import all TOBQMC.Consistency
 import all TOBQMC.ConsistencyT3
 import all TOBQMC.Counts
@@ -239,6 +242,9 @@ meta def paperResults : List (String × Name) :=
    ("ECToBlob Remark 8.3, TINNiK", ``ECToBlob.remark83_tinnik),
    ("ECToBlob Remark 8.4, binary networks", ``ECToBlob.Coarsening.remark8_4),
    ("ECToBlob Remark 8.4, the counterexample", ``ECToBlob.Coarsening.Counterexample.not_remark8_4),
+   ("ECToBlob Remark 8.4, the counterexample under the NMSC", ``ECToBlob.Coarsening.Counterexample.not_remark8_4_nmsc),
+   ("ECToBlob §3, MQS at a displayed tree, positive measure", ``ECToBlob.Section3Observations.not_isNull_selectsDisplayed),
+   ("ECToBlob §3, ties", ``ECToBlob.Section3Observations.exists_tie_of_displayedTrees),
    ("ECToBlob §10, the line test", ``ECToBlob.Remarks.consistency_line_nmsc),
    ("ECToBlob §10, a random T₀", ``ECToBlob.Remarks.consistency_random_tree),
    ("ECToBlob §10, data splitting", ``ECToBlob.Remarks.consistency_data_splitting),

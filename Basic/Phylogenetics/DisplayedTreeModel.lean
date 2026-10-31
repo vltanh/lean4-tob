@@ -1227,8 +1227,8 @@ probable, by at least the probability that two lineages coalesce on the arc.** T
 length zero on any arc, and inheritance zero on hybrid arcs. For positive lengths the bound averages over
 the displayed trees; the lengths then go down to those of `θ`, by continuity.
 
-Departure from the source: Ané et al. 2024, Proposition 12, also averages over the displayed trees, and cites the
-concordance factors of a species tree, `p_ab|cd = 1 - (2/3) e^{-τ}` for the internal path of length `τ`, with `≥`.
+Departure from the source: Ané et al. 2024, Proposition 12, also averages over the displayed trees, and uses that on a
+species tree the concordant CF is at least `1/3`; it prints no formula, and has `≥`.
 Here the bound on a tree conditions at the arc `e` (`one_sub_exp_le_sub_nmscCF_of_tree`), reusing
 `Basic/Phylogenetics/NMSC/TreeCF.lean`, which gives a strict inequality on any network. That file asks for positive
 lengths on tree arcs, and a hybrid arc of length zero becomes such a tree arc on a displayed tree, hence the limit.
@@ -1686,12 +1686,39 @@ theorem nmscCF_choiceMetric_bounds_of_displays (hN : N.IsPhylogenetic) (c : N.Pa
     linarith [hbound r' hr', hnonneg r']
   · linarith [hbound r' hr']
 
+/-- `NMSC.trivial_uniform` at the boundary of the parameters. -/
+theorem trivial_uniform_weak (hN : N.IsPhylogenetic) (hθ : N.IsWeakMetric θ) {ρ : ℝ} (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+    {q : Finset X} (hq : #q = 4) (ht : HasTrivialFourBlob N q) {r : QuartetTree X} (hr : r ∈ treesOn q) :
+    nmscCF N θ ρ r = 1 / 3 := by
+  have heq : ∀ r' ∈ treesOn q, nmscCF N θ ρ r' = nmscCF N θ ρ r := fun r' hr' =>
+    nmscCF_eq_of_forall_isMetric hθ ρ r' r fun _ hθ' => by
+      rw [NMSC.trivial_uniform hN hθ' hρ q hq ht r' hr', NMSC.trivial_uniform hN hθ' hρ q hq ht r hr]
+  have hsum := sum_nmscCF_weak (θ := θ) (ρ := ρ) hN hθ.isNormalized hρ.1 hq
+  rw [sum_congr rfl heq, sum_const, card_treesOn hq] at hsum
+  simp only [nsmul_eq_mul, Nat.cast_ofNat] at hsum
+  linarith
+
+omit [Fintype V] [Fintype E] [Fintype X] [DecidableEq X] in
+/-- The network of a parent choice has weak parameters when its lengths are nonnegative. -/
+theorem isWeakMetric_choiceNetworkMetric [Fintype E] {θ : MetricData E} (hN : N.IsPhylogenetic)
+    (c : N.ParentChoice) (x₀ : X) (hℓ : ∀ f, N.IsKeptArc c f → 0 ≤ θ.length f) :
+    (N.choiceNetwork hN c x₀).IsWeakMetric (N.choiceNetworkMetric θ c) := by
+  have htree : ∀ f g : {f // N.IsKeptArc c f},
+      (N.choiceNetwork hN c x₀).graph.target f = (N.choiceNetwork hN c x₀).graph.target g → f = g :=
+    fun _ _ h => eq_of_target_choiceNetwork hN c x₀ h
+  have hle : ∀ v, ¬ 2 ≤ (N.choiceNetwork hN c x₀).graph.indegree v := fun v h2 => by
+    have : (N.choiceNetwork hN c x₀).graph.indegree v ≤ 1 :=
+      (Set.ncard_le_one (Set.toFinite _)).2 fun a ha b hb => htree _ _ (ha.trans hb.symm)
+    omega
+  exact ⟨fun f => hℓ f.val f.property, fun _ _ => zero_le_one, fun _ _ => rfl,
+    fun v hv => absurd hv (hle v)⟩
+
 /-- **Taxa that a parent choice leaves unresolved have concordance factors `1/3` in the parameters of the
-choice**, as a polytomy of the displayed tree gives no information, whatever the lengths. -/
-theorem nmscCF_choiceMetric_eq_third (hN : N.IsPhylogenetic) (c : N.ParentChoice)
-    (hℓ : ∀ f, 0 < θ.length f) {q : Finset X} (hq : #q = 4)
+choice**, as a polytomy of the displayed tree gives no information, whatever the lengths, and for all `ρ`. -/
+theorem nmscCF_choiceMetric_eq_third_of_nonneg {ρ : ℝ} (hN : N.IsPhylogenetic) (c : N.ParentChoice)
+    (hρ : 0 ≤ ρ ∧ ρ ≤ 1) (hℓ : ∀ f, 0 ≤ θ.length f) {q : Finset X} (hq : #q = 4)
     (hstar : ∀ r ∈ treesOn q, ¬ Displays (N.displayedSides c) r) {r : QuartetTree X}
-    (hr : r ∈ treesOn q) : nmscCF N (N.choiceMetric θ c) 1 r = 1 / 3 := by
+    (hr : r ∈ treesOn q) : nmscCF N (N.choiceMetric θ c) ρ r = 1 / 3 := by
   obtain ⟨a, -⟩ : q.Nonempty := card_pos.1 (by omega)
   have hM := isPhylogenetic_choiceNetwork hN c a
   have hmem : ∀ (u : {v // N.IsKeptVertex c v}) (x : X),
@@ -1722,21 +1749,15 @@ theorem nmscCF_choiceMetric_eq_third (hN : N.IsPhylogenetic) (c : N.ParentChoice
     exact hstar _ (mem_treesOn.2 (quartetOfCherry_taxa _ _ hq inter_subset_right h2))
       (displays_quartetOfCherry hA hq h2)
   have ht := hasTrivialFourBlob_of_tree hM (fun f g h => eq_of_target_choiceNetwork hN c a h) hq hne
-  rw [← nmscCF_choiceNetwork hN c a zero_le_one θ r]
-  exact NMSC.trivial_uniform hM (isMetric_choiceNetworkMetric hN c a fun f _ => hℓ f)
-    ⟨zero_le_one, le_rfl⟩ q hq ht r hr
+  rw [← nmscCF_choiceNetwork hN c a hρ.1 θ r]
+  exact trivial_uniform_weak hM (isWeakMetric_choiceNetworkMetric hN c a fun f _ => hℓ f) hρ hq ht hr
 
-/-- `NMSC.trivial_uniform` at the boundary of the parameters. -/
-theorem trivial_uniform_weak (hN : N.IsPhylogenetic) (hθ : N.IsWeakMetric θ) {ρ : ℝ} (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
-    {q : Finset X} (hq : #q = 4) (ht : HasTrivialFourBlob N q) {r : QuartetTree X} (hr : r ∈ treesOn q) :
-    nmscCF N θ ρ r = 1 / 3 := by
-  have heq : ∀ r' ∈ treesOn q, nmscCF N θ ρ r' = nmscCF N θ ρ r := fun r' hr' =>
-    nmscCF_eq_of_forall_isMetric hθ ρ r' r fun _ hθ' => by
-      rw [NMSC.trivial_uniform hN hθ' hρ q hq ht r' hr', NMSC.trivial_uniform hN hθ' hρ q hq ht r hr]
-  have hsum := sum_nmscCF_weak (θ := θ) (ρ := ρ) hN hθ.isNormalized hρ.1 hq
-  rw [sum_congr rfl heq, sum_const, card_treesOn hq] at hsum
-  simp only [nsmul_eq_mul, Nat.cast_ofNat] at hsum
-  linarith
+/-- `nmscCF_choiceMetric_eq_third_of_nonneg` at `ρ = 1`, for positive lengths. -/
+theorem nmscCF_choiceMetric_eq_third (hN : N.IsPhylogenetic) (c : N.ParentChoice)
+    (hℓ : ∀ f, 0 < θ.length f) {q : Finset X} (hq : #q = 4)
+    (hstar : ∀ r ∈ treesOn q, ¬ Displays (N.displayedSides c) r) {r : QuartetTree X}
+    (hr : r ∈ treesOn q) : nmscCF N (N.choiceMetric θ c) 1 r = 1 / 3 :=
+  nmscCF_choiceMetric_eq_third_of_nonneg hN c ⟨zero_le_one, le_rfl⟩ (fun f => (hℓ f).le) hq hstar hr
 
 /-- **On a trivial 4-blob, no displayed tree resolves the four taxa**: the concordance factors of a parent choice
 are `1/3` for all lengths, while long edges would make a displayed quartet tree more likely than that. -/

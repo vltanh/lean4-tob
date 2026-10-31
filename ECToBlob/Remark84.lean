@@ -1,5 +1,6 @@
 module
 
+public import ECToBlob.Remark33
 public import ECToBlob.Section8
 
 /-!
@@ -20,7 +21,8 @@ So the output should be `T₀ ∩ T_B(N)`, for an arbitrary unrooted tree `T₀`
 * for a non-binary network the Remark is false (`Counterexample.not_remark8_4`): on the tree
   `((0,1),2,3,4)` with a polytomy, and the binary `T₀` with cherries `02` and `34`, the false edge
   `34|012` has all its quartets under the T1 null, one of them not uniform, so neither the star test
-  nor the T1 test contracts it;
+  nor the T1 test contracts it. This is so for gene trees from the NMSC on this tree, at all its
+  numerical parameters (`Counterexample.not_remark8_4_nmsc`);
 * for every network and every `T₀`, what the algorithm tends to is `limitTree N T₀`
   (`tendsto_ectoblob_limitTree`), for all quartet types, corrections and selection rules. It
   contains the cut edges of `T₀` (`inter_treeOfBlobs_subset_limitTree`), so these do remain; all its
@@ -1685,7 +1687,190 @@ end Generic
 
 end Limit
 
-/-! ### Part 6: Remark 8.4 is false for non-binary networks -/
+/-! ### Part 6: gene trees from the NMSC -/
+
+section NMSCLaw
+
+variable {V E X : Type*} [Fintype V] [Fintype E] [Fintype X] [DecidableEq X] {N : RootedNetwork V E X}
+  {θ : MetricData E} {ρ : ℝ}
+
+/-- A binary gene tree, as an unrooted gene tree. -/
+def toUnrootedGeneTree (g : BinaryGeneTree X) : UnrootedGeneTree X :=
+  ⟨g.1, let ⟨H, h₁, h₂, _⟩ := g.2; ⟨H, h₁, h₂⟩⟩
+
+omit [Fintype V] [Fintype E] in
+theorem toUnrootedGeneTree_injective :
+    Function.Injective (toUnrootedGeneTree : BinaryGeneTree X → UnrootedGeneTree X) :=
+  fun _ _ h => Subtype.ext (congrArg (fun T : UnrootedGeneTree X => T.val) h)
+
+/-- The law of the NMSC on unrooted gene trees is carried by the binary ones. -/
+theorem nmscTreeDist_eq_zero [Nonempty X] (hN : N.IsPhylogenetic) {T : UnrootedGeneTree X}
+    (hT : T ∉ Set.range (toUnrootedGeneTree : BinaryGeneTree X → UnrootedGeneTree X)) :
+    nmscTreeDist N θ ρ T = 0 := by
+  unfold nmscTreeDist imageTreeDist
+  refine Finset.sum_eq_zero fun G _ => ?_
+  split_ifs with h
+  · by_contra hG
+    obtain ⟨hH, hbin⟩ := geneTreeDist_support hN hG
+    exact hT ⟨⟨T.val, G, hH, h, hbin⟩, Subtype.ext rfl⟩
+  · rfl
+
+variable (N θ ρ) in
+/-- The law of the NMSC, on binary gene trees: the form that Theorem 8.2 takes. -/
+def nmscBinaryDist (g : BinaryGeneTree X) : ℝ := nmscTreeDist N θ ρ (toUnrootedGeneTree g)
+
+theorem sum_nmscBinaryDist_mul [Nonempty X] (hN : N.IsPhylogenetic) (C : UnrootedGeneTree X → ℝ) :
+    ∑ g, nmscBinaryDist N θ ρ g * C (toUnrootedGeneTree g) = ∑ T, nmscTreeDist N θ ρ T * C T :=
+  Fintype.sum_of_injective toUnrootedGeneTree toUnrootedGeneTree_injective _ _
+    (fun T hT => by rw [nmscTreeDist_eq_zero hN hT, zero_mul]) fun _ => rfl
+
+theorem nmscBinaryDist_isDist [Nonempty X] (hN : N.IsPhylogenetic) (hθ : N.IsWeakMetric θ)
+    (hρ : 0 ≤ ρ ∧ ρ ≤ 1) : IsDist (nmscBinaryDist N θ ρ) := by
+  obtain ⟨h₀, h₁⟩ := nmscTreeDist_isDist hN hθ hρ
+  refine ⟨fun g => h₀ _, ?_⟩
+  have := sum_nmscBinaryDist_mul (θ := θ) (ρ := ρ) hN fun _ => 1
+  simpa [h₁] using this
+
+theorem pushDist_nmscBinaryDist [Nonempty X] (hN : N.IsPhylogenetic) :
+    Trinomial.pushDist (nmscBinaryDist N θ ρ) toUnrootedGeneTree = nmscTreeDist N θ ρ := by
+  funext T
+  unfold Trinomial.pushDist
+  by_cases hT : T ∈ Set.range (toUnrootedGeneTree : BinaryGeneTree X → UnrootedGeneTree X)
+  · obtain ⟨g, rfl⟩ := hT
+    rw [Finset.sum_eq_single g]
+    · rw [ite_eq_left rfl]
+      rfl
+    · exact fun g' _ hne => ite_eq_right fun h => hne (toUnrootedGeneTree_injective h)
+    · exact fun h => absurd (mem_univ g) h
+  · rw [nmscTreeDist_eq_zero hN hT]
+    exact Finset.sum_eq_zero fun g _ => ite_eq_right fun h => hT ⟨g, h⟩
+
+/-- The concordance factors of the law on binary gene trees, by `expectedCF_nmscTreeDist`. -/
+theorem displayCF_nmscBinaryDist [Nonempty X] (hN : N.IsPhylogenetic) (s : QuartetTree X) :
+    displayCF (nmscBinaryDist N θ ρ) Subtype.val s = nmscCF N θ ρ s := by
+  rw [← expectedCF_nmscTreeDist hN s]
+  unfold expectedCF
+  rw [← sum_nmscBinaryDist_mul hN]
+  unfold displayCF
+  refine Finset.sum_congr rfl fun g _ => ?_
+  obtain ⟨r₀, hr₀, hdisp⟩ := g.2.exists_displays s.card_taxa
+  show _ = nmscBinaryDist N θ ρ g * geneContribution g.1 s
+  unfold geneContribution
+  by_cases hd : Displays g.1 s
+  · simp [hd]
+  · rw [ite_eq_right hd, ite_eq_right hd, ite_eq_right fun h => h r₀ hr₀ hdisp, mul_zero]
+
+/-- A sample from the law of the NMSC on unrooted gene trees is a sample of binary gene trees. -/
+theorem iidProb_nmscTreeDist [Nonempty X] (hN : N.IsPhylogenetic) (n : ℕ)
+    (Ev : (Fin n → UnrootedGeneTree X) → Prop) :
+    iidProb (nmscTreeDist N θ ρ) n Ev =
+      iidProb (nmscBinaryDist N θ ρ) n fun ω => Ev fun i => toUnrootedGeneTree (ω i) := by
+  rw [Trinomial.iidProb_comp_label toUnrootedGeneTree n Ev, pushDist_nmscBinaryDist hN]
+
+/-- **The limit of ECToBlob for gene trees from the NMSC**, at parameters where both directions of
+Assumption 1 hold, for any network and any tree `T₀`. -/
+theorem tendsto_ectoblob_limitTree_nmsc [Nonempty X] (N : RootedNetwork V E X)
+    (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+    (h₁ : Assumption1Forward N (nmscCF N θ ρ)) (h₂ : Assumption1Converse N (nmscCF N θ ρ))
+    (T₀ : Finset (Finset X)) (hT₀ : IsUnrootedTree T₀) (o : ECToBlobOptions) :
+    Tendsto (fun n => iidProb (nmscTreeDist N θ ρ) n fun ω =>
+      ectoblob o (alphaSeq n) (betaSeq n) (quartetCount Subtype.val ω) T₀ = limitTree N T₀)
+      atTop (𝓝 1) := by
+  have hcf : displayCF (nmscBinaryDist N θ ρ) Subtype.val = nmscCF N θ ρ :=
+    funext (displayCF_nmscBinaryDist hN)
+  simp only [iidProb_nmscTreeDist hN]
+  exact tendsto_ectoblob_limitTree N hN _ (nmscBinaryDist_isDist hN hθ.isWeakMetric hρ)
+    (hcf ▸ h₁) (hcf ▸ h₂) T₀ hT₀ o fun _ _ _ r _ => hcf ▸ nmscCF_pos hN hθ hρ r
+
+/-- If the limit tree is not `G`, then under the NMSC the output is `G` with probability tending to
+zero. -/
+theorem tendsto_ectoblob_zero_nmsc [Nonempty X] (N : RootedNetwork V E X)
+    (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+    (h₁ : Assumption1Forward N (nmscCF N θ ρ)) (h₂ : Assumption1Converse N (nmscCF N θ ρ))
+    (T₀ : Finset (Finset X)) (hT₀ : IsUnrootedTree T₀) (o : ECToBlobOptions)
+    {G : Finset (Finset X)} (hG : limitTree N T₀ ≠ G) :
+    Tendsto (fun n => iidProb (nmscTreeDist N θ ρ) n fun ω =>
+      ectoblob o (alphaSeq n) (betaSeq n) (quartetCount Subtype.val ω) T₀ = G) atTop (𝓝 0) := by
+  have hcf : displayCF (nmscBinaryDist N θ ρ) Subtype.val = nmscCF N θ ρ :=
+    funext (displayCF_nmscBinaryDist hN)
+  simp only [iidProb_nmscTreeDist hN]
+  exact tendsto_ectoblob_zero N hN _ (nmscBinaryDist_isDist hN hθ.isWeakMetric hρ)
+    (hcf ▸ h₁) (hcf ▸ h₂) T₀ hT₀ o (fun _ _ _ r _ => hcf ▸ nmscCF_pos hN hθ hρ r) hG
+
+/-! #### A network with no reticulation -/
+
+omit [Fintype V] [Fintype E] [Fintype X] [DecidableEq X] in
+/-- At a vertex with one parent, of inheritance `1`, the allocation of the lineages has probability
+`1`, for any correlation. -/
+theorem allocationWeight_eq_one_of_subsingleton {R P : Type*} [Fintype R] [Fintype P] [DecidableEq P]
+    [Subsingleton P] {ρ : ℝ} {γ : P → ℝ} (hρ : 0 ≤ ρ) (hγ : ∑ e, γ e = 1) (a : R → P) :
+    allocationWeight ρ γ a = 1 := by
+  have h := sum_allocationWeight (R := R) hρ hγ
+  rwa [Finset.sum_eq_single a (fun b _ hb => absurd (Subsingleton.elim b a) hb)
+    (fun h => absurd (mem_univ a) h)] at h
+
+omit [Fintype V] in
+/-- In a network with no reticulation, the allocation at a vertex does not depend on the correlation. -/
+theorem allocationFactor_eq_of_isTreeArc (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ)
+    (hT : ∀ e, N.IsTreeArc e) (hρ : 0 ≤ ρ) {v : V} (hv : v ≠ N.root) (F : Finset (Finset X))
+    (bot : E → Finset (Finset X)) :
+    allocationFactor N θ ρ F v bot = allocationFactor N θ 1 F v bot := by
+  obtain ⟨e₀, he₀⟩ : ∃ e, N.graph.target e = v := by
+    have h := hN.nonroot_indegree v hv
+    have hne : {f | N.graph.target f = v}.Nonempty := by
+      rw [← Set.ncard_pos (Set.toFinite _)]
+      exact h
+    exact hne
+  have hsub : Subsingleton {e // N.graph.target e = v} := by
+    refine ⟨fun a b => Subtype.ext ?_⟩
+    have ha : {f | N.graph.target f = N.graph.target e₀}.ncard = 1 := hT e₀
+    obtain ⟨c, hc⟩ := Set.ncard_eq_one.1 ha
+    have hmem : ∀ f : {e // N.graph.target e = v}, f.val = c := fun f => by
+      have : f.val ∈ {f | N.graph.target f = N.graph.target e₀} := by
+        show N.graph.target f.val = N.graph.target e₀
+        rw [f.property, he₀]
+      rw [hc] at this
+      exact this
+    rw [hmem a, hmem b]
+  have hγ : ∑ e : {e // N.graph.target e = v}, θ.inheritance e.val = 1 := by
+    rw [Fintype.sum_subsingleton _ (⟨e₀, he₀⟩ : {e // N.graph.target e = v})]
+    exact hθ.2.2.1 e₀ (hT e₀)
+  unfold allocationFactor
+  refine Finset.sum_congr rfl fun a _ => ?_
+  rw [allocationWeight_eq_one_of_subsingleton hρ hγ,
+    allocationWeight_eq_one_of_subsingleton zero_le_one hγ]
+
+/-- In a network with no reticulation, the NMSC does not depend on the correlation. -/
+theorem nmscCF_eq_of_isTreeArc (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ)
+    (hT : ∀ e, N.IsTreeArc e) (hρ : 0 ≤ ρ) : nmscCF N θ ρ = nmscCF N θ 1 := by
+  have hH : ∀ bot top, historyWeight N θ ρ bot top = historyWeight N θ 1 bot top := by
+    intro bot top
+    unfold historyWeight
+    congr 1
+    exact Finset.prod_congr rfl fun v hv =>
+      allocationFactor_eq_of_isTreeArc hN hθ hT hρ (Finset.ne_of_mem_erase hv) _ _
+  have hG : ∀ G, geneTreeDist N θ ρ G = geneTreeDist N θ 1 G := by
+    intro G
+    unfold geneTreeDist
+    simp only [hH]
+  funext s
+  unfold nmscCF
+  simp only [hG]
+
+/-- A network with no reticulation has no anomalous quartets, for any correlation, so the forward
+direction of Assumption 1 holds at all its numerical parameters: at `ρ = 1` this is
+`nmscCF_lt_rho_one`, and the correlation does not matter. -/
+theorem assumption1Forward_of_isTreeArc (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ)
+    (hT : ∀ e, N.IsTreeArc e) (hρ : 0 ≤ ρ ∧ ρ ≤ 1) : Assumption1Forward N (nmscCF N θ ρ) := by
+  refine ⟨fun q hq ht => NMSC.trivial_uniform hN hθ hρ q hq ht, fun s hs => ⟨fun r hr => ?_,
+    NMSC.cut_alternatives hN hθ hρ s hs⟩⟩
+  rw [nmscCF_eq_of_isTreeArc hN hθ hT hρ.1]
+  exact nmscCF_lt_rho_one hN hθ hs hr
+
+end NMSCLaw
+
+/-! ### Part 7: Remark 8.4 is false for non-binary networks -/
+
 
 namespace Counterexample
 
@@ -2091,8 +2276,14 @@ theorem law_forward : Assumption1Forward net (displayCF law Subtype.val) := by
       norm_num
     · rw [halt r hr, halt r' hr']
 
-/-- The law meets the converse direction of Assumption 1. -/
-theorem law_converse : Assumption1Converse net (displayCF law Subtype.val) := by
+/-- On this network, the converse direction of Assumption 1 follows from the forward direction: each
+set of four taxa has a trivial 4-blob or a cut split. -/
+theorem converse_of_forward {p : QuartetTree (Fin 5) → ℝ} (hF : Assumption1Forward net p) :
+    Assumption1Converse net p := by
+  -- the quartet tree `01|xy`
+  have hcut : ∀ {x y : Fin 5}, x ≠ 0 → x ≠ 1 → y ≠ 0 → y ≠ 1 →
+      ∀ hc : ({0, 1, x, y} : Finset (Fin 5)).card = 4, InducedCutSplit net (quartetTree 0 1 x y hc) :=
+    fun h₁ h₂ h₃ h₄ hc => inducedCutSplit_of_rdom net_isPhylogenetic hc (rdom_zero_one h₁ h₂ h₃ h₄)
   refine ⟨fun q hq htr hu => ?_, fun s hs hstrict => ?_⟩
   · have hmem : 0 ∈ q ∧ 1 ∈ q := by
       by_contra hcon
@@ -2101,30 +2292,19 @@ theorem law_converse : Assumption1Converse net (displayCF law Subtype.val) := by
       · exact Or.inr fun h₁ => hcon ⟨h₀, h₁⟩
       · exact Or.inl h₀
     obtain ⟨x, y, hx₀, hx₁, hy₀, hy₁, hxy, rfl⟩ := exists_decomp hq hmem.1 hmem.2
-    have hc : ({0, x, 1, y} : Finset (Fin 5)).card = 4 :=
-      card_four_of_ne hx₀.symm (by decide) hy₀.symm hx₁ hxy hy₁.symm
-    have ht : (quartetTree 0 x 1 y hc).taxa = {0, 1, x, y} := by
-      rw [taxa_quartetTree]
-      ext z
-      simp only [mem_insert, mem_singleton]
-      tauto
-    have hval := hu (quartetTree 0 x 1 y hc) (by simp [treesOn, ht])
-    rw [displayCF_law, ite_eq_right, ite_eq_left] at hval
-    · norm_num at hval
-    · rw [ht]
-      intro z hz
-      simp only [mem_insert, mem_singleton] at hz ⊢
-      tauto
-    · simp only [quartetTree_val, mem_insert, mem_singleton]
-      rintro (h | h)
-      · have : (1 : Fin 5) ∈ ({0, x} : Finset (Fin 5)) := h ▸ (by simp)
-        simp [hx₁.symm] at this
-      · have : (0 : Fin 5) ∈ ({1, y} : Finset (Fin 5)) := h ▸ (by simp)
-        simp [hy₀.symm] at this
-  · have hne : s.alternatives.Nonempty := by
-      rw [← Finset.card_pos, s.card_alternatives]
+    have hstr := hF.t1 _ (hcut hx₀ hx₁ hy₀ hy₁ hq)
+    obtain ⟨r, hr⟩ : (quartetTree 0 1 x y hq).alternatives.Nonempty := by
+      rw [← Finset.card_pos, (quartetTree 0 1 x y hq).card_alternatives]
       omega
-    by_cases h₀ : ({0, 1} : Finset (Fin 5)) ∈ s.val
+    have hlt := hstr.1 r hr
+    have hrq : r ∈ treesOn ({0, 1, x, y} : Finset (Fin 5)) := by
+      have := QuartetTests.mem_treesOn_taxa_of_mem_alternatives hr
+      rwa [taxa_quartetTree] at this
+    have hsq : quartetTree 0 1 x y hq ∈ treesOn ({0, 1, x, y} : Finset (Fin 5)) := by
+      simp [treesOn]
+    rw [hu r hrq, hu _ hsq] at hlt
+    exact lt_irrefl _ hlt
+  · by_cases h₀ : ({0, 1} : Finset (Fin 5)) ∈ s.val
     · -- then `s` is the cut split
       apply hs
       have hmem : s ∈ bipartitionQuartets ({0, 1} : Finset (Fin 5)) := by
@@ -2138,27 +2318,42 @@ theorem law_converse : Assumption1Converse net (displayCF law Subtype.val) := by
         decide
       exact rdom_iff.2 (hdec a b c d ha hb hc' hd (ne_of_card_four hc).1)
     · by_cases h₁ : ({0, 1} : Finset (Fin 5)) ⊆ s.taxa
-      · -- the quartet tree `01|xy` has more weight
+      · -- the quartet tree `01|xy` has more weight, and `s` is an alternative of it
         obtain ⟨x, y, hx₀, hx₁, hy₀, hy₁, hxy, htaxa⟩ :=
           exists_decomp s.card_taxa (h₁ (by simp)) (h₁ (by simp))
         have hc : ({0, 1, x, y} : Finset (Fin 5)).card = 4 := htaxa ▸ s.card_taxa
-        have hr : quartetTree 0 1 x y hc ∈ s.alternatives := by
-          refine QuartetTree.mem_alternatives.2 ⟨by rw [taxa_quartetTree, htaxa], ?_⟩
-          rintro h
+        have hne : quartetTree 0 1 x y hc ≠ s := by
+          intro h
           apply h₀
           rw [← h]
           simp
-        have hlt := hstrict.1 _ hr
-        rw [displayCF_law, displayCF_law, ite_eq_right h₀, ite_eq_left h₁, ite_eq_left (by simp)] at hlt
-        norm_num at hlt
-      · -- all three are at `1/3`
-        obtain ⟨r, hr⟩ := hne
-        obtain ⟨hrt, _⟩ := QuartetTree.mem_alternatives.1 hr
-        have hsub : ¬ ({0, 1} : Finset (Fin 5)) ⊆ r.taxa := hrt ▸ h₁
-        have hlt := hstrict.1 _ hr
-        rw [displayCF_law, displayCF_law, ite_eq_right h₀, ite_eq_right h₁,
-          ite_eq_right (fun h => hsub (r.subset_taxa h)), ite_eq_right hsub] at hlt
+        have hr : quartetTree 0 1 x y hc ∈ s.alternatives :=
+          QuartetTree.mem_alternatives.2 ⟨by rw [taxa_quartetTree, htaxa], hne⟩
+        have hr' : s ∈ (quartetTree 0 1 x y hc).alternatives :=
+          QuartetTree.mem_alternatives.2 ⟨by rw [taxa_quartetTree, htaxa], hne.symm⟩
+        exact lt_asymm (hstrict.1 _ hr) ((hF.t1 _ (hcut hx₀ hx₁ hy₀ hy₁ hc)).1 _ hr')
+      · -- the taxa have a trivial 4-blob, and all three are at `1/3`
+        have htr : HasTrivialFourBlob net s.taxa := by
+          refine (hasTrivialFourBlob_iff s.card_taxa).2 ?_
+          by_contra hcon
+          push Not at hcon
+          refine h₁ fun z hz => ?_
+          simp only [mem_insert, mem_singleton] at hz
+          rcases hz with rfl | rfl
+          · exact hcon.1
+          · exact hcon.2
+        have hu := hF.star _ s.card_taxa htr
+        obtain ⟨r, hr⟩ : s.alternatives.Nonempty := by
+          rw [← Finset.card_pos, s.card_alternatives]
+          omega
+        have hlt := hstrict.1 r hr
+        rw [hu r (QuartetTests.mem_treesOn_taxa_of_mem_alternatives hr),
+          hu s (QuartetTests.mem_treesOn_taxa s)] at hlt
         exact lt_irrefl _ hlt
+
+/-- The law meets the converse direction of Assumption 1. -/
+theorem law_converse : Assumption1Converse net (displayCF law Subtype.val) :=
+  converse_of_forward law_forward
 
 /-- **Remark 8.4 is false for non-binary networks.** The network is the tree `((0,1),2,3,4)`, with a
 polytomy of degree four and the cut edge `01|234`. The tree `T₀` is the binary tree with cherries
@@ -2197,6 +2392,54 @@ theorem not_remark8_4 :
       T₀ T₀_isUnrootedTree o fun _ _ _ r _ => displayCF_law_pos r
   · refine tendsto_ectoblob_zero net net_isPhylogenetic law law_isDist law_forward law_converse T₀
       T₀_isUnrootedTree o (fun _ _ _ r _ => displayCF_law_pos r) fun h => ?_
+    have := mem_limitTree_three_four
+    rw [h] at this
+    exact notMem_treeOfBlobs (mem_inter.1 this).2
+
+/-! #### The NMSC on this network -/
+
+/-- All arcs of the network are tree arcs: it has no reticulation. -/
+theorem net_isTreeArc (e : Fin 6) : net.IsTreeArc e := by
+  show net.graph.indegree (tgt e) = 1
+  rw [indegree_eq]
+  revert e
+  decide
+
+/-- This network has numerical parameters. -/
+theorem exists_isMetric : ∃ θ : MetricData (Fin 6), net.IsMetric θ := by
+  refine ⟨⟨fun _ => 1, fun _ => 1⟩, fun _ _ => one_pos, fun _ _ => zero_le_one, fun _ _ => rfl,
+    fun _ _ => one_pos, fun v hv => ?_⟩
+  rw [indegree_eq] at hv
+  revert v
+  decide
+
+/-- **Remark 8.4 is false under the NMSC.** For gene trees from the network multispecies coalescent on
+the tree `((0,1),2,3,4)`, at all valid parameters and for any inheritance correlation (which has no
+effect on a network with no reticulation), both directions of Assumption 1 hold, the concordance factors
+are positive, and for all variants of the algorithm on the binary tree `T₀` with cherries `02` and `34`
+the output tends to the limit tree, which has the false edge `34|012`. So the output is `T₀ ∩ T_B(N)`
+with probability tending to zero. -/
+theorem not_remark8_4_nmsc {θ : MetricData (Fin 6)} (hθ : net.IsMetric θ) {ρ : ℝ}
+    (hρ : 0 ≤ ρ ∧ ρ ≤ 1) :
+    Assumption1Forward net (nmscCF net θ ρ) ∧ Assumption1Converse net (nmscCF net θ ρ) ∧
+      (∀ r, 0 < nmscCF net θ ρ r) ∧
+      ({3, 4} : Finset (Fin 5)) ∈ T₀ ∧ ({3, 4} : Finset (Fin 5)) ∉ treeOfBlobs net ∧
+      limitTree net T₀ = (T₀.filter fun A => A ≠ {0, 2} ∧ A ≠ {1, 3, 4}) ∧
+      ({3, 4} : Finset (Fin 5)) ∈ limitTree net T₀ ∧
+      ∀ o : ECToBlobOptions,
+        Tendsto (fun n => iidProb (nmscTreeDist net θ ρ) n fun ω =>
+          ectoblob o (alphaSeq n) (betaSeq n) (quartetCount Subtype.val ω) T₀ = limitTree net T₀)
+          atTop (𝓝 1) ∧
+        Tendsto (fun n => iidProb (nmscTreeDist net θ ρ) n fun ω =>
+          ectoblob o (alphaSeq n) (betaSeq n) (quartetCount Subtype.val ω) T₀ =
+            T₀ ∩ treeOfBlobs net) atTop (𝓝 0) := by
+  have h₁ := assumption1Forward_of_isTreeArc net_isPhylogenetic hθ net_isTreeArc hρ
+  have h₂ := converse_of_forward h₁
+  refine ⟨h₁, h₂, nmscCF_pos net_isPhylogenetic hθ hρ, by unfold T₀ H₀ unroot; decide,
+    notMem_treeOfBlobs, limitTree_eq, mem_limitTree_three_four, fun o => ⟨?_, ?_⟩⟩
+  · exact tendsto_ectoblob_limitTree_nmsc net net_isPhylogenetic hθ hρ h₁ h₂ T₀ T₀_isUnrootedTree o
+  · refine tendsto_ectoblob_zero_nmsc net net_isPhylogenetic hθ hρ h₁ h₂ T₀ T₀_isUnrootedTree o
+      fun h => ?_
     have := mem_limitTree_three_four
     rw [h] at this
     exact notMem_treeOfBlobs (mem_inter.1 this).2

@@ -663,9 +663,9 @@ theorem minP_lt_iff {α : ℝ} (hα : α ≤ 1) {P : Multiset ℝ} : minP P < α
 star test does not reject at level `β`, and the p-value of the cut test otherwise. At a level `α > 0` of the cut test,
 it is below `α` exactly when the set is judged non-treelike (`judgedP_lt_iff`).
 
-This reads the tests as `TOBQMC.tobqmc` does, TOB-QMC §4.3's "TINNiK's hypothesis tests". The implementation described
-at embedded lines 133-137 instead keeps the p-value of the treelikeness test and applies the star test to the
-minimizer alone; the T3 test is not treated. -/
+This reads the tests as `TOBQMC.tobqmc` does, TOB-QMC §4.3's "TINNiK's hypothesis tests", with the cut test;
+`TOBQMC/BipartitionSearchT3.lean` has the T3 option. The implementation described at embedded lines 133-137 instead
+keeps the p-value of the treelikeness test and applies the star test to the minimizer alone. -/
 def judgedP (ml : (QuartetTree X → ℝ) → Finset X → QuartetTree X) (β : ℝ) (c : QuartetTree X → ℝ) (Y : Finset X) : ℝ :=
   if β ≤ starPValue .lrt c Y then 0 else cutPValue c (ml c Y)
 
@@ -682,15 +682,14 @@ def edgeP (ml : (QuartetTree X → ℝ) → Finset X → QuartetTree X) (β : �
     (Q : Finset (Finset X)) (o : SearchOut X) : ℝ :=
   min (minP (Q.val.map (judgedP ml β c))) (o.pValue fun t => judgedP ml β c t.taxa)
 
-/-- The p-value of an edge is below a level exactly when one of the four-taxon sets tested has its p-value below that
-level, at levels at most `1`. So it is the minimum over the cover and over the sets the search tested. -/
-theorem edgeP_lt_iff {ml : (QuartetTree X → ℝ) → Finset X → QuartetTree X} {α β : ℝ} {c : QuartetTree X → ℝ}
-    {Q : Finset (Finset X)} {A : Finset X} {argmin : Finset (SearchTuple X) → SearchTuple X} {limit : ℕ}
-    {pick : ℕ → SearchTuple X} (hargmin : IsArgmin (fun t => judgedP ml β c t.taxa) argmin) (hα : α ≤ 1) :
-    edgeP ml β c Q (bipartitionSearch A (fun t => judgedP ml β c t.taxa) argmin limit pick) < α ↔
-      ∃ Y ∈ Q ∪ (bipartitionSearch A (fun t => judgedP ml β c t.taxa) argmin limit pick).testedSets,
-        judgedP ml β c Y < α := by
-  rw [edgeP, min_lt_iff, minP_lt_iff hα, pValue_lt_iff hargmin hα]
+/-- The minimum over a cover `Q` and over Algorithm 2, for any p-value `P` of a four-taxon set, is below a level at
+most `1` exactly when one of the four-taxon sets tested has its p-value below that level. -/
+theorem min_minP_pValue_lt_iff {P : Finset X → ℝ} {α : ℝ} {Q : Finset (Finset X)} {A : Finset X}
+    {argmin : Finset (SearchTuple X) → SearchTuple X} {limit : ℕ} {pick : ℕ → SearchTuple X}
+    (hargmin : IsArgmin (fun t => P t.taxa) argmin) (hα : α ≤ 1) :
+    min (minP (Q.val.map P)) ((bipartitionSearch A (fun t => P t.taxa) argmin limit pick).pValue fun t => P t.taxa) < α ↔
+      ∃ Y ∈ Q ∪ (bipartitionSearch A (fun t => P t.taxa) argmin limit pick).testedSets, P Y < α := by
+  rw [min_lt_iff, minP_lt_iff hα, pValue_lt_iff hargmin hα]
   simp only [Multiset.mem_map, mem_val, SearchOut.testedSets, mem_union, mem_image]
   constructor
   · rintro (⟨x, ⟨Y, hY, rfl⟩, hx⟩ | ⟨t, ht, hx⟩)
@@ -699,6 +698,16 @@ theorem edgeP_lt_iff {ml : (QuartetTree X → ℝ) → Finset X → QuartetTree 
   · rintro ⟨Y, hY | ⟨t, ht, rfl⟩, hx⟩
     · exact Or.inl ⟨_, ⟨Y, hY, rfl⟩, hx⟩
     · exact Or.inr ⟨t, ht, hx⟩
+
+/-- The p-value of an edge is below a level exactly when one of the four-taxon sets tested has its p-value below that
+level, at levels at most `1`. So it is the minimum over the cover and over the sets the search tested. -/
+theorem edgeP_lt_iff {ml : (QuartetTree X → ℝ) → Finset X → QuartetTree X} {α β : ℝ} {c : QuartetTree X → ℝ}
+    {Q : Finset (Finset X)} {A : Finset X} {argmin : Finset (SearchTuple X) → SearchTuple X} {limit : ℕ}
+    {pick : ℕ → SearchTuple X} (hargmin : IsArgmin (fun t => judgedP ml β c t.taxa) argmin) (hα : α ≤ 1) :
+    edgeP ml β c Q (bipartitionSearch A (fun t => judgedP ml β c t.taxa) argmin limit pick) < α ↔
+      ∃ Y ∈ Q ∪ (bipartitionSearch A (fun t => judgedP ml β c t.taxa) argmin limit pick).testedSets,
+        judgedP ml β c Y < α :=
+  min_minP_pValue_lt_iff hargmin hα
 
 /-- The method with any further four-taxon sets `R` around the bipartitions: from the tree `B`, contract the edges
 where the tests judge a set of the cover `Q` or of `R` non-treelike. -/
