@@ -24,6 +24,7 @@ public import Basic.Phylogenetics.Coalescent.Tavare
 public import Basic.Phylogenetics.Coalescent.Trace
 public import Basic.Phylogenetics.CutHierarchy
 public import Basic.Phylogenetics.Defs
+public import Basic.Phylogenetics.DeletedArcs
 public import Basic.Phylogenetics.Hierarchy
 public import Basic.Phylogenetics.HierarchyGraph
 public import Basic.Phylogenetics.HierarchyParents
