@@ -1,55 +1,124 @@
-# Tree-of-blobs formalization
+# Tree of blobs inference from quartets, in Lean
 
-**Incomplete: source inventory, shared foundations and preliminary audit. No
-numbered paper result has been formalized.** The full statements baseline remains
-unfinished. The current foundations cover directed multigraphs, rooted
-network data, ancestral restriction, quartet probability representations, finite
-tree hierarchies, exact quartet scores and stability of maximizers under finite
-uniform perturbations. Selected finite Kingman kernel foundations are included;
-an arbitrary-network NMSC law has not been constructed.
+A Lean 4 formalization of three papers on inferring the tree of blobs of a phylogenetic network from gene trees under the
+network multispecies coalescent: **ECToBlob** (Rhodes, Allman, Ané, Baños 2026), **TOB-QMC** (Dai, Han, Molloy 2026) and **TINNiK**
+(Allman, Baños, Mitchell, Rhodes 2024). The tree of blobs is what remains of a network when its reticulate parts are
+contracted. These papers infer it from 4-taxon concordance factors, and the main results say that it is
+recovered with probability tending to one as the number of gene trees grows.
 
-Work stopped at the user's request. See [HANDOFF.md](docs/HANDOFF.md) for the
-current verification, local drafts and next steps.
+The formalization is **conditional** on one result of the literature: the CF-detectability of 4-blobs for generic parameters
+(Allman et al. 2023, Corollary 1), taken as the named hypothesis `External.AllmanEtAl2023.Corollary1` of TINNiK's Theorem 4, and in
+the form ECToBlob's Proposition 5.1 adapts, `ECToBlob.AdaptedAllmanTheorem1`. Nothing else is assumed. One statement correction, E11 below, still awaits the agreement of the person who
+requested the formalization.
 
-Sources: ECToBlob bioRxiv v1, TOB-QMC bioRxiv v5 (user-authorized fallback from the
-subscription-only journal), and published TINNiK. The two supplements supplied by
-the user have been read; exact linkage of the internally February-dated TOB-QMC
-supplement to main v5 remains unconfirmed. See [configuration](docs/CONFIGURATION.md), [source hashes](docs/sources.json)
-and the [preliminary audit](REPORT.md).
+## What is proved
 
-The audit records an overcount in ECToBlob (3.3), a missing genericity restriction
-in Theorem 8.2 under its literal general-model scope, and TINNiK's open-domain MLE
-problem. Approved corrections are generic numerical parameters for ECToBlob
-Theorem 8.2, closed-simplex estimation for TINNiK, and only the forward implication
-of TOB-QMC supplementary Lemma 2, and a nontrivial-blob condition for supplementary
-Lemma 8. The supplement's probability-gap definition also
-needs a local proof repair. Verification limits are explicit in the report.
+- Every numbered result of the three papers, by the paper's argument except for the departures listed below. [REPORT.md](REPORT.md) has the
+  list, with what each depends on (Section 8).
+- The results the papers cite: Allman et al. 2023 (Theorem 2, Lemma 3), Rhodes 2020 (Theorem 2), Huber et al. 2025 (Theorem 5.1, forward), Ané et al. 2024
+  (exchangeability), Mitchell et al. 2019 (Theorem 3.1, for this model). They are in `External/`.
+- The objects themselves: rooted networks as multigraphs; cut edges; the tree of blobs and the induced networks as graphs, with bridges to the split
+  families the statements use; Kingman's coalescent; the network multispecies coalescent on arbitrary networks with correlated inheritance, as a
+  probability law on binary trees; the star, T1 and cut tests, and their limit laws from the central limit theorem.
+- Assumed: see [REPORT.md, Section 2](REPORT.md#assumed-a-conditional-formalization).
+- `lake build` passes with no warnings other than the `sorry`s of the statements in `Challenge.lean`, which are there by design. There is no `axiom`, `native_decide` or `implemented_by`.
+  `scripts/Audit.lean` checks every declaration of the libraries, including private and generated ones, against `propext`, `Classical.choice`, `Quot.sound`.
 
-Build/check with Lean and Mathlib `v4.36.0-rc1`:
+## The main results
+
+Each is stated in [`Challenge.lean`](Challenge.lean), and proved in [`Solution.lean`](Solution.lean) from the library.
+
+- `Challenge.theorem3_1` (ECToBlob 3.1): every tree maximizing the Maximum Quartet Support objective resolves the tree of blobs, for quartet probabilities with strict dominance across cut edges and exchangeability across them.
+- `Challenge.theorem4_1` (ECToBlob 4.1): if `a₁a₂|b₁b₂` is a cut-edge split of every induced 4-taxon network for `aᵢ ∈ Aᵢ`, `bᵢ ∈ Bᵢ`, then `A₁ ∪ A₂ | B₁ ∪ B₂` is a cut-edge split of the network.
+- `Challenge.theorem8_2` (ECToBlob 8.2, corrected): there are test levels `α_n, β_n`, independent of the network, such that every variant of the ECToBlob algorithm, from any resolution of the tree of blobs, returns the tree of blobs with probability tending to one.
+- `Challenge.theorem1`, `Challenge.theorem1_optimal` (TOB-QMC 1): optimal solutions of Weighted Quartet Consensus refine the tree of blobs, almost surely for all large numbers of gene trees.
+- `Challenge.theorem2` (TOB-QMC 2): on a binary level-1 network, an oracle for treelikeness on a disjoint cover around each edge of a refinement finds the edges to contract.
+- `Challenge.consistency` (TOB-QMC §4.3): the resulting method is consistent for level-1 networks, under the paper's assumptions.
+- `Challenge.theorem4` (TINNiK 4, conditional): for generic parameters there are levels `α_m → 0` such that the TINNiK algorithm is consistent, for any `β > 0` and exact tree builder.
+
+## Palomar
+
+- `Challenge.lean` (no project imports, definitions copied from `Basic/Phylogenetics/Defs.lean` by `scripts/sync_challenge_defs.py`), `Solution.lean` (generated by `scripts/gen_solution.py`), `comparator.json` and `formalization.yaml`.
+- `lake env lake comparator --config=comparator.json` reports "Your solution is okay!", under Lean's kernel and NanoDa.
+- This repository is not yet published, and the preflight hasn't run.
+
+## Audit summary
+
+The numbers refer to [REPORT.md](REPORT.md), which gives the details and the repairs.
+
+- **Errors.** ECToBlob's (3.3) overcounts (E2). TOB-QMC's supplement: Lemma 7 and Theorem 1 are false at level 2, by an explicit network (E25); Lemma 2's converse is false (E23); positive lengths don't exclude the centroid (E28). TINNiK: the count `4(N-1)` should be `4(N-4)` (E29), and the MLE need not exist on the open cut model (E31).
+- **Gaps.** All are repaired, and none changes a statement. The largest: in the proof of ECToBlob's Theorem 8.2, the witness of a false edge may have a trivial 4-blob, where the T1 null holds, which needed a new argument (E12). Others in that proof: E13–E17. Elsewhere: E1, E3, E4, E6–E8; TOB-QMC E18–E22, E24; TINNiK E30, E32, E33.
+- **Missing hypotheses.** ECToBlob's Theorem 8.2 needs parameters meeting Assumption 1 (E10, agreed with the user), and, for its Cauchy and CBC variants, positive alternatives on null quartets, with a counterexample at a 5-sunlet (E11, **not yet agreed**). The latter does not affect the NMSC.
+- **Redundant hypotheses.** In ECToBlob's Theorem 4.1, `A₁, A₂` and `B₁, B₂` needn't be disjoint. In TOB-QMC's Lemma 4, of the hypotheses on the refinement only `RefinesBlob` matters, and Theorem 2 doesn't need `B` binary. In TINNiK's Theorem 4, `0 ≤ δ` isn't used.
+- **Use of cited results.** TINNiK's use of its Theorem 2 needs a stronger rule than hypothesis (b) (E30, proved). TOB-QMC cites TINNiK's Theorem 4 for a step of its proof, which fails at some parameters its assumptions allow; the claim holds by a finer argument (E21). ECToBlob's adaptation of Allman et al.'s Theorem 1 is taken on trust (E5).
+- **Proofs.** They follow the papers' arguments. The route check confirms that each uses the results its paper's proof cites, except six recorded differences. Departures, each with a reason in [REPORT.md, Section 7](REPORT.md#7-departures-from-the-papers-proofs): gaps repaired in ECToBlob's Theorems 3.1, 8.2, Corollary 3.6, Lemma 6.1, TOB-QMC's Lemma 3, Lemma 4 of its supplement and consistency, and TINNiK's Theorem 4; representation in TOB-QMC's Lemmas 3, 4 and the cited Lemma 3 of Allman et al. and Theorem 2 of Rhodes; mathematics Lean lacks in TINNiK's Proposition 5 and its centroid step and ECToBlob's Proposition 5.1. TINNiK's Proposition 6 computes its integrals in Cartesian coordinates, with the paper's intermediate formulas: this isn't forced.
+
+## Credits
+
+- Requested and supervised by The-Anh Vu-Le, who chose the papers and agreed to the corrections. **No person has reviewed the proofs.**
+- Source audit and first foundations by Codex; statements, proofs, audit and packaging by Claude (Opus 5.5) in Claude Code, with sub-agents, following the [formalize-math-paper](https://github.com/vltanh/formalize-math-paper) procedure. Independent agents reviewed the statements and compared the proofs with the papers.
+- Made on 2026-10-27 and 2026-10-31. [CREDITS.md](CREDITS.md) has the details.
+
+## Related work
+
+From [REPORT.md, Section 10](REPORT.md#10-the-papers-in-the-literature).
+
+- No formalization of these papers was found other than this one. The closest is the public [lean4-phylogenetics](https://github.com/vltanh/lean4-phylogenetics), whose Kingman coalescent modules this project adapts; its level-1 network coalescent isn't used.
+- History: Allman et al. 2023 showed tree of blobs identifiability from quartets, with no bound on the level; TINNiK made it an algorithm with a consistency theorem. Huber et al. 2025 and Frohn et al. 2025 give the exact-quarnet form that ECToBlob's Theorem 4.1 extends. ECToBlob's Corollary 4.2 is, for binary networks, Lemma 1 of Frohn et al., as ECToBlob says.
+- Concurrent: TOB-QMC and ECToBlob prove the same result that an optimum of the quartet criterion refines the tree of blobs, and ECToBlob calls the two works independent.
+- Since: Dai and Molloy (WABI 2026) reconstruct level-1 blobs from a tree of blobs, using TOB-QMC's Theorem 2. We found no erratum or published counterexample to the three papers; the errors recorded here are this audit's own.
+
+## What's next
+
+The natural next steps are to prove the assumed Corollary 1, which needs an analytic parametrization of quartet concordance factors on networks, and to settle whether treelikeness of the quartets around an edge decides its membership in the tree of blobs beyond level 1, which ECToBlob's §10 raises. [REPORT.md, Section 11](REPORT.md#11-whats-next) has these and the simpler arguments that the formalization found, among them a proof of ECToBlob's Theorem 4.1 by domination, with no vertex sets.
+
+## Building
 
 ```sh
 lake exe cache get
 lake build
-lake env lean scripts/AuditFoundations.lean
-lake env lean -DautoImplicit=false -DmaxSynthPendingDepth=3 scripts/SourceChecks.lean
-lake env lean -DautoImplicit=false -DmaxSynthPendingDepth=3 scripts/BoundaryCheck.lean
-lake env lean -DautoImplicit=false -DmaxSynthPendingDepth=3 scripts/IndistinguishabilityCheck.lean
-lake env lean scripts/SunletCheck.lean
-lake env lean scripts/TOBQMCGapCheck.lean
+lake env lean -DautoImplicit=false -DmaxSynthPendingDepth=3 scripts/Audit.lean   # axioms and dependencies
+python3 scripts/route_check.py check docs/paper_routes.tsv --accept docs/route_differences.tsv
+lake env lake comparator --config=comparator.json
 ```
 
-`Basic/` contains general mathematics, `External/` is reserved for cited results, and
-`TINNiK/`, `TOBQMC/`, `ECToBlob/` for the papers. `Challenge.lean` and
-`Solution.lean` are empty placeholders. Comparator, full axiom/route audits and
-Palomar packaging are pending; nothing has been published.
+Toolchain: Lean and Mathlib `v4.36.0-rc1` (`lean-toolchain`, `lake-manifest.json`). After changing the shared definitions, run `python3 scripts/sync_challenge_defs.py`; after changing a statement in the Challenge, `python3 scripts/gen_solution.py`; after adding a module, `python3 scripts/gen_audit.py`; and after moving declarations, `python3 scripts/linkify_docs.py` to update the documents' links. `scripts/*Check.lean` check by themselves some counterexamples of the audit. `docs/CONFIGURATION.md` records the versions and decisions; `docs/ADAPTED_SOURCES.md` and `docs/COALESCENT_SOURCES.md` record adapted code.
 
-Prepared with Codex and three parallel readers following
-[formalize-math-paper 3.0.0](https://github.com/vltanh/formalize-math-paper).
-See [CREDITS.md](CREDITS.md) for the run's scope and measurement limits.
-A general tree-hierarchy kernel was adapted from
-[Phylogenetics](https://github.com/vltanh/lean4-phylogenetics); exact provenance and
-changes are in [ADAPTED_SOURCES.md](docs/ADAPTED_SOURCES.md).
-The finite coalescent extraction is documented in [COALESCENT_SOURCES.md](docs/COALESCENT_SOURCES.md).
-[CAMUS](https://github.com/vltanh/lean4-camus) was inspected but not incorporated.
+## Layout
 
-License: Apache-2.0.
+Libraries: `Basic` (general and phylogenetic foundations, [Basic/README.md](Basic/README.md)), `External` (cited results, each with a README), `ECToBlob`, `TOBQMC`, `TINNiK`.
+
+| Module | Paper content |
+| --- | --- |
+| `ECToBlob/Section3` | Lemma 3.5, (3.2), (3.3), Theorem 3.1, Remark 3.2, Corollary 3.6 |
+| `ECToBlob/Section4` | Theorem 4.1, Corollaries 4.2, 4.3 |
+| `ECToBlob/Section5` | The parameter measure, Assumption 1, Proposition 5.1 |
+| `ECToBlob/Section6` | Lemma 6.1 |
+| `ECToBlob/Lemma81` | Lemma 8.1 |
+| `ECToBlob/FalseEdge` | The witness at a false edge (the repair of E12) |
+| `ECToBlob/Deterministic` | The deterministic core of the proof of Theorem 8.2 |
+| `ECToBlob/Section8` | Theorem 8.2 |
+| `TOBQMC/WQC` | Equations (1)–(3), Lemma 3, supplement Lemma 4, Theorem 1, the ASTRAL corollary |
+| `TOBQMC/Level1Blobs` | Blobs of level-1 networks |
+| `TOBQMC/Level1` | Lemmas 2, 4, Corollary 1, Theorem 2, 3-fix-1-alter |
+| `TOBQMC/Consistency` | The consistency claim of §4.3 |
+| `TINNiK/Basic` | The count of Step 3(a)(i), the tests' correctness, Theorem 4 |
+| `TINNiK/Statistics/Definitions` | Likelihood definitions |
+| `TINNiK/Statistics/AppendixC` | Appendix C.1, Proposition 5 |
+| `TINNiK/Statistics/Proposition6` | Proposition 6 |
+
+| `External/` | Source |
+| --- | --- |
+| `AllmanEtAl2023` | Allman, Baños, Mitchell, Rhodes, *The tree of blobs of a species network: identifiability under the coalescent*: Theorem 2, Lemma 3, and the statement of Corollary 1 |
+| `AneEtAl2024` | Ané, Fogg, Allman, Baños, Rhodes, *Anomalous networks under the multispecies coalescent*: exchangeability |
+| `HuberEtAl2025` | Huber, van Iersel, Jones, Moulton, Veenema-Nipius, *When are quarnets sufficient…*: Theorem 5.1, forward |
+| `MitchellAllmanRhodes2019` | Mitchell, Allman, Rhodes, *Hypothesis testing near singularities and boundaries*: Theorem 3.1, for this model |
+| `Rhodes2020` | Rhodes, *Topological metrizations of trees…*: Theorem 2 |
+
+## GitHub configuration
+
+`.github/workflows/lean_action_ci.yml` builds the project, runs the audit and the route check, and checks that the generated files, the documents' links and the Markdown tables are current. It needs no settings.
+
+## License
+
+Apache-2.0: [LICENSE](LICENSE). Code adapted from [lean4-phylogenetics](https://github.com/vltanh/lean4-phylogenetics) (Apache-2.0) keeps its notice in each file's header.

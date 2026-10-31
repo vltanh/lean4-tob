@@ -36,3 +36,7 @@ absorption limit exists on forests and is a probability distribution on one-root
 forests (`Absorption.lean`), with the PMF wrappers in `PMF.lean`. The network
 multispecies coalescent itself is not adapted from the source, whose `Net` syntax
 is level-1 with independent inheritance: `Basic/Phylogenetics/NMSC/` is new.
+
+`Basic/Phylogenetics/Defs.lean`, and its copy in `Challenge.lean`, carries the definitions `IsHierarchy`, `childClusters`, `unroot`, `roots`,
+`kingmanGenerator`, `kingmanTransition`, `kingmanAbsorption` and `forestBelow`, adapted from the same commit
+(`Phylogenetics/Hierarchy/Basic.lean`, `Phylogenetics/MSC/Defs.lean`, `Phylogenetics/MSC/Notions.lean`), with a notice in its header.

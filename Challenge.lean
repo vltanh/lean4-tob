@@ -1,3 +1,11 @@
+/-
+The definitions `IsHierarchy`, `childClusters`, `unroot`, `roots`, `kingmanGenerator`, `kingmanTransition`,
+`kingmanAbsorption` and `forestBelow` are adapted from https://github.com/vltanh/lean4-phylogenetics,
+commit 06f684e526e276ca2ccf668a1c3a808a2b8c181d.
+Licensed under the Apache License, Version 2.0:
+https://www.apache.org/licenses/LICENSE-2.0
+Exact source regions: docs/COALESCENT_SOURCES.md and docs/ADAPTED_SOURCES.md.
+-/
 module
 
 public import Mathlib.Analysis.Normed.Algebra.MatrixExponential
