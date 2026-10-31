@@ -180,7 +180,7 @@ private theorem tinnik_eq_of_tests {V E : Type*} {N : RootedNetwork V E X} (hN :
       refine (Finset.sum_eq_zero fun A hA => ?_).symm
       have := Finset.mem_filter.mp hA
       exact absurd this.2.1 this.2.2
-    · rw [External.Rhodes2020.theorem2 hTB hX hxy]
+    · rw [External.Rhodes2020.theorem2 hTB hxy]
       exact congrFun (congrFun (quartetDistance_congr (fun q h4 => by
         simp only [Set.mem_ofPred_eq, h4, true_and]; rfl) rfl) x) y
   have hw : ∀ A ∈ treeOfBlobs N, 0 < External.Rhodes2020.quartetWeight (treeOfBlobs N) A ∧
@@ -541,7 +541,7 @@ theorem tests_correct {V E : Type*} [Fintype V] [Fintype E] {N : RootedNetwork V
   tests_correct_of_noCentroidCF hN hX hθ hρ hdet (noCentroidCF_of_cfDetectable hdet) hα₀ hrej hβ hml
 
 /-- **Theorem 4** at given parameters (`tinnik:theorem4`). If the NMSC's concordance factors at the
-parameters `θ` of a rooted binary network satisfy CF-detectability on all induced 4-taxon networks, and are
+parameters `θ` of a rooted phylogenetic network satisfy CF-detectability on all induced 4-taxon networks, and are
 off the centroid on all of them, then for levels `α_m → 0` of the cut test at which it rejects on the sets with
 no cut-edge split, for any `β > 0` and
 `δ < 2`, any exact distance-based tree building method and any selection of maximum likelihood topologies,

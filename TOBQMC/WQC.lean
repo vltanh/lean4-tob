@@ -18,8 +18,7 @@ detaching taxa and reattaching them to a best taxon of their block (`detachReatt
 `vertexPart_detachReattach`, `exists_block_side`) would give a maximizer that does not: a contradiction
 (`exists_vertex_maximizer`). Such a maximizer is binary after removing all but one taxon from each block
 (`isBinaryTree_pullTree_of_vertex_maximizer`): a refinement of the restricted tree, with the removed taxa
-reattached (`reattach`), would gain at every choice of the representatives, and the gain on all the taxa is
-the sum of these gains (`vertexPart_lt_reattach`). Contracting the edges inside blocks leaves a family of
+reattached (`reattach`), would gain at every choice of the representatives, and the gain on all the taxa, times the number of choices, is the sum of these gains (`vertexPart_lt_reattach`). Contracting the edges inside blocks leaves a family of
 unions of blocks (`displays_filter_isBlockUnion`). These families and the tree of blobs have a common
 refinement, the compatibility supertree of the paper, which is `splice`.
 -/
@@ -488,8 +487,7 @@ theorem prod_card_mul_vertexPart_sub (hd : ∀ B ∈ P, ∀ C ∈ P, B ≠ C →
 /-- **The refinement step of the paper's lines 490-492.** Let `T'` have the blocks as sides, and let `R` be a
 proper refinement of its restriction to the representatives `x`. Reattaching the removed taxa to `R` gains
 at every representative tuple `y`, not only at `x`: `T'` has the same restriction to `y`, and a refinement
-increases a score with positive weights. The gain on all the taxa is the sum of these gains over the
-tuples (`prod_card_mul_vertexPart_sub`), which is the paper's "the score increase would be amplified after
+increases a score with positive weights. The gain on all the taxa, times the number of tuples, is the sum of these gains over the tuples (`prod_card_mul_vertexPart_sub`), which is the paper's "the score increase would be amplified after
 reattaching the removed taxa". -/
 theorem vertexPart_lt_reattach {F : QuartetTree X → ℝ} (hF : ∀ s, 0 < F s)
     (hd : ∀ B ∈ P, ∀ C ∈ P, B ≠ C → Disjoint B C) (hcover : P.sup id = univ) (hP : 2 ≤ P.card)
@@ -601,8 +599,7 @@ end DetachScore
 
 /-- **Lemma 3** (`tob2025:lemma3`), in the form its proof gives, for weights `F` with the properties that
 the proof uses:
-there is a binary refinement `B` of the tree of blobs that maximizes the star part and the tree part of
-the score over binary trees, and has a larger score than every binary tree not refining the tree of
+there is a binary refinement `B` of the tree of blobs that maximizes the star part of the score over binary trees, and has a larger score than every binary tree not refining the tree of
 blobs. The compatibility supertree of the paper's lines 497-498 (Warnow, Chapters 3, 7: compatible
 splits have a common refinement) is `splice`, by `splice_isUnrootedTree`. The strictness of the paper's
 (2) needs that the quartets a tree displays determine its splits (`subset_of_forall_displays`). -/

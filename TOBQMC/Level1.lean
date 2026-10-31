@@ -9,7 +9,8 @@ public import TOBQMC.Wedge
 /-!
 # TOB-QMC §4.3: false positives in a refinement, with a linear number of tests, for level-1 networks
 
-Lemma 2, Lemma 4, Corollary 1, Definition 2, Theorem 2 and the 3-fix-1-alter search.
+Lemma 2, Lemma 4, Corollary 1, Theorem 2 and the 3-fix-1-alter search. Definition 2 is `IsDisjointCover` in
+`Basic/Phylogenetics/Defs.lean`.
 A taxon set's oracle answer *treelike* is `IsTreelike N Y`: the restriction has a cut edge with a
 non-trivial split, equivalently no 4-blob. On four taxa this is a cut edge of the union of the wedge
 paths between them (`Level1.isTreelike_iff_hasWedgeCutSplit`), which is where Lemma 4 is proved.

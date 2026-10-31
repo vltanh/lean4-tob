@@ -4,13 +4,9 @@ version: "v0.4"
 project:
   name: "Tree of blobs inference from quartet concordance factors"
   description: >-
-    Conditional on one result of the literature: Corollary 1 of Allman, Baños, Mitchell, Rhodes 2023 (the
-    CF-detectability of 4-blobs for generic parameters), in its original form and in the form ECToBlob adapts.
-
-
     A Lean formalization of three papers on inferring the tree of blobs of a phylogenetic network from gene trees under
     the network multispecies coalescent: ECToBlob (Rhodes, Allman, Ané, Baños 2026), TOB-QMC (Dai, Han, Molloy 2026) and
-    TINNiK (Allman, Baños, Mitchell, Rhodes 2024).
+    TINNiK (Allman, Baños, Mitchell, Rhodes 2024). No result of the literature is assumed.
 
 
     Proved: optimal trees of the maximum quartet support criterion resolve the tree of blobs; if every quartet across a
@@ -18,8 +14,9 @@ project:
     statistical consistency of the ECToBlob algorithm for all its variants, with sequences of levels independent of the
     network; a disjoint cover of quartets around each edge detects false edges at level 1, and its statistical
     consistency; statistical consistency of the TINNiK algorithm; the limit laws of the star, T1 and cut tests from the
-    central limit theorem; the density of the cut test; and the network multispecies coalescent on arbitrary networks with
-    correlated inheritance, with exchangeability across cut edges.
+    central limit theorem; the density of the cut test; the network multispecies coalescent on arbitrary networks with
+    correlated inheritance, with exchangeability across cut edges; and the CF-detectability of 4-blobs for generic
+    parameters (Allman et al. 2023).
 
 
     The audit records 34 findings in the papers, including a counterexample to a boundary case of ECToBlob's Theorem 8.2
@@ -78,7 +75,7 @@ sources:
     type: "article"
     location: "https://doi.org/10.1007/s00285-022-01838-9"
     relationship: "background"
-    note: "Theorem 2 and Lemma 3 are proved in External/AllmanEtAl2023. Theorem 1 and Corollary 1 are assumed, as the named hypothesis External.AllmanEtAl2023.Corollary1."
+    note: "Theorems 1, 2, Corollary 1 and Lemmas 2, 3 are proved in External/AllmanEtAl2023."
   - title: "Topological metrizations of trees, and new quartet methods of tree inference"
     authors:
       - "John A. Rhodes"
@@ -132,15 +129,11 @@ related_formalizations:
 
 status:
   scope: >-
-    Conditional formalization. It assumes Corollary 1 of Allman et al. 2023 (External.AllmanEtAl2023.Corollary1), and the
-    adaptation that ECToBlob's Proposition 5.1 makes of it (ECToBlob.AdaptedAllmanTheorem1, its generic clause), as named
-    hypotheses. TINNiK Theorem 4 and ECToBlob Proposition 5.1 are conditional on them. All other numbered results of the
-    three papers and the results they cite are proved. Theorem 8.2 of ECToBlob is proved under two corrections, for
-    parameters meeting both directions of Assumption 1, and, for two variants of the algorithm, positive alternatives on
-    quartets strictly in the T1 null; the second correction, which has a counterexample under the continuous extension of
-    the Cauchy transform, was agreed with the requester.
-    Not formalized: simulations, running times, neighbor joining as an exact tree builder, the T3 test, heuristic
-    optimizers, and Remarks 8.3 and 8.4 of ECToBlob as theorems. See REPORT.md, Section 9.
+    All numbered results of the three papers and the results they cite are proved, with no assumed result. Theorem 8.2 of
+    ECToBlob is proved under two corrections, for parameters meeting both directions of Assumption 1, and, for two variants of the
+    algorithm, positive alternatives on quartets strictly in the T1 null, under the continuous extension of the Cauchy transform.
+    Both were agreed with the requester. Not formalized: simulations, running times, neighbor joining as an exact tree builder, the
+    T3 test, heuristic optimizers, and Remarks 8.3 and 8.4 of ECToBlob as theorems. See REPORT.md, Section 9.
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: []
@@ -159,9 +152,9 @@ automation:
     - method: "agent"
       models: ["claude-opus-5-5"]
       framework: "Claude Code (VS Code extension)"
-      tool_setup: "formalize-math-paper skill, repository vltanh/formalize-math-paper, commit e339f64; Claude Code 2.1.314; 17 sub-agents, at most 10 at once."
+      tool_setup: "formalize-math-paper skill, repository vltanh/formalize-math-paper, commit e339f64; Claude Code 2.1.314; 33 sub-agents, at most 11 at once."
       cost:
-        wall_time: "3.43 h elapsed to the audited formalization, 2026-10-31; 10.6 h total sub-agent working time"
+        wall_time: "7.06 h elapsed, 2026-10-31, including 1.67 h for the second round that proved the assumed result; 18.5 h total sub-agent working time"
         spend_usd: "not tracked"
         hardware: "local machine"
       prompting_notes: "Slash command with the three paper links, continuing from the earlier handoff."
@@ -178,13 +171,10 @@ fidelity:
     its Lemma 2, forward direction only (E23); its Lemma 8 for nontrivial blobs (E26); TINNiK's maximum likelihood estimate on
     the closed simplex (E31). Library statements omit hypotheses that the proofs do not use (REPORT.md, Section 5);
     Challenge.lean keeps them. Readings: REPORT.md, Section 6. Departures from the papers' proofs (REPORT.md, Section 7).
-    Forced, repairing gaps: ECToBlob Theorem 3.1 (E2), Corollary 3.6 (E3), Theorem 8.2 (E11-E17), TOB-QMC supplement Lemma 4
-    (E22, E24), TINNiK Theorem 4 under the alternative (E33). Forced, because Lean lacks the mathematics: TINNiK Proposition 5,
-    by a direct central limit argument in place of van der Vaart's Theorem 16.7; TINNiK Theorem 4's exclusion of the centroid, without
-    analyticity; ECToBlob Proposition 5.1's generic clause, assumed. Not forced, and kept, as disclosed in the report: TOB-QMC Lemma 3's second
-    observation and Lemma 4's wedge paths, in favour of shorter arguments on the rooted subgraph; TOB-QMC's consistency claim,
-    by a finer argument than the citation (E21); TINNiK Proposition 6's integrals, in Cartesian coordinates with the paper's
-    intermediate formulas; TINNiK Theorem 4's null case; and the cited Lemma 3 of Allman et al. and Theorem 2 of Rhodes.
+    Repairing gaps: ECToBlob Theorem 3.1 (E2), Corollary 3.6 (E3), Theorem 8.2 (E11-E17), TOB-QMC supplement Lemma 4
+    (E22, E24), TINNiK Theorem 4 under the alternative (E33). Because Lean lacks the mathematics: TINNiK Proposition 5, by a direct
+    central limit argument in place of van der Vaart's Theorem 16.7. Among cited results, smaller changes: Allman et al.'s Theorem 1 and
+    Corollary 1 (no 2-blob step; on the network directly; one explicit parameter) and Lemma 3 (paths and the cycle as sets of arcs).
 
 review:
   status: "agent-reviewed"
@@ -235,7 +225,7 @@ alignment:
     - source: "TINNiK, Theorem 4"
       lean: "Challenge.theorem4"
       module: "Challenge"
-      status: "conditional"
-      note: "Conditional on External.AllmanEtAl2023.Corollary1. One level sequence for all networks and parameters."
+      status: "proved"
+      note: "For generic parameters on a binary network, with the paper's levels. TINNiK.theorem4_explicit gives one sequence for all networks and parameters."
 
 acknowledgements: "Lean, Mathlib; the Phylogenetics library of the requester (lean4-phylogenetics), for adapted Kingman coalescent modules; the authors of the three papers."

@@ -53,7 +53,9 @@ def IsParentChoice (d : V → E) : Prop := ∀ v, 2 ≤ N.graph.indegree v → N
 /-- The numerical parameters with the given edge lengths and free inheritance probabilities. -/
 abbrev metricOfCoords (d : V → E) (ℓ g : E → ℝ) : MetricData E := coordMetric N d ℓ g
 
-/-- A set of numerical parameters is null for the measure of §5.1 on valid parameters. -/
+/-- A set of numerical parameters is null for the measure of §5.1 on valid parameters. The inheritance
+coordinates of tree arcs and left-out parents are dummies, of mass one: the set is a cylinder over them, so it
+is null exactly when its base is. -/
 def IsNullParams (A : Set (MetricData E)) : Prop :=
   ∀ d : V → E, IsParentChoice N d →
     ((Measure.pi fun e => lengthMeasure (N.IsHybridArc e)).prod

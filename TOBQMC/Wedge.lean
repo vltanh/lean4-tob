@@ -15,6 +15,7 @@ proof of Lemma 4 (lines 541–556 of v5). `TOBQMC.lemma4` in `TOBQMC/Level1.lean
 ## The subnetwork and the representation bridge
 
 * `IsDirPath`, `IsWedgePath`, `OnWedgePath`: directed paths as lists of arcs, and wedge paths.
+* `IsWalk`, `IsPath`, `IsWedgePath.isPath`: paths of the underlying undirected graph; a wedge path is one.
 * `wedgeArcs`, `HasWedgeCutSplit`: the arcs of the subnetwork on `Y` and the splits of its cut edges.
 * `wedgeArcs_subset_belowArcs`: the subnetwork lies below the least stable ancestor of `Y`, in the part of
   `N⁺` that `N⁻` keeps.
@@ -22,18 +23,23 @@ proof of Lemma 4 (lines 541–556 of v5). `TOBQMC.lemma4` in `TOBQMC/Level1.lean
   `Y` with both sides nonempty, a cut edge of the subnetwork inducing it is the predicate `HasCutSplitOn`,
   and a cut edge of the induced network. This holds for every network, binary or not, of any level.
 
-The paper's suppression of degree-two vertices, parallel arcs and degree-two blobs is not carried out on the
-subnetwork, and `inducedNetwork` suppresses only the degree-two vertices. The other two keep the splits of cut
-edges: a parallel pair or a degree-two blob lies between two cut edges with one split, and the edge
-replacing them has that split. This remark is not formalized, and no proof depends on it.
+The paper's suppression of degree-two vertices, parallel arcs and degree-two blobs is not carried out on
+the subnetwork, and `inducedNetwork` suppresses only the degree-two vertices. In a binary network, as in
+TOB-QMC, the other two keep the splits of cut edges: a parallel pair or a degree-two blob has exactly two
+cut edges at it, with one split, and the edge replacing them has that split. Off binary networks a parallel
+pair with more edges at its ends can create a new split. This remark is not formalized, and no proof
+depends on it.
 
 ## A level-1 blob
 
 * `BlobCycle`, `exists_blobCycle`: a blob of a binary level-1 network is a cycle, two directed paths from
   its top to its reticulation `h`.
-* `isDirPath_unique`, `wedgePath_unique`: only one wedge path between two vertices of the blob other than `h`.
-* `exactly_two_wedgePaths`: exactly two wedge paths from `h` to another vertex of the blob, and their
-  union is the blob.
+* `isDirPath_unique`: a directed path to a vertex of the blob other than `h` is unique.
+* `BlobCycle.degLeTwo`, `exactly_two_paths_of_split`, `wedgePath_unique`: the cycle offers exactly two paths
+  between two of its vertices other than `h`. The one through `h` uses both reticulation arcs, which a wedge
+  path cannot (`IsWedgePath.eq_of_target_eq`), so there is only one wedge path between them.
+* `exactly_two_wedgePaths`: exactly two wedge paths from `h` to another vertex of the blob, and every arc
+  of the blob is on one of them (the converse is `IsWedgePath.sameBlob_of_mem`).
 * `IsAttachment`, `AttachPath`: the attachment `B(x)` of a taxon, and the wedge path from `x` to `B(x)`.
 
 ## Lemma 4 on the subnetwork
@@ -191,6 +197,12 @@ theorem IsDirPath.source_mem_vertices (h : N.IsDirPath u p v) (hf : f ∈ p) :
       simp only [List.map_cons]
       exact List.mem_cons_of_mem _ this
 
+/-- A path has only one start. -/
+theorem IsDirPath.start_eq {u' : V} (h : N.IsDirPath u p v) (h' : N.IsDirPath u' p v) : u = u' := by
+  cases p with
+  | nil => exact h.trans (Eq.symm h')
+  | cons e p => exact h.1.symm.trans h'.1
+
 /-- The end of a path is among its vertices. -/
 theorem IsDirPath.end_mem_vertices (h : N.IsDirPath u p v) : v ∈ u :: p.map N.graph.target := by
   induction p generalizing u with
@@ -256,6 +268,12 @@ theorem IsWedgePath.of_disjoint (hp : N.IsDirPath u p v) (hq : N.IsDirPath u q w
     · exact hp.start_notMem hA ha
     · exact hd a ha hb
 
+theorem IsWedgePath.symm (h : N.IsWedgePath v w u p q) : N.IsWedgePath w v u q p :=
+  IsWedgePath.of_disjoint hA h.right h.left fun z hq hp => by
+    have := h.distinct
+    rw [List.nodup_append] at this
+    exact this.2.2 z (List.mem_reverse.mpr hp) z (List.mem_cons_of_mem _ hq) rfl
+
 /-- **Every two vertices with a common ancestor are joined by a wedge path**: from two directed paths
 with a common start, the wedge path rooted at the last vertex of the second path on the first. -/
 theorem exists_isWedgePath_aux {r r' a b : V} {P Q : List E} (hP : N.IsDirPath r P a)
@@ -313,6 +331,384 @@ theorem IsWedgePath.mem_iff {S : Set V} {u' : V} (h : N.IsWedgePath v w u' p q)
     (h.right.mem_iff fun f hf => hS f (Or.inr hf))
 
 end Paths
+
+/-! ### Paths of the underlying undirected graph -/
+
+section Undirected
+
+/-- The arc `e` joins `a` and `b`, in either direction. -/
+def Joins (N : RootedNetwork V E X) (e : E) (a b : V) : Prop :=
+  (N.graph.source e = a ∧ N.graph.target e = b) ∨ (N.graph.source e = b ∧ N.graph.target e = a)
+
+/-- The vertex `z` is an end of the arc `e`. -/
+def Incident (N : RootedNetwork V E X) (e : E) (z : V) : Prop :=
+  N.graph.source e = z ∨ N.graph.target e = z
+
+/-- A walk from `u` to `v` in the underlying undirected graph, as its steps: each is an arc, and the
+vertex it leads to. -/
+def IsWalk (N : RootedNetwork V E X) : V → List (E × V) → V → Prop
+  | u, [], v => u = v
+  | u, s :: l, v => N.Joins s.1 u s.2 ∧ IsWalk N s.2 l v
+
+/-- A path of the underlying undirected graph: a walk with distinct vertices. -/
+structure IsPath (N : RootedNetwork V E X) (u : V) (l : List (E × V)) (v : V) : Prop where
+  walk : N.IsWalk u l v
+  distinct : (u :: l.map Prod.snd).Nodup
+
+/-- The steps of a walk from `u`, walked backwards from its end. -/
+def revSteps : V → List (E × V) → List (E × V)
+  | _, [] => []
+  | u, s :: l => revSteps s.2 l ++ [(s.1, u)]
+
+/-- The steps of a directed path. -/
+def downSteps (N : RootedNetwork V E X) (q : List E) : List (E × V) :=
+  q.map fun e => (e, N.graph.target e)
+
+/-- The steps of a wedge path with summit `u` and legs `p`, `q`, from the end of `p` to the end of `q`. -/
+def wedgeSteps (N : RootedNetwork V E X) (u : V) (p q : List E) : List (E × V) :=
+  revSteps u (N.downSteps p) ++ N.downSteps q
+
+/-- At most two arcs of `F` at each vertex. -/
+def DegLeTwo (N : RootedNetwork V E X) (F : Set E) : Prop :=
+  ∀ z f g k, f ∈ F → g ∈ F → k ∈ F → N.Incident f z → N.Incident g z → N.Incident k z →
+    f ≠ g → f ≠ k → g ≠ k → False
+
+variable {u v w a b : V} {e : E} {l l' : List (E × V)} {s : E × V} {p q : List E}
+
+theorem Joins.symm (h : N.Joins e a b) : N.Joins e b a := Or.symm h
+
+theorem Joins.incident (h : N.Joins e a b) : N.Incident e a := by
+  rcases h with ⟨h, -⟩ | ⟨-, h⟩
+  · exact Or.inl h
+  · exact Or.inr h
+
+/-- An arc leads from a vertex to only one vertex. -/
+theorem Joins.eq_of_left (h : N.Joins e a b) (h' : N.Joins e a w) : b = w := by
+  rcases h with ⟨h₁, h₂⟩ | ⟨h₁, h₂⟩ <;> rcases h' with ⟨h₃, h₄⟩ | ⟨h₃, h₄⟩
+  · exact h₂.symm.trans h₄
+  · exact h₂.symm.trans (h₄.trans (h₁.symm.trans h₃))
+  · exact h₁.symm.trans (h₃.trans (h₂.symm.trans h₄))
+  · exact h₁.symm.trans h₃
+
+theorem IsWalk.append (h₁ : N.IsWalk u l v) (h₂ : N.IsWalk v l' w) : N.IsWalk u (l ++ l') w := by
+  induction l generalizing u with
+  | nil =>
+    obtain rfl : u = v := h₁
+    exact h₂
+  | cons s l ih => exact ⟨h₁.1, ih h₁.2⟩
+
+/-- The end of a nonempty walk is among the vertices it leads to. -/
+theorem IsWalk.end_mem_map (h : N.IsWalk u l v) (hl : l ≠ []) : v ∈ l.map Prod.snd := by
+  induction l generalizing u with
+  | nil => exact absurd rfl hl
+  | cons s l ih =>
+    simp only [List.map_cons]
+    by_cases hl' : l = []
+    · subst hl'
+      obtain rfl : s.2 = v := h.2
+      simp
+    · exact List.mem_cons_of_mem _ (ih h.2 hl')
+
+theorem IsWalk.end_mem_vertices (h : N.IsWalk u l v) : v ∈ u :: l.map Prod.snd := by
+  by_cases hl : l = []
+  · subst hl
+    obtain rfl : u = v := h
+    simp
+  · exact List.mem_cons_of_mem _ (h.end_mem_map hl)
+
+/-- A walk splits at each of its vertices. -/
+theorem IsWalk.split_of_mem (h : N.IsWalk u l v) (hw : w ∈ u :: l.map Prod.snd) :
+    ∃ l₁ l₂, l = l₁ ++ l₂ ∧ N.IsWalk u l₁ w ∧ N.IsWalk w l₂ v := by
+  induction l generalizing u with
+  | nil =>
+    simp only [List.map_nil, List.mem_cons, List.not_mem_nil, or_false] at hw
+    subst hw
+    exact ⟨[], [], rfl, rfl, h⟩
+  | cons s l ih =>
+    rcases List.mem_cons.mp hw with rfl | hw
+    · exact ⟨[], s :: l, rfl, rfl, h⟩
+    · obtain ⟨l₁, l₂, rfl, h₁, h₂⟩ := ih h.2 hw
+      exact ⟨s :: l₁, l₂, rfl, ⟨h.1, h₁⟩, h₂⟩
+
+theorem IsWalk.rev (h : N.IsWalk u l v) : N.IsWalk v (revSteps u l) u := by
+  induction l generalizing u with
+  | nil =>
+    obtain rfl : u = v := h
+    exact rfl
+  | cons s l ih => exact (ih h.2).append ⟨h.1.symm, rfl⟩
+
+/-- The vertices of a walk backwards are its vertices in reverse. -/
+theorem IsWalk.verts_rev (h : N.IsWalk u l v) :
+    v :: (revSteps u l).map Prod.snd = (u :: l.map Prod.snd).reverse := by
+  induction l generalizing u with
+  | nil =>
+    obtain rfl : u = v := h
+    rfl
+  | cons s l ih =>
+    have := ih h.2
+    simp only [revSteps, List.map_append, List.map_cons, List.map_nil, List.reverse_cons] at this ⊢
+    rw [← List.cons_append, this]
+
+theorem map_fst_revSteps : (revSteps u l).map Prod.fst = (l.map Prod.fst).reverse := by
+  induction l generalizing u with
+  | nil => rfl
+  | cons s l ih => simp [revSteps, ih]
+
+theorem IsPath.tail (h : N.IsPath u (s :: l) v) : N.IsPath s.2 l v :=
+  ⟨h.walk.2, (List.nodup_cons.mp h.distinct).2⟩
+
+theorem IsPath.eq_nil_of_eq (h : N.IsPath u l u) : l = [] := by
+  by_contra hl
+  exact (List.nodup_cons.mp h.distinct).1 (h.walk.end_mem_map hl)
+
+/-- **A path in a graph of maximum degree two is forced.** Two paths from `u` to `v` with arcs in `F`,
+which continue a path arriving at `u` by the arc `g` of `F`, leave each vertex by the one arc other than
+the arc they arrived by. -/
+theorem IsPath.eq_of_forced {F : Set E} (hF : N.DegLeTwo F) {g : E} (h : N.IsPath u l v)
+    (h' : N.IsPath u l' v) (hl : ∀ s ∈ l, s.1 ∈ F) (hl' : ∀ s ∈ l', s.1 ∈ F) (hg : g ∈ F)
+    (hj : N.Joins g u w) (hw : w ∉ u :: l.map Prod.snd) (hw' : w ∉ u :: l'.map Prod.snd) :
+    l = l' := by
+  induction l generalizing u l' g w with
+  | nil =>
+    obtain rfl : u = v := h.walk
+    exact h'.eq_nil_of_eq.symm
+  | cons s l ih =>
+    cases l' with
+    | nil =>
+      obtain rfl : u = v := h'.walk
+      exact absurd h.eq_nil_of_eq (by simp)
+    | cons s' l' =>
+      have hs : s.1 ≠ g := fun hc => hw (by
+        have h₁ : N.Joins g u s.2 := hc ▸ h.walk.1
+        rw [← h₁.eq_of_left hj]
+        simp)
+      have hs' : s'.1 ≠ g := fun hc => hw' (by
+        have h₁ : N.Joins g u s'.2 := hc ▸ h'.walk.1
+        rw [← h₁.eq_of_left hj]
+        simp)
+      have h₁ : s.1 = s'.1 := by
+        by_contra hne
+        exact hF u s.1 s'.1 g (hl s (by simp)) (hl' s' (by simp)) hg h.walk.1.incident
+          h'.walk.1.incident hj.incident hne hs hs'
+      have h₂ : s.2 = s'.2 := h.walk.1.eq_of_left (h₁.symm ▸ h'.walk.1)
+      have hss : s = s' := Prod.ext h₁ h₂
+      subst hss
+      rw [ih h.tail h'.tail (fun t ht => hl t (by simp [ht])) (fun t ht => hl' t (by simp [ht]))
+        (hl s (by simp)) h.walk.1.symm (List.nodup_cons.mp h.distinct).1
+        (List.nodup_cons.mp h'.distinct).1]
+
+/-- **A cycle offers exactly two paths between two of its vertices.** Let `F` have at most two arcs at each
+vertex, and contain a path `A ++ B ++ D` from `z` to `z'` with `a` after `A` and `b` after `B`, and two arcs `k`
+and `k'` joining `z` and `z'` to a vertex `c` off this path. The paths from `a` to `b` in `F` are `B`, and
+`A` backwards followed by `k`, `k'` and `D` backwards, which goes through `c`. -/
+theorem exactly_two_paths_of_split {F : Set E} (hF : N.DegLeTwo F) {z z' c : V} {k k' : E}
+    {A B D : List (E × V)} (hsp : (z :: (A ++ (B ++ D)).map Prod.snd).Nodup)
+    (hA : N.IsWalk z A a) (hB : N.IsWalk a B b) (hD : N.IsWalk b D z')
+    (hc : c ∉ z :: (A ++ (B ++ D)).map Prod.snd) (hk : N.Joins k z c) (hk' : N.Joins k' c z')
+    (hlF : ∀ s ∈ A ++ (B ++ D), s.1 ∈ F) (hkF : k ∈ F) (hk'F : k' ∈ F) (hab : a ≠ b) :
+    N.IsPath a B b ∧ N.IsPath a (revSteps z A ++ (k, c) :: (k', z') :: revSteps b D) b ∧
+      B ≠ revSteps z A ++ (k, c) :: (k', z') :: revSteps b D ∧
+      ∀ W, N.IsPath a W b → (∀ s ∈ W, s.1 ∈ F) →
+        W = B ∨ W = revSteps z A ++ (k, c) :: (k', z') :: revSteps b D := by
+  have hB0 : B ≠ [] := by
+    rintro rfl
+    exact hab hB
+  have hbB : b ∈ B.map Prod.snd := hB.end_mem_map hB0
+  simp only [List.map_append, List.mem_cons, List.mem_append, not_or] at hsp hc
+  obtain ⟨hz, hsp⟩ := List.nodup_cons.mp hsp
+  obtain ⟨hA', hBD, hdis⟩ := List.nodup_append.mp hsp
+  obtain ⟨hB', hD', hdis₂⟩ := List.nodup_append.mp hBD
+  simp only [List.mem_append, not_or] at hz
+  -- the vertices of `A` are off `B` and `D`
+  have hoff : ∀ x ∈ z :: A.map Prod.snd, x ∉ B.map Prod.snd ∧ x ∉ D.map Prod.snd := by
+    intro x hx
+    rcases List.mem_cons.mp hx with rfl | hx
+    · exact hz.2
+    · exact ⟨fun hy => hdis x hx x (List.mem_append_left _ hy) rfl,
+        fun hy => hdis x hx x (List.mem_append_right _ hy) rfl⟩
+  have hbD : b ∉ D.map Prod.snd := fun hy => hdis₂ b hbB b hy rfl
+  have hcoff : c ∉ z :: A.map Prod.snd := by
+    intro hy
+    rcases List.mem_cons.mp hy with rfl | hy
+    · exact hc.1 rfl
+    · exact hc.2.1 hy
+  have hpath₁ : N.IsPath a B b :=
+    ⟨hB, List.nodup_cons.mpr ⟨(hoff a hA.end_mem_vertices).1, hB'⟩⟩
+  set O := revSteps z A ++ (k, c) :: (k', z') :: revSteps b D with hO
+  have hOverts : a :: O.map Prod.snd =
+      (z :: A.map Prod.snd).reverse ++ c :: (b :: D.map Prod.snd).reverse := by
+    rw [← hD.verts_rev, ← hA.verts_rev]
+    simp [hO]
+  have hpath₂ : N.IsPath a O b := by
+    refine ⟨hA.rev.append ⟨hk, hk', hD.rev⟩, ?_⟩
+    rw [hOverts, List.nodup_append]
+    refine ⟨List.nodup_reverse.mpr (List.nodup_cons.mpr ⟨hz.1, hA'⟩), ?_, ?_⟩
+    · refine List.nodup_cons.mpr ⟨?_, List.nodup_reverse.mpr (List.nodup_cons.mpr ⟨hbD, hD'⟩)⟩
+      rw [List.mem_reverse]
+      intro hy
+      rcases List.mem_cons.mp hy with rfl | hy
+      · exact hc.2.2.1 hbB
+      · exact hc.2.2.2 hy
+    · intro x hx y hy hxy
+      subst hxy
+      rw [List.mem_reverse] at hx
+      rcases List.mem_cons.mp hy with rfl | hy
+      · exact hcoff hx
+      · rw [List.mem_reverse] at hy
+        rcases List.mem_cons.mp hy with rfl | hy
+        · exact (hoff _ hx).1 hbB
+        · exact (hoff _ hx).2 hy
+  -- the arcs of the second path are in `F`
+  have hOF : ∀ s ∈ O, s.1 ∈ F := by
+    have hrev : ∀ {u : V} {L : List (E × V)}, (∀ t ∈ L, t.1 ∈ F) → ∀ t ∈ revSteps u L, t.1 ∈ F := by
+      intro u L hL t ht
+      have h₁ : t.1 ∈ (revSteps u L).map Prod.fst := List.mem_map_of_mem ht
+      rw [map_fst_revSteps, List.mem_reverse] at h₁
+      obtain ⟨t', ht', hte⟩ := List.mem_map.mp h₁
+      exact hte ▸ hL t' ht'
+    intro t ht
+    simp only [hO, List.mem_append, List.mem_cons] at ht
+    rcases ht with ht | rfl | rfl | ht
+    · exact hrev (fun t ht => hlF t (by simp [ht])) t ht
+    · exact hkF
+    · exact hk'F
+    · exact hrev (fun t ht => hlF t (by simp [ht])) t ht
+  -- the two paths leave `a` by different arcs
+  obtain ⟨s₁, B₀, rfl⟩ := List.exists_cons_of_ne_nil hB0
+  obtain ⟨s₂, O₀, hO₀, hs₂⟩ : ∃ s₂ O₀, O = s₂ :: O₀ ∧ s₂.2 ∉ (s₁ :: B₀).map Prod.snd := by
+    cases hL : revSteps z A with
+    | nil =>
+      exact ⟨(k, c), (k', z') :: revSteps b D, by simp [hO, hL], hc.2.2.1⟩
+    | cons t L =>
+      refine ⟨t, L ++ (k, c) :: (k', z') :: revSteps b D, by simp [hO, hL], ?_⟩
+      have hmem : t.2 ∈ a :: (revSteps z A).map Prod.snd := by simp [hL]
+      rw [hA.verts_rev, List.mem_reverse] at hmem
+      exact (hoff _ hmem).1
+  have hj₁ : N.Joins s₁.1 a s₁.2 := hB.1
+  have hj₂ : N.Joins s₂.1 a s₂.2 := by
+    have := hpath₂.walk
+    rw [hO₀] at this
+    exact this.1
+  have hne : s₁.1 ≠ s₂.1 := fun hc' => hs₂ (by
+    have h₁ : N.Joins s₁.1 a s₂.2 := hc' ▸ hj₂
+    rw [← hj₁.eq_of_left h₁]
+    simp)
+  refine ⟨hpath₁, hpath₂, ?_, ?_⟩
+  · intro heq
+    rw [hO₀] at heq
+    obtain ⟨h₁, -⟩ := List.cons.inj heq
+    exact hne (congrArg Prod.fst h₁)
+  · intro W hW hWF
+    have hW0 : W ≠ [] := by
+      rintro rfl
+      exact hab hW.walk
+    obtain ⟨s, W₀, rfl⟩ := List.exists_cons_of_ne_nil hW0
+    have hsF := hWF s (by simp)
+    have hj : N.Joins s.1 a s.2 := hW.walk.1
+    have hs₁F : s₁.1 ∈ F := hlF s₁ (by simp)
+    have hs₂F : s₂.1 ∈ F := hOF s₂ (by simp [hO₀])
+    have hcases : s.1 = s₁.1 ∨ s.1 = s₂.1 := by
+      by_contra hcon
+      push Not at hcon
+      exact hF a s.1 s₁.1 s₂.1 hsF hs₁F hs₂F hj.incident hj₁.incident hj₂.incident hcon.1 hcon.2 hne
+    rcases hcases with h₁ | h₁
+    · left
+      have hss : s = s₁ := Prod.ext h₁ (hj.eq_of_left (h₁.symm ▸ hj₁))
+      subst hss
+      rw [hW.tail.eq_of_forced hF hpath₁.tail (fun t ht => hWF t (by simp [ht]))
+        (fun t ht => hlF t (by simp [ht])) hsF hj.symm (List.nodup_cons.mp hW.distinct).1
+        (List.nodup_cons.mp hpath₁.distinct).1]
+    · right
+      have hss : s = s₂ := Prod.ext h₁ (hj.eq_of_left (h₁.symm ▸ hj₂))
+      subst hss
+      have hpath₂' := hpath₂
+      rw [hO₀] at hpath₂' ⊢
+      rw [hW.tail.eq_of_forced hF hpath₂'.tail (fun t ht => hWF t (by simp [ht]))
+        (fun t ht => hOF t (by simp [hO₀, ht])) hsF hj.symm (List.nodup_cons.mp hW.distinct).1
+        (List.nodup_cons.mp hpath₂'.distinct).1]
+
+theorem IsDirPath.isWalk_downSteps (h : N.IsDirPath u p v) : N.IsWalk u (N.downSteps p) v := by
+  induction p generalizing u with
+  | nil => exact h
+  | cons e p ih =>
+    obtain ⟨rfl, h⟩ := h
+    exact ⟨Or.inl ⟨rfl, rfl⟩, ih h⟩
+
+theorem map_snd_downSteps : (N.downSteps q).map Prod.snd = q.map N.graph.target := by
+  simp [downSteps]
+
+theorem map_fst_downSteps : (N.downSteps q).map Prod.fst = q := by
+  rw [downSteps, List.map_map]
+  exact List.map_id q
+
+/-- The vertices of the steps of a wedge path are the sequence of the wedge path. -/
+theorem IsWedgePath.verts (hw : N.IsWedgePath v w u p q) :
+    v :: (N.wedgeSteps u p q).map Prod.snd =
+      (p.map N.graph.target).reverse ++ u :: q.map N.graph.target := by
+  have h := hw.left.isWalk_downSteps.verts_rev
+  simp only [wedgeSteps, List.map_append]
+  rw [← List.cons_append, h, map_snd_downSteps, map_snd_downSteps]
+  simp
+
+/-- A wedge path is a path of the underlying undirected graph. -/
+theorem IsWedgePath.isPath (hw : N.IsWedgePath v w u p q) : N.IsPath v (N.wedgeSteps u p q) w :=
+  ⟨hw.left.isWalk_downSteps.rev.append hw.right.isWalk_downSteps, by
+    rw [hw.verts]
+    exact hw.distinct⟩
+
+theorem map_fst_wedgeSteps : (N.wedgeSteps u p q).map Prod.fst = p.reverse ++ q := by
+  simp [wedgeSteps, map_fst_revSteps, map_fst_downSteps]
+
+theorem mem_of_mem_wedgeSteps (hs : s ∈ N.wedgeSteps u p q) : s.1 ∈ p ∨ s.1 ∈ q := by
+  have h₁ : s.1 ∈ (N.wedgeSteps u p q).map Prod.fst := List.mem_map_of_mem hs
+  rw [map_fst_wedgeSteps, List.mem_append, List.mem_reverse] at h₁
+  exact h₁
+
+/-- The arcs of a wedge path determine its legs: an arc goes up on the first leg, and down on the
+second. -/
+theorem wedgeSteps_inj (hA : N.graph.IsAcyclic) {u' a' : V} {p' q' : List E}
+    (hp : N.IsDirPath u p a) (hp' : N.IsDirPath u' p' a')
+    (h : N.wedgeSteps u p q = N.wedgeSteps u' p' q') : p = p' ∧ q = q' := by
+  have hup : ∀ {u a : V} {p : List E}, N.IsDirPath u p a → ∀ s ∈ revSteps u (N.downSteps p),
+      s.2 = N.graph.source s.1 := by
+    intro u a p hp
+    induction p generalizing u with
+    | nil => simp [downSteps, revSteps]
+    | cons e p ih =>
+      obtain ⟨rfl, hp⟩ := hp
+      intro s hs
+      simp only [downSteps, List.map_cons, revSteps, List.mem_append, List.mem_singleton] at hs
+      rcases hs with hs | rfl
+      · exact ih hp s hs
+      · rfl
+  have hdown : ∀ {q : List E}, ∀ s ∈ N.downSteps q, s.2 = N.graph.target s.1 := by
+    intro q s hs
+    obtain ⟨e, -, rfl⟩ := List.mem_map.mp hs
+    rfl
+  have hloop : ∀ s : E × V, s.2 = N.graph.source s.1 → s.2 = N.graph.target s.1 → False := by
+    intro s h₁ h₂
+    have hr : N.graph.Reaches (N.graph.target s.1) (N.graph.source s.1) := by
+      rw [← h₁, ← h₂]
+      exact .refl
+    exact not_reaches_target_source hA s.1 hr
+  have hsplit : revSteps u (N.downSteps p) = revSteps u' (N.downSteps p') ∧
+      N.downSteps q = N.downSteps q' := by
+    rcases List.append_eq_append_iff.mp h with ⟨c, h₁, h₂⟩ | ⟨c, h₁, h₂⟩
+    · cases c with
+      | nil => exact ⟨by simpa using h₁.symm, by simpa using h₂⟩
+      | cons t c =>
+        exact (hloop t (hup hp' t (by rw [h₁]; simp)) (hdown t (by rw [h₂]; simp))).elim
+    · cases c with
+      | nil => exact ⟨by simpa using h₁, by simpa using h₂.symm⟩
+      | cons t c =>
+        exact (hloop t (hup hp t (by rw [h₁]; simp)) (hdown t (by rw [h₂]; simp))).elim
+  constructor
+  · have := congrArg (List.map Prod.fst) hsplit.1
+    simpa [map_fst_revSteps, map_fst_downSteps] using this
+  · have := congrArg (List.map Prod.fst) hsplit.2
+    simpa [map_fst_downSteps] using this
+
+end Undirected
 
 /-! ### The subnetwork on `Y` -/
 
@@ -536,6 +932,10 @@ section Blob
 
 variable {v h : V}
 
+/-- The arcs of the blob of `v`: both ends are in it. -/
+def blobArcs (N : RootedNetwork V E X) (v : V) : Set E :=
+  {f | SameBlob N v (N.graph.source f) ∧ SameBlob N v (N.graph.target f)}
+
 /-- A vertex on a directed path between two vertices of a blob is in the blob. -/
 theorem sameBlob_of_reaches_of_reaches (hN : N.IsPhylogenetic) {a w c : V} (ha : SameBlob N v a)
     (hc : SameBlob N v c) (haw : N.graph.Reaches a w) (hwc : N.graph.Reaches w c) :
@@ -597,6 +997,24 @@ theorem _root_.Phylogenetics.RootedNetwork.IsWedgePath.sameBlob_of_mem (hN : N.I
       exact sameBlob_of_reaches_of_reaches hN hu ha this.1 this.2
     · have := hw.right.reaches_of_mem_map hz
       exact sameBlob_of_reaches_of_reaches hN hu hb this.1 this.2
+
+/-- The arcs of a wedge path between two vertices of a blob are arcs of the blob. -/
+theorem _root_.Phylogenetics.RootedNetwork.IsWedgePath.mem_blobArcs (hN : N.IsPhylogenetic)
+    {a b u : V} {p q : List E} {f : E} (hw : N.IsWedgePath a b u p q) (ha : SameBlob N v a)
+    (hb : SameBlob N v b) (hf : f ∈ p ∨ f ∈ q) : f ∈ blobArcs N v := by
+  have key : N.graph.source f ∈ u :: (p.map N.graph.target ++ q.map N.graph.target) ∧
+      N.graph.target f ∈ u :: (p.map N.graph.target ++ q.map N.graph.target) := by
+    simp only [List.mem_cons, List.mem_append]
+    rcases hf with hf | hf
+    · have h₁ := hw.left.source_mem_vertices hf
+      simp only [List.mem_cons] at h₁
+      have h₂ : N.graph.target f ∈ p.map N.graph.target := List.mem_map_of_mem hf
+      tauto
+    · have h₁ := hw.right.source_mem_vertices hf
+      simp only [List.mem_cons] at h₁
+      have h₂ : N.graph.target f ∈ q.map N.graph.target := List.mem_map_of_mem hf
+      tauto
+  exact ⟨hw.sameBlob_of_mem hN ha hb key.1, hw.sameBlob_of_mem hN ha hb key.2⟩
 
 /-- A wedge path contains at most one arc into a vertex. This is the reason the paper gives for
 `wedgePath_unique`: the other path between two vertices of the cycle crosses `p₁, v_h, p₂`, along the two
@@ -668,55 +1086,6 @@ theorem isDirPath_unique (hN : N.IsPhylogenetic) (hLevel : IsLevelOne N)
         intro hsh
         exact not_reaches_source hN g (hsh ▸ reaches_reticulation hN hLevel hh hh₂ hb)
       rw [ih hs hsh hP hL]
-
-/-- **Only one wedge path between two vertices of a level-1 blob other than the reticulation** (TOB-QMC,
-proof of Lemma 4, lines 551–554 of v5). The other path between them around the cycle uses both
-reticulation arcs, so it is not wedge (`IsWedgePath.eq_of_target_eq`). Formally: the summits are in the
-blob and comparable, a summit strictly above another would have the lower one on both of its legs,
-and the legs are unique by `isDirPath_unique`. -/
-theorem wedgePath_unique (hN : N.IsPhylogenetic) (hLevel : IsLevelOne N)
-    (hh : SameBlob N v h) (hh₂ : 2 ≤ N.graph.indegree h) {a b u u' : V} {p q p' q' : List E}
-    (ha : SameBlob N v a) (hb : SameBlob N v b) (hah : a ≠ h) (hbh : b ≠ h)
-    (hw : N.IsWedgePath a b u p q) (hw' : N.IsWedgePath a b u' p' q') :
-    u = u' ∧ p = p' ∧ q = q' := by
-  have hu := hw.summit_sameBlob hN ha hb
-  have hu' := hw'.summit_sameBlob hN ha hb
-  -- a summit above another is the other
-  have key : ∀ {u u' : V} {p q p' q' : List E}, SameBlob N v u → SameBlob N v u' →
-      N.IsWedgePath a b u p q → N.IsWedgePath a b u' p' q' → N.graph.Reaches u u' → u = u' := by
-    intro u u' p q p' q' hu hu' hw hw' hr
-    by_contra hne
-    obtain ⟨A, hA⟩ := exists_isDirPath hr
-    have hmem : u' ∈ A.map N.graph.target := by
-      rcases List.mem_cons.mp hA.end_mem_vertices with h' | h'
-      · exact absurd h'.symm hne
-      · exact h'
-    have h₁ : p = A ++ p' := isDirPath_unique hN hLevel hh hh₂ hu ha hah hw.left (hA.append hw'.left)
-    have h₂ : q = A ++ q' := isDirPath_unique hN hLevel hh hh₂ hu hb hbh hw.right (hA.append hw'.right)
-    exact hw.disjoint (z := u') (by rw [h₁, List.map_append]; exact List.mem_append_left _ hmem)
-      (by rw [h₂, List.map_append]; exact List.mem_append_left _ hmem)
-  obtain ⟨T, hT, hTall⟩ := exists_top hN v
-  obtain ⟨A, hA⟩ := exists_isDirPath (hTall u hu)
-  obtain ⟨A', hA'⟩ := exists_isDirPath (hTall u' hu')
-  have hL : A ++ p = A' ++ p' :=
-    isDirPath_unique hN hLevel hh hh₂ hT ha hah (hA.append hw.left) (hA'.append hw'.left)
-  have hP := hA.append hw.left
-  have hmem : u ∈ T :: (A ++ p).map N.graph.target := by
-    have := hA.end_mem_vertices
-    simp only [List.map_append, List.mem_cons, List.mem_append] at this ⊢
-    tauto
-  have hmem' : u' ∈ T :: (A ++ p).map N.graph.target := by
-    rw [hL]
-    have := hA'.end_mem_vertices
-    simp only [List.map_append, List.mem_cons, List.mem_append] at this ⊢
-    tauto
-  have huu : u = u' := by
-    rcases hP.total hmem hmem' with h' | h'
-    · exact key hu hu' hw hw' h'
-    · exact (key hu' hu hw' hw h').symm
-  subst huu
-  exact ⟨rfl, isDirPath_unique hN hLevel hh hh₂ hu ha hah hw.left hw'.left,
-    isDirPath_unique hN hLevel hh hh₂ hu hb hbh hw.right hw'.right⟩
 
 /-- **A level-1 blob of a binary network is a cycle**: two directed paths from its top `T` to its
 reticulation `h`, sharing only their ends, `pL` then the reticulation arc `k₁`, and `pR` then `k₂`. The arcs
@@ -845,6 +1214,237 @@ theorem mem_of_sameBlob (hN : N.IsPhylogenetic) (hLevel : IsLevelOne N)
   · exact Or.inl (C.mem_left_of_reaches hN hLevel hh₂ hu hr)
   · exact Or.inr (C.swap.mem_left_of_reaches hN hLevel hh₂ hu hr)
 
+omit [Fintype V] [Fintype E] in
+/-- The arcs of the cycle have both ends in the blob. -/
+theorem sameBlob_of_mem (hN : N.IsPhylogenetic) (C : BlobCycle N v h T k₁ k₂ pL pR) {f : E}
+    (hf : f ∈ pL ++ [k₁]) :
+    SameBlob N v (N.graph.source f) ∧ SameBlob N v (N.graph.target f) := by
+  have hL : N.IsDirPath T (pL ++ [k₁]) h := C.left.append ⟨rfl, C.target₁⟩
+  have hr := hL.reaches_of_mem hf
+  exact ⟨sameBlob_of_reaches_of_reaches hN C.top C.reticulation hr.1
+      ((reaches_of_arc N f).trans hr.2),
+    sameBlob_of_reaches_of_reaches hN C.top C.reticulation (hr.1.tail ⟨f, rfl, rfl⟩) hr.2⟩
+
+/-! #### At most two arcs of the blob at each vertex -/
+
+/-- The arc `f` of the blob is on the way to the reticulation arc `k`. -/
+def Towards (N : RootedNetwork V E X) (k f : E) : Prop :=
+  f = k ∨ N.graph.Reaches (N.graph.target f) (N.graph.source k)
+
+omit [Fintype V] [Fintype E] in
+theorem Towards.reaches {k f : E} (h : Towards N k f) :
+    N.graph.Reaches (N.graph.source f) (N.graph.source k) := by
+  rcases h with rfl | h
+  · exact .refl
+  · exact (reaches_of_arc N f).trans h
+
+theorem towards_or (hN : N.IsPhylogenetic) (hLevel : IsLevelOne N)
+    (hh₂ : 2 ≤ N.graph.indegree h) (C : BlobCycle N v h T k₁ k₂ pL pR) {f : E}
+    (hf : f ∈ blobArcs N v) : Towards N k₁ f ∨ Towards N k₂ f := by
+  by_cases hth : N.graph.target f = h
+  · rcases C.arcs f hth with hk | hk
+    · exact Or.inl (Or.inl hk)
+    · exact Or.inr (Or.inl hk)
+  · rcases C.reaches_source hN hLevel hh₂ hf.2 hth with hr | hr
+    · exact Or.inl (Or.inr hr)
+    · exact Or.inr (Or.inr hr)
+
+/-- Only one arc leaving a vertex of the blob is on the way to `k₁`: a directed path to `p₁` is unique. -/
+theorem eq_of_towards (hN : N.IsPhylogenetic) (hLevel : IsLevelOne N)
+    (hh₂ : 2 ≤ N.graph.indegree h) (C : BlobCycle N v h T k₁ k₂ pL pR) {f g : E}
+    (hf : f ∈ blobArcs N v) (hs : N.graph.source f = N.graph.source g) (htf : Towards N k₁ f)
+    (htg : Towards N k₁ g) : f = g := by
+  rcases htf with rfl | htf <;> rcases htg with rfl | htg
+  · rfl
+  · exact absurd (hs ▸ htg) (not_reaches_source hN g)
+  · exact absurd (hs ▸ htf) (not_reaches_source hN f)
+  · obtain ⟨Bf, hBf⟩ := exists_isDirPath htf
+    obtain ⟨Bg, hBg⟩ := exists_isDirPath htg
+    have hpf : N.IsDirPath (N.graph.source f) (f :: Bf) (N.graph.source k₁) := ⟨rfl, hBf⟩
+    have hpg : N.IsDirPath (N.graph.source f) (g :: Bg) (N.graph.source k₁) := ⟨hs.symm, hBg⟩
+    exact (List.cons.inj (isDirPath_unique hN hLevel C.reticulation hh₂ hf.1
+      (C.source₁_sameBlob hN) (C.source₁_ne hN) hpf hpg)).1
+
+/-- A vertex of the blob other than the top has only one arc of the blob leaving it. -/
+theorem eq_of_source_eq (hN : N.IsPhylogenetic) (hLevel : IsLevelOne N)
+    (hh₂ : 2 ≤ N.graph.indegree h) (C : BlobCycle N v h T k₁ k₂ pL pR) {f g : E}
+    (hf : f ∈ blobArcs N v) (hg : g ∈ blobArcs N v) (hs : N.graph.source f = N.graph.source g)
+    (hT : N.graph.source f ≠ T) : f = g := by
+  have hsides : N.graph.Reaches (N.graph.source f) (N.graph.source k₁) →
+      N.graph.Reaches (N.graph.source f) (N.graph.source k₂) → False := by
+    intro h₁ h₂
+    rcases List.mem_cons.mp (C.mem_left_of_reaches hN hLevel hh₂ hf.1 h₁) with h' | h'
+    · exact hT h'
+    · rcases List.mem_cons.mp (C.swap.mem_left_of_reaches hN hLevel hh₂ hf.1 h₂) with h'' | h''
+      · exact hT h''
+      · exact C.disjoint _ h' h''
+  rcases C.towards_or hN hLevel hh₂ hf with hf₁ | hf₂ <;>
+    rcases C.towards_or hN hLevel hh₂ hg with hg₁ | hg₂
+  · exact C.eq_of_towards hN hLevel hh₂ hf hs hf₁ hg₁
+  · exact (hsides hf₁.reaches (hs ▸ hg₂.reaches)).elim
+  · exact (hsides (hs ▸ hg₁.reaches) hf₂.reaches).elim
+  · exact C.swap.eq_of_towards hN hLevel hh₂ hf hs hf₂ hg₂
+
+/-- **At most two arcs of the blob at each vertex**: the reticulation has its two reticulation arcs, the
+top has one arc towards each of them, and any other vertex has one arc in and one arc out. -/
+theorem degLeTwo (hN : N.IsPhylogenetic) (hLevel : IsLevelOne N)
+    (hh₂ : 2 ≤ N.graph.indegree h) (C : BlobCycle N v h T k₁ k₂ pL pR) :
+    N.DegLeTwo (blobArcs N v) := by
+  intro z f g k hf hg hk if' ig ik hfg hfk hgk
+  by_cases hzh : z = h
+  · -- at `h`: every arc of the blob enters it
+    subst hzh
+    have hin : ∀ {x : E}, x ∈ blobArcs N v → N.Incident x z → x = k₁ ∨ x = k₂ := by
+      intro x hx hi
+      rcases hi with hi | hi
+      · exact absurd (hi ▸ reaches_reticulation hN hLevel C.reticulation hh₂ hx.2)
+          (not_reaches_source hN x)
+      · exact C.arcs x hi
+    rcases hin hf if' with h₁ | h₁ <;> rcases hin hg ig with h₂ | h₂ <;>
+      rcases hin hk ik with h₃ | h₃
+    all_goals first
+      | exact hfg (h₁.trans h₂.symm)
+      | exact hfk (h₁.trans h₃.symm)
+      | exact hgk (h₂.trans h₃.symm)
+  by_cases hzT : z = T
+  · -- at the top: every arc of the blob leaves it, and at most one goes towards each `kᵢ`
+    subst hzT
+    have hout : ∀ {x : E}, x ∈ blobArcs N v → N.Incident x z → N.graph.source x = z := by
+      intro x hx hi
+      rcases hi with hi | hi
+      · exact hi
+      · exact absurd (hi ▸ C.top_reaches _ hx.1) (not_reaches_source hN x)
+    have hsg : N.graph.source f = N.graph.source g := (hout hf if').trans (hout hg ig).symm
+    have hsk : N.graph.source f = N.graph.source k := (hout hf if').trans (hout hk ik).symm
+    have hgk' : N.graph.source g = N.graph.source k := hsg.symm.trans hsk
+    rcases C.towards_or hN hLevel hh₂ hf with h₁ | h₁ <;>
+      rcases C.towards_or hN hLevel hh₂ hg with h₂ | h₂ <;>
+      rcases C.towards_or hN hLevel hh₂ hk with h₃ | h₃
+    · exact hfg (C.eq_of_towards hN hLevel hh₂ hf hsg h₁ h₂)
+    · exact hfg (C.eq_of_towards hN hLevel hh₂ hf hsg h₁ h₂)
+    · exact hfk (C.eq_of_towards hN hLevel hh₂ hf hsk h₁ h₃)
+    · exact hgk (C.swap.eq_of_towards hN hLevel hh₂ hg hgk' h₂ h₃)
+    · exact hgk (C.eq_of_towards hN hLevel hh₂ hg hgk' h₂ h₃)
+    · exact hfk (C.swap.eq_of_towards hN hLevel hh₂ hf hsk h₁ h₃)
+    · exact hfg (C.swap.eq_of_towards hN hLevel hh₂ hf hsg h₁ h₂)
+    · exact hfg (C.swap.eq_of_towards hN hLevel hh₂ hf hsg h₁ h₂)
+  · -- elsewhere: one arc in and one arc out
+    have hzb : SameBlob N v z := by
+      rcases if' with hi | hi
+      · exact hi ▸ hf.1
+      · exact hi ▸ hf.2
+    have hinn : ∀ {x y : E}, N.graph.target x = z → N.graph.target y = z → x = y :=
+      fun hx hy => arc_eq_of_target_eq hN hLevel C.reticulation hh₂ hzb hzh hx hy
+    have hout : ∀ {x y : E}, x ∈ blobArcs N v → y ∈ blobArcs N v → N.graph.source x = z →
+        N.graph.source y = z → x = y :=
+      fun hx hy hxz hyz => C.eq_of_source_eq hN hLevel hh₂ hx hy (hxz.trans hyz.symm)
+        (hxz ▸ hzT)
+    rcases if' with h₁ | h₁ <;> rcases ig with h₂ | h₂ <;> rcases ik with h₃ | h₃
+    · exact hfg (hout hf hg h₁ h₂)
+    · exact hfg (hout hf hg h₁ h₂)
+    · exact hfk (hout hf hk h₁ h₃)
+    · exact hgk (hinn h₂ h₃)
+    · exact hgk (hout hg hk h₂ h₃)
+    · exact hfk (hinn h₁ h₃)
+    · exact hfg (hinn h₁ h₂)
+    · exact hfg (hinn h₁ h₂)
+
+/-! #### The two paths of the cycle between two of its vertices -/
+
+/-- Two vertices of the blob other than `h` are in order on the path `pL`, `pR` around the top. -/
+theorem exists_split (hN : N.IsPhylogenetic) (hLevel : IsLevelOne N)
+    (hh₂ : 2 ≤ N.graph.indegree h) (C : BlobCycle N v h T k₁ k₂ pL pR) {a b : V}
+    (ha : SameBlob N v a) (hah : a ≠ h) (hb : SameBlob N v b) (hbh : b ≠ h) :
+    (∃ A B D, N.wedgeSteps T pL pR = A ++ (B ++ D) ∧ N.IsWalk (N.graph.source k₁) A a ∧
+        N.IsWalk a B b ∧ N.IsWalk b D (N.graph.source k₂)) ∨
+      (∃ A B D, N.wedgeSteps T pL pR = A ++ (B ++ D) ∧ N.IsWalk (N.graph.source k₁) A b ∧
+        N.IsWalk b B a ∧ N.IsWalk a D (N.graph.source k₂)) := by
+  have hsp : N.IsWedgePath (N.graph.source k₁) (N.graph.source k₂) T pL pR :=
+    IsWedgePath.of_disjoint hN.acyclic C.left C.right C.disjoint
+  have hwalk := hsp.isPath.walk
+  have hon : ∀ {u : V}, SameBlob N v u → u ≠ h →
+      u ∈ N.graph.source k₁ :: (N.wedgeSteps T pL pR).map Prod.snd := by
+    intro u hu huh
+    rw [hsp.verts]
+    simp only [List.mem_append, List.mem_reverse, List.mem_cons]
+    have hm := C.mem_of_sameBlob hN hLevel hh₂ hu huh
+    simp only [List.mem_cons] at hm
+    tauto
+  obtain ⟨l₁, l₂, heq, h₁, h₂⟩ := hwalk.split_of_mem (hon ha hah)
+  have hbm := hon hb hbh
+  rw [heq, List.map_append, ← List.cons_append, List.mem_append] at hbm
+  rcases hbm with hbm | hbm
+  · obtain ⟨D₀, B₀, rfl, hD₀, hB₀⟩ := h₁.split_of_mem hbm
+    exact Or.inr ⟨D₀, B₀, l₂, by simp [heq], hD₀, hB₀, h₂⟩
+  · obtain ⟨B₁, D₁, rfl, hB₁, hD₁⟩ := h₂.split_of_mem (List.mem_cons_of_mem _ hbm)
+    exact Or.inl ⟨l₁, B₁, D₁, heq, h₁, hB₁, hD₁⟩
+
+/-- **A wedge path between two vertices of the cycle is the path that avoids `h`.** It stays in the blob
+(`IsWedgePath.sameBlob_of_mem`), and the cycle offers exactly two paths between its ends
+(`exactly_two_paths_of_split`). The other one crosses `p₁, v_h, p₂`, with both reticulation arcs, so it
+is not wedge (`IsWedgePath.eq_of_target_eq`). -/
+theorem wedgeSteps_eq_of_split (hN : N.IsPhylogenetic) (hLevel : IsLevelOne N)
+    (hh₂ : 2 ≤ N.graph.indegree h) (C : BlobCycle N v h T k₁ k₂ pL pR) {a b u : V}
+    {p q : List E} {A B D : List (E × V)} (hs : N.wedgeSteps T pL pR = A ++ (B ++ D))
+    (hA : N.IsWalk (N.graph.source k₁) A a) (hB : N.IsWalk a B b)
+    (hD : N.IsWalk b D (N.graph.source k₂)) (ha : SameBlob N v a) (hb : SameBlob N v b)
+    (hab : a ≠ b) (hw : N.IsWedgePath a b u p q) : N.wedgeSteps u p q = B := by
+  have hsp : N.IsWedgePath (N.graph.source k₁) (N.graph.source k₂) T pL pR :=
+    IsWedgePath.of_disjoint hN.acyclic C.left C.right C.disjoint
+  have hpath := hsp.isPath
+  have hoff : h ∉ N.graph.source k₁ :: (N.wedgeSteps T pL pR).map Prod.snd := by
+    rw [hsp.verts]
+    simp only [List.mem_append, List.mem_reverse, List.mem_cons, not_or]
+    exact ⟨C.reticulation_notMem_left hN, (C.top_ne hN).symm, C.swap.reticulation_notMem_left hN⟩
+  have hspF : ∀ t ∈ N.wedgeSteps T pL pR, t.1 ∈ blobArcs N v := by
+    intro t ht
+    rcases mem_of_mem_wedgeSteps ht with h₁ | h₁
+    · exact C.sameBlob_of_mem hN (by simp [h₁])
+    · exact C.swap.sameBlob_of_mem hN (by simp [h₁])
+  have hkF : ∀ {k k' : E} {pL pR : List E}, BlobCycle N v h T k k' pL pR → k ∈ blobArcs N v :=
+    fun C => C.sameBlob_of_mem hN (by simp)
+  have hWF : ∀ t ∈ N.wedgeSteps u p q, t.1 ∈ blobArcs N v :=
+    fun t ht => hw.mem_blobArcs hN ha hb (mem_of_mem_wedgeSteps ht)
+  obtain ⟨-, -, -, hall⟩ := exactly_two_paths_of_split (C.degLeTwo hN hLevel hh₂)
+    (hs ▸ hpath.distinct) hA hB hD (hs ▸ hoff) (Or.inl ⟨rfl, C.target₁⟩) (Or.inr ⟨rfl, C.target₂⟩)
+    (hs ▸ hspF) (hkF C) (hkF C.swap) hab
+  rcases hall _ hw.isPath hWF with heq | heq
+  · exact heq
+  · -- the path through `h` is not wedge
+    exfalso
+    have h₁ : k₁ ∈ p ∨ k₁ ∈ q := mem_of_mem_wedgeSteps (s := (k₁, h)) (by rw [heq]; simp)
+    have h₂ : k₂ ∈ p ∨ k₂ ∈ q :=
+      mem_of_mem_wedgeSteps (s := (k₂, N.graph.source k₂)) (by rw [heq]; simp)
+    exact C.ne (hw.eq_of_target_eq hN h₁ h₂ (C.target₁.trans C.target₂.symm))
+
+end BlobCycle
+
+/-- **Only one wedge path between two distinct vertices of a level-1 blob other than the reticulation**
+(TOB-QMC, proof of Lemma 4, lines 551–554 of v5). A wedge path between them stays in the blob, the cycle
+offers exactly two paths between them, and the other one crosses `p₁, v_h, p₂`, along the two reticulation
+arcs, so it is not wedge (`BlobCycle.wedgeSteps_eq_of_split`). -/
+theorem wedgePath_unique (hN : N.IsPhylogenetic) (hLevel : IsLevelOne N)
+    (hh₂ : 2 ≤ N.graph.indegree h) {T : V} {k₁ k₂ : E} {pL pR : List E}
+    (C : BlobCycle N v h T k₁ k₂ pL pR) {a b u u' : V} {p q p' q' : List E}
+    (ha : SameBlob N v a) (hb : SameBlob N v b) (hah : a ≠ h) (hbh : b ≠ h) (hab : a ≠ b)
+    (hw : N.IsWedgePath a b u p q) (hw' : N.IsWedgePath a b u' p' q') :
+    u = u' ∧ p = p' ∧ q = q' := by
+  have hA := hN.acyclic
+  rcases C.exists_split hN hLevel hh₂ ha hah hb hbh with
+    ⟨A, B, D, hs, hA', hB, hD⟩ | ⟨A, B, D, hs, hA', hB, hD⟩
+  · have h₁ := C.wedgeSteps_eq_of_split hN hLevel hh₂ hs hA' hB hD ha hb hab hw
+    have h₂ := C.wedgeSteps_eq_of_split hN hLevel hh₂ hs hA' hB hD ha hb hab hw'
+    obtain ⟨rfl, rfl⟩ := wedgeSteps_inj hA hw.left hw'.left (h₁.trans h₂.symm)
+    exact ⟨hw.left.start_eq hw'.left, rfl, rfl⟩
+  · have h₁ := C.wedgeSteps_eq_of_split hN hLevel hh₂ hs hA' hB hD hb ha hab.symm (hw.symm hA)
+    have h₂ := C.wedgeSteps_eq_of_split hN hLevel hh₂ hs hA' hB hD hb ha hab.symm (hw'.symm hA)
+    obtain ⟨rfl, rfl⟩ := wedgeSteps_inj hA hw.right hw'.right (h₁.trans h₂.symm)
+    exact ⟨hw.left.start_eq hw'.left, rfl, rfl⟩
+
+namespace BlobCycle
+
+variable {T : V} {k₁ k₂ : E} {pL pR : List E}
+
 /-- All arcs of the blob not entering `h` are on the two sides of the cycle: the directed path through
 such an arc, and a side, are both the wedge path from `p₁` or `p₂` to the top. -/
 theorem mem_of_arc (hN : N.IsPhylogenetic) (hLevel : IsLevelOne N)
@@ -861,16 +1461,18 @@ theorem mem_of_arc (hN : N.IsPhylogenetic) (hLevel : IsLevelOne N)
       IsWedgePath.of_disjoint hA (hA'.append ⟨rfl, hB⟩) rfl (by simp)
     have hw₂ : N.IsWedgePath (N.graph.source k₁) T T pL [] :=
       IsWedgePath.of_disjoint hA C.left rfl (by simp)
-    have := (wedgePath_unique hN hLevel C.reticulation hh₂ (C.source₁_sameBlob hN) C.top
-      (C.source₁_ne hN) (C.top_ne hN) hw₁ hw₂).2.1
+    have hne : N.graph.source k₁ ≠ T := fun hc => not_reaches_source hN f
+      (hc ▸ hB.reaches |>.trans hA'.reaches)
+    have := (wedgePath_unique hN hLevel hh₂ C (C.source₁_sameBlob hN) C.top
+      (C.source₁_ne hN) (C.top_ne hN) hne hw₁ hw₂).2.1
     rw [← this]
     simp
   rcases C.reaches_source hN hLevel hh₂ ht hth with hr | hr
   · exact Or.inl (key C hr)
   · exact Or.inr (key C.swap hr)
 
-/-- **Exactly two wedge paths from the reticulation to a vertex of the blob, and their union is the blob**
-(TOB-QMC, proof of Lemma 4, lines 543–544 of v5), for a vertex on the side of `p₁`. -/
+/-- **Exactly two wedge paths from the reticulation to a vertex of the blob, and every arc of the blob is on
+one of them** (TOB-QMC, proof of Lemma 4, lines 543–544 of v5), for a vertex on the side of `p₁`. -/
 theorem exactly_two_of_left (hN : N.IsPhylogenetic) (hLevel : IsLevelOne N)
     (hh₂ : 2 ≤ N.graph.indegree h) (C : BlobCycle N v h T k₁ k₂ pL pR) {b : V}
     (hb : b ∈ T :: pL.map N.graph.target) (hbh : b ≠ h) :
@@ -971,9 +1573,9 @@ theorem exactly_two_of_left (hN : N.IsPhylogenetic) (hLevel : IsLevelOne N)
 
 end BlobCycle
 
-/-- **Exactly two wedge paths from the reticulation of a level-1 blob to another of its vertices, and their
-union is the blob** (TOB-QMC, proof of Lemma 4, lines 543–544 of v5). A path is given by its
-summit and two legs. -/
+/-- **Exactly two wedge paths from the reticulation of a level-1 blob to another of its vertices, and every
+arc of the blob is on one of them** (TOB-QMC, proof of Lemma 4, lines 543–544 of v5). A path is given by
+its summit and two legs. -/
 theorem exactly_two_wedgePaths (hN : N.IsPhylogenetic) (hBin : N.IsBinary) (hLevel : IsLevelOne N)
     (hh : SameBlob N v h) (hh₂ : 2 ≤ N.graph.indegree h) {b : V} (hb : SameBlob N v b)
     (hbh : b ≠ h) :
@@ -1230,17 +1832,6 @@ theorem BlobCycle.notMem_of_cut (hN : N.IsPhylogenetic) {T : V} {k₁ k₂ : E} 
   have hc := (hS e (hF e (Or.inl he))).mpr rfl
   simp only [DirectedMultigraph.Crosses] at hc
   tauto
-
-omit [Fintype V] [Fintype E] in
-/-- The arcs of the cycle have both ends in the blob. -/
-theorem BlobCycle.sameBlob_of_mem (hN : N.IsPhylogenetic) {T : V} {k₁ k₂ : E} {pL pR : List E}
-    (C : BlobCycle N v h T k₁ k₂ pL pR) {f : E} (hf : f ∈ pL ++ [k₁]) :
-    SameBlob N v (N.graph.source f) ∧ SameBlob N v (N.graph.target f) := by
-  have hL : N.IsDirPath T (pL ++ [k₁]) h := C.left.append ⟨rfl, C.target₁⟩
-  have hr := hL.reaches_of_mem hf
-  exact ⟨sameBlob_of_reaches_of_reaches hN C.top C.reticulation hr.1
-      ((reaches_of_arc N f).trans hr.2),
-    sameBlob_of_reaches_of_reaches hN C.top C.reticulation (hr.1.tail ⟨f, rfl, rfl⟩) hr.2⟩
 
 /-- **Lemma 4, `⇐`, on the subnetwork** (TOB-QMC, lines 541–546 of v5). Take four taxa in distinct blocks,
 with `d` below the reticulation. The other taxa are attached away from `h`. For each of them, the wedge paths

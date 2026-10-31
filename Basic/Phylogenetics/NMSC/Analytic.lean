@@ -259,7 +259,7 @@ theorem analyticOnNhd_nmscCF {θ : W → MetricData E} (ρ : ℝ)
     analyticOnNhd_ite _ fun _ => analyticOnNhd_geneTreeDist N ρ hℓ hγ G
 
 /-- **The concordance factors are entire in the coordinates**, for every network, every choice `d` of the
-left-out coordinates and every inheritance correlation `ρ`; `ρ = 0` is contract K4. -/
+left-out coordinates and every inheritance correlation `ρ`; `ρ = 0` is the independent inheritance of Allman et al. 2023. -/
 theorem analyticOnNhd_nmscCF_coordMetric (d : V → E) (ρ : ℝ) (r : QuartetTree X) :
     AnalyticOnNhd ℝ (fun x : (E → ℝ) × (E → ℝ) => nmscCF N (coordMetric N d x.1 x.2) ρ r)
       Set.univ :=

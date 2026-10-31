@@ -277,8 +277,10 @@ def IsTreelike (q : Finset X) : Prop :=
 
 /-- The network induced on `q` has a trivial 4-blob, a multifurcation: there is a vertex `v` with,
 for each taxon `x` of `q`, a cut edge of the induced subgraph at `v` separating exactly `x`
-from `v`. (ECToBlob §5.1.) Chains of 2-blobs may lead to the taxa, but `v` itself lies on no cycle: a
-vertex of a non-trivial blob is not a trivial 4-blob, as in ECToBlob §2. -/
+from `v`. (ECToBlob §5.1.) Chains of 2-blobs may lead to the taxa, and `v` lies on no cycle below the LSA of
+`q`: a vertex of a non-trivial blob of the induced semidirected network is not a trivial 4-blob, as in
+ECToBlob §2. A cycle above `v` is possible when `v` is that LSA, since the induced semidirected network
+omits it. -/
 def HasTrivialFourBlob (q : Finset X) : Prop :=
   ∃ v : V, ∀ x ∈ q, ∃ e ∈ N.ancestralArcs (q : Set X), ∃ S : Set V,
     (∀ f ∈ N.ancestralArcs (q : Set X), N.graph.Crosses f S ↔ f = e) ∧
@@ -827,9 +829,10 @@ def IsNonCut (p : QuartetTree X → ℝ) (q : Finset X) : Prop :=
 
 variable [Fintype V] [Fintype E]
 
-/-- A set of numerical parameters of a binary network is null: in the coordinates given by all edge
-lengths and, at each hybrid vertex, the inheritance probability of all but one parent, for Lebesgue
-measure. -/
+/-- A set of numerical parameters of a network is null: in the coordinates given by all edge lengths
+and, at each hybrid vertex, the inheritance probability of all but one parent, for Lebesgue measure. The
+inheritance coordinates of tree arcs and left-out parents are dummies: the set is a cylinder over them,
+so it is null exactly when its base is. -/
 def IsGenericNull (N : RootedNetwork V E X) (A : Set (MetricData E)) : Prop :=
   ∀ d : V → E, (∀ v, 2 ≤ N.graph.indegree v → N.graph.target (d v) = v) →
     ((Measure.pi fun _ : E => (volume : Measure ℝ)).prod (Measure.pi fun _ : E => (volume : Measure ℝ)))

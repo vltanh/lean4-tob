@@ -9,7 +9,7 @@ public import Basic.Phylogenetics.TreeMetric
 The source proves part (b) of its Theorem 1 at boundary parameters: an inheritance probability `0`
 deletes a hybrid arc. This file is the part of that proof about graphs. It reads the network off a set
 `D` of deleted arcs (`Basic/Phylogenetics/DeletedArcs.lean`). Its result, `exists_reduction`: a 4-set
-`q` that is not treelike has a set `D`, deletion of which leaves `q` not treelike, and a reticulation
+`q` that is not treelike has a set `D` and a reticulation
 `h` with exactly two parents `k₁`, `k₂` off `D` and exactly one taxon `a` of `q` below it, such that
 deleting either parent gives a cut split, and the two splits differ.
 
@@ -649,7 +649,7 @@ theorem StarOff.four_le_degree (hN : N.IsPhylogenetic) {q : Finset X} (hq : q.ca
         Set.ncard_le_ncard hsub (Set.toFinite _)
     _ ≤ _ := Set.ncard_union_le _ _
 
-/-- **K1, the graph side of part (b) of Theorem 1 of Allman et al. 2023**
+/-- **The graph side of part (b) of Theorem 1 of Allman et al. 2023**
 (`notes/sources/allman2023.txt`, lines 145-149). For a binary network and a 4-set `q` that is not
 treelike, there are a deletion `D` of hybrid arcs and a reticulation with exactly two parents `k₁`, `k₂`
 off `D` and exactly one taxon `a` of `q` below it, such that deleting `k₂` gives a cut arc `e₁` of a

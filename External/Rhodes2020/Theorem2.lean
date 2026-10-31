@@ -626,11 +626,11 @@ The proof is the source's. Each quartet of `Q_{x,y}` determines one node on the 
 (`pairs_eq_biUnion_nodePairs`, `nodePairs_disjoint`), and the count by node (`card_nodePairs`) gives
 equations (2) and (3) (`equation_two`, `equation_three`). Adding them and grouping the terms by the edges
 on the path (`sum_sidePairs_eq`, `sum_sidePairs_compl_eq`) gives `2 |Q_{x,y}| = ∑_e w_Q(e) - 2N + 4`. -/
-theorem theorem2 {T : Finset (Finset X)} (hT : IsUnrootedTree T) (hX : 4 ≤ Fintype.card X)
-    {x y : X} (hxy : x ≠ y) :
+theorem theorem2 {T : Finset (Finset X)} (hT : IsUnrootedTree T) {x y : X} (hxy : x ≠ y) :
     treeMetric T (quartetWeight T) x y =
       quartetDistance {q | ∀ s ∈ treesOn q, ¬ Displays T s} {s | Displays T s} x y := by
-  have hS : IsSplitFamily T := (isUnrootedTree_iff (by omega) T).mp hT
+  have hX : 2 ≤ Fintype.card X := Fintype.one_lt_card_iff.mpr ⟨x, y, hxy⟩
+  have hS : IsSplitFamily T := (isUnrootedTree_iff hX T).mp hT
   have h2 := equation_two hT hS hxy
   have h3 := equation_three hT hS hxy
   have e1 := sum_sidePairs_eq (x := x) (y := y) hS

@@ -18,7 +18,7 @@ The four-lineage analysis at a cut edge, from sampling consistency
 
 ## Main results
 
-* `exchangeability`: `CutExchangeable`, the assumed result `External.AneEtAl2024.Exchangeability`.
+* `exchangeability`: `CutExchangeable`, cited as `External.AneEtAl2024.exchangeability`.
 * `cut_alternatives`: on a cut-edge split of the induced network, the two alternatives have equal
   concordance factors.
 * `trivial_uniform`: on a trivial 4-blob, all three concordance factors are `1/3`.
@@ -402,8 +402,7 @@ private theorem eq_relabelQuartet_swap {s s' : QuartetTree X} {a a' : X} (ha' : 
   · simp [hza, hza']
   · rfl
 
-/-- **Exchangeability of the network multispecies coalescent** (the assumed result
-`External.AneEtAl2024.Exchangeability`): concordance factors do not change when a taxon of a quartet
+/-- **Exchangeability of the network multispecies coalescent** (Ané et al. 2024, `External.AneEtAl2024.exchangeability`): concordance factors do not change when a taxon of a quartet
 tree is replaced by one that a cut edge groups with it, away from the other three taxa. -/
 theorem exchangeability (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1) :
     CutExchangeable N (nmscCF N θ ρ) := by

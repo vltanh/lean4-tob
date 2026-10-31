@@ -414,8 +414,8 @@ theorem Determines.ne_of_leadsTo (hdet : Determines G F v ℓ S) (hs : s ∈ S) 
   rintro rfl
   exact hne (hdet.eq_of_mem_side onlyCrosses_far not_mem_far_self hs ht hws hwt he.2 he'.2)
 
-/-- The arcs of a path from the blob of `v` to `u`: the incident cut edge leading to `u`, and the
-arcs beyond it. -/
+/-- The arcs available to a path from the blob of `v` to `u`: the incident cut edge leading to `u`, and
+all arcs beyond it (`LeadsTo.exists_walks_pathArcs`). -/
 def pathArcs (G : DirectedMultigraph V E) (F : Set E) (v u : V) : Set E :=
   {g | ∃ e, LeadsTo G F v e u ∧ (g = e ∨ g ∈ insideArcs G F (far G F e v))}
 
@@ -457,8 +457,9 @@ theorem disjoint_pathArcs (hconn : ∀ f ∈ F, G.Walks F v (G.source f))
   · exact key he'.1 he.1 hee.symm hg' hg
   · exact hee (LeadsTo.unique ⟨he.1, hg.2.1⟩ ⟨he'.1, hg'.2.1⟩ (hconn g hg.1))
 
-/-- **Lemma 2 of the source.** Let `M` be a subnetwork of `F` in which the labels `S` are nodes of
-degree one. If `S`, with at least three elements, determines the blob of `v` in `M`, then `S`
+/-- **Lemma 2 of the source.** Let `M` be a subnetwork of `F`, connected from the blob of `v` (`hc`,
+`hconn`, which the source's proof assumes when it takes paths in `M`), with the labels `S` nodes of degree
+one of `F`. If `S`, with at least three elements, determines the blob of `v` in `M`, then `S`
 determines the blob of `v` in `F`, which contains it (`SameBlobIn.mono`), and the incident cut edges
 of that blob leading to the elements of `S` are in `M`.
 

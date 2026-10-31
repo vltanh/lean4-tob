@@ -135,19 +135,15 @@ theorem consistency [Fintype V] [Fintype E] {N : RootedNetwork V E X} {θ : Metr
         Tendsto (fun k => iidProb (geneTreeDist N θ ρ) k fun ω =>
           tobqmc ml (α k) β (quartetCount unroot ω) (solve (quartetCount unroot ω))
             (cover (solve (quartetCount unroot ω))) = treeOfBlobs N) atTop (𝓝 1) := by
-  refine ⟨fun k => chiSqOneTail (Real.log k), QuartetTests.tendsto_chiSqOneTail_log,
-    fun k => QuartetTests.chiSqOneTail_pos _, fun β hβ ml hml solve hsolve cover hcover => ?_⟩
   have hN := hStd.phylogenetic
   have hne : Nonempty X := Fintype.card_pos_iff.mp (by omega)
   have hd : IsDist (geneTreeDist N θ ρ) :=
     ⟨geneTreeDist_nonneg hN hStd.metric hStd.rho, sum_geneTreeDist hN hStd.metric hStd.rho⟩
   -- the tests are correct on all four-taxon subsets
   have hdet := Level1.cfDetectable hStd hLevel hNon hBlob
-  have htests := TINNiK.tests_correct hN hX hStd.metric hStd.rho hdet
-    QuartetTests.tendsto_chiSqOneTail_log
-    (TINNiK.rejects_of_log hN hStd.metric hStd.rho hdet
-      (fun k => QuartetTests.chiSqOneTail_pos (Real.log k)) QuartetTests.tendsto_log_chiSqOneTail_log)
-    hβ hml
+  obtain ⟨α, hα₀, hαpos, hrej⟩ := TINNiK.exists_levels hN hStd.metric hStd.rho hdet
+  refine ⟨α, hα₀, hαpos, fun β hβ ml hml solve hsolve cover hcover => ?_⟩
+  have htests := TINNiK.tests_correct hN hX hStd.metric hStd.rho hdet hα₀ hrej hβ hml
   refine tendsto_iidProb_of_imp hd (Eventually.of_forall fun k ω hω => ?_)
     (TINNiK.tendsto_iidProb_and hd htests (tendsto_optimaRefine hStd hNon hX hd))
   obtain ⟨⟨hB, -⟩, hopt⟩ := hω

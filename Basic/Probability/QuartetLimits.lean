@@ -420,7 +420,7 @@ line of the true topology has the least statistic with probability tending to on
 This is TINNiK's proof of Theorem 4: "If a true CF is cut, then as `m → ∞`, the parameter `μ₀` of that
 distribution goes to `∞` and the distribution converges to the `χ²₁`. This holds even using the MLE in place of
 the true parameter. To ensure that the probability of failing to reject the null hypothesis approaches 1 as
-`m → ∞`, it is enough to choose any sequence of significance levels `α_m → 0`." The p-value is
+`m → ∞`, it is enough to choose any sequence of significance levels with `α_m → 0`." The p-value is
 asymptotically uniform (`cutPValue_asymptoticallyUniform`, through `Trinomial.tendsto_cut`), so
 `P(p < α_m) → 0`. Read `μ₀ → ∞` there as `|μ₀| → ∞`, since anomalous strictly cut concordance factors have
 `μ₀ → -∞`: the two signs behave alike. The limit is uniform once `cos α₀ |μ₀|` is large
