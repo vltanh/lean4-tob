@@ -15,12 +15,12 @@ Theorem 8.2. Lemma 8.1 is in `ECToBlob/Lemma81.lean`, the deterministic part of 
 `ECToBlob/FalseEdge.lean`.
 
 Theorem 8.2 is stated for a network at numerical parameters where both directions of Assumption 1
-hold (E7 of the report: as printed, for all parameters, it fails). The correction was agreed with
+hold (E10 of the report: as printed, for all parameters, it fails). The correction was agreed with
 the user. `theorem8_2_generic` gives the conclusion for almost all parameters, from `Assumption1`.
 
 For the corrections `cauchy` and `cbc`, Theorem 8.2 also requires the alternatives of a quartet tree
 satisfying (5.2) to have positive probability: without this a p-value is exactly `1`, and the Cauchy
-combination is `1` whatever the other p-values (E18 of the report).
+combination is `1` whatever the other p-values (E11 of the report).
 -/
 
 @[expose] public noncomputable section
@@ -487,8 +487,8 @@ private theorem tendsto_ectoblob {V E X : Type u} [Fintype X] [DecidableEq X]
     linarith
   · exact Eventually.of_forall fun n => (iidProb_le_one hd n _).trans_lt ha
 
-/-- **Theorem 8.2** (`ecto:thm8_2`), with the correction agreed with the user (E7 of the report) and
-the one required for the Cauchy combinations (E18, which needs the user's agreement). There are sequences `α_n`, `β_n`, independent of
+/-- **Theorem 8.2** (`ecto:thm8_2`), with the correction agreed with the user (E10 of the report) and
+the one required for the Cauchy combinations (E11, which needs the user's agreement). There are sequences `α_n`, `β_n`, independent of
 the network, such that for every resolution `T₀` of the tree of blobs, every variant of the
 algorithm, and every distribution of binary gene trees whose quartet concordance factors satisfy
 both directions of Assumption 1 at the network's parameters, the output on `n` independent gene
@@ -498,22 +498,31 @@ The proof is the paper's: the same sequences; Lemma 8.1 for the p-values under t
 6.1 for the combined p-values; the growth of the statistics under the alternative; Corollary 4.3 for
 an edge that is not a cut edge. These points differ from the printed text.
 
-* **The statement (E7).** Printed for any model meeting Assumption 1, it fails at nongeneric
+* **The statement (E10).** Printed for any model meeting Assumption 1, it fails at nongeneric
   parameters; here both directions of Assumption 1 hold at the parameters of the network.
-* **The Cauchy combinations (E18).** For `cauchy` and `cbc`, the alternatives of a quartet tree with
+* **The Cauchy combinations (E11).** For `cauchy` and `cbc`, the alternatives of a quartet tree with
   (5.2) must have positive probability: otherwise its p-value is exactly `1`, and the Cauchy
-  combination is `1` whatever the other p-values. So for `bon` and `bbc` the combined p-value of a
-  cut edge is above `α_n`, but need not be below `1 - δ` as the paper's proof says; only the lower
-  bound is used.
+  combination is `1` whatever the other p-values.
+* **The upper bound on combined p-values (E15).** The paper's proof says that the combined p-value of a cut
+  edge lies in `(α_n, 1 - δ)`. The upper bound fails for `bon`, `bbc` and `cbc`, even with positive
+  alternatives: `Bon({3/4, 3/4}) = 1`. Only the lower bound `> α_n` is used. The individual upper bounds
+  `p ≤ 1 - δ` are used only for `cauchy` and `cbc`, through Lemma 6.1.
 * **The slack in `η_n`.** The paper chooses `η_n` with `B(K, η_n, 1 - δ) ∼ β_n`, which does not give
   `B(K, η_n, 1 - δ) < β_n`. Here `η_n = c₀ β_n` and `c₀ α_n` for a small constant `c₀`
   (`Deterministic.exists_combineBounds`). Only `b_n = o(n)` is used of `b_n = -2 log η_n`.
 * **The union over the intermediate trees.** The sequence of trees is random, so a bound for each
   edge of a tree does not cover the run. Here the events are per quartet, not per run
   (`Deterministic.Run`): on one event every combined test on every possible tree comes out right.
-* **The gap at the centroid.** A quartet tree may satisfy the T1 null at its boundary `(1/3, 1/3,
+* **The gap at the centroid (E13).** A quartet tree may satisfy the T1 null at its boundary `(1/3, 1/3,
   1/3)`, where its p-value is not asymptotically uniform, so Lemma 8.1 does not apply; the proof
-  overlooks this case. Here `t1PValue_centroid_tight` gives the bounds `δ ≤ p ≤ 1 - δ` there too.
+  overlooks this case. Here `t1PValue_centroid_tight` gives the bounds `δ ≤ p ≤ 1 - δ` there too. Of these, only
+  the upper bound is used, and only for `cauchy` and `cbc`.
+* **The T1 threshold (E14).** The paper's "an individual p-value is below `η_n` exactly when the statistic is above
+  `b_n`" holds for the star test, whose test law is fixed, and not for the T1 test, whose law depends on an
+  estimated `μ`. The formal proof bounds the T1 p-value above by the `χ²₂` tail at the statistic.
+* **Step 3 (E17).** The paper says that Step 3 contracts "precisely those edges that resolve multifurcations". This is
+  false: on a 4-cycle, `ab|cd` resolves a multifurcation of the tree of blobs and survives Step 3. The formal proof shows what is needed: the
+  edges of the tree of blobs are kept, and each edge that is kept has a nonuniform quartet.
 * **The trivial 4-blob gap.** The paper finds a quartet on which the T1 null fails at a false edge
   from Corollaries 4.2 and 4.3, but their witness may have a trivial 4-blob, on which the null
   holds. Here `falseEdge_witness` gives a quartet that is neither a cut split nor a trivial 4-blob.

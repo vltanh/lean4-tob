@@ -9,7 +9,7 @@ public import Mathlib.Order.Filter.AtTopBot.Basic
 # ECToBlob §3: resolving the tree of blobs
 
 Lemma 3.5, Theorem 3.1, Remark 3.2, Corollary 3.6, and the objective decompositions (3.2) and (3.3).
-Equation (3.3) as printed overcounts quartets (E1 of the report): `equation3_3` is the repaired
+Equation (3.3) as printed overcounts quartets (E2 of the report): `equation3_3` is the repaired
 identity, with the weights by block sizes, and the proof of Theorem 3.1 follows the paper's route
 with these weights. The splice of the local maximizers into the tree of blobs is the construction of
 `Basic/Phylogenetics/TreeSplice.lean`.
@@ -132,7 +132,7 @@ theorem card_rep_mul_blockWeight {P : Finset (Finset X)}
     simp
   · rw [ite_eq_right hb, ite_eq_right hb, mul_one]
 
-/-- **Equation (3.3)** (`ecto:eq3_3`), repaired (E1 of the report). The printed identity repeats a
+/-- **Equation (3.3)** (`ecto:eq3_3`), repaired (E2 of the report). The printed identity repeats a
 quartet once for each choice of representatives of the blocks it does not use. Weighted by the
 block sizes and divided by the product of all block sizes, the representative sum is `f_m`. A
 representative tuple `x` chooses a taxon in each block. The `X_i` of the paper partition the taxa:
@@ -367,12 +367,15 @@ of a gene tree distribution, such that
 Then every unrooted tree maximizing the sum over its displayed quartet trees of `p` is a resolution
 of the tree of blobs. The paper's `p` is a probability; only its nonnegativity is used.
 
-Departure from the paper: since the printed (3.3) overcounts (E1 of the report), the local objective
+Departure from the paper: since the printed (3.3) overcounts (E2 of the report), the local objective
 `f̃_m` is weighted by the product of the sizes of the four blocks (`localWeight`), and (3.3) is
 `equation3_3`. The rest is the paper's route: (3.2), the maximizers of `f_R` display the resolved
 quartets of the tree of blobs, a spliced tree simultaneously maximizes the inner sums of (3.3), hence
-every `f_m` by Lemma 3.5, and `f_R`, hence `f` by Lemma 3.5; every maximizer of `f` maximizes `f_R`. The
-paper's closing remark, that every maximizer arises by splicing, is not needed for the conclusion. -/
+every `f_m` by Lemma 3.5, and `f_R`, hence `f` by Lemma 3.5; every maximizer of `f` maximizes `f_R`.
+
+Not formalized: the paper's description of the maximizers along the way, that every maximizer of `f_m` restricts
+to a maximizer of `f̃_m` on any representatives, and its closing remark, that every maximizer arises by splicing. The
+statement doesn't ask for them, and the conclusion does not need them. -/
 theorem theorem3_1 (hN : N.IsPhylogenetic) (p : QuartetTree X → ℝ) (hp : ∀ s, 0 ≤ p s)
     (h₁ : ∀ s, Displays (treeOfBlobs N) s → ∀ r ∈ s.alternatives, p r < p s)
     (h₂ : CutExchangeable N p) {T : Finset (Finset X)} (hT : IsUnrootedTree T)
@@ -1383,7 +1386,7 @@ satisfying the assumptions of Theorem 3.1, with probability tending to one every
 Maximum Quartet Support criterion is a resolution of the tree of blobs.
 
 Departure from the paper: the printed claim that the empirical and expected objectives have the same
-optima is too strong when the expected objective has ties (E2 of the report). The containment of the
+optima is too strong when the expected objective has ties (E3 of the report). The containment of the
 empirical optima in the expected optima suffices, from the gap to non-maximizers. -/
 theorem corollary3_6 (hN : N.IsPhylogenetic) (dist : UnrootedGeneTree X → ℝ)
     (hdist : (∀ G, 0 ≤ dist G) ∧ ∑ G, dist G = 1)
@@ -1398,7 +1401,7 @@ theorem corollary3_6 (hN : N.IsPhylogenetic) (dist : UnrootedGeneTree X → ℝ)
     mul_nonneg (hdist.1 G) (by
       unfold geneContribution
       split_ifs <;> norm_num)
-  -- a radius within which the empirical maximizers are expected maximizers (E2 of the report)
+  -- a radius within which the empirical maximizers are expected maximizers (E3 of the report)
   let S : Finset (Finset (Finset X)) := univ.filter fun T => IsUnrootedTree T
   obtain ⟨δ, hδ, hrad⟩ := Finset.exists_pos_radius_isMaxOn S (quartetScore (expectedCF dist))
   let c : ℝ := (Fintype.card (QuartetTree X) : ℝ) + 1

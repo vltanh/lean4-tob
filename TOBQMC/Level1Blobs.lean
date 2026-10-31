@@ -12,7 +12,7 @@ The graph facts behind TOB-QMC Lemma 4 (`TOBQMC/Level1.lean`), in the domination
   (`isBridge_iff_reaches`).
 * Arcs entering a reticulation are not bridges (`not_isBridge_of_two_le_indegree`).
 * A blob with a non-bridge arc has a reticulation (`exists_reticulation_or_forall_isBridge`), a unique
-  one when the network is binary and level-1 (`reticulation_unique`), and every vertex of the blob
+  one when the network is level-1 (`reticulation_unique`), and every vertex of the blob
   reaches it (`reaches_reticulation`).
 * A connected component of the complement of a blob is the far side of a cut edge
   (`exists_blockWalk_cut`).

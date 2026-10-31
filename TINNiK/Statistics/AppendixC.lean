@@ -12,7 +12,7 @@ public import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
 The maximum likelihood estimates and maximal log-likelihoods of Appendix C.1, and Proposition 5 of
 Appendix C.2 (Proposition 6 is in `TINNiK/Statistics/Proposition6.lean`). The maximum likelihood estimate on the cut model is over the closed simplex, as agreed
 with the user: on the open cut model of Definition 7 no maximum exists for counts such as `(1, 0, 0)`
-(E9 of the report). The generating parameter stays in the open simplex.
+(E31 of the report). The generating parameter stays in the open simplex.
 -/
 
 @[expose] public noncomputable section

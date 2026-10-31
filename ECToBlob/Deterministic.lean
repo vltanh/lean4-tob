@@ -12,7 +12,7 @@ If the combined tests behave as the proof of Theorem 8.2 says they do on a table
 counts, then the algorithm outputs the tree of blobs. The conditions on the table (`Run`) are per
 quartet, not per run of the algorithm, so one event covers all the possible intermediate trees.
 
-The steps are those of the paper's proof:
+The steps are those of the paper's proof, with the corrections listed at `ECToBlob.theorem8_2`:
 
 * Step 3 keeps the edges of the tree of blobs, and each edge it keeps has a nonuniform quartet
   (`Run.treeOfBlobs_subset_afterStar`, `Run.exists_not_uniform`);

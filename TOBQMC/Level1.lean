@@ -580,10 +580,12 @@ The case split of `⇒` is the paper's: taxa in one block are separated by the b
 **Lemma 2**; with distinct blocks and no taxon below `h`, an arc of the blob gives the `2|2` split that
 the paper reads off the path through `B(a), B(b), B(c), B(d)` (`exists_arc_two_below`).
 
-Departure from the paper: for `⇐` the paper exhibits the suppressed 4-taxon semi-directed network by
-wedge paths and sees the 4-blob in it. Here treelikeness is a statement about the rooted induced
-subgraph, so `⇐` shows directly that no arc of it separates two taxa from two others
-(`not_isTreelike_of_distinct`). The paper's `⇒` does not treat two taxa below `h` explicitly; they are
+Departure from the paper, in both directions, because treelikeness here is a statement about the rooted induced
+subgraph, and wedge paths and the suppressed semi-directed network have no counterpart. For `⇐`, the paper exhibits the suppressed 4-taxon
+semi-directed network by wedge paths and sees the 4-blob in it; here `⇐` shows directly that no arc of the subgraph separates two
+taxa from two others (`not_isTreelike_of_distinct`). For `⇒` with distinct blocks and no taxon below `h`, the paper uses
+that there is one wedge path between each pair and reads the split off their order; here `exists_arc_two_below` descends from the top of the
+blob to an arc with exactly two taxa below it. The paper's `⇒` does not treat two taxa below `h` explicitly; they are
 in one block (`blockWalk_of_below_reticulation`), which distinct blocks exclude. Of the hypotheses
 on the refinement, only `RefinesBlob` is used. -/
 theorem lemma4 (hN : N.IsPhylogenetic) (hBin : N.IsBinary) (hLevel : IsLevelOne N) {A : Finset X}

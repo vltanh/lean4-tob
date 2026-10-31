@@ -26,9 +26,10 @@ Status of the formalization:
 - **Proved cited results**: Allman et al. 2023 Theorem 2 and Lemma 3; Rhodes 2020 Theorem 2; Huber et al. 2025 Theorem 5.1,
   forward direction; Ané et al. 2024 exchangeability; Mitchell et al. 2019 Theorem 3.1 for this model.
 - **Conditional** on one result of the literature: `External.AllmanEtAl2023.Corollary1` (TINNiK's Theorem 1: 4-blobs are
-  CF-detectable for generic parameters), a hypothesis of `TINNiK.theorem4`, and on the part of it adapted by ECToBlob's
-  Proposition 5.1, `ECToBlob.AdaptedAllmanTheorem1`. Section 2 gives what Lean lacks for them.
-- **Statements**: four statements of the papers had to change, listed in Section 4. E11 of them still awaits the agreement
+  CF-detectable for generic parameters), a hypothesis of `TINNiK.theorem4`, and on the form that ECToBlob's
+  Proposition 5.1 adapts it to, `ECToBlob.AdaptedAllmanTheorem1`, a hypothesis of `ECToBlob.proposition5_1`. Everything else is unconditional, including ECToBlob's Theorem 8.2 and
+  TOB-QMC's consistency claim, which take the papers' own assumptions. Section 2 gives what Lean lacks for the two.
+- **Statements**: the corrections are listed in Section 4 and at the end of Section 6. One of them, E11, still awaits the agreement
   of the user who requested this formalization.
 - `lake build` passes; the only `sorry`s are the statements of `Challenge.lean`, by design. There is no `axiom`, `native_decide`
   or `implemented_by`. `scripts/Audit.lean` checks every declaration of the libraries, including private and generated
@@ -69,7 +70,7 @@ Status of the formalization:
 | The quartet distance is a tree metric with the same topology (TINNiK's Theorem 3) | TINNiK Theorem 4 | Rhodes 2020 | `External.Rhodes2020.theorem2` |
 | Limit law of the likelihood ratio at a cut model | TINNiK Prop. 5 | Mitchell et al. 2019 | `External.MitchellAllmanRhodes2019.cutModel_theorem31`, for this model |
 
-The last row proves the source's conclusion for the model used, by the central limit theorem, not from van der Vaart's Theorem 16.7
+The row on Mitchell et al. proves the source's conclusion for the model used, by the central limit theorem, not from van der Vaart's Theorem 16.7
 (Section 7). The Lean form of exchangeability is on arbitrary networks with inheritance correlation.
 
 ### Assumed (a conditional formalization)
@@ -102,7 +103,7 @@ and `ECToBlob.Assumption1Converse`.
 | --- | --- | --- |
 | Huber et al. Theorem 5.1 | TOB-QMC Lemma 2 | Correct. The source treats binary semi-directed networks; the forward direction needs neither |
 | Ané et al. exchangeability | TOB-QMC Lemma 3, ECToBlob §3, §5 | Correct |
-| Allman et al. Theorem 1 | TINNiK Theorem 4 | Correct, and its use against the centroid was unnecessary (Section 11) |
+| Allman et al. Theorem 1 | TINNiK Theorem 4 | Correct, and its use against the centroid is unnecessary (Section 11) |
 | Allman et al. Theorem 2 | TINNiK Theorem 4 | Applied loosely: E30 |
 | Rhodes 2020 Theorem 2 | TINNiK Theorem 4 | Correct. Pendant edges have weight at least 2 as well |
 | Mitchell et al. Theorem 3.1 | TINNiK Prop. 5 | Correct for fixed φ; the "not too close to the boundary" remark is not needed (E32) |
@@ -131,12 +132,14 @@ occur here. The result holds: the empirical optima lie among the expected ones, 
 the corollary says. Lean: `ECToBlob.corollary3_6`.
 
 **E4. Theorem 4.1, proof.** "The minimality of `|E|` implies that the funnel of `a₁` can only attach to `G̃₃` on the
-`ã₂`-side" is elliptical: it needs the comparability of the sets `E(z, …)` of cut edges for different replacements. The "two
-3-blobs" and "chain of 2-blobs" remarks are not used. The formal proof supplies comparability (`ECToBlob.quartetCutArc_comparable`).
+`ã₂`-side" is elliptical: it needs the comparability of the sets `E(z, …)` of cut edges for different replacements. Going from
+one funnel to all of them at once needs that funnels on opposite sides of an edge share no node, which is true and unstated. The "two
+3-blobs" and "chain of 2-blobs" remarks are not used. The formal proof supplies comparability (`ECToBlob.quartetCutArc_comparable`), and its
+per-taxon domination takes care of the funnels. The result holds.
 
 **E5. Proposition 5.1.** Its proof rests on an adaptation of Allman et al.'s Theorem 1 stated by "checking the argument". This is not
-an error, but the formalization cannot confirm it, and takes it as a hypothesis (Section 2). The formal `ECToBlob.proposition5_1`
-proves the reduction.
+an error, but the formalization cannot confirm it, and takes the generic clause as a hypothesis under the proposition's own degree condition (Section 2). The
+paper's two other facts are proved for every network: `Phylogenetics.NMSC.cut_alternatives`, `Phylogenetics.NMSC.trivial_uniform`.
 
 **E6. Lemma 6.1, proof.** `Bon(P) = km` omits the clipping at one in the paper's definition: `{3/4, 3/4}` gives `Bon = 1`, not
 `3/2`. The inequality needed still holds. Lean: `Phylogenetics.QuartetTests.bonP_le_mul` (name in the library: `bonP_le_mul`).
@@ -146,10 +149,10 @@ can feed `Bon = 1` into it. Lean's total tangent is not a reading of the undefin
 extend `f` continuously at the endpoints. Simultaneous inputs `0` and `1` have no continuous extension, but this case does not
 occur on the lemma's domain: `Bon = 1` forces all inputs positive. Lean: `Phylogenetics.cauchyP`, `ECToBlob.cauchyP_pair_le_max`.
 
-**E8. Lemma 6.1, part 1: the bound.** The printed `B_{Cauchy,k}(η, D)` is claimed non-decreasing in `k`, and is not when `η > D`: at
-`η = 0.9`, `D = 0.1` it is `0.9` at `k = 1` and `0.5` at `k = 2`. It also fails `∼ kη` at `D = 0`, where `f(0) = +∞` makes it `0` for
-`k ≥ 2`. The lemma holds, and the theorem's use is unaffected, since `min(P) ≤ max(P)`. Lean: `ECToBlob.cauchyBound` uses
-the anchor `max(D, η, 1/2)` and equals the printed bound for `η ≤ D`, `D ≥ 1/2` (Section 7).
+**E8. Lemma 6.1, part 1: the bound.** The printed `B_{Cauchy,k}(η, D)` has all the claimed properties on `0 < η ≤ D < 1`, the only region `(min P, max P)` reaches when `min P > 0`, which is where the paper uses it.
+The lemma's statement also covers other points, and there it fails: it is claimed non-decreasing in `k`, and is not when `η > D` (at `η = 0.9`, `D = 0.1` it is `0.9` at `k = 1` and `0.5` at `k = 2`), and it fails `∼ kη` at `D = 0`,
+where `f(0) = +∞` makes it `0` for `k ≥ 2`. No bound agreeing with the printed one for `η ≤ D` can have both properties at `D = 0`, as `ECToBlob/Section6.lean` shows. The lemma holds, by another bound: `ECToBlob.cauchyBound` uses
+the anchor `max(D, η, 1/2)`, and equals the printed bound for `η ≤ D`, `D ≥ 1/2` (Section 7). The theorem's use is unaffected.
 
 **E9. Algorithm 7.1, Step 10.** The late rule needs a convention when no iteration is rejected. Lean chooses the first iteration, which agrees
 with the rule's intent (`Phylogenetics.selectedIteration`).
@@ -182,23 +185,25 @@ trivial 4-blob, for all three quartet types at every stage. Hence also Corollary
 **E13. Theorem 8.2, proof: T1 at the centroid.** "Arguing as for the star test" is not enough: T1 p-values are not asymptotically uniform at the centroid (the paper's own
 line 1017 notes this), so Lemma 8.1 does not apply there. Repaired by tightness (`Phylogenetics.QuartetTests.t1PValue_centroid_tight`) and a union bound.
 
-**E14. Theorem 8.2, proof: slack at the threshold.** `B(η_n, 1-δ) ∼ β_n` does not give `< β_n`. Repaired with a constant: `η_n = c₀ · level` (`ECToBlob.exists_combineBounds`). Only
-`b_n = o(n)` is used, not `b_n ∼ log n`, and the asymptotic of `α_n` is unused.
+**E14. Theorem 8.2, proof: the threshold.** `B(η_n, 1-δ) ∼ β_n` does not give `< β_n`. Repaired with a constant: `η_n = c₀ · level` (`ECToBlob.exists_combineBounds`). Only
+`b_n = o(n)` is used, not `b_n ∼ log n`, and the asymptotic of `α_n` is unused. "An individual p-value is below `η_n` exactly when the test statistic is above `b_n`" holds for the star test, whose test law is fixed, and "the T1 tests are handled similarly" does not carry it over:
+the T1 law depends on an estimated `μ`. Lean bounds the T1 p-value by the `χ²₂` tail at the statistic (`Phylogenetics.QuartetTests.t1Tail_le_chiSqTwoTail`).
 
-**E15. Theorem 8.2, proof: bounds on the combined p-values.** "In `(α_n, 1-δ)`" is false for Bon on the upper side (`{3/4, 3/4}` gives 1), and individual p-values `≤ 1-δ` is false when alternatives vanish (E11). Only the
-lower bounds are needed for Bon and BBC. Lean uses `ECToBlob.minP_le_combineP` and `ECToBlob.combineP_le_two_mul` for these two, and Lemma 6.1 for Cauchy and CBC.
+**E15. Theorem 8.2, proof: bounds on the combined p-values.** "In `(α_n, 1-δ)`" is false on the upper side for Bon, BBC and CBC, even with positive alternatives: `Bon({3/4, 3/4}) = 1`, and then `BBC` and `CBC` are `1`. Individual p-values `≤ 1-δ` is false when alternatives vanish (E11). Only the
+lower bounds are needed, and the upper individual bounds only for Cauchy and CBC. Lean uses `ECToBlob.minP_le_combineP` and `ECToBlob.combineP_le_two_mul` for Bon and BBC, and Lemma 6.1 for Cauchy and CBC.
 
 **E16. Theorem 8.2, proof: intermediate trees.** The bounds `ε/(2s)` are per edge, but for type `mul` an edge's quartets depend on the random current tree `T_k`, so the union must
-run over all states the algorithm could visit. The formal proof uses one event per quartet (`ECToBlob.Deterministic.Run`), and then a deterministic argument.
+run over all states the algorithm could visit. Likewise "our prior choice of `M`" does not cover the sets that the overall `p_k` uses. The formal proof uses one event per quartet (`ECToBlob.Deterministic.Run`), and then a deterministic argument.
 
-**E17. Theorem 8.2, proof: Step 3.** "`T_{k₁}` is obtained from `T₀` by contracting precisely those edges that resolve multifurcations" is imprecise: a false edge with a
-non-uniform quartet survives Step 3. The code proves what is needed: `T_B` is kept and each kept edge has a non-uniform quartet.
+**E17. Theorem 8.2, proof: Step 3.** "`T_{k₁}` is obtained from `T₀` by contracting precisely those edges that resolve multifurcations" is false as written: on a 4-cycle, `ab|cd` resolves a multifurcation of the tree of blobs and survives Step 3, since its quartet is not uniform. The formal
+proof shows what is needed: `T_B` is kept and each kept edge has a non-uniform quartet (`ECToBlob.Deterministic.Run.treeOfBlobs_subset_afterStar`, `ECToBlob.Deterministic.Run.exists_not_uniform`).
 
 ### TOB-QMC, main text (v5)
 
-**E18. Lemma 3, proof.** The result holds; the steps below are repaired in `TOBQMC.lemma3_of_properties`, `TOBQMC.lemma3`.
+**E18. Lemma 3, proof.** The result holds; the steps below are repaired in `TOBQMC.lemma3_of_properties`, `TOBQMC.lemma3`, and in the proof of exchangeability.
 
-- Lines 450–451: "uniquely maximized by `T_N`" is wrong: every refinement of `T_N` ties (`Phylogenetics.quartetPart_of_displays`); (2) only compares with non-refinements.
+- Lines 449–451: "uniquely maximized by `T_N`" is wrong: every refinement of `T_N` ties (`Phylogenetics.quartetPart_of_displays`); (2) only compares with non-refinements. The strictness of (2) needs that a non-refinement differs from `T_N` on some T-quartet, so that displayed quartets determine splits (`Phylogenetics.subset_of_forall_displays`).
+- Lines 467–471: "only after the four sampled lineages enter this blob can they coalesce" is false for the block containing the root: the three other lineages can coalesce inside the blob and then leave upward. The conclusion holds for a different reason: a pair that coalesces first decides the quartet whichever taxon is above, and if all three leave uncoalesced the three quartet trees are equally likely. `Phylogenetics.NMSC.exchangeability` treats both cases.
 - Lines 472–486: framed as a contradiction, but it is a direct transformation of any maximizer. The reasons (i), (ii) justify `QS^v(new) = QS^v - QS^{v(b)} + QS^{v(a)}`, not the printed equality with `QS^v(T*)`; quartets without `b`
   are unaffected, and those with `b` read as the same with `a`, because `b` is now sister to `a`. These last facts are unstated, and the case `QS^{v(a)} > QS^{v(b)}` cannot occur at a maximizer.
 - Line 485, "Repeating": needs three unstated facts: detaching `b` leaves the partial scores of the block's other taxa unchanged, so `a` stays best; the block side grows step by step; and earlier block sides
@@ -210,7 +215,7 @@ non-uniform quartet survives Step 3. The code proves what is needed: `T_B` is ke
 **E19. Lemma 4, proof of ⇒ (lines 551–556).** It does not treat two or more taxa below `v_h`. They lie in one block, a fact stated only in the proof of Corollary 1, so distinct blocks exclude this case.
 Lean: `TOBQMC.Level1.blockWalk_of_below_reticulation`. The result holds.
 
-**E20. Corollary 1, proof (line 568).** "Each side contains at least two blocks (otherwise `B_N` is not binary)" gives the wrong reason: a side with one block is a cut side, so the edge would be in the tree of blobs. Binary `B` is not needed. The result holds.
+**E20. Corollary 1, proof (lines 563, 568).** "Each side contains at least two blocks (otherwise `B_N` is not binary)" gives the wrong reason: a side with one block is a cut side, so the edge would be in the tree of blobs. Binary `B` is not needed. "By the setting" also needs `e ∉ T_N`, for the same reason (`TOBQMC.Level1.exists_not_isTreelike`). The result holds.
 
 **E21. Consistency (lines 597–600).** The paper cites TINNiK's Theorem 4 as stating that the tests are correct on all four-taxon subsets. Its statement is about the algorithm's output, and this fact is a step of its proof,
 for generic parameters at `ρ = 0`. It also fails under v5's assumptions: at parameters where a treelike subset has the centroid CF (E28), the test answers wrongly there. The claim holds anyway, under v5's own assumptions:
@@ -226,7 +231,7 @@ Theorem 1's almost-sure "for all large `k`" to probability tending to one is uns
 a five-leaf star as tree of blobs, while its restriction to `{e,a,b,c}` displays `ab|ce` (`scripts/SunletCheck.lean`). The proof of the converse in fact reproves the contrapositive of the forward direction. Main v5 keeps only the forward direction, as does Lean (`TOBQMC.lemma2`). Agreed with the user.
 
 **E24. Lemma 4, proof.** Strict coordinate errors are weakened to non-strict bounds, after which strict positivity is claimed at the boundary radius; keeping them strict repairs this at the same radius. Equations (6)–(7) must cancel agreeing quartet
-terms before identifying the sums. The final display has `2|Y_tree|δ` for `2|Y_star|δ`. Lean: `TOBQMC.supplementLemma4`.
+terms before identifying the sums. The final display has `2|Y_tree|δ` for `2|Y_star|δ`. `B*` is "some tree that maximizes `QS_E`", and then `QS_E^star(B*) ≥ QS_E^star(T)` is taken from Lemma 5, which gives this for the constructed tree; it holds for any maximizer, since the constructed tree attains both maxima, but that needs saying. Lean: `TOBQMC.supplementLemma4`.
 
 **E25. Lemma 7 and Theorem 1 at arbitrary level: false.** The supplement's claims extend to networks of arbitrary level that a disjoint cover finds a non-treelike quartet around every false edge. On the binary level-2 network with arcs `(0,2),(1,3),(1,4),(3,6),(2,8),(6,9),(6,10),(9,12),(2,13),(13,7),(3,14),(14,5),(13,14),(0,15),(15,1),(9,16),(16,11),(15,16)`,
 leaves `4,5,7,8,10,11,12`, the 3-fix-1-alter cover with blocks `{10},{7},{4,5,8},{11,12}` and anchors `10,7,8,12` has every quartet treelike, though the edge is false. Main v5 restricts Theorem 2 to level 1, so this is consistent with it. Whether a *full* oracle on all quartets around an edge suffices beyond level 1 is open (Section 11).
@@ -248,8 +253,8 @@ This needs a stronger rule than the printed one. It holds by the same proof, bec
 
 **E32. Proposition 5, proof.** "Assuming `θ₀` is not too close to the boundary … dependent on the sample size" is informal and not needed for fixed `φ₀`. The result holds as stated.
 
-**E33. Theorem 4, proof.** For anomalous strictly cut CFs `μ₀ → -∞`, so the statement needed is `|μ₀| → ∞`. Convergence in distribution alone does not justify the comparison at thresholds moving with the sample, for a test law also moving with the estimate. Repaired by the pointwise domination of the test
-distribution by `Z²`: `Phylogenetics.QuartetTests.cutTest_alternative`, `Phylogenetics.QuartetTests.cutTest_null`.
+**E33. Theorem 4, proof.** "The test distribution converges to `χ²₁`" gives no comparison at levels `α_m → 0`, nor at cutoffs `m d/2` growing with `m`. The same sentence says that `μ₀ → ∞`, where anomalous strictly cut CFs have `μ₀ → -∞`. "Without loss of generality the MLE is on the vertical line" hides that
+the fitted line is random and `d` depends on it. The result holds. Repairs: under the alternative, the test distribution is pointwise at most that of `Z²`, and the least limit over the three lines gives one `d` (`Phylogenetics.QuartetTests.cutTest_alternative`, `Phylogenetics.QuartetTests.cutTail_le_chiSqOneTail`); under the null, a uniform lower bound on the test law replaces the limit (`Phylogenetics.QuartetTests.cutTest_null`).
 
 ### Typos
 
@@ -258,7 +263,10 @@ distribution by `Z²`: `Phylogenetics.QuartetTests.cutTest_alternative`, `Phylog
 - ECToBlob, proof of Corollary 4.3: `∪_{j′≠i} B_{j′}` should be `∪_{j′≠j} B_{j′}`.
 - ECToBlob, §7: "Theorem 3.6" for Corollary 3.6; §10: "Theorem 4.2 and Theorem 4.3" for Corollaries.
 - TOB-QMC, line 449: `QS^tree(T|N)` for `QS^tree(T_N)`. Lines 455, 459: `Pᵢ ≠ Pⱼ ≠ Pₛ ≠ Pₜ` must mean pairwise distinct. Line 462: `∪∪ Y` gives taxa, not 4-subsets: should be the union of `f_cover(P)`.
+- TOB-QMC, line 535: `Z|Y` for `Z|W`.
+- TINNiK, Appendix C: `Λ̃_n` for Proposition 5's `Λ_n`.
 - Allman et al. 2023, proof of Lemma 3: "`N \ {e0}`" for `N′`, "`Kbc`" for `K_cd` (possibly an artifact of the text extraction).
+- Mitchell et al. 2019: "Proposition 16.7" for van der Vaart's Theorem 16.7, in one place.
 
 ## 4. Missing hypotheses
 
@@ -276,10 +284,11 @@ The Lean statements leave these out, except in `Challenge.lean`, which keeps the
 | Result | Hypothesis that is not needed | Why | Lean |
 | --- | --- | --- | --- |
 | ECToBlob Theorem 4.1 | `A₁ ∩ A₂ = ∅`, `B₁ ∩ B₂ = ∅` | Only `A ∩ B = ∅` and the cover are used | `ECToBlob.theorem4_1` |
+| ECToBlob Proposition 5.1, forward clauses | Degree 2 or 3 in blobs; binary | Exchangeability holds on every network | `ECToBlob.proposition5_1`, where the condition enters only through the assumed clause |
 | ECToBlob (3.3) | Nonempty blocks | | `ECToBlob.equation3_3` |
 | TOB-QMC Lemma 4 | That `B` is a tree, refines `T_N`, that `A` is an internal side and is not in `T_N` | Only `RefinesBlob` is used | `TOBQMC.lemma4` |
 | TOB-QMC Corollary 1, Theorem 2 | `B` binary | | `TOBQMC.corollary1`, `TOBQMC.theorem2` |
-| TINNiK Theorem 4 | `0 ≤ δ` | The filter uses only `δ < 2`. Also, "binary" is needed only for the hypothesis `Corollary1` to hold | `TINNiK.theorem4_of_detectable`, `TINNiK.theorem4` |
+| TINNiK Theorem 4 | `0 ≤ δ` | The filter uses only `δ < 2`. Also, "binary" is needed only for the hypothesis `Corollary1` to hold | `TINNiK.theorem4_of_rejects`, `TINNiK.theorem4` |
 | Allman et al. Theorem 2 | Binary network | | `External.AllmanEtAl2023.theorem2` |
 | Huber et al. Theorem 5.1, forward | Binary | | `External.HuberEtAl2025.theorem5_1_forward` |
 
@@ -298,7 +307,7 @@ The Lean statements leave these out, except in `Challenge.lean`, which keeps the
 - **`CutExchangeable`** is the form in which ECToBlob's Theorem 3.1 uses its condition 2; `ECToBlob.pendantChainInvariant_cutExchangeable` derives it from the literal form.
 - **Parameters**: `MetricData` has lengths on all arcs and hybridization parameters; `IsMetric` requires positivity on tree edges, and `γ` strictly between 0 and 1 where a reticulation has two parents.
 - **Assumption 6a** of TOB-QMC is the hypothesis `hBlob` of `TOBQMC.consistency`.
-- **TINNiK Theorem 4** is stated for one level sequence `α_m = P(χ²₁ > log m)`, independent of the network and parameters. This is stronger than the printed "there exists a sequence", as ECToBlob's Remark 8.3 says.
+- **TINNiK Theorem 4**: `TINNiK.theorem4` uses the paper's levels (`TINNiK.exists_levels`), which depend on unknown limits. `TINNiK.theorem4_explicit` also proves it for one sequence `α_m = P(χ²₁ > log m)`, independent of the network and parameters, as ECToBlob's Remark 8.3 suggests.
 - **Lemma 8.1** of ECToBlob is proved for functions of iid finite samples, with `δ` chosen first. This is the form its use needs, and is stronger in the order of quantifiers.
 
 Corrections of statements, listed here for reference: E2 (3.3); E10 and E11, Theorem 8.2; E23, E26, supplement results; E31, TINNiK's MLE.
@@ -307,16 +316,18 @@ Corrections of statements, listed here for reference: E2 (3.3); E10 and E11, The
 
 | Result | The paper's argument | The formalization's | Why it is necessary | E-item |
 | --- | --- | --- | --- | --- |
-| ECToBlob Theorem 3.1 | Local objective `f̃_m`; (3.3) | Weighted by the block sizes | Gap: (3.3) is false | E2 |
+| ECToBlob Theorem 3.1 | Local objective `f̃_m`; (3.3) | Weighted by the block sizes. The paper's side claims on the form of all maximizers (lines 497–500, 504–507) are not formalized: the statement doesn't ask for them | Gap: (3.3) is false | E2 |
 | ECToBlob Corollary 3.6 | Equal sets of optima | Containment, by the gap to non-maximizers | Gap | E3 |
 | ECToBlob Lemma 6.1, part 1 | Cauchy bound anchored at `D` | Anchored at `max(D, η, 1/2)`, zero for `η ≤ 0` | Gap: the statement includes `D = 0` and `η > D` | E8 |
-| ECToBlob Theorem 8.2 | Per-edge bounds; witness from Corollaries 4.2, 4.3; Lemma 8.1 per edge; `B ∼ β_n` | Per-quartet events; `falseEdge_witness`; Lemma 8.1 once, jointly; a constant `c₀`; tightness at the centroid; degenerate null handled separately | Gaps | E12–E17 |
-| TOB-QMC Lemma 3 | Contradiction, on "the tree after removing all but one taxon per block" | Direct, on all of `X`, for quartets in distinct blocks of the maximizer | Gap (lines 472–486), representation | E18 |
-| TOB-QMC Lemma 4, ⇐ | Exhibits the suppressed semi-directed `N\|Y` by wedge paths | Shows no arc of the rooted induced subgraph separates two taxa from two others | Representation: treelikeness is a statement on the rooted induced subgraph, and wedge paths have no counterpart | — |
+| ECToBlob Proposition 5.1 | Adapts Allman et al.'s Theorem 1 | The generic clause is a named hypothesis; the other two facts are proved | Lean lacks the analytic parametrization | E5 |
+| ECToBlob Theorem 8.2 | Per-edge bounds; witness from Corollaries 4.2, 4.3; Lemma 8.1 per edge; `B ∼ β_n`; T1 threshold "exactly when"; Step 3 "precisely"; bounds `(α_n, 1-δ)` | Per-quartet events; `falseEdge_witness`, without Corollary 4.2; Lemma 8.1 once, jointly; a constant `c₀`; tightness at the centroid; the `χ²₂` bound for T1; a weaker Step 3 claim; only the lower bounds, and degenerate nulls separately | Gaps. Each of these steps fails or does not cover the case | E11–E17 |
+| TOB-QMC Lemma 3 | Contradiction (lines 472–486); the tree on one taxon per block is binary, a refinement's gain "amplified after reattaching" (lines 489–492) | Direct transformation; the maximizer resolves every 4-taxon set in distinct blocks, on all of `X`. No restriction or reattachment | Gap, for the first; representation, for the second: trees are split families on `X`, and "binary after restriction" translates to the claim on 4-sets | E18 |
+| TOB-QMC Lemma 4 | ⇐: exhibits the suppressed semi-directed `N\|Y` by wedge paths. ⇒, distinct blocks: one wedge path per pair, and the split read off their order | ⇐: no arc of the rooted induced subgraph separates two taxa from two others. ⇒: descends from the top of the blob to an arc with exactly two taxa below | Representation: treelikeness is a statement on the rooted induced subgraph, and wedge paths have no counterpart | E19 |
 | TOB-QMC consistency | Cites correctness on all subsets | Only the subsets that matter | Gap: false at some parameters allowed by the printed assumptions | E21 |
+| TOB-QMC supplement Lemma 4 | Margin from all three differences; strictness dropped, then claimed | Margin against the displayed quartet; strict bounds | Gap | E22, E24 |
 | TINNiK Proposition 5 | From Mitchell et al. Theorem 3.1 (van der Vaart 16.7) | Direct CLT for this model; projections and minimum as the paper | Lean lacks differentiability in quadratic mean, local asymptotic normality, MLE consistency | — |
-| TINNiK Proposition 6 | Polar coordinates, differentiating under the integral; a second rotated figure for `G₄, G₅` | Rotated Cartesian coordinates and Fubini; `R₄, R₅, R₆` by reflection | Cartesian and Fubini: Lean's Gaussian integrals in polar form with moving regions would need changing-variables results not available in this shape. The six strips, `G = 2 Σ Gᵢ` and the formula are the paper's | — |
-| TINNiK Theorem 4 | Centroid excluded by analyticity of the NMSC parametrization | From CF-detectability directly | Lean lacks that parametrization; a simpler argument exists (Section 11) | — |
+| TINNiK Proposition 6 | Polar coordinates, differentiating under the integral; a second rotated figure for `G₄, G₅` | Rotated Cartesian coordinates and Fubini; `R₄, R₅, R₆` by reflection | Not forced, and listed for completeness: this is how the integrals are computed, a matter of mechanics. Mathlib has polar coordinates. The six strips, the intermediate `d/dx Gᵢ`, `G = 2 Σ Gᵢ` and the formula are the paper's | — |
+| TINNiK Theorem 4 | Centroid excluded by analyticity of the NMSC parametrization; the test law's limit `χ²₁` | From CF-detectability directly; a pointwise upper bound by `Z²` under the alternative, and a uniform lower bound under the null | Lean lacks the parametrization (a simpler argument exists: Section 11). The limit gives no comparison at moving levels: a gap | E33 |
 | Allman et al. Lemma 3 (cited) | A cycle through `A, K_ab, e₀, K_cd` | Domination, comparing arcs by `order_of_isBelow_of_dominates` | Representation: components have no direct counterpart; result cited | — |
 | Rhodes 2020 Theorem 2 (cited) | Sum over nodes on the `x`–`y` path | Double count over path edges | Representation: trees are split families | — |
 
@@ -336,8 +347,9 @@ The route check (`scripts/route_check.py check docs/paper_routes.tsv --accept do
 - Neighbor joining: TINNiK's Theorem 4 is proved for any exact builder (`Phylogenetics.IsExactBuilder`), and such a builder exists; that NJ is one is standard (Atteson 1999), and is not formalized.
 - The T3 test option of TOB-QMC (assumption 6b), and TOB-QMC's treelikeness oracle with the T3 test.
 - That TREE-QMC's or ASTRAL's heuristic finds an optimum: `TOBQMC.astral_corollary` assumes the search space fills up with gene tree bipartitions as in the paper; `TOBQMC.consistency` takes any exact solver.
-- ECToBlob's Remark 8.3 as a theorem for NANUQ (its TINNiK part is `TINNiK.theorem4`), Remark 8.4 (coarsening), §10's discussions.
-- TOB-QMC's supplement Lemmas 7 and Theorem 1 at arbitrary level, which are false (E25); at level 1 they are Lemma 4 and Theorem 2.
+- ECToBlob's side claims in the proof of Theorem 3.1 on the form of all maximizers (lines 497–500, 504–507); Remark 8.3 as a theorem for NANUQ (its TINNiK part is `TINNiK.theorem4_explicit`); Remark 8.4 (coarsening); §10's discussions.
+- TOB-QMC's Lemma 1 (cited, used in no proof) and its supplement's Lemma 8 (not needed for the level-1 arguments, which use `TOBQMC.Level1.exists_reticulation_or_forall_isBridge`).
+- TOB-QMC's supplement Lemma 7 and Theorem 1 at arbitrary level, which are false (E25); at level 1 they are Lemma 4 and Theorem 2.
 - Allman et al. 2023's Theorem 1 and Corollary 1 (assumed).
 
 ## 10. The papers in the literature

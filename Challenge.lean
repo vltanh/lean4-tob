@@ -254,7 +254,7 @@ def InducedCutSplit (s : QuartetTree X) : Prop :=
   ∃ B ∈ s.val, N.HasCutSplitOn (s.taxa : Set X) (B : Set X)
 
 /-- The network induced on the taxa `q` has a nontrivial cut-edge split: it is *treelike* in the
-sense of TOB-QMC §1 and has no 4-blob. Its negation is the oracle's "non-treelike". -/
+sense of TOB-QMC §4.1 and has no 4-blob. Its negation is the oracle's "non-treelike". -/
 def IsTreelike (q : Finset X) : Prop :=
   ∃ s ∈ treesOn q, InducedCutSplit N s
 
@@ -560,7 +560,7 @@ def treeSeq (i : ℕ) : Finset (Finset X) :=
 def lastIteration : ℕ := sInf {i | internalSides (treeSeq o β c T₀ i) = ∅}
 
 /-- Step 10: the selected iteration. The late rule selects the iteration after the last p-value below
-`α`, and the first iteration if there is none (the implementation's convention, E6 of the report). -/
+`α`, and the first iteration if there is none (the implementation's convention, E9 of the report). -/
 def selectedIteration : ℕ :=
   match o.rule with
   | .early => sInf {i | i ≤ lastIteration o β c T₀ ∧ α ≤ treeT1P o c (treeSeq o β c T₀ i)}
@@ -734,7 +734,7 @@ open Phylogenetics Phylogenetics.RootedNetwork
 
 variable {V E X : Type*} [Fintype X] [DecidableEq X]
 
-/-- The standard assumptions of TOB-QMC §1 (conditions 1–3): a binary network, positive tree edge
+/-- The standard assumptions of TOB-QMC §2.1 (conditions 1–3): a binary network, positive tree edge
 lengths, nonnegative reticulation edge lengths, and inheritance proportions in `(0,1)` summing to
 one at each reticulation; with the inheritance correlation in `[0,1]`. -/
 structure StandardAssumptions [Fintype E] (N : RootedNetwork V E X) (θ : MetricData E) (ρ : ℝ) :

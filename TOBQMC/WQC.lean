@@ -182,30 +182,6 @@ theorem equation3 {TN : Finset (Finset X)} (hTN : IsUnrootedTree TN) (F : Quarte
   · rw [sum_eq_zero fun P _ => ite_eq_right fun h => hD h.2]
     simp only [hD, and_false, ↓reduceIte]
 
-/-- The partial score of Equation (4), `vertexTaxonPart`: summing it over all taxa counts each 4-taxon set
-four times. -/
-theorem equation4 (P : Finset (Finset X)) (F : QuartetTree X → ℝ) (t : Finset (Finset X)) :
-    ∑ x, vertexTaxonPart P x F t = 4 * vertexPart P F t := by
-  simp only [vertexTaxonPart, vertexPart]
-  rw [sum_comm, mul_sum]
-  refine sum_congr rfl fun s _ => ?_
-  by_cases hID : InDistinctBlocks P s.taxa ∧ Displays t s
-  · have hstep : ∀ x : X, (if InDistinctBlocks P s.taxa ∧ x ∈ s.taxa ∧ Displays t s then F s else 0) =
-        if x ∈ s.taxa then F s else 0 := by
-      intro x
-      by_cases hx : x ∈ s.taxa
-      · simp only [hID.1, hID.2, hx, and_self, ↓reduceIte]
-      · simp only [hx, false_and, and_false, ↓reduceIte]
-    have e1 : (InDistinctBlocks P s.taxa ∧ Displays t s) = True := eq_true hID
-    simp only [hstep]
-    simp only [e1, ↓reduceIte]
-    rw [sum_ite_mem, univ_inter, sum_const, s.card_taxa]
-    simp
-  · rw [sum_eq_zero fun x _ => ite_eq_right fun h => hID ⟨h.1, h.2.2⟩]
-    simp only [hID, ↓reduceIte, mul_zero]
-
-/-! ### The blob `v` part: detaching and reattaching taxa of a block -/
-
 section DetachScore
 
 variable {P : Finset (Finset X)} {B₀ : Finset X} {a b : X}
@@ -538,7 +514,14 @@ the proof uses:
 there is a binary refinement `B` of the tree of blobs that maximizes the star part and the tree part of
 the score over binary trees, and has a larger score than every binary tree not refining the tree of
 blobs. The compatibility supertree of the paper's lines 497-498 (Warnow, Chapters 3, 7: compatible
-splits have a common refinement) is `splice`, by `splice_isUnrootedTree`. -/
+splits have a common refinement) is `splice`, by `splice_isUnrootedTree`.
+
+Departure from the paper, in the second observation (lines 489-492): the paper says that the tree on one taxon per
+block is binary, and that a refinement's gain "would be amplified after reattaching". Trees here are split families on all of `X`, so the
+formal claim is the translation of the first part, that the maximizer resolves every 4-taxon set in distinct blocks
+(`displays_of_vertex_maximizer`), and no restriction or reattachment occurs: a refinement resolving a further such set has a larger score
+on `X` directly. The strictness of the paper's (2) needs that the quartets a tree displays determine its splits
+(`subset_of_forall_displays`). -/
 theorem lemma3_of_properties {V E : Type*} {N : RootedNetwork V E X} (hN : N.IsPhylogenetic)
     {F : QuartetTree X → ℝ} (hF : ∀ s, 0 < F s) (hEx : CutExchangeable N F)
     (hNon : IsTQuartetNonanomalous N F) (hX : 4 ≤ Fintype.card X) :
@@ -608,14 +591,14 @@ theorem lemma3 [Fintype V] [Fintype E] {N : RootedNetwork V E X} {θ : MetricDat
     (External.AneEtAl2024.exchangeability hStd.phylogenetic hStd.metric hStd.rho) hNon hX
   exact ⟨B, hB, hBT, hlt⟩
 
-/-- The margin `π` of the perturbation lemma: the least difference, over the 4-taxon sets that `T_N`
-resolves, between the concordance factor of the quartet tree `T_N` displays and those of the
-alternatives. E12 of the report: the printed "minimum of all differences" can vanish. -/
+/-- `π` is a margin of the perturbation lemma: a lower bound, over the 4-taxon sets that `T_N`
+resolves, on the differences between the concordance factor of the quartet tree `T_N` displays and those of the
+alternatives. E22 of the report: the printed "minimum of all differences" can vanish. -/
 def Margin (N : RootedNetwork V E X) (F : QuartetTree X → ℝ) (π : ℝ) : Prop :=
   ∀ s, Displays (treeOfBlobs N) s → ∀ r ∈ s.alternatives, π ≤ F s - F r
 
-/-- **Supplement, Lemma 4** (`tob2025:supplement_lemma4`), with the corrected margin (E12) and strict
-bounds (E13). If all the errors of the weights `w` are below `π / (2 |f₄(S)|)`, the score of a
+/-- **Supplement, Lemma 4** (`tob2025:supplement_lemma4`), with the corrected margin (E22) and strict
+bounds (E24). If all the errors of the weights `w` are below `π / (2 |f₄(S)|)`, the score of a
 refinement `B` maximizing the star part exceeds that of every binary tree not refining `T_N`. The proof
 is the supplement's: quartets on which the two trees agree cancel, the tree part gains more than
 `|Y_tree| (π - 2δ)` (its (5), strict since `Y_tree` is not empty), the star part loses at most
@@ -661,7 +644,7 @@ theorem supplementLemma4 {V E : Type*} {N : RootedNetwork V E X} (hN : N.IsPhylo
       (∀ r ∈ treesOn q, ¬ Displays TN r) ∧ sT q ≠ sB q := ⟨_, fun _ => Iff.rfl⟩
   let Ytree := f4.filter Pt
   let Ystar := f4.filter Ps
-  -- agreeing quartets cancel (E13)
+  -- agreeing quartets cancel (E24)
   have htree : ∀ w' : QuartetTree X → ℝ, treePart TN w' B - treePart TN w' T =
       ∑ q ∈ Ytree, (w' (sB q) - w' (sT q)) := by
     intro w'
@@ -708,7 +691,7 @@ theorem supplementLemma4 {V E : Type*} {N : RootedNetwork V E X} (hN : N.IsPhylo
     rw [hsb]
     intro he
     exact hnot (he ▸ hdT _ hq)
-  -- Equation (5), with the strict inequality of E13
+  -- Equation (5), with the strict inequality of E24
   have h5 : (Ytree.card : ℝ) * (π - 2 * δ) < treePart TN w B - treePart TN w T := by
     rw [htree w]
     have : ∑ _q ∈ Ytree, (π - 2 * δ) < ∑ q ∈ Ytree, (w (sB q) - w (sT q)) := by

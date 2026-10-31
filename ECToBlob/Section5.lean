@@ -74,6 +74,11 @@ def Assumption1 (model : MetricData E → QuartetTree X → ℝ) : Prop :=
 
 variable {N}
 
+/-- Vertices in a non-trivial blob have degree two or three. The blob of `v` is the set of vertices joined
+to it by a walk of arcs that are not bridges; it is non-trivial when it contains another vertex. -/
+def BlobDegreeAtMostThree (N : RootedNetwork V E X) : Prop :=
+  ∀ v w : V, v ≠ w → TOBQMC.SameBlob N v w → N.graph.indegree v + N.graph.outdegree v ≤ 3
+
 /-- **Assumed result: the adaptation of Theorem 1 of Allman et al. 2023 in ECToBlob's proof of Proposition
 5.1**, for a network whose vertices in non-trivial blobs have degree two or three, under the NMSC with
 independent inheritance: for parameters outside a null set of ECToBlob's measure, an induced network without a
@@ -81,7 +86,7 @@ cut-edge split and without a trivial 4-blob has three distinct probabilities ("c
 that generically, no two gene quartet probabilities are equal"). The paper's other two facts for this proof are
 proved: `NMSC.cut_alternatives`, `NMSC.trivial_uniform`. -/
 def AdaptedAllmanTheorem1 (N : RootedNetwork V E X) : Prop :=
-  IsNullParams N {θ | N.IsMetric θ ∧ ∃ q : Finset X, q.card = 4 ∧
+  BlobDegreeAtMostThree N → IsNullParams N {θ | N.IsMetric θ ∧ ∃ q : Finset X, q.card = 4 ∧
     ¬ IsTreelike N q ∧ ¬ HasTrivialFourBlob N q ∧
     ¬ ∀ r ∈ treesOn q, ∀ r' ∈ treesOn q, r ≠ r' → nmscCF N θ 0 r ≠ nmscCF N θ 0 r'}
 
@@ -89,11 +94,6 @@ def AdaptedAllmanTheorem1 (N : RootedNetwork V E X) : Prop :=
 cut-edge split, the quartet tree of the split is more probable than its alternatives. -/
 def NoAnomalousQuartets (N : RootedNetwork V E X) (p : QuartetTree X → ℝ) : Prop :=
   ∀ s, InducedCutSplit N s → ∀ r ∈ s.alternatives, p r < p s
-
-/-- Vertices in a non-trivial blob have degree two or three. The blob of `v` is the set of vertices joined
-to it by a walk of arcs that are not bridges; it is non-trivial when it contains another vertex. -/
-def BlobDegreeAtMostThree (N : RootedNetwork V E X) : Prop :=
-  ∀ v w : V, v ≠ w → TOBQMC.SameBlob N v w → N.graph.indegree v + N.graph.outdegree v ≤ 3
 
 /-- A quartet tree `s` and another tree `r ≠ s` on the same taxa: `r` is an alternative of `s`. -/
 private theorem mem_alternatives {s r : QuartetTree X} (h : r.taxa = s.taxa) (hne : r ≠ s) :
@@ -106,9 +106,9 @@ private theorem mem_treesOn_taxa (s : QuartetTree X) : s ∈ treesOn s.taxa := b
 
 /-- **Proposition 5.1** (`ecto:prop5_1`), conditional on `AdaptedAllmanTheorem1`. Let `N`
 be a rooted network whose vertices in non-trivial blobs have degree two or three. Then Assumption 1 holds under
-the NMSC, for the numerical parameters with no anomalous quartets. The degree condition is used only through
-the hypothesis, which the source's proof gives under it, so it is not a hypothesis here. -/
-theorem proposition5_1 {N : RootedNetwork V E X} (hN : N.IsPhylogenetic)
+the NMSC, for the numerical parameters with no anomalous quartets. The forward direction holds for every network;
+the degree condition is used only through the assumed result, which claims the generic clause under it. -/
+theorem proposition5_1 {N : RootedNetwork V E X} (hN : N.IsPhylogenetic) (hdeg : BlobDegreeAtMostThree N)
     (hA : AdaptedAllmanTheorem1 N) :
     (∀ θ, N.IsMetric θ → NoAnomalousQuartets N (nmscCF N θ 0) →
       Assumption1Forward N (nmscCF N θ 0)) ∧
@@ -118,7 +118,7 @@ theorem proposition5_1 {N : RootedNetwork V E X} (hN : N.IsPhylogenetic)
   refine ⟨fun θ hθ hano => ⟨fun q hq ht => NMSC.trivial_uniform hN hθ hρ q hq ht,
     fun s hs => ⟨hano s hs, NMSC.cut_alternatives hN hθ hρ s hs⟩⟩, ?_⟩
   intro d hd
-  refine measure_mono_null ?_ (hA d hd)
+  refine measure_mono_null ?_ (hA hdeg d hd)
   rintro x ⟨hval, hθ, hano, hnot⟩
   refine ⟨hval, hval, ?_⟩
   -- A parameter failing a converse has a set of four taxa as in the hypothesis.

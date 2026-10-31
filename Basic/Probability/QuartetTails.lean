@@ -651,7 +651,7 @@ theorem chiSqTwoTail_log (n : ℕ) (hn : 0 < n) :
 
 /-- The cut test on a non-cut, positive concordance factor: for each `b_n = o(n)`, whatever the fitted
 line, the p-value is eventually below the `χ²₁` tail at `b_n`, by the domination of the test
-distribution by `Z²`. (TINNiK's proof of Theorem 4, repaired: E10 of the report.) -/
+distribution by `Z²`. (TINNiK's proof of Theorem 4, repaired: E33 of the report.) -/
 theorem cutTest_alternative (hd : IsDist dist) {q : Finset X}
     (hq : q.card = 4) (hnc : ∀ r ∈ treesOn q, ∀ r' ∈ treesOn q, r ≠ r' →
       displayCF dist sides r ≠ displayCF dist sides r') :

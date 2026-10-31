@@ -9,11 +9,13 @@ public import Mathlib.Analysis.SpecialFunctions.Trigonometric.ArctanDeriv
 
 Lemma 6.1. The combination methods are defined in `Basic/Phylogenetics/Defs.lean`.
 
-Departure from the paper, in the bound for the Cauchy combination: `max(D, η, 1/2)` replaces the
-paper's `D`. The printed `f⁻¹(((k-1) f(D) + f(η))/k)` is not non-decreasing in `k` for `η > D`, and no
+Departure from the paper, in the bound for the Cauchy combination (E8 of the report): `max(D, η, 1/2)` replaces the
+paper's `D`. The printed `f⁻¹(((k-1) f(D) + f(η))/k)` has the properties the lemma claims on `0 < η ≤ D < 1`, the only
+region `(min P, max P)` reaches when `min P > 0`, and that is where the paper uses it. But the lemma's statement
+also covers `D = 0` and `η > D`. The printed bound is not non-decreasing in `k` for `η > D`, and no
 bound agreeing with it for `η ≤ D` can have both properties the lemma claims at `D = 0`: it would equal
 `η` at `D = η`, and so, being non-decreasing in `D`, would be at most `η` at `D = 0`, where the claim
-is `∼ k η`. The bound here is at least the printed one for `η ≤ D`, equal to it for `1/2 ≤ D`, and
+is `∼ k η`. So the statement, as printed, needs another bound. The bound here is at least the printed one for `η ≤ D`, equal to it for `1/2 ≤ D`, and
 non-decreasing in `k`, `η` and `D`, with the claimed asymptotics for every `D < 1`.
 
 Also exported, for the proof of Theorem 8.2: `minP_le_combineP` and `combineP_le_two_mul`, for multisets

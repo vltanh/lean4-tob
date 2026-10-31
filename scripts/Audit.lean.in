@@ -97,7 +97,8 @@ meta def paperResults : List (String × Name) :=
    ("TINNiK C.1, full log-likelihood", ``TINNiK.fullMaxLogLikelihood_eq),
    ("TINNiK Proposition 5", ``TINNiK.proposition5),
    ("TINNiK Proposition 6", ``TINNiK.proposition6),
-   ("TINNiK Theorem 4, at given parameters", ``TINNiK.theorem4_of_detectable),
+   ("TINNiK Theorem 4, at given parameters", ``TINNiK.theorem4_of_rejects),
+   ("TINNiK Theorem 4, one sequence of levels", ``TINNiK.theorem4_explicit),
    ("TINNiK Theorem 4", ``TINNiK.theorem4)]
 
 /-- The theorems that Palomar's comparator checks (`theorem_names` of `comparator.json`). -/
