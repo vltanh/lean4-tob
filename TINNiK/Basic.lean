@@ -240,7 +240,8 @@ private theorem tests_of_qGood {V E : Type*} {N : RootedNetwork V E X} {ml : (Qu
     exact ⟨fun hn => hn.2 ⟨s, hsmem, hc⟩,
       ((h s.taxa (QuartetTree.card_taxa s)).2.1 s hsmem hc).1.symm⟩
 
-private theorem tendsto_iidProb_and {Γ : Type*} [Fintype Γ] {dist : Γ → ℝ} (hd : IsDist dist)
+/-- If two events have probability tending to one, so does their intersection. -/
+theorem tendsto_iidProb_and {Γ : Type*} [Fintype Γ] {dist : Γ → ℝ} (hd : IsDist dist)
     {P Q : (n : ℕ) → (Fin n → Γ) → Prop}
     (hP : Tendsto (fun n => iidProb dist n (P n)) atTop (𝓝 1))
     (hQ : Tendsto (fun n => iidProb dist n (Q n)) atTop (𝓝 1)) :
@@ -252,10 +253,10 @@ private theorem tendsto_iidProb_and {Γ : Type*} [Fintype Γ] {dist : Γ → ℝ
 
 /-- Gene trees under the NMSC are binary, so they display one quartet tree on each set of four taxa. -/
 private theorem displaysOne_nmsc {V E : Type*} [Fintype V] [Fintype E] [Nonempty X]
-    {N : RootedNetwork V E X} (hN : N.IsPhylogenetic) {θ : MetricData E} (hθ : N.IsMetric θ) :
-    QuartetTests.DisplaysOne (geneTreeDist N θ 0) (unroot (L := X)) := by
+    {N : RootedNetwork V E X} (hN : N.IsPhylogenetic) {θ : MetricData E} (hθ : N.IsMetric θ) {ρ : ℝ}
+    (hρ : 0 ≤ ρ ∧ ρ ≤ 1) : QuartetTests.DisplaysOne (geneTreeDist N θ ρ) (unroot (L := X)) := by
   intro g hg q hq
-  obtain ⟨hH, hbin⟩ := geneTreeDist_support hN hθ ⟨le_rfl, zero_le_one⟩ hg
+  obtain ⟨hH, hbin⟩ := geneTreeDist_support hN hθ hρ hg
   have hbt : IsBinaryTree (unroot g) := ⟨g, hH, rfl, hbin⟩
   obtain ⟨s, hs, hd⟩ := hbt.exists_displays hq
   refine ⟨s, ⟨hs, hd⟩, fun s' h' => ?_⟩
@@ -296,25 +297,24 @@ private theorem tendsto_star {Γ : Type*} [Fintype Γ] {dist : Γ → ℝ} {side
 /-- On each set of four taxa, the tests give the wanted answers with probability tending to one. -/
 private theorem tendsto_qGood {V E : Type*} [Fintype V] [Fintype E] {N : RootedNetwork V E X}
     (hN : N.IsPhylogenetic) (hX : 4 ≤ Fintype.card X) {θ : MetricData E} (hθ : N.IsMetric θ)
-    (hdet : External.AllmanEtAl2023.CFDetectable N (nmscCF N θ 0))
+    {ρ : ℝ} (hρ : 0 ≤ ρ ∧ ρ ≤ 1) (hdet : External.AllmanEtAl2023.CFDetectable N (nmscCF N θ ρ))
     {α : ℕ → ℝ} (hα : ∀ m, 0 < α m) (hα₀ : Tendsto α atTop (𝓝 0))
     (hαlog : Tendsto (fun m : ℕ => Real.log (α m) / m) atTop (𝓝 0))
     {β : ℝ} (hβ : 0 < β) {ml : (QuartetTree X → ℝ) → Finset X → QuartetTree X}
     (hml : IsMLSelection ml) {q : Finset X} (hq : q.card = 4) :
-    Tendsto (fun m => iidProb (geneTreeDist N θ 0) m fun ω =>
+    Tendsto (fun m => iidProb (geneTreeDist N θ ρ) m fun ω =>
       QGood N ml β (α m) (quartetCount unroot ω) q) atTop (𝓝 1) := by
   have hne : Nonempty X := Fintype.card_pos_iff.mp (by omega)
-  have hρ : (0 : ℝ) ≤ 0 ∧ (0 : ℝ) ≤ 1 := ⟨le_rfl, zero_le_one⟩
-  have hd : IsDist (geneTreeDist N θ 0) :=
+  have hd : IsDist (geneTreeDist N θ ρ) :=
     ⟨geneTreeDist_nonneg hN hθ hρ, sum_geneTreeDist hN hθ hρ⟩
-  have hs := displaysOne_nmsc hN hθ
+  have hs := displaysOne_nmsc hN hθ hρ
   by_cases htl : IsTreelike N q
   · -- a cut-edge split on the induced network: the cut test does not reject
     obtain ⟨s₀, hs₀, hc₀⟩ := htl
     have hst : s₀.taxa = q := (Finset.mem_filter.mp hs₀).2
     obtain ⟨hcne, hceq⟩ := hdet.cut s₀ hc₀
     -- Departure from the paper: a strictly cut CF is off the centroid, without genericity
-    have hcentroid : ¬ ∀ r ∈ treesOn q, displayCF (geneTreeDist N θ 0) unroot r = 1 / 3 := by
+    have hcentroid : ¬ ∀ r ∈ treesOn q, displayCF (geneTreeDist N θ ρ) unroot r = 1 / 3 := by
       intro hall
       obtain ⟨r, hr⟩ := Finset.card_pos.mp
         (by rw [QuartetTree.card_alternatives]; norm_num : 0 < s₀.alternatives.card)
@@ -340,7 +340,7 @@ private theorem tendsto_qGood {V E : Type*} [Fintype V] [Fintype E] {N : RootedN
     exact absurd (hm2 s hsq) (not_le.mpr (h2 _ halt))
   · -- no cut-edge split: the cut test rejects
     have hnc := hdet.blob q hq htl
-    have hcentroid : ¬ ∀ r ∈ treesOn q, displayCF (geneTreeDist N θ 0) unroot r = 1 / 3 := by
+    have hcentroid : ¬ ∀ r ∈ treesOn q, displayCF (geneTreeDist N θ ρ) unroot r = 1 / 3 := by
       intro hall
       obtain ⟨r, hr, r', hr', hrr⟩ := Finset.one_lt_card.mp
         (by rw [card_treesOn hq]; norm_num : 1 < (treesOn q).card)
@@ -353,24 +353,28 @@ private theorem tendsto_qGood {V E : Type*} [Fintype V] [Fintype E] {N : RootedN
     refine ⟨h1, fun s hsq hcs => absurd ⟨s, hsq, hcs⟩ htl, fun _ => ?_⟩
     exact (h2 _ (hml (quartetCount unroot ω) q hq).1).trans_le hm
 
-/-- The upper tail of `χ²₁` is positive everywhere. -/
-private theorem chiSqOneTail_pos (t : ℝ) : 0 < chiSqOneTail t := by
-  unfold chiSqOneTail
-  rw [MeasureTheory.measureReal_def, ENNReal.toReal_pos_iff]
-  refine ⟨?_, MeasureTheory.measure_lt_top _ _⟩
-  rw [pos_iff_ne_zero]
-  intro h0
-  have hac := ProbabilityTheory.gaussianReal_absolutelyContinuous' 0 (v := 1) one_ne_zero
-  have h1 := hac h0
-  have hsub : Set.Ioi (|t| + 1) ⊆ {z : ℝ | t < z ^ 2} := by
-    intro z hz
-    have hz' : |t| + 1 < z := hz
-    have ht := le_abs_self t
-    have ht0 := abs_nonneg t
-    simp only [Set.mem_ofPred_eq]
-    nlinarith
-  have h2 := MeasureTheory.measure_mono_null hsub h1
-  simp at h2
+/-- **The test-correctness step of the proof of Theorem 4**, for any inheritance correlation `ρ`: at
+parameters satisfying CF-detectability, for levels `α_m → 0` with `log(1/α_m) = o(m)` and any `β > 0`, TINNiK's
+hypothesis tests return the correct answer on all 4-taxon sets with probability tending to one. This is
+what TOB-QMC §4.3 cites from TINNiK's Theorem 4. -/
+theorem tests_correct {V E : Type*} [Fintype V] [Fintype E] {N : RootedNetwork V E X}
+    (hN : N.IsPhylogenetic) (hX : 4 ≤ Fintype.card X) {θ : MetricData E} (hθ : N.IsMetric θ)
+    {ρ : ℝ} (hρ : 0 ≤ ρ ∧ ρ ≤ 1) (hdet : External.AllmanEtAl2023.CFDetectable N (nmscCF N θ ρ))
+    {α : ℕ → ℝ} (hα : ∀ m, 0 < α m) (hα₀ : Tendsto α atTop (𝓝 0))
+    (hαlog : Tendsto (fun m : ℕ => Real.log (α m) / m) atTop (𝓝 0))
+    {β : ℝ} (hβ : 0 < β) {ml : (QuartetTree X → ℝ) → Finset X → QuartetTree X}
+    (hml : IsMLSelection ml) :
+    Tendsto (fun m => iidProb (geneTreeDist N θ ρ) m fun ω =>
+      testedB ml (α m) β (quartetCount unroot ω) = {q | q.card = 4 ∧ ¬ IsTreelike N q} ∧
+        testedT ml (α m) β (quartetCount unroot ω) = {s | InducedCutSplit N s}) atTop (𝓝 1) := by
+  have hne : Nonempty X := Fintype.card_pos_iff.mp (by omega)
+  have hd : IsDist (geneTreeDist N θ ρ) :=
+    ⟨geneTreeDist_nonneg hN hθ hρ, sum_geneTreeDist hN hθ hρ⟩
+  have hall := tendsto_iidProb_forall hd (ι := {q : Finset X // q.card = 4})
+    (fun q m ω => QGood N ml β (α m) (quartetCount unroot ω) q.val)
+    (fun q => tendsto_qGood hN hX hθ hρ hdet hα hα₀ hαlog hβ hml q.property)
+  refine tendsto_iidProb_of_imp hd (Eventually.of_forall fun m ω hω => ?_) hall
+  exact tests_of_qGood fun q hq => hω ⟨q, hq⟩
 
 set_option linter.unusedVariables false in
 /-- **Theorem 4** at given parameters (`tinnik:theorem4`). If the NMSC's concordance factors at the
@@ -408,13 +412,9 @@ theorem theorem4_of_detectable [Fintype V] [Fintype E] {N : RootedNetwork V E X}
   have hρ : (0 : ℝ) ≤ 0 ∧ (0 : ℝ) ≤ 1 := ⟨le_rfl, zero_le_one⟩
   have hd : IsDist (geneTreeDist N θ 0) :=
     ⟨geneTreeDist_nonneg hN hθ hρ, sum_geneTreeDist hN hθ hρ⟩
-  have hall := tendsto_iidProb_forall hd (ι := {q : Finset X // q.card = 4})
-    (fun q m ω => QGood N ml β (α m) (quartetCount unroot ω) q.val)
-    (fun q => tendsto_qGood hN hX hθ hdet hα hα₀ hαlog hβ hml q.property)
-  refine tendsto_iidProb_of_imp hd (Eventually.of_forall fun m ω hω => ?_) hall
-  obtain ⟨hB, hT⟩ := tests_of_qGood (N := N) (ml := ml) (β := β) (a := α m)
-    (c := quartetCount unroot ω) (fun q hq => hω ⟨q, hq⟩)
-  exact tinnik_eq_of_tests hN hX hδ₂ hM hB hT
+  exact tendsto_iidProb_of_imp hd
+    (Eventually.of_forall fun m ω hω => tinnik_eq_of_tests hN hX hδ₂ hM hω.1 hω.2)
+    (tests_correct hN hX hθ hρ hdet hα hα₀ hαlog hβ hml)
 
 /-- **Theorem 4** (`tinnik:theorem4`), conditional on CF-detectability for generic parameters
 (`External.AllmanEtAl2023.Corollary1`). For generic numerical parameters on a binary network there is a
@@ -441,8 +441,8 @@ theorem theorem4 [Fintype V] [Fintype E] {N : RootedNetwork V E X}
     by_contra hn
     exact hA ⟨hθ, hn⟩
   refine ⟨fun m => chiSqOneTail (Real.log m), QuartetTests.tendsto_chiSqOneTail_log,
-    fun m => chiSqOneTail_pos _, fun β δ hβ hδ hδ₂ M hM ml hml => ?_⟩
-  exact theorem4_of_detectable hN hBin hX hθ hdet (fun m => chiSqOneTail_pos _)
+    fun m => QuartetTests.chiSqOneTail_pos _, fun β δ hβ hδ hδ₂ M hM ml hml => ?_⟩
+  exact theorem4_of_detectable hN hBin hX hθ hdet (fun m => QuartetTests.chiSqOneTail_pos _)
     QuartetTests.tendsto_chiSqOneTail_log QuartetTests.tendsto_log_chiSqOneTail_log hβ hδ hδ₂ hM hml
 
 end TINNiK

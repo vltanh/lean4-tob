@@ -12,6 +12,14 @@ public import Mathlib.Probability.StrongLaw
 Definition 1, Equations (1)–(4), Lemma 3, the perturbation Lemma 4 of the Supplement, Theorem 1 and the
 ASTRAL corollary. These results take the exchangeability of taxa on one side of a cut edge from the
 literature (`External.AneEtAl2024.Exchangeability`), so they are conditional on it.
+
+The route of Lemma 3 is the paper's. A maximizer of the blob `v` part of the score is changed, by
+detaching taxa and reattaching them to a best taxon of their block (`detachReattach`,
+`vertexPart_detachReattach`, `exists_block_side`), into a maximizer that does not break the blocks
+(`exists_vertex_maximizer`). It resolves every quartet around `v` (`displays_of_vertex_maximizer`), and
+contracting the edges inside blocks leaves a family of unions of blocks (`displays_filter_isBlockUnion`).
+These families and the tree of blobs have a common refinement, the compatibility supertree of the paper,
+which is `splice`.
 -/
 
 @[expose] public noncomputable section
@@ -527,7 +535,8 @@ end DetachScore
 /-- **Lemma 3**, in the form its proof gives, for weights `F` with the properties that the proof uses:
 there is a binary refinement `B` of the tree of blobs that maximizes the star part and the tree part of
 the score over binary trees, and has a larger score than every binary tree not refining the tree of
-blobs. -/
+blobs. The compatibility supertree of the paper's lines 497-498 (Warnow, Chapters 3, 7: compatible
+splits have a common refinement) is `splice`, by `splice_isUnrootedTree`. -/
 theorem lemma3_of_properties {V E : Type*} {N : RootedNetwork V E X} (hN : N.IsPhylogenetic)
     {F : QuartetTree X → ℝ} (hF : ∀ s, 0 < F s) (hEx : CutExchangeable N F)
     (hNon : IsTQuartetNonanomalous N F) (hX : 4 ≤ Fintype.card X) :
@@ -604,7 +613,10 @@ def Margin (N : RootedNetwork V E X) (F : QuartetTree X → ℝ) (π : ℝ) : Pr
 
 /-- **Supplement, Lemma 4** (`tob2025:supplement_lemma4`), with the corrected margin (E12) and strict
 bounds (E13). If all the errors of the weights `w` are below `π / (2 |f₄(S)|)`, the score of a
-refinement `B` maximizing the star part exceeds that of every binary tree not refining `T_N`. -/
+refinement `B` maximizing the star part exceeds that of every binary tree not refining `T_N`. The proof
+is the supplement's: quartets on which the two trees agree cancel, the tree part gains more than
+`|Y_tree| (π - 2δ)` (its (5), strict since `Y_tree` is not empty), the star part loses at most
+`2 |Y_star| δ` (its (8)), and `|Y_tree| + |Y_star| ≤ |f₄(S)|`. -/
 theorem supplementLemma4 {V E : Type*} {N : RootedNetwork V E X} (hN : N.IsPhylogenetic)
     {F w : QuartetTree X → ℝ} {π : ℝ} (hπ : 0 < π) (hmargin : Margin N F π)
     (herr : ∀ s, |w s - F s| < π / (2 * ((Fintype.card X).choose 4 : ℝ)))
@@ -612,12 +624,277 @@ theorem supplementLemma4 {V E : Type*} {N : RootedNetwork V E X} (hN : N.IsPhylo
     (hstar : starPart (treeOfBlobs N) F T ≤ starPart (treeOfBlobs N) F B)
     (hT : IsBinaryTree T) (hTN : ¬ treeOfBlobs N ⊆ T) :
     quartetScore w T < quartetScore w B := by
-  sorry
+  have hX : Nonempty X := by
+    obtain ⟨A, hA, -⟩ := not_subset.1 hTN
+    obtain ⟨x, -⟩ := (mem_filter.1 hA).2.1
+    exact ⟨x⟩
+  have hTB : IsUnrootedTree (treeOfBlobs N) := treeOfBlobs_isUnrootedTree hN
+  set TN := treeOfBlobs N with hTNdef
+  have hB' := hB.isUnrootedTree
+  have hT' := hT.isUnrootedTree
+  set f4 := powersetCard 4 (univ : Finset X) with hf4
+  have hf4mem : ∀ q ∈ f4, q.card = 4 := fun q hq => (mem_powersetCard.1 hq).2
+  -- the tree part differs on at least one 4-taxon subset
+  obtain ⟨r₀, hr₀, hnot⟩ : ∃ r, Displays TN r ∧ ¬ Displays T r := by
+    by_contra hcon
+    push Not at hcon
+    exact hTN (subset_of_forall_displays hT' hTB hcon)
+  haveI : Nonempty (QuartetTree X) := ⟨r₀⟩
+  -- the quartet trees that `B` and `T` display
+  choose! sB hsB hdB using fun q (hq : q ∈ f4) => hB.exists_displays (hf4mem q hq)
+  choose! sT hsT hdT using fun q (hq : q ∈ f4) => hT.exists_displays (hf4mem q hq)
+  have hpartB : ∀ (w' : QuartetTree X → ℝ), ∀ q ∈ f4, quartetPart w' B q = w' (sB q) := by
+    intro w' q hq
+    have := quartetPart_of_displays hB' w' (hdB q hq)
+    rwa [mem_treesOn.1 (hsB q hq)] at this
+  have hpartT : ∀ (w' : QuartetTree X → ℝ), ∀ q ∈ f4, quartetPart w' T q = w' (sT q) := by
+    intro w' q hq
+    have := quartetPart_of_displays hT' w' (hdT q hq)
+    rwa [mem_treesOn.1 (hsT q hq)] at this
+  -- the 4-taxon subsets on which the two trees differ
+  obtain ⟨Pt, hPt⟩ : ∃ Pt : Finset X → Prop, ∀ q, Pt q ↔
+      (∃ r ∈ treesOn q, Displays TN r) ∧ sT q ≠ sB q := ⟨_, fun _ => Iff.rfl⟩
+  obtain ⟨Ps, hPs⟩ : ∃ Ps : Finset X → Prop, ∀ q, Ps q ↔
+      (∀ r ∈ treesOn q, ¬ Displays TN r) ∧ sT q ≠ sB q := ⟨_, fun _ => Iff.rfl⟩
+  let Ytree := f4.filter Pt
+  let Ystar := f4.filter Ps
+  -- agreeing quartets cancel (E13)
+  have htree : ∀ w' : QuartetTree X → ℝ, treePart TN w' B - treePart TN w' T =
+      ∑ q ∈ Ytree, (w' (sB q) - w' (sT q)) := by
+    intro w'
+    rw [treePart_eq_sum, treePart_eq_sum, ← sum_sub_distrib, sum_filter]
+    refine sum_congr rfl fun q hq => ?_
+    simp only [hPt]
+    by_cases hR : ∃ r ∈ treesOn q, Displays TN r
+    · by_cases he : sT q = sB q
+      · simp only [hR, he, ↓reduceIte, hpartB w' q hq, hpartT w' q hq, ne_eq, not_true_eq_false,
+          and_false, sub_self]
+      · simp only [hR, he, ↓reduceIte, hpartB w' q hq, hpartT w' q hq, ne_eq, not_false_eq_true,
+          and_self]
+    · simp only [hR, ↓reduceIte, false_and, sub_self]
+  have hstar' : ∀ w' : QuartetTree X → ℝ, starPart TN w' B - starPart TN w' T =
+      ∑ q ∈ Ystar, (w' (sB q) - w' (sT q)) := by
+    intro w'
+    rw [starPart_eq_sum, starPart_eq_sum, ← sum_sub_distrib, sum_filter]
+    refine sum_congr rfl fun q hq => ?_
+    simp only [hPs]
+    by_cases hR : ∀ r ∈ treesOn q, ¬ Displays TN r
+    · have e1 : (∀ r ∈ treesOn q, ¬ Displays TN r) = True := eq_true hR
+      by_cases he : sT q = sB q
+      · simp only [e1, he, ↓reduceIte, hpartB w' q hq, hpartT w' q hq, ne_eq, not_true_eq_false,
+          and_false, sub_self]
+      · simp only [e1, he, ↓reduceIte, hpartB w' q hq, hpartT w' q hq, ne_eq, not_false_eq_true,
+          and_self]
+    · have e1 : (∀ r ∈ treesOn q, ¬ Displays TN r) = False := eq_false hR
+      simp only [e1, ↓reduceIte, false_and, sub_self]
+  set δ := π / (2 * ((Fintype.card X).choose 4 : ℝ)) with hδ
+  have hup : ∀ s, w s < F s + δ := fun s => by
+    have := (abs_lt.1 (herr s)).2
+    linarith
+  have hlo : ∀ s, F s - δ < w s := fun s => by
+    have := (abs_lt.1 (herr s)).1
+    linarith
+  have hsBr : ∀ q ∈ f4, ∀ r ∈ treesOn q, Displays TN r → sB q = r := by
+    intro q hq r hr hdr
+    exact hB'.displays_unique (hdB q hq) (hdr.mono hBT)
+      ((mem_treesOn.1 (hsB q hq)).trans (mem_treesOn.1 hr).symm)
+  have hYne : Ytree.Nonempty := by
+    have hq : r₀.taxa ∈ f4 := mem_powersetCard.2 ⟨subset_univ _, r₀.card_taxa⟩
+    have hsb := hsBr _ hq r₀ (mem_treesOn.2 rfl) hr₀
+    refine ⟨r₀.taxa, mem_filter.2 ⟨hq, (hPt _).2 ⟨⟨r₀, mem_treesOn.2 rfl, hr₀⟩, ?_⟩⟩⟩
+    rw [hsb]
+    intro he
+    exact hnot (he ▸ hdT _ hq)
+  -- Equation (5), with the strict inequality of E13
+  have h5 : (Ytree.card : ℝ) * (π - 2 * δ) < treePart TN w B - treePart TN w T := by
+    rw [htree w]
+    have : ∑ _q ∈ Ytree, (π - 2 * δ) < ∑ q ∈ Ytree, (w (sB q) - w (sT q)) := by
+      refine sum_lt_sum_of_nonempty hYne fun q hq => ?_
+      obtain ⟨hqf, hq'⟩ := mem_filter.1 hq
+      obtain ⟨⟨r, hr, hdr⟩, hne⟩ := (hPt q).1 hq'
+      have hsb := hsBr q hqf r hr hdr
+      have halt : sT q ∈ (sB q).alternatives := QuartetTree.mem_alternatives.2
+        ⟨(mem_treesOn.1 (hsT q hqf)).trans (mem_treesOn.1 (hsB q hqf)).symm, hne⟩
+      have hm := hmargin (sB q) (hsb ▸ hdr) (sT q) halt
+      have h1 := hlo (sB q)
+      have h2 := hup (sT q)
+      linarith
+    rwa [sum_const, nsmul_eq_mul] at this
+  -- Equation (8)
+  have h8 : starPart TN w T - starPart TN w B ≤ 2 * (Ystar.card : ℝ) * δ := by
+    have h1 := hstar' w
+    have h2 := hstar' F
+    have h3 : ∑ q ∈ Ystar, (F (sB q) - F (sT q)) - (Ystar.card : ℝ) * (2 * δ) ≤
+        ∑ q ∈ Ystar, (w (sB q) - w (sT q)) := by
+      have : ∑ q ∈ Ystar, ((F (sB q) - F (sT q)) - 2 * δ) ≤
+          ∑ q ∈ Ystar, (w (sB q) - w (sT q)) := by
+        refine sum_le_sum fun q _ => ?_
+        have h4 := hlo (sB q)
+        have h5 := hup (sT q)
+        linarith
+      rwa [sum_sub_distrib, sum_const, nsmul_eq_mul] at this
+    have h4 := hstar
+    linarith
+  -- combining the bounds
+  have hC : ((Fintype.card X).choose 4 : ℝ) = (f4.card : ℝ) := by
+    rw [hf4, card_powersetCard, card_univ]
+  have hYcard : (Ytree.card : ℝ) + Ystar.card ≤ f4.card := by
+    have hdisj : Disjoint Ytree Ystar := disjoint_left.2 fun q h1 h2 => by
+      obtain ⟨r, hr, hdr⟩ := ((hPt q).1 (mem_filter.1 h1).2).1
+      exact ((hPs q).1 (mem_filter.1 h2).2).1 r hr hdr
+    have := card_le_card (union_subset (filter_subset _ f4) (filter_subset _ f4) :
+      Ytree ∪ Ystar ⊆ f4)
+    rw [card_union_of_disjoint hdisj] at this
+    exact_mod_cast this
+  have hYpos : (1 : ℝ) ≤ Ytree.card := by exact_mod_cast card_pos.2 hYne
+  have hCpos : (0 : ℝ) < f4.card := lt_of_lt_of_le (by linarith) hYcard
+  have hδC : 2 * δ * (f4.card : ℝ) = π := by
+    rw [hδ, hC]
+    field_simp
+  have hδpos : 0 < δ := by
+    rw [hδ, hC]
+    positivity
+  have hcomb : 0 ≤ (Ytree.card : ℝ) * π - 2 * δ * ((Ytree.card : ℝ) + Ystar.card) := by
+    have h1 : 2 * δ * ((Ytree.card : ℝ) + Ystar.card) ≤ 2 * δ * (f4.card : ℝ) :=
+      mul_le_mul_of_nonneg_left hYcard (by positivity)
+    have h2 : π ≤ (Ytree.card : ℝ) * π := le_mul_of_one_le_left hπ.le hYpos
+    linarith
+  rw [equation1 TN w T, equation1 TN w B]
+  nlinarith
+
+/-- A positive margin exists when the network is T-quartet-nonanomalous. -/
+theorem exists_margin {N : RootedNetwork V E X} {F : QuartetTree X → ℝ}
+    (hNon : IsTQuartetNonanomalous N F) : ∃ π, 0 < π ∧ Margin N F π := by
+  let S := (univ : Finset (QuartetTree X × QuartetTree X)).filter fun p =>
+    Displays (treeOfBlobs N) p.1 ∧ p.2 ∈ p.1.alternatives
+  by_cases hS : S.Nonempty
+  · obtain ⟨p, hp, hmin⟩ := S.exists_min_image (fun p => F p.1 - F p.2) hS
+    obtain ⟨h1, h2⟩ := (mem_filter.1 hp).2
+    refine ⟨F p.1 - F p.2, sub_pos.2 (hNon p.1 h1 p.2 h2), fun s hs r hr => ?_⟩
+    exact hmin (s, r) (mem_filter.2 ⟨mem_univ _, hs, hr⟩)
+  · refine ⟨1, one_pos, fun s hs r hr => absurd ⟨(s, r), mem_filter.2 ⟨mem_univ _, hs, hr⟩⟩ hS⟩
+
+/-! ### Almost sure convergence of the frequencies -/
+
+/-- **The strong law of large numbers for gene trees**: the frequency among the first `k` gene trees of
+any property converges almost surely to its probability. -/
+theorem ae_tendsto_freq [Fintype V] [Fintype E] {N : RootedNetwork V E X} {θ : MetricData E} {ρ : ℝ}
+    {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P]
+    {G : ℕ → Ω → Finset (Finset X)} (hG : IsGeneTreeSample P N θ ρ G) (Φ : Finset (Finset X) → Prop) :
+    ∀ᵐ ω ∂P, Tendsto (fun k : ℕ => (((range k).filter fun i => Φ (G i ω)).card : ℝ) / k) atTop
+      (𝓝 (∑ g, if Φ g then geneTreeDist N θ ρ g else 0)) := by
+  letI mS : MeasurableSpace (Finset (Finset X)) := ⊤
+  haveI : DiscreteMeasurableSpace (Finset (Finset X)) := ⟨fun _ => MeasurableSpace.measurableSet_top⟩
+  have hmeas : ∀ i, Measurable (G i) := fun i => measurable_to_countable' (hG.measurable i)
+  have hsing : ∀ i (g : Finset (Finset X)), P (G i ⁻¹' {g}) = P (G 0 ⁻¹' {g}) := by
+    intro i g
+    refine (ENNReal.toReal_eq_toReal_iff' (measure_ne_top _ _) (measure_ne_top _ _)).1 ?_
+    have h1 := hG.law i g
+    have h2 := hG.law 0 g
+    simp only [Measure.real] at h1 h2
+    rw [h1, h2]
+  have hident : ∀ i, IdentDistrib (G i) (G 0) P P := fun i =>
+    ⟨(hmeas i).aemeasurable, (hmeas 0).aemeasurable, Measure.ext_iff_singleton.2 fun g => by
+      rw [Measure.map_apply (hmeas i) (measurableSet_singleton g),
+        Measure.map_apply (hmeas 0) (measurableSet_singleton g), hsing]⟩
+  have hind : ∀ i j, i ≠ j → IndepFun (G i) (G j) P := by
+    intro i j hij
+    rw [indepFun_iff_map_prod_eq_prod_map_map (hmeas i).aemeasurable (hmeas j).aemeasurable]
+    refine Measure.ext_iff_singleton.2 fun ⟨g, h⟩ => ?_
+    have hprod : ({(g, h)} : Set (Finset (Finset X) × Finset (Finset X))) = {g} ×ˢ {h} :=
+      Set.singleton_prod_singleton.symm
+    rw [Measure.map_apply ((hmeas i).prodMk (hmeas j)) (measurableSet_singleton _), hprod,
+      Measure.prod_prod, Measure.map_apply (hmeas i) (measurableSet_singleton g),
+      Measure.map_apply (hmeas j) (measurableSet_singleton h)]
+    have hji : j ≠ i := Ne.symm hij
+    have := hG.indep {i, j} (fun n => if n = i then g else h)
+    rw [prod_pair hij] at this
+    simp only [↓reduceIte, hji] at this
+    rw [← this]
+    congr 1
+    ext ω
+    simp only [Set.mem_preimage, Set.mem_prod, Set.mem_singleton_iff, mem_insert, mem_singleton,
+      Set.mem_iInter, Prod.mk.injEq]
+    constructor
+    · rintro ⟨h1, h2⟩ n (rfl | rfl)
+      · simpa using h1
+      · simpa [hji] using h2
+    · intro hn
+      have h1 := hn i (Or.inl rfl)
+      have h2 := hn j (Or.inr rfl)
+      simp only [↓reduceIte, hji] at h1 h2
+      exact ⟨h1, h2⟩
+  let f : Finset (Finset X) → ℝ := fun g => if Φ g then 1 else 0
+  have hf : Measurable f := Measurable.of_discrete
+  let Y : ℕ → Ω → ℝ := fun i => f ∘ G i
+  have hint : Integrable (Y 0) P := by
+    refine Integrable.of_bound (hf.comp (hmeas 0)).aestronglyMeasurable 1 (ae_of_all _ fun ω => ?_)
+    simp only [Y, f, Function.comp]
+    split_ifs <;> simp
+  have hmean : ∫ ω, Y 0 ω ∂P = ∑ g, if Φ g then geneTreeDist N θ ρ g else 0 := by
+    have h1 : ∫ ω, Y 0 ω ∂P = ∫ g, f g ∂(P.map (G 0)) :=
+      (integral_map (hmeas 0).aemeasurable hf.aestronglyMeasurable).symm
+    rw [h1, integral_fintype (f := f) Integrable.of_finite]
+    refine sum_congr rfl fun g _ => ?_
+    rw [map_measureReal_apply (hmeas 0) (measurableSet_singleton g), hG.law 0 g]
+    simp only [f, smul_eq_mul]
+    split_ifs <;> simp
+  have hlaw := strong_law_ae_real Y hint
+    (fun i j hij => (hind i j hij).comp hf hf) (fun i => (hident i).comp hf)
+  filter_upwards [hlaw] with ω hω
+  rw [hmean] at hω
+  refine hω.congr fun k => ?_
+  congr 1
+  simp only [Y, f, Function.comp]
+  exact sum_boole _ _
+
+/-- The observed concordance factors converge almost surely to the expected ones, simultaneously. -/
+theorem ae_eventually_abs_lt [Fintype V] [Fintype E] {N : RootedNetwork V E X} {θ : MetricData E}
+    {ρ : ℝ} {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P]
+    {G : ℕ → Ω → Finset (Finset X)} (hG : IsGeneTreeSample P N θ ρ G) {δ : ℝ} (hδ : 0 < δ) :
+    ∀ᵐ ω ∂P, ∃ K, ∀ k, K ≤ k → ∀ s, |geneCount G k ω s / k - nmscCF N θ ρ s| < δ := by
+  have hall : ∀ᵐ ω ∂P, ∀ s : QuartetTree X, Tendsto (fun k : ℕ => geneCount G k ω s / k) atTop
+      (𝓝 (nmscCF N θ ρ s)) := by
+    refine ae_all_iff.2 fun s => ?_
+    have := ae_tendsto_freq hG (fun g => Displays (unroot g) s)
+    filter_upwards [this] with ω hω
+    simpa only [geneCount, nmscCF] using hω
+  filter_upwards [hall] with ω hω
+  have hev : ∀ᶠ k : ℕ in atTop, ∀ s, |geneCount G k ω s / k - nmscCF N θ ρ s| < δ := by
+    refine eventually_all.2 fun s => ?_
+    have := (Metric.tendsto_nhds.1 (hω s)) δ hδ
+    simpa only [Real.dist_eq] using this
+  obtain ⟨K, hK⟩ := eventually_atTop.1 hev
+  exact ⟨K, hK⟩
+
+/-- Scaling the weights scales the score. -/
+theorem quartetScore_div (c : QuartetTree X → ℝ) (k : ℝ) (T : Finset (Finset X)) :
+    quartetScore (fun s => c s / k) T = quartetScore c T / k := by
+  unfold quartetScore
+  rw [sum_div]
+  refine sum_congr rfl fun s _ => ?_
+  split_ifs <;> simp
+
+/-- The scores for counts compare when the observed concordance factors are within the error bound of
+the supplement's Lemma 4. -/
+theorem geneCount_score_lt {N : RootedNetwork V E X} (hN : N.IsPhylogenetic)
+    {F : QuartetTree X → ℝ} {π : ℝ} (hπ : 0 < π) (hmargin : Margin N F π)
+    {c : QuartetTree X → ℝ} {k : ℕ} (hk : 0 < k)
+    (herr : ∀ s, |c s / k - F s| < π / (2 * ((Fintype.card X).choose 4 : ℝ)))
+    {B T : Finset (Finset X)} (hB : IsBinaryTree B) (hBT : treeOfBlobs N ⊆ B)
+    (hstar : starPart (treeOfBlobs N) F T ≤ starPart (treeOfBlobs N) F B)
+    (hT : IsBinaryTree T) (hTN : ¬ treeOfBlobs N ⊆ T) :
+    quartetScore c T < quartetScore c B := by
+  have := supplementLemma4 hN hπ hmargin herr hB hBT hstar hT hTN
+  rw [quartetScore_div, quartetScore_div] at this
+  exact (div_lt_div_iff_of_pos_right (by exact_mod_cast hk)).1 this
 
 /-- **Theorem 1** (`tob2025:theorem1`), conditional on exchangeability. For a network under the
 standard assumptions that is T-quartet-nonanomalous and independent gene trees from the NMSC, for any
 binary tree `T` not refining the tree of blobs and any `ε > 0` there are a binary refinement `B` and
-`K` such that `QS_k(B) > QS_k(T)` for all `k ≥ K` with probability at least `1 - ε`. -/
+`K` such that `QS_k(B) > QS_k(T)` for all `k ≥ K` with probability at least `1 - ε`. The strong law of
+large numbers gives almost sure convergence of the observed concordance factors (`ae_eventually_abs_lt`);
+the deterministic `K` comes from continuity of the measure along the increasing events. -/
 theorem theorem1 [Fintype V] [Fintype E] {N : RootedNetwork V E X} {θ : MetricData E} {ρ : ℝ}
     (hStd : StandardAssumptions N θ ρ) (hEx : External.AneEtAl2024.Exchangeability N θ ρ)
     (hNon : IsTQuartetNonanomalous N (nmscCF N θ ρ)) (hX : 4 ≤ Fintype.card X)
@@ -626,7 +903,34 @@ theorem theorem1 [Fintype V] [Fintype E] {N : RootedNetwork V E X} {θ : MetricD
     (T : Finset (Finset X)) (hT : IsBinaryTree T) (hTN : ¬ treeOfBlobs N ⊆ T) {ε : ℝ} (hε : 0 < ε) :
     ∃ (B : Finset (Finset X)) (K : ℕ), IsBinaryTree B ∧ treeOfBlobs N ⊆ B ∧
       1 - ε ≤ P.real {ω | ∀ k, K ≤ k → quartetScore (geneCount G k ω) T < quartetScore (geneCount G k ω) B} := by
-  sorry
+  have hN := hStd.phylogenetic
+  obtain ⟨B, hB, hBT, hstar, -⟩ := lemma3_of_properties hN
+    (nmscCF_pos hN hStd.metric hStd.rho) hEx hNon hX
+  obtain ⟨π, hπ, hmargin⟩ := exists_margin hNon
+  have hC : (0 : ℝ) < ((Fintype.card X).choose 4 : ℝ) := by
+    exact_mod_cast Nat.choose_pos hX
+  have hδ : 0 < π / (2 * ((Fintype.card X).choose 4 : ℝ)) := by positivity
+  set δ := π / (2 * ((Fintype.card X).choose 4 : ℝ)) with hδdef
+  have hae := ae_eventually_abs_lt hG hδ
+  -- the increasing events
+  let Ev : ℕ → Set Ω := fun K => {ω | ∀ k, K ≤ k → ∀ s, |geneCount G k ω s / k - nmscCF N θ ρ s| < δ}
+  have hmono : Monotone Ev := fun K K' hKK ω hω k hk => hω k (hKK.trans hk)
+  have hun : P (⋃ K, Ev K) = 1 := by
+    have : (⋃ K, Ev K) =ᵐ[P] Set.univ := by
+      rw [ae_eq_univ]
+      refine measure_mono_null (fun ω hω => ?_) (ae_iff.1 hae)
+      rintro ⟨K, hK⟩
+      exact hω (Set.mem_iUnion.2 ⟨K, hK⟩)
+    rw [measure_congr this, measure_univ]
+  have hlim : Tendsto (fun K => P.real (Ev K)) atTop (𝓝 1) := by
+    have h1 := tendsto_measure_iUnion_atTop (μ := P) hmono
+    rw [hun] at h1
+    have h2 := (ENNReal.tendsto_toReal ENNReal.one_ne_top).comp h1
+    simpa [Measure.real, Function.comp_def] using h2
+  obtain ⟨K, hK, hK1⟩ := ((hlim.eventually (lt_mem_nhds (by linarith : 1 - ε < 1))).and
+    (eventually_ge_atTop 1)).exists
+  refine ⟨B, K, hB, hBT, hK.le.trans (measureReal_mono fun ω hω k hk => ?_)⟩
+  exact geneCount_score_lt hN hπ hmargin (lt_of_lt_of_le hK1 hk) (hω k hk) hB hBT (hstar T hT) hT hTN
 
 /-- **Theorem 1** (`tob2025:theorem1`), "put simply": almost surely, for all large `k`, every optimal
 solution of Weighted Quartet Consensus is a refinement of the tree of blobs. -/
@@ -638,7 +942,20 @@ theorem theorem1_optimal [Fintype V] [Fintype E] {N : RootedNetwork V E X} {θ :
     ∀ᵐ ω ∂P, ∃ K, ∀ k, K ≤ k → ∀ B, IsBinaryTree B →
       (∀ T, IsBinaryTree T → quartetScore (geneCount G k ω) T ≤ quartetScore (geneCount G k ω) B) →
       treeOfBlobs N ⊆ B := by
-  sorry
+  have hN := hStd.phylogenetic
+  obtain ⟨Bs, hBs, hBsT, hstar, -⟩ := lemma3_of_properties hN
+    (nmscCF_pos hN hStd.metric hStd.rho) hEx hNon hX
+  obtain ⟨π, hπ, hmargin⟩ := exists_margin hNon
+  have hC : (0 : ℝ) < ((Fintype.card X).choose 4 : ℝ) := by
+    exact_mod_cast Nat.choose_pos hX
+  have hδ : 0 < π / (2 * ((Fintype.card X).choose 4 : ℝ)) := by positivity
+  filter_upwards [ae_eventually_abs_lt hG hδ] with ω ⟨K₀, hK₀⟩
+  refine ⟨max K₀ 1, fun k hk B hB hopt => ?_⟩
+  by_contra hne
+  have hk0 : K₀ ≤ k := (le_max_left _ _).trans hk
+  have hk1 : 0 < k := lt_of_lt_of_le one_pos ((le_max_right _ _).trans hk)
+  exact absurd (hopt Bs hBs) (not_le.2 (geneCount_score_lt hN hπ hmargin hk1 (hK₀ k hk0) hBs hBsT
+    (hstar B hB) hB hne))
 
 /-- The constrained search space of ASTRAL (versions up to 3): binary trees whose splits all occur on
 the first `k` gene trees. -/
@@ -648,7 +965,9 @@ def AstralSpace {Ω : Type*} (G : ℕ → Ω → Finset (Finset X)) (k : ℕ) (�
 
 /-- **Corollary of Theorem 1** (`tob2025:astral_corollary`), conditional on exchangeability: almost
 surely, for all large `k`, every optimum of the score in ASTRAL's search space is a refinement of the
-tree of blobs, since every split has positive probability under the NMSC. -/
+tree of blobs, since every split has positive probability under the NMSC: every binary gene tree has
+positive probability (`geneTreeDist_pos`), so it occurs almost surely (the paper cites Mirarab et al.),
+and then ASTRAL's search space contains all binary trees. -/
 theorem astral_corollary [Fintype V] [Fintype E] {N : RootedNetwork V E X} {θ : MetricData E} {ρ : ℝ}
     (hStd : StandardAssumptions N θ ρ) (hEx : External.AneEtAl2024.Exchangeability N θ ρ)
     (hNon : IsTQuartetNonanomalous N (nmscCF N θ ρ)) (hX : 4 ≤ Fintype.card X)
@@ -657,6 +976,54 @@ theorem astral_corollary [Fintype V] [Fintype E] {N : RootedNetwork V E X} {θ :
     ∀ᵐ ω ∂P, ∃ K, ∀ k, K ≤ k → ∀ B, AstralSpace G k ω B →
       (∀ T, AstralSpace G k ω T → quartetScore (geneCount G k ω) T ≤ quartetScore (geneCount G k ω) B) →
       treeOfBlobs N ⊆ B := by
-  sorry
+  have hN := hStd.phylogenetic
+  have hne' : Nonempty X := Fintype.card_pos_iff.1 (by omega)
+  obtain ⟨Bs, hBs, hBsT, hstar, -⟩ := lemma3_of_properties hN
+    (nmscCF_pos hN hStd.metric hStd.rho) hEx hNon hX
+  obtain ⟨π, hπ, hmargin⟩ := exists_margin hNon
+  have hC : (0 : ℝ) < ((Fintype.card X).choose 4 : ℝ) := by
+    exact_mod_cast Nat.choose_pos hX
+  have hδ : 0 < π / (2 * ((Fintype.card X).choose 4 : ℝ)) := by positivity
+  -- every binary gene tree occurs almost surely, since it has positive probability
+  have hocc : ∀ᵐ ω ∂P, ∀ H : Finset (Finset X), IsBinaryHierarchy H → ∃ i, G i ω = H := by
+    refine ae_all_iff.2 fun H => ?_
+    by_cases hH : IsBinaryHierarchy H
+    · have hpos := geneTreeDist_pos hN hStd.metric hStd.rho hH
+      have hsum : ∀ d : ∀ g : Finset (Finset X), Decidable (g = H),
+          (∑ g, @ite _ (g = H) (d g) (geneTreeDist N θ ρ g) 0) = geneTreeDist N θ ρ H := by
+        intro d
+        rw [sum_eq_single H]
+        · simp
+        · intro g _ hg
+          simp [hg]
+        · simp
+      filter_upwards [ae_tendsto_freq hG (fun g => g = H)] with ω hω _
+      obtain ⟨k, hk⟩ := (hω.eventually (lt_mem_nhds (a := 0)
+        (lt_of_lt_of_eq hpos (hsum _).symm))).exists
+      by_contra hcon
+      push Not at hcon
+      simp [hcon] at hk
+    · exact ae_of_all _ fun _ h => absurd h hH
+  filter_upwards [ae_eventually_abs_lt hG hδ, hocc] with ω ⟨K₀, hK₀⟩ hω
+  -- from some point on, ASTRAL's search space contains all binary trees
+  obtain ⟨K₁, hK₁⟩ : ∃ K₁, ∀ H : Finset (Finset X), IsBinaryHierarchy H → ∃ i < K₁, G i ω = H := by
+    classical
+    choose! idx hidx using hω
+    obtain ⟨M, hM⟩ := ((univ : Finset (Finset (Finset X))).image idx).exists_le
+    exact ⟨M + 1, fun H hH => ⟨idx H, Nat.lt_succ_of_le (hM _ (mem_image_of_mem _ (mem_univ H))),
+      hidx H hH⟩⟩
+  have hspace : ∀ k, K₁ ≤ k → ∀ T, IsBinaryTree T → AstralSpace G k ω T := by
+    intro k hk T hT
+    refine ⟨hT, fun A hA => ?_⟩
+    obtain ⟨H, hH, rfl, hbin⟩ := hT
+    obtain ⟨i, hi, he⟩ := hK₁ H ⟨hH, hbin⟩
+    exact ⟨i, lt_of_lt_of_le hi hk, he ▸ hA⟩
+  refine ⟨max (max K₀ K₁) 1, fun k hk B hB hopt => ?_⟩
+  by_contra hne
+  have hk0 : K₀ ≤ k := ((le_max_left _ _).trans (le_max_left _ _)).trans hk
+  have hk₁ : K₁ ≤ k := ((le_max_right _ _).trans (le_max_left _ _)).trans hk
+  have hk1 : 0 < k := lt_of_lt_of_le one_pos ((le_max_right _ _).trans hk)
+  exact absurd (hopt Bs (hspace k hk₁ Bs hBs)) (not_le.2 (geneCount_score_lt hN hπ hmargin hk1
+    (hK₀ k hk0) hBs hBsT (hstar B hB.1) hB.1 hne))
 
 end TOBQMC
