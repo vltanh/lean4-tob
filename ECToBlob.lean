@@ -1,5 +1,6 @@
 module
 
+public import ECToBlob.Lemma81
 public import ECToBlob.Section3
 public import ECToBlob.Section4
 public import ECToBlob.Section5

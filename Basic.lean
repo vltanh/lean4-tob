@@ -1,33 +1,58 @@
 module
 
-public import Basic.Phylogenetics.Defs
 public import Basic.Analysis.FiniteOptimization
+public import Basic.Analysis.SpecialFunctions.EntropyExcess
 public import Basic.Analysis.SpecialFunctions.Erf
+public import Basic.Analysis.SpecialFunctions.GibbsInequality
 public import Basic.Combinatorics.BridgeCutLaminar
 public import Basic.Combinatorics.DirectedMultigraph
 public import Basic.Combinatorics.MultigraphBlobs
 public import Basic.Combinatorics.MultigraphConnectivity
 public import Basic.Combinatorics.MultigraphCutUniqueness
+public import Basic.Combinatorics.MultigraphDegree
+public import Basic.Combinatorics.MultigraphTree
 public import Basic.Phylogenetics.AncestralRestriction
+public import Basic.Phylogenetics.Coalescent.Absorption
+public import Basic.Phylogenetics.Coalescent.BinaryForest
 public import Basic.Phylogenetics.Coalescent.Defs
 public import Basic.Phylogenetics.Coalescent.Factorization
 public import Basic.Phylogenetics.Coalescent.Forest
+public import Basic.Phylogenetics.Coalescent.Outcome
+public import Basic.Phylogenetics.Coalescent.PMF
 public import Basic.Phylogenetics.Coalescent.Tavare
 public import Basic.Phylogenetics.ConcordanceFactor
 public import Basic.Phylogenetics.CutHierarchy
+public import Basic.Phylogenetics.Defs
 public import Basic.Phylogenetics.Hierarchy
 public import Basic.Phylogenetics.HierarchyGraph
 public import Basic.Phylogenetics.HierarchyParents
+public import Basic.Phylogenetics.InducedNetwork
+public import Basic.Phylogenetics.NMSC.Basic
+public import Basic.Phylogenetics.NMSC.History
+public import Basic.Phylogenetics.NMSC.Inheritance
 public import Basic.Phylogenetics.Network
 public import Basic.Phylogenetics.NetworkCuts
-public import Basic.Phylogenetics.NMSC.Basic
 public import Basic.Phylogenetics.PendantCuts
 public import Basic.Phylogenetics.Quartet
 public import Basic.Phylogenetics.QuartetScore
 public import Basic.Phylogenetics.Star
+public import Basic.Phylogenetics.TreeDetach
+public import Basic.Phylogenetics.TreeMetric
+public import Basic.Phylogenetics.TreeOfBlobs
+public import Basic.Phylogenetics.TreeSplice
 public import Basic.Phylogenetics.TreeSplits
 public import Basic.Phylogenetics.TreeTopology
+public import Basic.Probability.GaussianPlane
+public import Basic.Probability.GaussianTail
 public import Basic.Probability.IID
-public import Basic.Probability.QuartetTests
+public import Basic.Probability.QuartetLimits
+public import Basic.Probability.QuartetTails
+public import Basic.Probability.Trinomial.Bridge
+public import Basic.Probability.Trinomial.CLT
+public import Basic.Probability.Trinomial.Gaussian
+public import Basic.Probability.Trinomial.Statistics
+public import Basic.Probability.Trinomial.Tests
+public import Basic.Probability.Trinomial.Transfer
+public import Basic.Probability.Trinomial.Whiten
 
-/-! Shared mathematical foundations; no numbered paper result is claimed here. -/
+/-! Shared mathematical foundations of the tree-of-blobs formalization. -/

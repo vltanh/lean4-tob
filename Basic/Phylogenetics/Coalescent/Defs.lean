@@ -14,8 +14,8 @@ public import Basic.Phylogenetics.Defs
 
 Forest states retain all gene-lineage clusters. The transition is the actual
 matrix exponential of the pairwise-merger generator. Root absorption is defined
-as its entrywise limit; its existence, normalization and support proofs remain
-in uncompiled local drafts at this handoff. No species-tree or network syntax
+as its entrywise limit; its existence, normalization and support are proved in
+`Basic/Phylogenetics/Coalescent/Absorption.lean`. No species-tree or network syntax
 is assumed here.
 -/
 
