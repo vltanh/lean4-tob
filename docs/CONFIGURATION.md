@@ -45,8 +45,14 @@ The user also approved retaining only the valid forward implication of supplied 
 
 The user approved requiring a nontrivial blob in supplied TOB-QMC supplement Lemma 8 (E26). A singleton internal blob in a binary tree refutes the unrestricted statement. This correction uses the standard network convention that sinks are labelled leaves, explicit in main v5.
 
-## Readings not yet agreed
+## Correction agreed on 2026-10-31
 
-The correction E11 of REPORT.md (positivity of alternatives on T1-strict quartets, for the Cauchy and CBC variants of ECToBlob's Theorem 8.2) was added on 2026-10-31 on the strength of a counterexample that an independent reader checked. The user has not yet agreed to it. Until they do, `ECToBlob.theorem8_2` and `Challenge.theorem8_2` carry it as a documented deviation.
+The user agreed to the correction E11 of REPORT.md: the Cauchy transform is extended continuously at `p = 1`, where the printed formula is undefined, and the Cauchy and CBC variants of ECToBlob's Theorem 8.2 carry the hypothesis of positive alternatives on T1-strict quartets, on the strength of a counterexample that an independent reader checked. A finite value of the transform at `p = 1`, as in the authors' R code, was the alternative, and was not chosen.
+
+## Readings
 
 The tests are read as implemented in the sources: gene trees are binary in Theorem 8.2, which covers the NMSC and the Displayed Tree model when all displayed trees are binary, and the small-count procedures of MSCquartets are not modelled.
+
+## Publishing
+
+On 2026-10-31 the user asked for everything to be pushed to a private repository and not made public. The formalization is on branch `formalize/tree-of-blobs`; the private notes, including `NEXT.md` and `notes/`, are on the separate branch `private/notes`, so that the formalization branch stays free of them. No Palomar preflight, submission or registration is authorized.

@@ -29,8 +29,7 @@ Status of the formalization:
   CF-detectable for generic parameters), a hypothesis of [`TINNiK.theorem4`](TINNiK/Basic.lean#L603), and on the form that ECToBlob's
   Proposition 5.1 adapts it to, [`ECToBlob.AdaptedAllmanTheorem1`](ECToBlob/Section5.lean#L88), a hypothesis of [`ECToBlob.proposition5_1`](ECToBlob/Section5.lean#L111). Everything else is unconditional, including ECToBlob's Theorem 8.2 and
   TOB-QMC's consistency claim, which take the papers' own assumptions. Section 2 gives what Lean lacks for the two.
-- **Statements**: the corrections are listed in Section 4 and at the end of Section 6. One of them, E11, still awaits the agreement
-  of the user who requested this formalization.
+- **Statements**: the corrections are listed in Section 4 and at the end of Section 6, all agreed with the user who requested this formalization.
 - `lake build` passes; the only `sorry`s are the statements of [`Challenge.lean`](Challenge.lean), by design. There is no `axiom`, `native_decide`
   or `implemented_by`. [`scripts/Audit.lean`](scripts/Audit.lean) checks every declaration of the libraries, including private and generated
   ones, against the standard axioms [`propext`](https://leanprover-community.github.io/mathlib4_docs/Init/Core.html#propext), [`Classical.choice`](https://leanprover-community.github.io/mathlib4_docs/Init/Prelude.html#Classical.choice), [`Quot.sound`](https://leanprover-community.github.io/mathlib4_docs/Init/Prelude.html#Quot.sound).
@@ -47,7 +46,7 @@ Status of the formalization:
 - **Gaps.** The proof of ECToBlob's Theorem 8.2 has the most serious ones: the quartet witnessing a false edge may have a
   trivial 4-blob, where the T1 null holds (E12); this needed a new 1,100-line argument, [`ECToBlob.falseEdge_witness`](ECToBlob/FalseEdge.lean#L1082), and
   changes no statement. Others: E1, E3, E4, E6, E7, E13–E17 (ECToBlob); E18–E22, E24 (TOB-QMC); E30, E32, E33 (TINNiK). All are repaired. Only E22 changes a statement, the margin of supplement Lemma 4.
-- **Missing hypotheses.** ECToBlob's Theorem 8.2 needs generic parameters for the literal general model (E10, agreed) and, for its Cauchy and CBC variants, positive alternatives (E11, not yet agreed; E11 holds for Lean's continuous extension of the Cauchy transform at `p = 1`, where the printed formula is undefined). Section 4.
+- **Missing hypotheses.** ECToBlob's Theorem 8.2 needs generic parameters for the literal general model (E10, agreed) and, for its Cauchy and CBC variants, positive alternatives (E11, agreed; E11 holds for Lean's continuous extension of the Cauchy transform at `p = 1`, where the printed formula is undefined). Section 4.
 - **Redundant hypotheses.** Section 5. The most notable: the disjointness of `A₁, A₂` and of `B₁, B₂` in Theorem 4.1 of
   ECToBlob; all the refinement hypotheses in TOB-QMC's Lemma 4 except [`RefinesBlob`](TOBQMC/Level1.lean#L43); `0 ≤ δ` in TINNiK's Theorem 4.
 - **Use of cited results.** TINNiK's Theorem 2 is applied beyond its printed hypothesis (b) (E30), TOB-QMC cites the statement
@@ -164,7 +163,7 @@ network has the cut split `ab|cd` and the CF is `(1,0,0)`; the other four quarte
 Cauchy p-value is `1 ≥ α_n`; so for all `α, β` both selection rules return `T₀`, which is not the star. Bon and BBC are not affected, since clipping loses the `1`. A mixture with weights `δ, 1-δ` of a point mass at `T₀` and the uniform law on all 15 binary trees shows that `-log β_n = o(n)` for any
 sequence working on trees, so the failure does not depend on the choice of sequences. An independent reader recomputed the law, the network's predicates and Assumption 1, and simulated the Lean definitions on this example and on a second law with the same CF on `abcd` at `n = 500, 5000, 50000`: Cauchy and CBC returned `T₀` in every replicate, and Bon and BBC returned the star at `n ≥ 5000`.
 
-The NMSC has positive CFs ([`Phylogenetics.nmscCF_pos`](Basic/Phylogenetics/NMSC/Basic.lean#L96)), so the paper's main model loses nothing. Lean adds the hypothesis `hpos` to [`ECToBlob.theorem8_2`](ECToBlob/Section8.lean#L533), for these two variants only and on T1-strict quartets only. So `hpos` is what Lean's extension needs; a finite `f(1)` would need no such hypothesis. **The user has not yet agreed to this correction.**
+The NMSC has positive CFs ([`Phylogenetics.nmscCF_pos`](Basic/Phylogenetics/NMSC/Basic.lean#L96)), so the paper's main model loses nothing. Lean adds the hypothesis `hpos` to [`ECToBlob.theorem8_2`](ECToBlob/Section8.lean#L533), for these two variants only and on T1-strict quartets only. So `hpos` is what Lean's extension needs; a finite `f(1)` would need no such hypothesis. The user agreed to this correction on 2026-10-31.
 
 **E12. Theorem 8.2, proof: the witness may be a trivial 4-blob.** "By Corollaries 4.2 and 4.3, `S^a(e)` is empty exactly when `e` is a cut-edge" fails for non-binary
 networks: the quartet that those corollaries find may have a trivial 4-blob, on which the T1 null hypothesis holds (`CF = (1/3,1/3,1/3)` is on every T1 null).
@@ -258,7 +257,7 @@ This needs a stronger rule than the printed one. It holds by the same proof, bec
 | Where | Missing hypothesis | Counterexample without it | In the formalization |
 | --- | --- | --- | --- |
 | ECToBlob Theorem 8.2 (E10), agreed | Parameters outside the exceptional sets of Assumption 1's converse | A rooted 4-cycle network with arcs `s→r, s→d, r→u, r→v, u→h, v→h, u→a, v→b, h→c`, whose tree of blobs is a star, with the model `(1/2, 1/4+h(t), 1/4-h(t))`, `h(t) = (t-1)/(8(1+(t-1)²))`, for one edge length `t`: at `t = 1` its law equals that of a resolved tree `ab\|cd`, which has the same `T₀`, so no test sequence can be consistent for both ([`scripts/IndistinguishabilityCheck.lean`](scripts/IndistinguishabilityCheck.lean) for the algebra) | [`ECToBlob.Assumption1Forward`](Challenge.lean#L723), [`ECToBlob.Assumption1Converse`](Challenge.lean#L729) hold at the given law; [`ECToBlob.theorem8_2_generic`](ECToBlob/Section8.lean#L570) |
-| ECToBlob Theorem 8.2 (E11), **not yet agreed** | For Cauchy and CBC only: positive alternatives on T1-strict quartets | The 5-sunlet of E11, under the continuous extension of `f` at `p = 1`; see E11 | `hpos` in [`ECToBlob.theorem8_2`](ECToBlob/Section8.lean#L533) |
+| ECToBlob Theorem 8.2 (E11), agreed | For Cauchy and CBC only: positive alternatives on T1-strict quartets | The 5-sunlet of E11, under the continuous extension of `f` at `p = 1`; see E11 | `hpos` in [`ECToBlob.theorem8_2`](ECToBlob/Section8.lean#L533) |
 | ECToBlob (3.3) (E2) | Block-size weights; the blocks cover `X` (they do in the paper) | E2; for the cover, `X = {a,b,c,d}`, `P = {{a}}`, `s = ab\|cd`, `w` the indicator of `s` | [`ECToBlob.equation3_3`](ECToBlob/Section3.lean#L140) |
 | TOB-QMC supplement Lemma 8 (E26), agreed | Nontrivial blob | E26 | Not stated as such: used through [`TOBQMC.Level1.exists_reticulation_or_forall_isBridge`](TOBQMC/Level1Blobs.lean#L369) |
 

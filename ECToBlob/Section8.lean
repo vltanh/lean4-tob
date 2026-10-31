@@ -488,7 +488,7 @@ private theorem tendsto_ectoblob {V E X : Type u} [Fintype X] [DecidableEq X]
   · exact Eventually.of_forall fun n => (iidProb_le_one hd n _).trans_lt ha
 
 /-- **Theorem 8.2** (`ecto:thm8_2`), with the correction agreed with the user (E10 of the report) and
-the one required for the Cauchy combinations (E11, which needs the user's agreement). There are sequences `α_n`, `β_n`, independent of
+the one required for the Cauchy combinations (E11, also agreed). There are sequences `α_n`, `β_n`, independent of
 the network, such that for every resolution `T₀` of the tree of blobs, every variant of the
 algorithm, and every distribution of binary gene trees whose quartet concordance factors satisfy
 both directions of Assumption 1 at the network's parameters, the output on `n` independent gene

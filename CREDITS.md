@@ -4,7 +4,7 @@ How this formalization was made, from the run log and the session transcripts.
 
 ## Who
 
-- **Author and maintainer:** The-Anh Vu-Le, who asked for the formalization, chose the three papers and their versions, and agreed to the statement corrections listed in [`REPORT.md`](REPORT.md), except E11. Public authorship is theirs to confirm.
+- **Author and maintainer:** The-Anh Vu-Le, who asked for the formalization, chose the three papers and their versions, and agreed to the statement corrections listed in [`REPORT.md`](REPORT.md). Public authorship is theirs to confirm.
 - **Formalization:** Codex (GPT-6 family; exact revision and harness version not exposed), for the source audit and first foundations, in two rounds of one evening. Claude Code 2.1.314 (VS Code extension) with Claude Opus 5.5 (`claude-opus-5-5`), for the statements, proofs, audit, documents and packaging, in one session.
 - **Procedure:** the [formalize-math-paper](https://github.com/vltanh/formalize-math-paper) skill, version 3.0.0 in the first rounds, and checkout commit `e339f64` in the last.
 - **Review:** no person has reviewed the proofs. Independent agents, which didn't write what they checked, reviewed the statements, compared the proofs with the papers, and checked the audit's findings and its literature section. Comparator and the route check ran locally.
