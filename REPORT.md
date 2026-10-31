@@ -456,7 +456,7 @@ We found no other formalization of any of the three papers, of Allman et al. 202
 
 ## 11. What's next
 
-Plans for follow-up papers are kept in `NEXT.md`, which is not published.
+Plans for follow-up papers are kept in [`NEXT.md`](NEXT.md), which is not published.
 
 ### Open directions
 

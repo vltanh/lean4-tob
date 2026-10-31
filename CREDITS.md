@@ -43,4 +43,6 @@ Figures, from 2026-10-31 07:25:55 America/Chicago to commit `b2be3ef` at 10:51:3
 - Tool calls: 1,182 for the sub-agents, 243 for the main session.
 - Tokens, sub-agents: 3.84M output, 10.05M input, 241M cache reads. Main session: 0.68M output, 1.51M input, 89M cache reads.
 - Model calls: 960 to `claude-opus-5-5` (189 main session, 771 sub-agents).
-- Cost was not tracked. The figures leave out the Codex rounds above and any work after that commit: the packaging checks, and this file.
+- Cost was not tracked. The figures leave out the Codex rounds above and any work after that commit.
+
+After that commit, the packaging checks and this file were finished, and two more agents checked the private follow-up file. By the end of the session the totals were 5.29 h elapsed, 19 sub-agents, 13.4 h of sub-agent working time, and 1,449 and 254 tool calls for the sub-agents and the main session.
