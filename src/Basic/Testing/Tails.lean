@@ -463,7 +463,7 @@ private lemma tendsto_iidProb_stat_gt (hd : IsDist dist) (F : (QuartetTree X →
   rw [hc, hhom _ hn']
   exact hn.trans_lt (mul_lt_mul_of_pos_left hω hn')
 
-private lemma eventually_le_mul {b : ℕ → ℝ} (hb : Tendsto (fun n => b n / n) atTop (𝓝 0)) {d : ℝ}
+lemma eventually_le_mul {b : ℕ → ℝ} (hb : Tendsto (fun n => b n / n) atTop (𝓝 0)) {d : ℝ}
     (hd : 0 < d) : ∀ᶠ n : ℕ in atTop, b n ≤ n * d := by
   filter_upwards [hb.eventually (gt_mem_nhds hd), eventually_gt_atTop 0] with n h1 h2
   have hn' : (0 : ℝ) < n := by exact_mod_cast h2
@@ -623,7 +623,7 @@ theorem chiSqOneTail_log_pos : ∀ᶠ n : ℕ in atTop, 0 < chiSqOneTail (Real.l
   Eventually.of_forall fun _ => chiSqOneTail_pos _
 
 /-- A lower bound for the logarithm of the tail of `χ²₁`. -/
-private lemma log_chiSqOneTail_ge {t : ℝ} (ht : 0 ≤ t) :
+lemma log_chiSqOneTail_ge {t : ℝ} (ht : 0 ≤ t) :
     -Real.log (√(2 * Real.pi)) - 1 - t ≤ Real.log (chiSqOneTail t) := by
   have h1 := gaussianPDFReal_le_chiSqOneTail t
   have h2 := Real.log_le_log (gaussianPDFReal_pos _ _ _ one_ne_zero) h1
@@ -633,6 +633,17 @@ private lemma log_chiSqOneTail_ge {t : ℝ} (ht : 0 ≤ t) :
   rw [Real.log_mul (inv_ne_zero hpi.ne') (Real.exp_pos _).ne', Real.log_inv, Real.log_exp]
   have h3 : √t ^ 2 = t := Real.sq_sqrt ht
   nlinarith [sq_nonneg (√t - 1)]
+
+/-- The tail of `χ²₂` at `log n` is `1 / √n`, so its logarithm is `o(n)`. -/
+theorem tendsto_log_chiSqTwoTail_log :
+    Tendsto (fun n : ℕ => Real.log (chiSqTwoTail (Real.log n)) / n) atTop (𝓝 0) := by
+  have h : Tendsto (fun x : ℝ => Real.log x ^ 1 / (1 * x + 0)) atTop (𝓝 0) :=
+    Real.tendsto_pow_log_div_mul_add_atTop 1 0 1 one_ne_zero
+  have h' := (h.comp tendsto_natCast_atTop_atTop).const_mul (-(1 / 2) : ℝ)
+  rw [mul_zero] at h'
+  refine h'.congr fun n => ?_
+  simp only [chiSqTwoTail, Real.log_exp, Function.comp, pow_one, one_mul, add_zero]
+  ring
 
 theorem tendsto_log_chiSqOneTail_log :
     Tendsto (fun n : ℕ => Real.log (chiSqOneTail (Real.log n)) / n) atTop (𝓝 0) := by

@@ -1,6 +1,6 @@
 module
 
-public import ECToBlob.Remark52
+public import Basic.NMSCChain
 public import External.AllmanBanosRhodes2019.Proposition9
 
 /-!
@@ -28,10 +28,12 @@ two taxa below the reticulation.
 @[expose] public noncomputable section
 
 open Phylogenetics Phylogenetics.RootedNetwork Phylogenetics.NMSC Finset
-open ECToBlob.Remark52 Phylogenetics.NMSC.Chain
+open Phylogenetics.NMSC.Chain
 open scoped Classical
 
 namespace External.AllmanBanosRhodes2019.ThreeTwo
+
+export Phylogenetics.FinFour (taxa_eq_univ abcd acbd adbc Fab Cab Fall)
 
 /-! ### A forest injected at a child of the root -/
 
@@ -510,7 +512,7 @@ private theorem split_value (hθ : N₃.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 
   have hiff : C' ∈ r.val ↔ C ∈ r.val := by
     refine ⟨mem_val_compl r ?_, mem_val_compl r hCC⟩
     rw [← hCC, sdiff_sdiff_right_self, inf_eq_inter, univ_inter]
-  rw [hS, rootMass_all hN hθ hρ,
+  rw [hS, rootMass_singletons hN hθ hρ (q := univ) rfl (by rw [mem_treesOn, taxa_eq_univ]),
     rootMass_of_mem hN hθ hρ hg₁ (C := C) (mem_union_left _ (mem_insert_self _ _)) hC2 (htaxa _),
     rootMass_of_mem hN hθ hρ hg₂ (C := C') (mem_union_right _ (mem_insert_self _ _)) hC'2 (htaxa _),
     rootMass_of_mem hN hθ hρ hg₃ (C := C) (mem_union_left _ (mem_insert_self _ _)) hC2 (htaxa _)]
@@ -1143,5 +1145,74 @@ theorem theorem36_N₃ {θ : MetricData E₃} (hθ : N₃.IsMetric θ) (hx : Rea
     obtain ⟨r₁, r₂, -, ha⟩ := QuartetTests.QuartetTree.exists_alternatives abcd
     have hr : r₁ ∈ abcd.alternatives := by rw [ha]; simp
     exact (hstrict.1 r₁ hr).ne ((hall r₁ (mem_treesOn.2 (taxa_eq_univ _))).trans (hall abcd hmem).symm)
+
+/-! ### "May or may not be tree-like" -/
+
+/-- Parameters off the tree-like region: those of `metric₃`, with `x₁ = 99/100`. All lengths are positive. -/
+def metricOff : MetricData E₃ where
+  length := fun
+    | .ru => Real.log (4 / 3)
+    | .rv => Real.log (3 / 2)
+    | .uh => Real.log (10 / 9)
+    | .vh => Real.log (10 / 9)
+    | .hw => Real.log (100 / 99)
+    | _ => 1
+  inheritance := metric₃.inheritance
+
+theorem isMetric_metricOff : N₃.IsMetric metricOff := by
+  have hm := isMetric_metric₃
+  have hlog : (0 : ℝ) < Real.log (100 / 99) := Real.log_pos (by norm_num)
+  refine ⟨fun e he => ?_, fun e he => ?_, hm.2.2.1, hm.2.2.2.1, hm.2.2.2.2⟩
+  · have := hm.1 e he
+    cases e <;> first | exact this | exact hlog
+  · have := hm.2.1 e he
+    cases e <;> first | exact this | exact hlog.le
+
+/-- **The first sentence of part 2 of Proposition 9: "`CF` may or may not be tree-like"**, on `N₃`, the network of the source's
+Figure 5 (L). `isT1Strict_N₃` is tree-like; here the concordance factor is not. -/
+theorem exists_not_isT3Null_N₃ : ∃ θ : MetricData E₃, N₃.IsMetric θ ∧ ¬ IsT3Null (nmscCF N₃ θ 0) univ := by
+  have hθ := isMetric_metricOff
+  have h₁ : Real.exp (-metricOff.length .hw) = 99 / 100 := by
+    change Real.exp (-Real.log (100 / 99)) = _
+    rw [exp_neg_log (by norm_num)]
+    norm_num
+  have h₂ : Real.exp (-metricOff.length .uh) = 9 / 10 := by
+    change Real.exp (-Real.log (10 / 9)) = _
+    rw [exp_neg_log (by norm_num)]
+    norm_num
+  have h₄ : Real.exp (-metricOff.length .vh) = 9 / 10 := by
+    change Real.exp (-Real.log (10 / 9)) = _
+    rw [exp_neg_log (by norm_num)]
+    norm_num
+  have h₃ : x₃ metricOff = 1 / 2 := by
+    change Real.exp (-Real.log (4 / 3)) * Real.exp (-Real.log (3 / 2)) = _
+    rw [exp_neg_log (by norm_num), exp_neg_log (by norm_num)]
+    norm_num
+  have hγ : metricOff.inheritance .vh = 1 / 2 := rfl
+  have hab : nmscCF N₃ metricOff 0 abcd < nmscCF N₃ metricOff 0 acbd := by
+    rw [nmscCF_N₃_abcd hθ, nmscCF_N₃_acbd hθ, h₁, h₂, h₃, h₄, hγ]
+    norm_num [figure5CFab, figure5CFac]
+  have had : nmscCF N₃ metricOff 0 adbc = nmscCF N₃ metricOff 0 acbd := by
+    rw [nmscCF_N₃_adbc hθ, nmscCF_N₃_acbd hθ]
+  have hne₁ : abcd ≠ acbd := fun h => by
+    have := congrArg Subtype.val h
+    revert this
+    decide
+  have hne₂ : abcd ≠ adbc := fun h => by
+    have := congrArg Subtype.val h
+    revert this
+    decide
+  have hne₃ : acbd ≠ adbc := fun h => by
+    have := congrArg Subtype.val h
+    revert this
+    decide
+  have halt : ∀ {u v : QuartetTree (Fin 4)}, u ≠ v → v ∈ u.alternatives := fun {u v} huv =>
+    QuartetTree.mem_alternatives.2 ⟨(taxa_eq_univ v).trans (taxa_eq_univ u).symm, huv.symm⟩
+  refine ⟨metricOff, hθ, ?_⟩
+  rintro ⟨s, -, hle, heq⟩
+  rcases quartet_cases s with rfl | rfl | rfl
+  · exact absurd (hle acbd (halt hne₁)) (not_le.2 hab)
+  · exact hab.ne (heq abcd (halt hne₁.symm) adbc (halt hne₃) |>.trans had)
+  · exact hab.ne (heq abcd (halt hne₂.symm) acbd (halt hne₃.symm))
 
 end External.AllmanBanosRhodes2019.ThreeTwo

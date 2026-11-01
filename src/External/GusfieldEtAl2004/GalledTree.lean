@@ -110,6 +110,25 @@ theorem incompatible_of_straddles (hx : ∃ r ∈ L, ∀ s ∈ D, r s = x₀ s) 
     exact h₂b ((hOb z₂).1 ((hs₂ b hb).1 (fun h' => hne (h'.trans hq.symm))))
   · exact ⟨r₁, hr₁, flip ((hs₁ a ha).2 ((hOa z₁).2 h₁a)) hp, flip ((hs₁ b hb).2 ((hOb z₁).2 h₁b)) hq⟩
 
+/-- "The `i, j` state-pair at `x` differs from the `i, j` state-pair at every other node on `Q`" (after the proof of Theorem 2.2 of the source): a row at a coordinate differs from the recombination node at one of two incompatible columns. -/
+theorem onSide_or_of_incompatible (hrow : ∀ r ∈ L, (∀ s ∈ D, r s = x₀ s) ∨ ∃ z, ∀ s ∈ D, (r s ≠ x₀ s ↔ OnSide kind τ z s)) {s t : ι} (hs : s ∈ D) (ht : t ∈ D)
+    (h : Incompatible L s t) (z : ℤ) : OnSide kind τ z s ∨ OnSide kind τ z t := by
+  rcases straddles_of_incompatible hrow hs ht h with ⟨hks, hkt, ⟨z₁, -, h₁, h₂⟩, -⟩ | ⟨hkt, hks, ⟨z₁, -, h₁, h₂⟩, -⟩
+  · simp only [OnSide, hks, hkt, true_and, false_and, or_false, not_true_eq_false, not_false_eq_true, false_or]
+    omega
+  · simp only [OnSide, hks, hkt, true_and, false_and, or_false, not_true_eq_false, not_false_eq_true, false_or]
+    omega
+
+/-- Two incompatible columns on the line need a row with the state of the recombination node at every site on the line. -/
+theorem exists_row_of_incompatible (hrow : ∀ r ∈ L, (∀ s ∈ D, r s = x₀ s) ∨ ∃ z, ∀ s ∈ D, (r s ≠ x₀ s ↔ OnSide kind τ z s)) {s t : ι} (hs : s ∈ D) (ht : t ∈ D)
+    (h : Incompatible L s t) : ∃ r ∈ L, ∀ u ∈ D, r u = x₀ u := by
+  obtain ⟨r, hr, h₁, h₂⟩ := h (x₀ s) (x₀ t)
+  rcases hrow r hr with hx | ⟨z, hz⟩
+  · exact ⟨r, hr, hx⟩
+  · rcases onSide_or_of_incompatible hrow hs ht h z with h' | h'
+    · exact absurd h₁ ((hz s hs).2 h')
+    · exact absurd h₂ ((hz t ht).2 h')
+
 /-- The argument of Lemma 2.3 of the source: of two pairs that straddle, the one with the lower threshold of the second kind exchanges with the other. -/
 theorem Straddles.cross {a₁ b₁ a₂ b₂ : ι} (h₁ : Straddles L D x₀ kind τ a₁ b₁) (h₂ : Straddles L D x₀ kind τ a₂ b₂) (hle : τ b₁ ≤ τ b₂) :
     Straddles L D x₀ kind τ a₁ b₂ := by
@@ -136,6 +155,11 @@ theorem threshold_exchange (hx : ∃ r ∈ L, ∀ s ∈ D, r s = x₀ s)
     exact r₁.trans (hc.reachable.trans r₂'.symm)
   · have hc : (incompatGraph L).Adj a₂ b₁ := incompatible_of_straddles hx ha₂ hb₁ (h₂.cross h₁ hle)
     exact r₁'.trans (hc.reachable.symm.trans r₂.symm)
+
+/-- `threshold_exchange`, with the row of the recombination node from the incompatibility. -/
+theorem threshold_exchange_of_incompatible (hrow : ∀ r ∈ L, (∀ s ∈ D, r s = x₀ s) ∨ ∃ z, ∀ s ∈ D, (r s ≠ x₀ s ↔ OnSide kind τ z s)) {i j k l : ι} (hi : i ∈ D) (hj : j ∈ D) (hk : k ∈ D) (hl : l ∈ D)
+    (hij : Incompatible L i j) (hkl : Incompatible L k l) : (incompatGraph L).Reachable i k :=
+  threshold_exchange (exists_row_of_incompatible hrow hi hj hij) hrow hi hj hk hl hij hkl
 
 end Thresholds
 
@@ -323,10 +347,10 @@ theorem mem_prefix_iff {a : E} {c d : List E} : a ∈ c ↔ (c ++ d).idxOf a < c
     rw [List.idxOf_append_of_notMem hc] at h
     omega
 
-/-- **Theorem 2.2 of the source**, on one gall: the coordinates. The nodes of one side have negative even coordinates, of the other side positive ones, and the sites odd ones. -/
-theorem exists_threshold (hG : IsGalledTree N) (hc : N.IsCycleOn w x p q) :
-    ∃ (kind : ι → Prop) (τ : ι → ℤ), ∀ y : V, (∀ s, N.site s ∈ {e | e ∈ p ∨ e ∈ q} → N.label y s = N.label x s) ∨
-      ∃ z, ∀ s, N.site s ∈ {e | e ∈ p ∨ e ∈ q} → (N.label y s ≠ N.label x s ↔ OnSide kind τ z s) := by
+/-- **Theorem 2.2 of the source**, on one gall: the coordinates of the nodes of the gall. The nodes of one side have negative even coordinates, of the other side positive ones, and the sites odd ones. -/
+theorem exists_threshold_mem (hG : IsGalledTree N) (hc : N.IsCycleOn w x p q) :
+    ∃ (kind : ι → Prop) (τ : ι → ℤ), ∀ v ∈ N.blobVerts {e | e ∈ p ∨ e ∈ q}, v = x ∨
+      ∃ z, ∀ s, N.site s ∈ {e | e ∈ p ∨ e ∈ q} → (N.label v s ≠ N.label x s ↔ OnSide kind τ z s) := by
   let τ : ι → ℤ := fun s => if N.site s ∈ p then -(2 * (p.idxOf (N.site s) : ℤ) + 1) else 2 * (q.idxOf (N.site s) : ℤ) + 1
   let X : ι → Prop := fun s => N.label x s ≠ N.label N.root s
   let kind : ι → Prop := fun s => (N.site s ∈ p ∧ X s) ∨ (N.site s ∉ p ∧ ¬ X s)
@@ -338,12 +362,10 @@ theorem exists_threshold (hG : IsGalledTree N) (hc : N.IsCycleOn w x p q) :
     rw [hbool _ _ (N.label N.root s), hF]
     change ((if N.site s ∈ p then z < τ s else τ s < z) ↔ ¬ X s) ↔ OnSide kind τ z s
     by_cases hsp : N.site s ∈ p <;> by_cases hX : X s <;> simp only [OnSide, kind, hsp, hX, ite_true, ite_false, true_and, false_and, and_true, and_false, or_false, false_or, not_true_eq_false, not_false_eq_true, iff_false, iff_true, or_true, and_self] <;> omega
-  refine ⟨kind, τ, fun y => ?_⟩
-  obtain ⟨v, hv, hyv⟩ := exists_mem_label_eq hG hc y
-  rcases cycle_mem_cases hc hv with rfl | ⟨c, d, hp, hd, hcv⟩ | ⟨c, d, hq, hd, hcv⟩
-  · exact Or.inl hyv
+  refine ⟨kind, τ, fun v hv => ?_⟩
+  rcases cycle_mem_cases hc hv with h | ⟨c, d, hp, hd, hcv⟩ | ⟨c, d, hq, hd, hcv⟩
+  · exact Or.inl h
   · refine Or.inr ⟨-(2 * (c.length : ℤ)), fun s hs => ?_⟩
-    rw [hyv s hs]
     have hne : -(2 * (c.length : ℤ)) ≠ τ s := by
       simp only [τ]
       split_ifs <;> omega
@@ -357,7 +379,6 @@ theorem exists_threshold (hG : IsGalledTree N) (hc : N.IsCycleOn w x p q) :
       simp only [τ, hsp, ite_false, hnc, false_iff]
       omega
   · refine Or.inr ⟨2 * (c.length : ℤ), fun s hs => ?_⟩
-    rw [hyv s hs]
     have hne : 2 * (c.length : ℤ) ≠ τ s := by
       simp only [τ]
       split_ifs <;> omega
@@ -371,6 +392,17 @@ theorem exists_threshold (hG : IsGalledTree N) (hc : N.IsCycleOn w x p q) :
     · rw [mem_prefix_iff (d := d), ← hq]
       simp only [τ, hsp, ite_false]
       omega
+
+/-- **Theorem 2.2 of the source**, on one gall: the coordinates. A node has the states on the gall of the recombination node, or of a coordinate on the line. -/
+theorem exists_threshold (hG : IsGalledTree N) (hc : N.IsCycleOn w x p q) :
+    ∃ (kind : ι → Prop) (τ : ι → ℤ), ∀ y : V, (∀ s, N.site s ∈ {e | e ∈ p ∨ e ∈ q} → N.label y s = N.label x s) ∨
+      ∃ z, ∀ s, N.site s ∈ {e | e ∈ p ∨ e ∈ q} → (N.label y s ≠ N.label x s ↔ OnSide kind τ z s) := by
+  obtain ⟨kind, τ, hτ⟩ := exists_threshold_mem hG hc
+  refine ⟨kind, τ, fun y => ?_⟩
+  obtain ⟨v, hv, hyv⟩ := exists_mem_label_eq hG hc y
+  rcases hτ v hv with rfl | ⟨z, hz⟩
+  · exact Or.inl hyv
+  · exact Or.inr ⟨z, fun s hs => by rw [hyv s hs]; exact hz s hs⟩
 
 /-- What is below the recombination node of a gall has its states on the gall. -/
 theorem label_of_reach (hG : IsGalledTree N) (hc : N.IsCycleOn w x p q) {y : V} (hy : N.Reach x y) {s : ι} (hs : N.site s ∈ {e | e ∈ p ∨ e ∈ q}) :
@@ -398,6 +430,17 @@ theorem lemma2_3 (hG : IsGalledTree N) (hc : N.IsCycleOn w x p q) {M : Finset (�
   obtain ⟨y, rfl⟩ := hL r hr
   exact hτ y
 
+/-- **Lemma 2.3 of the source**, for rows that are labels of nodes on the sites `D`, on one gall, whichever rows are there. The fourth pair of an incompatibility is that of the recombination node (`exists_row_of_incompatible`), so no leaf below that node needs to be assumed. -/
+theorem lemma2_3_of_rows (hG : IsGalledTree N) (hc : N.IsCycleOn w x p q) {Y : Finset (ι → Bool)} {D : Set ι} (hDQ : ∀ s ∈ D, N.site s ∈ {e | e ∈ p ∨ e ∈ q})
+    (hY : ∀ r ∈ Y, ∃ v, ∀ s ∈ D, r s = N.label v s) {i j k l : ι} (hi : i ∈ D) (hj : j ∈ D) (hk : k ∈ D) (hl : l ∈ D) (hij : Incompatible Y i j) (hkl : Incompatible Y k l) :
+    (incompatGraph Y).Reachable i k := by
+  obtain ⟨kind, τ, hτ⟩ := exists_threshold hG hc
+  refine threshold_exchange_of_incompatible (D := D) (x₀ := N.label x) (kind := kind) (τ := τ) (fun r hr => ?_) hi hj hk hl hij hkl
+  obtain ⟨y, hy⟩ := hY r hr
+  rcases hτ y with h | ⟨z, hz⟩
+  · exact Or.inl fun s hs => (hy s hs).trans (h s (hDQ s hs))
+  · exact Or.inr ⟨z, fun s hs => by rw [hy s hs]; exact hz s (hDQ s hs)⟩
+
 /-- **Theorem 2.4** of the source. All the sites of a connected component with a site on a gall are on the gall. -/
 theorem theorem2_4 (hG : IsGalledTree N) {Q : Set E} (hQ : N.IsCycle Q) (hL : ∀ r ∈ L, ∃ v, N.label v = r) {i k : ι} (hi : N.site i ∈ Q)
     (hr : (incompatGraph L).Reachable i k) : N.site k ∈ Q := by
@@ -416,6 +459,16 @@ theorem theorem2_5 (hG : IsGalledTree N) {Q : Set E} (hQ : N.IsCycle Q) {M : Fin
   have hk' : N.site k' ∈ Q := theorem2_4 hG hQ hL hk (SimpleGraph.Adj.reachable (G := incompatGraph L) hkk')
   obtain ⟨w, x, p, q, hc, rfl⟩ := hQ
   exact lemma2_3 hG hc hD hML hL hi hi' hk hk' hii' hkk'
+
+/-- **Theorem 2.5** of the source, for any set of rows that label nodes. Sites with conflicts on one gall are in one connected component. -/
+theorem theorem2_5_of_rows (hG : IsGalledTree N) {Q : Set E} (hQ : N.IsCycle Q) (hL : ∀ r ∈ L, ∃ v, N.label v = r) {i k i' k' : ι}
+    (hi : N.site i ∈ Q) (hk : N.site k ∈ Q) (hii' : Incompatible L i i') (hkk' : Incompatible L k k') : (incompatGraph L).Reachable i k := by
+  have hi' : N.site i' ∈ Q := theorem2_4 hG hQ hL hi (SimpleGraph.Adj.reachable (G := incompatGraph L) hii')
+  have hk' : N.site k' ∈ Q := theorem2_4 hG hQ hL hk (SimpleGraph.Adj.reachable (G := incompatGraph L) hkk')
+  obtain ⟨w, x, p, q, hc, rfl⟩ := hQ
+  refine lemma2_3_of_rows hG hc (D := {s | N.site s ∈ {e | e ∈ p ∨ e ∈ q}}) (fun s hs => hs) (fun r hr => ?_) hi hi' hk hk' hii' hkk'
+  obtain ⟨v, rfl⟩ := hL r hr
+  exact ⟨v, fun _ _ => rfl⟩
 
 /-- A reduced galled tree is fully decomposed, for the graph of the incompatibilities of a set `L` of rows that label nodes, containing the rows derived. -/
 theorem IsReducedGalledTree.isFullyDecomposedFor_of_subset (h : IsReducedGalledTree N (incompatGraph L)) {M : Finset (ι → Bool)} (hD : N.Derives M) (hML : M ⊆ L)
@@ -534,6 +587,15 @@ theorem line180_printed_false :
       revert j
       decide
     exact hfd.isolated_treeArc 2 hiso ⟨printedGall, ⟨0, 4, _, _, printedNet_isCycleOn, rfl⟩, Or.inl (by decide)⟩
+
+/-- **Corollary 2.1** (`ext:cor2_1_printed`) of the source, one direction, is false. "A sequence is in `M(C) - 0` if and only if it is the sequence `l_v(C)` for some node `v` on `Q` other than the coalescent node. Stated differently, the node labels of the non-coalescent nodes on `Q`, restricted to sites in `C`, are exactly the sequences in `M(C) - 0`."
+On `printedNet`, with `C` all the sites, the node `1` of the gall isn't the coalescent node, and it has no edge off the gall: its label isn't a row. The source's proof shows that each row is the label of a node of the gall, which is the direction it uses, and `exists_mem_label_eq`. The source's standing assumptions hold: the columns are distinct, and each has a `1`. Gusfield et al. 2007 don't use this. -/
+theorem corollary2_1_printed_false : (1 : Fin 9) ∈ printedNet.blobVerts printedGall ∧ (1 : Fin 9) ≠ 0 ∧ printedNet.label 1 ∉ printedRows ∧ printedNet.label 0 = (fun _ => false) := by
+  refine ⟨Or.inr ⟨0, Or.inl (by decide), rfl⟩, by decide, ?_, ?_⟩
+  · change printedSpec.label 1 ∉ printedRows
+    decide
+  · change printedSpec.label 0 = _
+    decide
 
 end Printed
 

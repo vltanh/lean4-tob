@@ -27,10 +27,10 @@ the union of the three half-lines `(p, q, q)`, `q ≤ 1/3`, of the concordance f
   `QuartetTests.exists_t3PValue_lt_t1PValue`. What holds in the direction of the source is in
   `QuartetTests.t1PValue_le_t1Tail_t3Stat` and `QuartetTests.t1_rejects_where_t3_cannot`.
 
-Proposition `prop:T3approx` is an approximation, with no error stated. What is formalized of it: the law at a point off the
+Proposition `prop:T3approx` is an approximation, with no error stated. What is formalized of it here: the law at a point off the
 singularity tends to `χ²₁`, `QuartetTests.abs_t3Tail_sub_chiSqOneTail_lt`; the variable is the squared distance to the three
-half-lines, `QuartetTests.t3Var_eq_min_sqDistHalfLine`. The limit of the statistic at the singularity is not stated here, only that
-it is tight.
+half-lines, `QuartetTests.t3Var_eq_min_sqDistHalfLine`. Here the statistic at the singularity is only tight, which is all that
+non-collapse needs. Its limit law is in `T3Limit.lean`, and the density of the source's next proposition in `T3Density.lean`.
 -/
 
 @[expose] public noncomputable section
@@ -111,8 +111,6 @@ theorem sin_alphaZero_pos (hφ : φ < 3 / 2) : 0 < Real.sin (alphaZero φ) := by
   rw [alphaZero, Real.sin_arctan_pos]
   have hw : 0 < 3 * (3 - 2 * φ) := by linarith
   positivity
-
-theorem cos_alphaZero_pos (φ : ℝ) : 0 < Real.cos (alphaZero φ) := Real.cos_arctan_pos _
 
 /-- `α₀` is at least `arctan (1/3)`, as Mitchell, Allman, Rhodes 2019 state in Appendix `app1`. In this form:
 `sin² α₀ ≥ 1/10`. -/
@@ -359,7 +357,7 @@ theorem t3Tail_pos {n t : ℝ} (h0 : 0 ≤ φ) (h1 : φ ≤ 1) (ht : 0 ≤ t) : 
 
 /-- Where `Z² ≤ κ` and `Z̄ ≥ 2 √κ`, the T3 variable is `Z²`: the two half-lines are further away than the vertical
 one. -/
-private lemma t3Var_eq_of_large {κ x y : ℝ} (h1 : φ ≤ 1) (hx : x ^ 2 ≤ κ) (hy : 2 * √κ ≤ y) :
+lemma t3Var_eq_of_large {κ x y : ℝ} (h1 : φ ≤ 1) (hx : x ^ 2 ≤ κ) (hy : 2 * √κ ≤ y) :
     t3Var φ (x, y) = x ^ 2 := by
   have hc := one_half_le_cos_alphaZero h1
   have hs0 := sin_alphaZero_pos (φ := φ) (by linarith)
@@ -648,49 +646,11 @@ theorem lineS_le_lineS_of_le {a b c : ℝ} (hc : 0 ≤ c) (hcb : c ≤ b) (hba :
 
 /-! ### The statistics as functions of the three counts -/
 
-private theorem alternatives_facts' {s r₁ r₂ : QuartetTree X} (hne : r₁ ≠ r₂)
-    (h : s.alternatives = {r₁, r₂}) :
-    s ≠ r₁ ∧ s ≠ r₂ ∧ r₁.alternatives = {s, r₂} ∧ r₁.taxa = s.taxa ∧ r₂.taxa = s.taxa := by
-  have hr : ∀ r, r ∈ s.alternatives ↔ r.taxa = s.taxa ∧ r ≠ s := fun r => QuartetTree.mem_alternatives
-  have h₁ := (hr r₁).1 (by rw [h]; simp)
-  have h₂ := (hr r₂).1 (by rw [h]; simp)
-  refine ⟨h₁.2.symm, h₂.2.symm, ?_, h₁.1, h₂.1⟩
-  ext r
-  simp only [QuartetTree.mem_alternatives, Finset.mem_insert, Finset.mem_singleton]
-  constructor
-  · rintro ⟨ht, hrr⟩
-    by_cases hrs : r = s
-    · exact Or.inl hrs
-    · have := (hr r).2 ⟨ht.trans h₁.1, hrs⟩
-      rw [h] at this
-      simp only [Finset.mem_insert, Finset.mem_singleton] at this
-      rcases this with h' | h'
-      · exact absurd h' hrr
-      · exact Or.inr h'
-  · rintro (rfl | rfl)
-    · exact ⟨h₁.1.symm, h₁.2.symm⟩
-    · exact ⟨h₂.1.trans h₁.1.symm, hne.symm⟩
-
-private theorem lineStat_eq_lineS' (c : QuartetTree X → ℝ) {s r₁ r₂ : QuartetTree X} (hne : r₁ ≠ r₂)
-    (h : s.alternatives = {r₁, r₂}) : lineStat c s = lineS (c r₁) (c r₂) := by
-  unfold lineStat lineS
-  rw [h, Finset.sum_pair hne, Finset.sum_pair hne]
-
-private theorem starStat_eq_starS' (c : QuartetTree X → ℝ) {s r₁ r₂ : QuartetTree X} (hne : r₁ ≠ r₂)
-    (h : s.alternatives = {r₁, r₂}) : starStat c s.taxa = starS (c s) (c r₁) (c r₂) := by
-  have hm := mem_treesOn_taxa s
-  have e : ∀ f : QuartetTree X → ℝ, ∑ r ∈ treesOn s.taxa, f r = f s + (f r₁ + f r₂) := by
-    intro f
-    rw [← Finset.add_sum_erase _ f hm, ← s.alternatives_eq, h, Finset.sum_pair hne]
-  unfold starStat starS
-  rw [e, e]
-  simp only [add_assoc]
-
 /-- The statistic of a line is at most that of the star: the star is on the line. -/
 theorem lineStat_le_starStat {c : QuartetTree X → ℝ} (hc : ∀ r, 0 ≤ c r) (s : QuartetTree X) :
     lineStat c s ≤ starStat c s.taxa := by
   obtain ⟨r₁, r₂, hne, h⟩ := QuartetTree.exists_alternatives s
-  rw [lineStat_eq_lineS' c hne h, starStat_eq_starS' c hne h]
+  rw [lineStat_eq_lineS c hne h, starStat_eq_starS c hne h]
   exact lineS_le_starS (hc _) (hc _) (hc _)
 
 /-- The T1 null is inside the line, so its statistic is at least that of the line. -/
@@ -704,17 +664,17 @@ theorem lineStat_le_t1Stat {c : QuartetTree X → ℝ} (hc : ∀ r, 0 ≤ c r) (
 private theorem t1Stat_le_aux {c : QuartetTree X → ℝ} (hc : ∀ r, 0 ≤ c r) {s r₁ r₂ : QuartetTree X}
     (hne : r₁ ≠ r₂) (h : s.alternatives = {r₁, r₂}) (h₁ : c r₁ ≤ c s) (h₂ : c r₂ ≤ c s) :
     t1Stat c s ≤ t1Stat c r₁ := by
-  obtain ⟨-, hs₂, ha₁, ht₁, -⟩ := alternatives_facts' hne h
+  obtain ⟨-, hs₂, ha₁, ht₁, -⟩ := alternatives_taxa hne h
   have hs : t1Stat c s = lineS (c r₁) (c r₂) := by
     unfold t1Stat
-    rw [h, Finset.sum_pair hne, ite_eq_left (by linarith), lineStat_eq_lineS' c hne h]
+    rw [h, Finset.sum_pair hne, ite_eq_left (by linarith), lineStat_eq_lineS c hne h]
   rw [hs]
   unfold t1Stat
   rw [ha₁, Finset.sum_pair hs₂]
   split_ifs with hcond
-  · rw [lineStat_eq_lineS' c hs₂ ha₁]
+  · rw [lineStat_eq_lineS c hs₂ ha₁]
     exact lineS_le_lineS_of_le (hc _) (by linarith) h₁
-  · rw [ht₁, ← lineStat_eq_lineS' c hne h]
+  · rw [ht₁, ← lineStat_eq_lineS c hne h]
     exact lineStat_le_starStat hc s
 
 /-- **A topology of highest count is a maximum likelihood topology of model T3**: it has the least T1 statistic of
@@ -773,17 +733,13 @@ section Sample
 
 variable {Γ : Type*} [Fintype Γ] {dist : Γ → ℝ} {sides : Γ → Finset (Finset X)}
 
-private theorem sum_treesOn_taxa' (f : QuartetTree X → ℝ) {s r₁ r₂ : QuartetTree X} (hne : r₁ ≠ r₂)
-    (h : s.alternatives = {r₁, r₂}) : ∑ r ∈ treesOn s.taxa, f r = f s + (f r₁ + f r₂) := by
-  rw [← Finset.add_sum_erase _ f (mem_treesOn_taxa s), ← s.alternatives_eq, h, Finset.sum_pair hne]
-
 /-- With entries summing to one, the T1 null is the half-line `(1 - 2q, q, q)`, `q ≤ 1/3`. -/
 theorem isT1Null_iff_le_third {p : QuartetTree X → ℝ} {s : QuartetTree X}
     (hp : ∑ r ∈ treesOn s.taxa, p r = 1) :
     IsT1Null p s ↔ (∀ r ∈ s.alternatives, p r ≤ 1 / 3) ∧
       ∀ r ∈ s.alternatives, ∀ r' ∈ s.alternatives, p r = p r' := by
   obtain ⟨r₁, r₂, hne, h⟩ := QuartetTree.exists_alternatives s
-  rw [sum_treesOn_taxa' p hne h] at hp
+  rw [sum_treesOn p hne h] at hp
   have hm₁ : r₁ ∈ s.alternatives := by rw [h]; simp
   have hm₂ : r₂ ∈ s.alternatives := by rw [h]; simp
   refine and_congr_left fun heq => ?_
@@ -807,7 +763,7 @@ theorem not_isT3Null_of_isNonCut {p : QuartetTree X → ℝ} {q : Finset X}
     (h : AllmanEtAl2023.IsNonCut p q) : ¬ IsT3Null p q := by
   rintro ⟨s, hs, -, heq⟩
   obtain ⟨r₁, r₂, hne, ha⟩ := QuartetTree.exists_alternatives s
-  obtain ⟨-, -, -, ht₁, ht₂⟩ := alternatives_facts' hne ha
+  obtain ⟨-, -, -, ht₁, ht₂⟩ := alternatives_taxa hne ha
   have hsq := mem_treesOn.1 hs
   exact h r₁ (mem_treesOn.2 (ht₁.trans hsq)) r₂ (mem_treesOn.2 (ht₂.trans hsq)) hne
     (heq r₁ (by rw [ha]; simp) r₂ (by rw [ha]; simp))
@@ -818,8 +774,8 @@ theorem not_isT3Null_of_anomalous {p : QuartetTree X → ℝ} {s : QuartetTree X
     (hlt : ∀ r ∈ s.alternatives, p s < p r) : ¬ IsT3Null p s.taxa := by
   rintro ⟨u, hu, hle, heq⟩
   obtain ⟨r₁, r₂, hne, ha⟩ := QuartetTree.exists_alternatives s
-  obtain ⟨hs₁, hs₂, ha₁, ht₁, ht₂⟩ := alternatives_facts' hne ha
-  obtain ⟨-, -, ha₂, -, -⟩ := alternatives_facts' hne.symm (by rw [ha, Finset.pair_comm] : s.alternatives = {r₂, r₁})
+  obtain ⟨hs₁, hs₂, ha₁, ht₁, ht₂⟩ := alternatives_taxa hne ha
+  obtain ⟨-, -, ha₂, -, -⟩ := alternatives_taxa hne.symm (by rw [ha, Finset.pair_comm] : s.alternatives = {r₂, r₁})
   have h₁ := hlt r₁ (by rw [ha]; simp)
   have h₂ := hlt r₂ (by rw [ha]; simp)
   by_cases hus : u = s
@@ -833,15 +789,6 @@ theorem not_isT3Null_of_anomalous {p : QuartetTree X → ℝ} {s : QuartetTree X
     linarith
   · have := heq s (by rw [ha₂]; simp) r₁ (by rw [ha₂]; simp)
     linarith
-
-private theorem tendsto_iidProb_and' (hd : IsDist dist) {P Q : (n : ℕ) → (Fin n → Γ) → Prop}
-    (hP : Tendsto (fun n => iidProb dist n (P n)) atTop (𝓝 1))
-    (hQ : Tendsto (fun n => iidProb dist n (Q n)) atTop (𝓝 1)) :
-    Tendsto (fun n => iidProb dist n fun ω => P n ω ∧ Q n ω) atTop (𝓝 1) := by
-  have h := tendsto_iidProb_forall hd (ι := Bool) (fun b n ω => if b = true then P n ω else Q n ω)
-    (by intro b; cases b <;> simpa)
-  refine tendsto_iidProb_of_imp hd (Eventually.of_forall fun n ω hω => ?_) h
-  exact ⟨by simpa using hω true, by simpa using hω false⟩
 
 /-- On the null, with positive probabilities, the T1 p-value does not collapse: it is asymptotically uniform off
 the boundary, and stays away from `0` at the boundary. -/
@@ -874,7 +821,7 @@ private theorem exists_t1PValue_lower (hd : IsDist dist) (hs : DisplaysOne dist 
   · have hs₁ : displayCF dist sides r₁ = displayCF dist sides s :=
       le_antisymm (hle r₁ hm₁) (not_lt.1 hlt)
     have hsum := sum_displayCF_treesOn hd hs s.card_taxa
-    rw [sum_treesOn_taxa' _ hne h, ← heq r₁ hm₁ r₂ hm₂, hs₁] at hsum
+    rw [sum_treesOn _ hne h, ← heq r₁ hm₁ r₂ hm₂, hs₁] at hsum
     have hthird : displayCF dist sides s = 1 / 3 := by linarith
     have hall : ∀ r ∈ treesOn s.taxa, displayCF dist sides r = 1 / 3 := by
       intro r hr
@@ -953,7 +900,7 @@ theorem tendsto_t1Stat_lt (hd : IsDist dist) (hs : DisplaysOne dist sides) {s : 
       (continuous_apply s).continuousAt ?_
     rw [h, Finset.sum_pair hne]
     linarith [hstrict.1 r₁ hm₁, hstrict.1 r₂ hm₂]
-  refine tendsto_iidProb_of_imp hd ?_ (tendsto_iidProb_and' hd hline (tendsto_iidProb_freq hd hF))
+  refine tendsto_iidProb_of_imp hd ?_ (tendsto_iidProb_and hd hline (tendsto_iidProb_freq hd hF))
   filter_upwards [eventually_gt_atTop 0] with n hn0 ω hω r hr
   obtain ⟨⟨h₁, -⟩, h₂⟩ := hω
   have hn' : (0 : ℝ) < n := by exact_mod_cast hn0
@@ -977,7 +924,7 @@ theorem t3Test_null (hd : IsDist dist) (hs : DisplaysOne dist sides) {s : Quarte
       (∀ r ∈ s.alternatives, t1Stat (quartetCount sides ω) s < t1Stat (quartetCount sides ω) r) ∧
         α n ≤ t3PValue (quartetCount sides ω) s) atTop (𝓝 1) := by
   refine tendsto_iidProb_of_imp hd (Eventually.of_forall fun n ω hω =>
-    ⟨hω.1, hω.2 s (mem_treesOn_taxa s)⟩) (tendsto_iidProb_and' hd (tendsto_t1Stat_lt hd hs hstrict hpos)
+    ⟨hω.1, hω.2 s (mem_treesOn_taxa s)⟩) (tendsto_iidProb_and hd (tendsto_t1Stat_lt hd hs hstrict hpos)
       (t3Test_nonCollapse hd hs (IsT1Null.of_isT1Strict hstrict) hpos hα))
 
 /-- At a concordance factor strictly on a half-line, with positive probabilities, the fitted `μ̂₀` runs off to infinity:
@@ -994,7 +941,7 @@ theorem tendsto_muZero_t1Phi_large (hd : IsDist dist) (hs : DisplaysOne dist sid
   set p := displayCF dist sides with hp
   have hsum : p s + (p r₁ + p r₂) = 1 := by
     have := sum_displayCF_treesOn hd hs s.card_taxa
-    rwa [sum_treesOn_taxa' _ hne h] at this
+    rwa [sum_treesOn _ hne h, add_assoc] at this
   have heq : p r₁ = p r₂ := hstrict.2 r₁ hm₁ r₂ hm₂
   have hlt : p r₁ < p s := hstrict.1 r₁ hm₁
   have hq0 : 0 < p r₁ := hpos r₁ hm₁
@@ -1122,7 +1069,7 @@ theorem t3PValue_asymptoticallyUniform (hd : IsDist dist) (hs : DisplaysOne dist
     (t1PValue_asymptoticallyUniform hd hs hstrict.1 hstrict.2 hpos) fun ε hε => ?_
   obtain ⟨M, hM⟩ := exists_t1Tail_lt_t3Tail_add hε
   refine tendsto_iidProb_of_imp hd (Eventually.of_forall fun n ω hω => ?_)
-    (tendsto_iidProb_and' hd (tendsto_t1Stat_lt hd hs hstrict hpos)
+    (tendsto_iidProb_and hd (tendsto_t1Stat_lt hd hs hstrict hpos)
       (tendsto_muZero_t1Phi_large hd hs hstrict hpos M))
   obtain ⟨h₁, h₂⟩ := hω
   set c := quartetCount sides ω
@@ -1324,7 +1271,7 @@ then `t1PValue c s > t3PValue c s`. So the statement "the T1 p-value is at most 
 theorem exists_t3PValue_lt_t1PValue (s : QuartetTree X) :
     ∃ c : QuartetTree X → ℝ, (∀ r, 0 ≤ c r) ∧ t3PValue c s < t1PValue c s := by
   obtain ⟨r₁, r₂, hne, h⟩ := QuartetTree.exists_alternatives s
-  obtain ⟨hs₁, hs₂, -, -, -⟩ := alternatives_facts' hne h
+  obtain ⟨hs₁, hs₂, -, -, -⟩ := alternatives_taxa hne h
   set c : QuartetTree X → ℝ := fun r => if r = s then 3 else if r = r₁ then 2 else if r = r₂ then 1 else 0
     with hc
   have hc0 : ∀ r, 0 ≤ c r := by
@@ -1343,7 +1290,7 @@ theorem exists_t3PValue_lt_t1PValue (s : QuartetTree X) :
     · rw [hc₂, hcs]; norm_num
   refine ⟨c, hc0, t3PValue_lt_t1PValue (fun r hr => t1Stat_le_t1Stat_of_max hc0 hmax hr) ?_⟩
   have hge := lineStat_le_t1Stat hc0 s
-  rw [lineStat_eq_lineS' c hne h, hc₁, hc₂] at hge
+  rw [lineStat_eq_lineS c hne h, hc₁, hc₂] at hge
   exact (lineS_pos (by norm_num) (by norm_num) (by norm_num)).trans_le hge
 
 /-- If the T1 test rejects `s` where the T3 test does not reject, with its fit at `s`, then `s` is not a maximum
@@ -1374,7 +1321,7 @@ theorem t1_rejects_where_t3_cannot (hd : IsDist dist) (hs : DisplaysOne dist sid
   have h₂ := t3Test_nonCollapse hd hs hnull hpos hα₀
   rw [hst] at h₂
   refine tendsto_iidProb_of_imp hd (Eventually.of_forall fun n ω hω => ⟨?_, hω.2⟩)
-    (tendsto_iidProb_and' hd h₁ h₂)
+    (tendsto_iidProb_and hd h₁ h₂)
   have h₃ := hω.1
   rwa [show -(-2 * Real.log (α n)) / 2 = Real.log (α n) by ring, Real.exp_log (hα n)] at h₃
 

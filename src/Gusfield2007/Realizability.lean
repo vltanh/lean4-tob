@@ -9,9 +9,9 @@ The corrected Theorem 4 (`theorem4`, `theorem4_entry`) has hypotheses that the p
 an interior node of `T̄` (`exists_realization`).
 
 The network is that of the proof of Theorem 1 (line 299), with each central node inflated to a network all of whose arcs are on cycles, and with the root at a row `S` of `M`. There the row `S` has no leaf, and the root has one arc: turn it round (`Network.rerootNet`). So the old root becomes the leaf of `S`, and the root
-moves to the neighbour of `S` in `T̄`, which is an interior node since `M` has at least three rows. Line 299 lets the root of `T̄` be any node; this is the case of the neighbour of a row.
+moves to the neighbour of `S` in `T̄`, which is an interior node since `M` has at least three rows. Line 299 lets the root of `T̄` be any node; this is the case of the neighbour of a row, and `Gusfield2007.RootedFrame` has the others (`exists_network_rooted_at`).
 
-So there's an efficient fully decomposed network for every `M` in the sense of `IsEfficientAtEntry` too (`exists_isEfficientAtEntry`), which is line 329 for that definition.
+So there's an efficient fully decomposed network for every `M` in the sense of `IsEfficientAtEntry` too (`exists_isEfficientAtEntry`), which is line 329 for that definition. That the modification doesn't increase the number of recombinations is `exists_isEfficientAtEntry_of_fullyDecomposed`, in `Gusfield2007.EntryNet`.
 -/
 
 @[expose] public section
@@ -361,7 +361,7 @@ theorem exists_realization (c : Crossover) (hC : NoConstantColumn M) (h3 : 3 ≤
 /-- **Line 329, for `IsEfficientAtEntry`** (`g:efficient_entry_exists`). "So for any `M`, there is a efficient fully-decomposed phylogenetic network for `M`", where an external node can be entered from outside. With at least three rows, that's `exists_realization`; with fewer, `M` has no incompatible pair, and the network of Theorem 1
 has no blob.
 
-This is existence only. Line 329 also says that the modification doesn't increase the number of recombinations: `exists_isEfficient`, `exists_isEfficient_of_any` prove that for the printed definition, and it isn't proved here for this one, since a network with the fewest recombination nodes can have tree arcs in the networks at its central nodes. -/
+This is existence, from `T′ ≅ T̄`. Line 329 also says that the modification doesn't increase the number of recombinations: `exists_isEfficient`, `exists_isEfficient_of_any` prove that for the printed definition, and `exists_isEfficientAtEntry_of_fullyDecomposed`, `exists_isEfficientAtEntry_of_any`, in `Gusfield2007.EntryNet`, for this one. Those don't have `T′ ≅ T̄`, since a network with the fewest recombination nodes can have tree arcs in the networks at its central nodes. -/
 theorem exists_isEfficientAtEntry (c : Crossover) (M : Finset (ι → Bool)) (hM : M.Nonempty) (hC : NoConstantColumn M) :
     ∃ (a b : ℕ) (N : Network ι (Fin a) (Fin b)), N.Obeys c ∧ N.Derives M ∧ N.IsFullyDecomposedFor (incompatGraph M) ∧ N.IsEfficientAtEntry := by
   by_cases h3 : 3 ≤ M.card

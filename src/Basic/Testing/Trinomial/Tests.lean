@@ -463,7 +463,7 @@ theorem tendsto_t1 (hφ : 0 < φ ∧ φ < 3 / 2) (hφ1 : φ < 1) {x : ℝ} (h0 :
       linarith
   rwa [stdPlane_real_first, htx] at hlim
 
-private lemma sq_lt_of_abs_lt {x R : ℝ} (hx : |x| < R) : x ^ 2 < R ^ 2 := by
+lemma sq_lt_of_abs_lt {x R : ℝ} (hx : |x| < R) : x ^ 2 < R ^ 2 := by
   rw [← sq_abs x]
   exact pow_lt_pow_left₀ hx (abs_nonneg x) two_ne_zero
 
@@ -570,7 +570,7 @@ theorem continuous_centroidLimit : Continuous centroidLimit := by
   unfold centroidLimit
   fun_prop
 
-private lemma abs_min_sub_min_lt {x x' y y' ε : ℝ} (hx : |x - x'| < ε) (hy : |y - y'| < ε) :
+lemma abs_min_sub_min_lt {x x' y y' ε : ℝ} (hx : |x - x'| < ε) (hy : |y - y'| < ε) :
     |min x y - min x' y'| < ε := by
   have h := abs_min_sub_min_le_max x y x' y'
   exact h.trans_lt (max_lt hx hy)

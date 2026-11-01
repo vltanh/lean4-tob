@@ -258,20 +258,9 @@ private theorem eventually_betaSeq_pos : ∀ᶠ n in atTop, 0 < betaSeq n := by
   have : (0 : ℝ) < n := by exact_mod_cast hn
   positivity
 
-private theorem tendsto_log_betaSeq :
-    Tendsto (fun n : ℕ => Real.log (betaSeq n) / n) atTop (𝓝 0) := by
-  have h : Tendsto (fun x : ℝ => Real.log x ^ 1 / (1 * x + 0)) atTop (𝓝 0) :=
-    Real.tendsto_pow_log_div_mul_add_atTop 1 0 1 one_ne_zero
-  have h' := (h.comp tendsto_natCast_atTop_atTop).const_mul (-(1 / 2) : ℝ)
-  rw [mul_zero] at h'
-  refine h'.congr' ?_
-  filter_upwards [eventually_gt_atTop 0] with n hn
-  have hn' : (0 : ℝ) < n := by exact_mod_cast hn
-  have hlog : Real.log (1 / Real.sqrt (n : ℝ)) = -(Real.log n / 2) := by
-    rw [one_div, Real.log_inv, Real.log_sqrt hn'.le]
-  simp only [Function.comp, pow_one, one_mul, add_zero]
-  rw [betaSeq_eq hn, hlog]
-  ring
+theorem tendsto_log_betaSeq :
+    Tendsto (fun n : ℕ => Real.log (betaSeq n) / n) atTop (𝓝 0) :=
+  tendsto_log_chiSqTwoTail_log
 
 /-- The threshold `b_n` of the proof, for a threshold `η_n = c₀ a_n`: an individual p-value is below
 `η_n` when the test statistic is above `b_n`, and `b_n = o(n)`. -/

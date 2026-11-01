@@ -1,8 +1,8 @@
 # Semple, Steel 2003: the Splits Equivalence Theorem
 
-Source: C. Semple, M. Steel, *Phylogenetics*, Oxford University Press, 2003, Theorem 3.1.4. The book wasn't read: it's a printed book,
-and no copy was looked for. The statement is recalled from the book and from how Gusfield et al. 2007 use it, and the proofs are
-standard arguments, which may differ from the book's. Check them against the book when it's available.
+Source: C. Semple, M. Steel, *Phylogenetics*, Oxford University Press, 2003, Theorem 3.1.4. **The book wasn't read.** It was looked for: it isn't open, the publisher's pages answer 403, the Internet Archive's record `phylogenetics00char` has no text to search, and a public search of the Internet Archive's books finds the theorem's name only in other books. The statement here agrees with the one in S. Roch's lecture notes (Wisconsin, 2010, lecture 3), which give the book's Chapters 3 and 4 as their reference: "Let `Σ` be a collection of `X`-splits. Then, `Σ = Σ(T)` for some `X`-tree `T` if and only if the splits in `Σ` are pairwise compatible. Such tree is unique up to isomorphism." It also agrees with Theorem 2.1 of T. H. Klöpper's thesis (Tübingen, 2008), which calls it the Buneman theorem. The number 3.1.4 comes from Gusfield et al. 2007, line 156, and wasn't compared with the book.
+
+So the proofs are standard arguments, which may differ from the book's. In particular, those notes prove existence by induction on the number of splits, "Tree Popping" with their Label Painting Lemma, and existence here comes from a laminar family in one step, while their uniqueness is part of the same induction, and here it's through consistent orientations. Check them against the book when it's available.
 
 Gusfield et al. 2007 use it twice. At line 156 (the line numbers are explained in `src/Gusfield2007/README.md`), as a reference for the Perfect
 Phylogeny Theorem. At line 344, in the proof of Theorem 4: "the splits of an undirected tree uniquely define the tree".

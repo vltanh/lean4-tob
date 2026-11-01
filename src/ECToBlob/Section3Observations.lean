@@ -1041,23 +1041,16 @@ theorem isPhylogenetic_fourCycle : fourCycle.IsPhylogenetic := by
     · exact absurd rfl (hw 2)
     · exact absurd rfl (hw 3)
 
-private theorem ncard_filter {α : Type*} [Fintype α] (p : α → Prop) [DecidablePred p] :
-    {a | p a}.ncard = #(univ.filter p) := by
-  rw [← Set.ncard_coe_finset]
-  congr 1
-  ext a
-  simp
-
 /-- It is binary. -/
 theorem isBinary_fourCycle : fourCycle.IsBinary := by
   refine ⟨?_, fun w hw hout => ?_⟩
   · unfold DirectedMultigraph.outdegree
-    rw [ncard_filter]
+    rw [ncard_setOf_eq_card_filter]
     decide
   · unfold DirectedMultigraph.outdegree at hout
     unfold DirectedMultigraph.indegree DirectedMultigraph.outdegree
-    rw [ncard_filter] at hout
-    rw [ncard_filter, ncard_filter]
+    rw [ncard_setOf_eq_card_filter] at hout
+    rw [ncard_setOf_eq_card_filter, ncard_setOf_eq_card_filter]
     revert hw hout
     cases w <;> decide
 
@@ -1248,21 +1241,14 @@ theorem not_subset_treeAC : ¬ N₁.displayedSides choiceE₁ ⊆ treeAC := fun 
 def zeroLengths : E₁ → ℝ
   | .e₁ => 0 | .e₂ => 0 | _ => 1
 
-private theorem ncard_filter₁ {α : Type*} [Fintype α] (p : α → Prop) [DecidablePred p] :
-    {a | p a}.ncard = #(univ.filter p) := by
-  rw [← Set.ncard_coe_finset]
-  congr 1
-  ext a
-  simp
-
 theorem isHybridArc_e₁ : N₁.IsHybridArc .e₁ := by
   unfold IsHybridArc DirectedMultigraph.indegree
-  rw [ncard_filter₁]
+  rw [ncard_setOf_eq_card_filter]
   decide
 
 theorem isHybridArc_e₂ : N₁.IsHybridArc .e₂ := by
   unfold IsHybridArc DirectedMultigraph.indegree
-  rw [ncard_filter₁]
+  rw [ncard_setOf_eq_card_filter]
   decide
 
 /-- Valid parameters with hybrid arcs of length `0`: all concordance factors are `1/3`, and `ac|bd` is optimal, whatever

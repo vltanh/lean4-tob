@@ -1,7 +1,7 @@
 module
 
 public import Gusfield2007.Histories
-public import Batteries.Data.Nat.Lemmas
+public import Mathlib.Data.Nat.Init
 
 /-!
 # Gusfield et al. 2007: a verified search for lower bounds on `R`

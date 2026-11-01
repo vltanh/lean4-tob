@@ -1,5 +1,6 @@
 module
 
+public import AllmanEtAl2023.Algorithm
 public import AllmanEtAl2023.Basic
 public import AllmanEtAl2023.CFDetectable
 public import AllmanEtAl2023.CutOrder
@@ -106,46 +107,13 @@ theorem card_sharing_three {q : Finset X} (hq : q.card = 4) :
     · exact Finset.notMem_erase u q h2
   rw [huu]
 
-omit [Fintype X] in
-/-- `BInferred` holds only of 4-taxon sets. -/
-private theorem card_of_bInferred {B₀ : Set (Finset X)} {τ : Set (QuartetTree X)}
-    (hB₀ : ∀ q ∈ B₀, q.card = 4) {q : Finset X} (h : BInferred B₀ τ q) : q.card = 4 := by
-  have key : ∀ {a b c d e : X} {q : Finset X}, ({a, b, c, d, e} : Finset X).card = 5 →
-      q ∈ ({{a, b, c, e}, {a, b, d, e}, {a, c, d, e}} : Finset (Finset X)) → q.card = 4 := by
-    intro a b c d e q h5 hq
-    obtain ⟨hab, hac, had, hae, hbc, hbd, hbe, hcd, hce, hde⟩ :=
-      AllmanEtAl2023.ne_of_card_five h5
-    simp only [Finset.mem_insert, Finset.mem_singleton] at hq
-    rcases hq with rfl | rfl | rfl
-    · exact TreeMetric.card_four_of_ne hab hac hae hbc hbe hce
-    · exact TreeMetric.card_four_of_ne hab had hae hbd hbe hde
-    · exact TreeMetric.card_four_of_ne hac had hae hcd hce hde
-  induction h with
-  | base q hq => exact hB₀ q hq
-  | ruleB a b c d e t q h5 _ _ _ _ hq _ _ _ => exact key h5 hq
-  | ruleT a b c d e s q h5 _ _ _ _ _ hq _ _ => exact key h5 hq
-
 /-- The quartet distance depends only on the 4-taxon sets in its first argument. -/
-private theorem quartetDistance_congr {Bq Bq' : Set (Finset X)} {τ τ' : Set (QuartetTree X)}
+theorem quartetDistance_congr {Bq Bq' : Set (Finset X)} {τ τ' : Set (QuartetTree X)}
     (h1 : ∀ q : Finset X, q.card = 4 → (q ∈ Bq ↔ q ∈ Bq')) (h2 : τ = τ') :
     quartetDistance Bq τ = quartetDistance Bq' τ' := by
   subst h2
   funext x y
-  unfold quartetDistance
-  by_cases hxy : x = y
-  · simp [hxy]
-  · simp only [hxy, ↓reduceIte]
-    have : (univ.filter fun q : Finset X =>
-        q.card = 4 ∧ x ∈ q ∧ y ∈ q ∧ (q ∈ Bq ∨ ∃ s ∈ τ, s.taxa = q ∧ Separated s x y)) =
-        univ.filter fun q : Finset X =>
-        q.card = 4 ∧ x ∈ q ∧ y ∈ q ∧ (q ∈ Bq' ∨ ∃ s ∈ τ, s.taxa = q ∧ Separated s x y) := by
-      refine Finset.filter_congr fun q _ => ?_
-      constructor
-      · rintro ⟨h4, hx, hy, h⟩
-        exact ⟨h4, hx, hy, h.imp_left (h1 q h4).mp⟩
-      · rintro ⟨h4, hx, hy, h⟩
-        exact ⟨h4, hx, hy, h.imp_left (h1 q h4).mpr⟩
-    rw [this]
+  exact AllmanEtAl2023.Algorithm.quartetDistance_congr h1 x y
 
 /-- The deterministic part of Theorem 4: from correct answers on all 4-taxon sets the algorithm returns
 the tree of blobs. The closure identifies the B-quartets (`closure_complete`, `closure_sound`); the
@@ -167,7 +135,7 @@ private theorem tinnik_eq_of_tests {V E : Type*} {N : RootedNetwork V E X} (hN :
     simp only [Set.mem_ofPred_eq]
     constructor
     · intro h
-      exact ⟨card_of_bInferred (B₀ := {q' | q'.card = 4 ∧ ¬ IsTreelike N q'}) (fun q hq => hq.1) h,
+      exact ⟨AllmanEtAl2023.Algorithm.card_of_bInferred (B₀ := {q' | q'.card = 4 ∧ ¬ IsTreelike N q'}) (fun q hq => hq.1) h,
         AllmanEtAl2023.closure_sound hN h⟩
     · rintro ⟨h4, h⟩
       exact AllmanEtAl2023.closure_complete hN h4 h
@@ -285,7 +253,7 @@ theorem tendsto_iidProb_and {Γ : Type*} [Fintype Γ] {dist : Γ → ℝ} (hd : 
   exact ⟨by simpa using hω true, by simpa using hω false⟩
 
 /-- Gene trees under the NMSC are binary, so they display one quartet tree on each set of four taxa. -/
-private theorem displaysOne_nmsc {V E : Type*} [Fintype V] [Fintype E] [Nonempty X]
+theorem displaysOne_nmsc {V E : Type*} [Fintype V] [Fintype E] [Nonempty X]
     {N : RootedNetwork V E X} (hN : N.IsPhylogenetic) {θ : MetricData E} {ρ : ℝ} :
     QuartetTests.DisplaysOne (geneTreeDist N θ ρ) (unroot (L := X)) := by
   intro g hg q hq
@@ -314,7 +282,7 @@ private theorem eventually_chiSqOneTail_le {α : ℕ → ℝ} (hα : ∀ m, 0 < 
 
 /-- Step 2a of the algorithm: for any `β > 0` the star test rejects a concordance factor off the
 centroid, with probability tending to one. -/
-private theorem tendsto_star {Γ : Type*} [Fintype Γ] {dist : Γ → ℝ} {sides : Γ → Finset (Finset X)}
+theorem tendsto_star {Γ : Type*} [Fintype Γ] {dist : Γ → ℝ} {sides : Γ → Finset (Finset X)}
     (hd : IsDist dist) (hs : QuartetTests.DisplaysOne dist sides) {q : Finset X} (hq : q.card = 4)
     (h : ¬ ∀ r ∈ treesOn q, displayCF dist sides r = 1 / 3) {β : ℝ} (hβ : 0 < β) :
     Tendsto (fun n => iidProb dist n fun ω => starPValue .lrt (quartetCount sides ω) q < β)

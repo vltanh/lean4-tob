@@ -81,8 +81,20 @@ g:compute_F	+g:thm1_rooted	The paper's procedure takes it that a trivial compone
 g:compute_F	+g:vC_only	Replacing the route through Theorem 4, `IsTBar.eq_center` uses that each edge at the centre of a component carries a character of it, which line 277 declines to assert (`adj_center_labelled`).
 #
 # Section 5.2.
-g:thm10_printed	-ext:haplotype_equality	`Theorem10Printed` is the statement as a definition, with no proof: `R(M + S)` there is a notation slip for the rooted count, and with it the printed proof doesn't apply. `theorem10` is the form the proof is about.
-g:thm10_printed	-g:cor2	`Theorem10Printed` is the statement as a definition, with no proof: `R(M + S)` there is a notation slip for the rooted count, and with it the printed proof doesn't apply. `theorem10` is the form the proof is about.
-g:thm10	+g:thm10_multiple	Departure, recorded in the docstring of `theorem10`: line 560's equality is false for identical columns (`g:visible_false`), so for multiple crossovers the sites are first restricted to one per class of identical columns of `M + S` (`theorem10_multiple`).
-g:thm10	+g:cor3	`theorem10` covers all three crossover models, and the paper has only two. For recombinations that model mutations, it's Corollary 3.
+g:thm10_printed	-ext:haplotype_equality	`Theorem10Printed` is the statement as a definition, with no proof, because it is false for single crossovers (`theorem10Printed_single_false`): `R(M + S)` can be less than the rooted count, and then the printed proof doesn't apply. `theorem10` is the form the proof is about.
+g:thm10_printed	-g:cor2	`Theorem10Printed` is the statement as a definition, with no proof, because it is false for single crossovers (`theorem10Printed_single_false`): `R(M + S)` can be less than the rooted count, and then the printed proof doesn't apply. `theorem10` is the form the proof is about.
+g:thm10	-ext:haplotype_equality	Departure, recorded in the docstring of `theorem10`: line 560's equality is false for identical columns (`g:visible_false`). `exists_row_of_eq_haplotypeBound` (`g:thm10_pair`) has the same count on one site per distinct column, and gives the pair of labels on two sites. `sMinDecomposable_of_haplotype_tight` (`g:thm10_distinct`) is the paper's proof, for distinct columns.
+g:thm10	-g:cor2	The same departure: Corollary 2 asks for every node visible. `theorem10` has what the proof of Corollary 2 uses from that, that no recombination node breaks two components (`breaksAt_unique_of_eq_haplotypeBound`), and applies Theorem 7 as that proof does (`sMinDecomposable_of_isOptimalRooted`).
+g:thm10	-g:haplotype_rooted	Line 559 only shows that a network with `H(M + S)` nodes is optimal. The hypothesis `H(M + S) = R_S(M)` gives an optimal network with that many nodes directly, so the inequality isn't needed.
+g:thm10	+g:thm10_pair	The step that replaces visibility: see `-ext:haplotype_equality`.
 g:thm6	+g:trim	`Derives` has the rows exactly at the leaves, and the proof applies Theorem 10 to a network in which a row can be at an internal node: `exists_derives_of_displays` trims it. The paper's "phylogenetic network for `M`" allows this directly.
+#
+# ==== The sources' other results ====
+# Myers, Griffiths 2003.
+ext:mg_prop6	-ext:mg_lemma7	Proposition 6 is Lemma 7 at the last index, and the Lean proofs of both are the same two helpers, `rStarVec_feasible` and `sum_rStarVec_le`, so `proposition6` doesn't call `lemma7`.
+ext:mg_cor8	-ext:mg_lemma7	`corollary8` is stated for the sum of `rStarVec`, the minimum of Lemma 7, and takes its feasibility from `rStarVec_feasible`, the helper behind `lemma7`, not from the statement of `lemma7`.
+ext:mg_prop2	+g:trim	`Derives` has the rows exactly at the leaves, so the network with the site put back is trimmed (`exists_derives_of_displays`). The source's sample histories have no such condition.
+ext:mg_algorithm3_le	-ext:mg_prop2	Departure, recorded in the head of `SampleHistory.lean`: the source passes to the reduced data by Proposition 2, and Lean argues on a history, a set of nodes of a network closed under parents. Only the inequality `R_{S'} ≤ R_S` is used, in the form that a network with the rows on some sites has them on fewer.
+ext:mg_rh_le_rs	+ext:mg_algorithm1_correct	`Rh_le_Rs` compares the two bounds by the monotonicity of Algorithm 1 in the local bounds, `algorithm1_mono`, which comes from its optimality. The source says only "for any given data set `R_s ≥ R_h ≥ R_m`".
+# Hudson, Kaplan 1985.
+ext:hk_optimal	+ext:hk_optimal_region	`hudsonKaplan_isOptimalValue` is `isOptimalValue_countUpTo` at the last site, which has the same statement for the region up to any site, and the step that the source leaves out (`exists_pierce`).

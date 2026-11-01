@@ -104,12 +104,6 @@ theorem normalSample_map_sub (μ : ℝ) :
   rw [h, normalSample, ← Measure.map_prod_map _ _ measurable_id (by fun_prop), h₁, Measure.map_id]
   rfl
 
-private theorem cos_alphaZero_pos (φ : ℝ) : 0 < Real.cos (alphaZero φ) := Real.cos_arctan_pos _
-
-private lemma sq_lt_of_abs_lt {x R : ℝ} (hx : |x| < R) : x ^ 2 < R ^ 2 := by
-  rw [← sq_abs x]
-  exact pow_lt_pow_left₀ hx (abs_nonneg x) two_ne_zero
-
 private lemma sq_ge_of_le_abs {x R : ℝ} (hR : 0 ≤ R) (hx : R ≤ |x|) : R ^ 2 ≤ x ^ 2 := by
   rw [← sq_abs x]
   exact pow_le_pow_left₀ hR hx 2
@@ -167,20 +161,12 @@ private theorem closeOnBalls_normalSample {φ : ℝ} (hφ : 0 < φ ∧ φ < 3 / 
   rw [hval, sub_self, abs_zero]
   exact hε
 
-private theorem alphaZero_one : alphaZero 1 = Real.pi / 6 := by
-  have h : (1 : ℝ) / √(3 * (3 - 2 * 1)) = (√3)⁻¹ := by norm_num
-  unfold alphaZero
-  rw [h, Real.arctan_inv_sqrt_three]
-
 private theorem threeLineDistSq_centroid (z : ℝ × ℝ) :
     threeLineDistSq (Real.tan (alphaZero 1)) z = centroidLimit z := by
   have hc := cos_alphaZero_pos 1
   unfold threeLineDistSq centroidLimit
   rw [lineDistSq_tan hc.ne', lineDistSq_neg_tan hc.ne', alphaZero_one, Real.sin_pi_div_six,
     Real.cos_pi_div_six, min_comm ((1 / 2 * z.1 - √3 / 2 * z.2) ^ 2)]
-
-private theorem muZero_one (n : ℝ) : muZero 1 n = 0 := by
-  simp [muZero]
 
 /-- **Theorem 3.1 of the source, for the trinomial cut model.** For the true point
 `θ₀ = (1 - 2φ/3, φ/3, φ/3)`, `0 < φ < 3/2`, the likelihood ratio statistic of the cut model, the least

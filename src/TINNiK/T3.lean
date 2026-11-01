@@ -120,48 +120,6 @@ theorem noCentroidCF_of_t3Detectable {V E : Type*} {N : RootedNetwork V E X} {p 
 
 /-! ### The deterministic part -/
 
-omit [Fintype X] in
-/-- `BInferred` holds only of 4-taxon sets. As in `src/TINNiK/Basic.lean`, where it is private. -/
-private theorem card_of_bInferred {B₀ : Set (Finset X)} {τ : Set (QuartetTree X)}
-    (hB₀ : ∀ q ∈ B₀, q.card = 4) {q : Finset X} (h : BInferred B₀ τ q) : q.card = 4 := by
-  have key : ∀ {a b c d e : X} {q : Finset X}, ({a, b, c, d, e} : Finset X).card = 5 →
-      q ∈ ({{a, b, c, e}, {a, b, d, e}, {a, c, d, e}} : Finset (Finset X)) → q.card = 4 := by
-    intro a b c d e q h5 hq
-    obtain ⟨hab, hac, had, hae, hbc, hbd, hbe, hcd, hce, hde⟩ :=
-      AllmanEtAl2023.ne_of_card_five h5
-    simp only [Finset.mem_insert, Finset.mem_singleton] at hq
-    rcases hq with rfl | rfl | rfl
-    · exact TreeMetric.card_four_of_ne hab hac hae hbc hbe hce
-    · exact TreeMetric.card_four_of_ne hab had hae hbd hbe hde
-    · exact TreeMetric.card_four_of_ne hac had hae hcd hce hde
-  induction h with
-  | base q hq => exact hB₀ q hq
-  | ruleB a b c d e t q h5 _ _ _ _ hq _ _ _ => exact key h5 hq
-  | ruleT a b c d e s q h5 _ _ _ _ _ hq _ _ => exact key h5 hq
-
-/-- The quartet distance depends only on the 4-taxon sets in its first argument. As in `src/TINNiK/Basic.lean`, where it is
-private. -/
-private theorem quartetDistance_congr {Bq Bq' : Set (Finset X)} {τ τ' : Set (QuartetTree X)}
-    (h1 : ∀ q : Finset X, q.card = 4 → (q ∈ Bq ↔ q ∈ Bq')) (h2 : τ = τ') :
-    quartetDistance Bq τ = quartetDistance Bq' τ' := by
-  subst h2
-  funext x y
-  unfold quartetDistance
-  by_cases hxy : x = y
-  · simp [hxy]
-  · simp only [hxy, ↓reduceIte]
-    have : (univ.filter fun q : Finset X =>
-        q.card = 4 ∧ x ∈ q ∧ y ∈ q ∧ (q ∈ Bq ∨ ∃ s ∈ τ, s.taxa = q ∧ Separated s x y)) =
-        univ.filter fun q : Finset X =>
-        q.card = 4 ∧ x ∈ q ∧ y ∈ q ∧ (q ∈ Bq' ∨ ∃ s ∈ τ, s.taxa = q ∧ Separated s x y) := by
-      refine Finset.filter_congr fun q _ => ?_
-      constructor
-      · rintro ⟨h4, hx, hy, h⟩
-        exact ⟨h4, hx, hy, h.imp_left (h1 q h4).mp⟩
-      · rintro ⟨h4, hx, hy, h⟩
-        exact ⟨h4, hx, hy, h.imp_left (h1 q h4).mpr⟩
-    rw [this]
-
 /-- Steps 3 to 5 from their outcome: when the closure is the set of B-quartets and the quartet trees of the other sets are those
 of the tree of blobs, the algorithm returns the tree of blobs. The quartet distance is then the tree metric of the quartet
 metrization of the tree of blobs (Rhodes 2020, Theorem 2); an exact tree builder returns it; and the internal branches of length
@@ -241,7 +199,7 @@ private theorem tinnikT3_eq_of_tests {V E : Type*} {N : RootedNetwork V E X} (hN
     simp only [Set.mem_ofPred_eq]
     constructor
     · intro h
-      exact ⟨card_of_bInferred (B₀ := {q' | q'.card = 4 ∧ ¬ IsTreelike N q'}) (fun q hq => hq.1) h,
+      exact ⟨AllmanEtAl2023.Algorithm.card_of_bInferred (B₀ := {q' | q'.card = 4 ∧ ¬ IsTreelike N q'}) (fun q hq => hq.1) h,
         AllmanEtAl2023.closure_sound hN h⟩
     · rintro ⟨h4, h⟩
       exact AllmanEtAl2023.closure_complete hN h4 h
@@ -296,34 +254,6 @@ private theorem tests_of_qGoodT3 {V E : Type*} {N : RootedNetwork V E X}
       ((h s.taxa (QuartetTree.card_taxa s)).2.1 s hsmem hc).1.symm⟩
 
 /-! ### The tests on a sample -/
-
-/-- Gene trees under the NMSC are binary, so they display one quartet tree on each set of four taxa. As in
-`src/TINNiK/Basic.lean`, where it is private. -/
-private theorem displaysOne_nmsc {V E : Type*} [Fintype V] [Fintype E] [Nonempty X]
-    {N : RootedNetwork V E X} (hN : N.IsPhylogenetic) {θ : MetricData E} {ρ : ℝ} :
-    QuartetTests.DisplaysOne (geneTreeDist N θ ρ) (unroot (L := X)) := by
-  intro g hg q hq
-  obtain ⟨hH, hbin⟩ := isBinaryHierarchy_iff_card_childClusters.1 (geneTreeDist_support hN hg)
-  have hbt : IsBinaryTree (unroot g) := ⟨g, hH, rfl, hbin⟩
-  obtain ⟨s, hs, hd⟩ := hbt.exists_displays hq
-  refine ⟨s, ⟨hs, hd⟩, fun s' h' => ?_⟩
-  exact IsUnrootedTree.displays_unique ⟨g, hH, rfl⟩ h'.2 hd
-    (by rw [(Finset.mem_filter.mp h'.1).2, (Finset.mem_filter.mp hs).2])
-
-/-- Step 2a of the algorithm: for any `β > 0` the star test rejects a concordance factor off the centroid, with probability
-tending to one. As in `src/TINNiK/Basic.lean`, where it is private. -/
-private theorem tendsto_star {Γ : Type*} [Fintype Γ] {dist : Γ → ℝ} {sides : Γ → Finset (Finset X)}
-    (hd : IsDist dist) (hs : QuartetTests.DisplaysOne dist sides) {q : Finset X} (hq : q.card = 4)
-    (h : ¬ ∀ r ∈ treesOn q, displayCF dist sides r = 1 / 3) {β : ℝ} (hβ : 0 < β) :
-    Tendsto (fun n => iidProb dist n fun ω => starPValue .lrt (quartetCount sides ω) q < β)
-      atTop (𝓝 1) := by
-  have h0 := QuartetTests.starStat_growth .lrt hd hs hq h (b := fun _ => -2 * Real.log β)
-    (tendsto_const_div_atTop_nhds_zero_nat _)
-  refine tendsto_iidProb_of_imp hd (Eventually.of_forall fun n ω hω => ?_) h0
-  have he : Real.exp (-(-2 * Real.log β) / 2) = β := by
-    rw [show -(-2 * Real.log β) / 2 = Real.log β by ring, Real.exp_log hβ]
-  rw [he] at hω
-  exact hω
 
 /-- At a concordance factor strictly on the half-line of `s₀`, the maximum likelihood topology of model T3 is `s₀`, and the T3
 test does not reject. -/
@@ -459,7 +389,7 @@ theorem t3Rejects_of_log [Fintype V] [Fintype E] [Nonempty X] {N : RootedNetwork
     (hdet.blob _ hq htl) hα hαlog
 
 /-- `P(χ²₂ > m d) = exp(-m d / 2)` tends to zero, for `d > 0`. -/
-private theorem tendsto_chiSqTwoTail_mul {d : ℝ} (hd : 0 < d) :
+theorem tendsto_chiSqTwoTail_mul {d : ℝ} (hd : 0 < d) :
     Tendsto (fun m : ℕ => chiSqTwoTail (m * d)) atTop (𝓝 0) := by
   have h1 : Tendsto (fun m : ℕ => (m : ℝ) * d / 2) atTop atTop :=
     (tendsto_natCast_atTop_atTop.atTop_mul_const hd).atTop_div_const (by norm_num)
@@ -611,7 +541,7 @@ theorem closure_eq_of_relaxed {V E : Type*} {N : RootedNetwork V E X} (hN : N.Is
   constructor
   · intro h
     have hf := hfrom q h
-    exact ⟨card_of_bInferred (B₀ := {q' | q'.card = 4 ∧ ¬ IsTreelike N q'}) (fun q hq => hq.1) hf,
+    exact ⟨AllmanEtAl2023.Algorithm.card_of_bInferred (B₀ := {q' | q'.card = 4 ∧ ¬ IsTreelike N q'}) (fun q hq => hq.1) hf,
       AllmanEtAl2023.closure_sound hN hf⟩
   · rintro ⟨h4', h⟩
     exact hto q (AllmanEtAl2023.closure_complete hN h4' h)

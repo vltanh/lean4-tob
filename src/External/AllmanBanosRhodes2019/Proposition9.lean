@@ -14,8 +14,8 @@ The source takes its Proposition 9 (line 462) from its references [1, 3], and pr
 
 ## Main results
 
-* `proposition9`: parts 1 and 3, which are what Theorem 36 uses. Part 2 is not included: its equality is
-  `NMSC.cut_alternatives`, and its bound `CF_AB|CD ≥ 1/6` is not used.
+* `proposition9`: parts 1 and 3, which are what Theorem 36 uses. Part 2 is `proposition9_part2`, in
+  `Proposition9Part2.lean`, and all three parts in the source's terms are `Quartet.proposition9_source`, in `QuartetClass.lean`.
 * `nmscCF_lt_of_no_three_two`: part 1. On a cut-edge split of the induced network with no `3₂`-cycle, the quartet tree
   of the split has the strictly largest concordance factor. It does not matter whether the tree of blobs displays the
   split. For a split it does not display, `TOBQMC.Level1.nmscCF_lt_of_not_displays` has this with no condition on
@@ -1462,12 +1462,13 @@ theorem isStrictMin_of_not_groveDisplays (hN : N.IsPhylogenetic) (hBin : N.IsBin
 multispecies coalescent with any `0 ≤ ρ ≤ 1` and any valid parameters. The source prints no proof: it takes the
 proposition from its references [1, 3] (line 462). The proof here is the placement calculus of `Placement.lean`.
 
-Part 2 is not included: its equality is `NMSC.cut_alternatives`, and its bound `CF_AB|CD ≥ 1/6` is not used.
+Part 2 is `proposition9_part2`, in `Proposition9Part2.lean`, which Theorem 36 does not use.
 
 Departure from the paper, in the statement. The source states this on a quartet network `N⁺`, with the conditions on
 `N⁻` and `N_c⁻`. Here it is on a set of four taxa of a whole network, the concordance factor being the marginal of the
-gene tree on all the taxa, and the conditions are by blocks, cut edges and the grove. That these conditions agree with
-the source's is not proved: see the section below. -/
+gene tree on all the taxa, and the conditions are by blocks, cut edges and the grove. They agree with the source's on a
+binary level-1 network: `Quartet.hasThreeTwoCycle_iff`, `Quartet.hasCycleType_four_one_iff`, `Quartet.networkClass_eq_tree_iff`,
+`Quartet.networkClass_eq_cycle_iff`, and `Quartet.proposition9_source` states the proposition in the source's terms. -/
 theorem proposition9 (hN : N.IsPhylogenetic) (hBin : N.IsBinary) (hLevel : IsLevelOne N) (hθ : N.IsMetric θ)
     (hρ : 0 ≤ ρ ∧ ρ ≤ 1) : Proposition9 N (nmscCF N θ ρ) where
   no_three_two := fun _ hs h3 _ hr => nmscCF_lt_of_no_three_two hN hBin hLevel hθ hρ
@@ -1475,12 +1476,11 @@ theorem proposition9 (hN : N.IsPhylogenetic) (hBin : N.IsBinary) (hLevel : IsLev
   cycle_exists := fun _ hq hnt => exists_not_groveDisplays hN hBin hLevel hq hnt
   cycle_min := fun _ hnt hng => isStrictMin_of_not_groveDisplays hN hBin hLevel hθ hρ hnt hng
 
-/-! ### The definitions by blocks and the source's by contraction
+/-! ### The definitions by blocks
 
-The source reads `Q̃` and the types of cycle on `N_c⁻` and `N⁻`, the unrooted induced network with its 2- and 3-cycles
-contracted. Neither is formalized. `HasThreeTwoCycle` and `networkClass` are stated instead by blocks, cut edges and
-the grove, and **that these agree with the source's definitions by contraction is not proved**. What is proved, and is
-what one would use to prove it, is the following.
+`HasThreeTwoCycle` and `networkClass` are stated by blocks, cut edges and the grove. The source reads `Q̃` and the types of
+cycle on `N_c⁻` and `N⁻`, the unrooted induced network with its 2- and 3-cycles contracted; these are defined in
+`Quartet.lean` and `QuartetContract.lean`, and that the two agree is `QuartetClass.lean`. The results here are:
 
 * `not_isTreelike_iff`: no cut-edge split on the induced network is the same as four taxa in distinct blocks at a blob
   with a reticulation, with one taxon below it, so four pendant parts around a cycle: the type `4₁`.

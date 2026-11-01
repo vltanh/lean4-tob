@@ -68,15 +68,6 @@ private theorem tendsto_betaSeq₀ : Tendsto betaSeq atTop (𝓝 0) := by
   refine (Real.tendsto_exp_atBot.comp h).congr fun n => ?_
   simp [betaSeq, chiSqTwoTail, neg_div]
 
-private theorem tendsto_log_betaSeq₀ : Tendsto (fun n : ℕ => Real.log (betaSeq n) / n) atTop (𝓝 0) := by
-  have h : Tendsto (fun x : ℝ => Real.log x ^ 1 / (1 * x + 0)) atTop (𝓝 0) :=
-    Real.tendsto_pow_log_div_mul_add_atTop 1 0 1 one_ne_zero
-  have h' := (h.comp tendsto_natCast_atTop_atTop).const_mul (-(1 / 2) : ℝ)
-  rw [mul_zero] at h'
-  refine h'.congr fun n => ?_
-  simp only [betaSeq, chiSqTwoTail, Real.log_exp, Function.comp, pow_one, one_mul, add_zero]
-  ring
-
 /-! ### NANUQ -/
 
 section Nanuq
@@ -117,8 +108,8 @@ theorem remark83_nanuq [Fintype V] [Fintype E] [Nonempty X] {N : RootedNetwork V
         classify mlT mlC (alphaSeq n) (betaSeq n) (quartetCount unroot ω) q = cfClass (nmscCF N θ ρ) q) ∧
       nanuqDistance (classify mlT mlC (alphaSeq n) (betaSeq n) (quartetCount unroot ω)) =
         nanuqDistance (cfClass (nmscCF N θ ρ))) atTop (𝓝 1) :=
-  remark83_nanuq_levels (isDist_geneTreeDist hN hθ hρ) (displaysOne_nmsc hN) (fun r => nmscCF_pos hN hθ hρ r)
-    alphaSeq_pos tendsto_alphaSeq₀ tendsto_log_alphaSeq betaSeq_pos tendsto_betaSeq₀ tendsto_log_betaSeq₀ hmlT hmlC
+  remark83_nanuq_levels (isDist_geneTreeDist hN hθ hρ) (TINNiK.displaysOne_nmsc hN) (fun r => nmscCF_pos hN hθ hρ r)
+    alphaSeq_pos tendsto_alphaSeq₀ tendsto_log_alphaSeq betaSeq_pos tendsto_betaSeq₀ QuartetTests.tendsto_log_chiSqTwoTail_log hmlT hmlC
 
 /-- At a trivial 4-blob, at these levels, Step 2 says "star tree", with probability tending to one, on any network.
 With a fixed `β` it says so with probability tending only to `1 - β`
@@ -148,8 +139,8 @@ theorem remark83_nanuq_network [Fintype V] [Fintype E] [Nonempty X] {N : RootedN
       nanuqDistance (classify mlT mlC (alphaSeq n) (betaSeq n) (quartetCount unroot ω)) = networkDistance N)
       atTop (𝓝 1) :=
   tendsto_classify_eq_networkClass hN hLevel hθ hρ (proposition9 hN hBin hLevel hθ hρ) h32 hcen tendsto_alphaSeq₀
-    (rejectsOffNull_of_log (isDist_geneTreeDist hN hθ hρ) (displaysOne_nmsc hN) alphaSeq_pos tendsto_log_alphaSeq)
-    betaSeq_pos tendsto_log_betaSeq₀ hmlT hmlC
+    (rejectsOffNull_of_log (isDist_geneTreeDist hN hθ hρ) (TINNiK.displaysOne_nmsc hN) alphaSeq_pos tendsto_log_alphaSeq)
+    betaSeq_pos QuartetTests.tendsto_log_chiSqTwoTail_log hmlT hmlC
 
 /-- **Theorem 36 with an explicit sequence**: under the same hypotheses, the sequence `α_m` of the source's theorem
 can be `alphaSeq`, for any fixed `β > 0`. -/
@@ -165,7 +156,7 @@ theorem remark83_nanuq_fixed_beta [Fintype V] [Fintype E] [Nonempty X] {N : Root
       nanuqDistance (classify mlT mlC (alphaSeq n) β (quartetCount unroot ω)) = networkDistance N)
       atTop (𝓝 1) :=
   tendsto_classify_eq_networkClass hN hLevel hθ hρ (proposition9 hN hBin hLevel hθ hρ) h32 hcen tendsto_alphaSeq₀
-    (rejectsOffNull_of_log (isDist_geneTreeDist hN hθ hρ) (displaysOne_nmsc hN) alphaSeq_pos tendsto_log_alphaSeq)
+    (rejectsOffNull_of_log (isDist_geneTreeDist hN hθ hρ) (TINNiK.displaysOne_nmsc hN) alphaSeq_pos tendsto_log_alphaSeq)
     (β := fun _ => β) (fun _ => hβ) (tendsto_log_const_div β) hmlT hmlC
 
 /-- **For generic parameters**, the hypothesis of Theorem 36 as printed suffices at these sequences: a binary network
@@ -251,11 +242,11 @@ theorem remark83_tinnik [Fintype V] [Fintype E] {N : RootedNetwork V E X} (hN : 
   have hne : Nonempty X := Fintype.card_pos_iff.mp (by omega)
   have hρ : (0 : ℝ) ≤ 0 ∧ (0 : ℝ) ≤ 1 := ⟨le_rfl, zero_le_one⟩
   have hd := isDist_geneTreeDist (N := N) hN hθ hρ
-  have hs := displaysOne_nmsc (θ := θ) (ρ := 0) hN
+  have hs := TINNiK.displaysOne_nmsc (θ := θ) (ρ := 0) hN
   have hcen := TINNiK.noCentroidCF_of_cfDetectable hdet
   refine tendsto_iidProb_of_imp hd (Eventually.of_forall fun m ω hω => ?_)
     (TINNiK.tendsto_iidProb_and hd (TINNiK.theorem4_explicit hN hX hθ hdet one_pos hδ₂ hM hml)
-      (TINNiK.tendsto_iidProb_and hd (tendsto_star_all hd hs hcen betaSeq_pos tendsto_log_betaSeq₀)
+      (TINNiK.tendsto_iidProb_and hd (tendsto_star_all hd hs hcen betaSeq_pos QuartetTests.tendsto_log_chiSqTwoTail_log)
         (tendsto_star_all hd hs hcen (β := fun _ => 1) (fun _ => one_pos) (tendsto_log_const_div 1))))
   obtain ⟨h₁, h₂, h₃⟩ := hω
   exact (tinnik_congr h₂ h₃).trans h₁
@@ -273,11 +264,11 @@ theorem remark83_tinnik_t3 [Fintype V] [Fintype E] {N : RootedNetwork V E X} (hN
   have hne : Nonempty X := Fintype.card_pos_iff.mp (by omega)
   have hρ : (0 : ℝ) ≤ 0 ∧ (0 : ℝ) ≤ 1 := ⟨le_rfl, zero_le_one⟩
   have hd := isDist_geneTreeDist (N := N) hN hθ hρ
-  have hs := displaysOne_nmsc (θ := θ) (ρ := 0) hN
+  have hs := TINNiK.displaysOne_nmsc (θ := θ) (ρ := 0) hN
   have hcen := TINNiK.noCentroidCF_of_cfDetectable hdet
   refine tendsto_iidProb_of_imp hd (Eventually.of_forall fun m ω hω => ?_)
     (TINNiK.tendsto_iidProb_and hd (TINNiK.theorem4T3_explicit hN hX hθ hdet hno one_pos hδ₂ hM hml)
-      (TINNiK.tendsto_iidProb_and hd (tendsto_star_all hd hs hcen betaSeq_pos tendsto_log_betaSeq₀)
+      (TINNiK.tendsto_iidProb_and hd (tendsto_star_all hd hs hcen betaSeq_pos QuartetTests.tendsto_log_chiSqTwoTail_log)
         (tendsto_star_all hd hs hcen (β := fun _ => 1) (fun _ => one_pos) (tendsto_log_const_div 1))))
   obtain ⟨h₁, h₂, h₃⟩ := hω
   exact (tinnikT3_congr h₂ h₃).trans h₁

@@ -25,7 +25,7 @@ sentence. Those proved here are short, from the bridges. The claims for Theorem 
   `treeFromQuartets_displays` (proved, from the library's Steel theorem `mem_of_forall_displays`).
 * `a:claim:thm4-displayed`: "we thus can identify the topology of every displayed quartet tree on `T_rd(𝒩⁻)`": `displayedFromCF_eq`, in `AllmanEtAl2023.Theorem4`, since it uses Theorem 3.
 
-The geometric statements after Proposition 1 are used by no proof, so they are not stated. What else the paper says in passing, and no proof uses, is in `AllmanEtAl2023.InPassing`.
+The geometric statements after Proposition 1 are used by no proof, so they are not stated here. What the paper says in passing, and no proof uses, is in `AllmanEtAl2023.InPassing` and the modules beside it.
 -/
 
 @[expose] public noncomputable section

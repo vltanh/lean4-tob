@@ -632,13 +632,6 @@ theorem tendsto_classify_eq_cfClass (hd : IsDist dist) (hs : QuartetTests.Displa
 
 /-! ### The levels of the proof of Theorem 36 -/
 
-private theorem tendsto_chiSqTwoTail_mul {d : ℝ} (hd : 0 < d) :
-    Tendsto (fun m : ℕ => chiSqTwoTail (m * d)) atTop (𝓝 0) := by
-  have h1 : Tendsto (fun m : ℕ => (m : ℝ) * d / 2) atTop atTop :=
-    (tendsto_natCast_atTop_atTop.atTop_mul_const hd).atTop_div_const (by norm_num)
-  refine (Real.tendsto_exp_atBot.comp (tendsto_neg_atTop_atBot.comp h1)).congr fun m => ?_
-  simp [chiSqTwoTail, neg_div]
-
 /-- The level `α'_m` on a set of four taxa off the null, as in the source's "Let `α'_m = P(W_m > md/2)`" (lines
 2195-2196), rejects there with probability tending to one.
 
@@ -688,8 +681,8 @@ theorem exists_levels (hd : IsDist dist) (hs : QuartetTests.DisplaysOne dist sid
   refine ⟨α, ?_, fun m => (hpos _).trans_le (hbase m), fun m hm => ?_, ?_⟩
   · have hsum : Tendsto (fun m : ℕ => chiSqTwoTail (m * 1) + ∑ q ∈ Q, chiSqTwoTail (m * (t3Stat p q / 2)))
         atTop (𝓝 0) := by
-      have := (tendsto_chiSqTwoTail_mul (d := 1) one_pos).add
-        (tendsto_finsetSum Q fun q hq => tendsto_chiSqTwoTail_mul (hQ q hq))
+      have := (TINNiK.tendsto_chiSqTwoTail_mul (d := 1) one_pos).add
+        (tendsto_finsetSum Q fun q hq => TINNiK.tendsto_chiSqTwoTail_mul (hQ q hq))
       simpa using this
     refine squeeze_zero (fun m => (hpos _).le.trans (hbase m)) (fun m => ?_) hsum
     refine (Finset.fold_max_le _).mpr ⟨?_, fun q hq => ?_⟩
@@ -1007,17 +1000,6 @@ section Errors
 
 variable {Γ : Type*} [Fintype Γ] {dist : Γ → ℝ} {sides : Γ → Finset (Finset X)}
 
-private lemma log_chiSqOneTail_ge {t : ℝ} (ht : 0 ≤ t) :
-    -Real.log (√(2 * Real.pi)) - 1 - t ≤ Real.log (chiSqOneTail t) := by
-  have h1 := QuartetTests.gaussianPDFReal_le_chiSqOneTail t
-  have h2 := Real.log_le_log (ProbabilityTheory.gaussianPDFReal_pos _ _ _ one_ne_zero) h1
-  refine le_trans ?_ h2
-  have hpi : 0 < √(2 * Real.pi) := Real.sqrt_pos.2 (by positivity)
-  simp only [ProbabilityTheory.gaussianPDFReal, NNReal.coe_one, mul_one, sub_zero]
-  rw [Real.log_mul (inv_ne_zero hpi.ne') (Real.exp_pos _).ne', Real.log_inv, Real.log_exp]
-  have h3 : √t ^ 2 = t := Real.sq_sqrt ht
-  nlinarith [sq_nonneg (√t - 1)]
-
 /-- Levels of a smaller exponential order than the statistic do not reject. If the limit `d₁` of the statistic on `q₁`
 has `40 d₁ < D`, then at levels below `P(χ²₂ > m D/2)` the p-value on `q₁` is not below the level, with probability
 tending to one. -/
@@ -1053,7 +1035,7 @@ theorem not_rejects_below (hd : IsDist dist) {q₁ : Finset X} (hq₁ : q₁.car
       positivity
     rw [chiSqTwoTail, ← Real.le_log_iff_exp_le hpos, Real.log_mul (by norm_num)
       (QuartetTests.chiSqOneTail_pos _).ne', one_div, Real.log_inv]
-    have h₁ := log_chiSqOneTail_ge (t := 10 * ((m : ℝ) * e)) (by positivity)
+    have h₁ := QuartetTests.log_chiSqOneTail_ge (t := 10 * ((m : ℝ) * e)) (by positivity)
     nlinarith
   exact (hα m).trans (hval.trans (by linarith))
 
@@ -1191,8 +1173,8 @@ def GroveDisplays (N : RootedNetwork V E X) (s : QuartetTree X) : Prop :=
 it, the other two being in different blocks at its blob (TOB-QMC's blocks, `TOBQMC.Level1.BlockWalk`), so that the
 three parts of `q` meet the cycle at three vertices.
 
-The source's definition is by the cycles of the unrooted induced network `N⁻`, which is not formalized. That the two
-agree is not proved; `Proposition9.lean` says what is. -/
+The source's definition is by the cycles of the quartet network of its Definition 5. On a binary level-1 network the two
+agree: `Quartet.hasThreeTwoCycle_iff`, in `Quartet.lean`. -/
 def HasThreeTwoCycle (N : RootedNetwork V E X) (q : Finset X) : Prop :=
   ∃ h : V, 2 ≤ N.graph.indegree h ∧ (q.filter fun x => N.graph.Reaches h (N.leaf x)).card = 2 ∧
     ∀ x ∈ q, ∀ y ∈ q, x ≠ y → ¬ N.graph.Reaches h (N.leaf x) → ¬ N.graph.Reaches h (N.leaf y) →
@@ -1218,7 +1200,8 @@ The parts:
   networks that the source uses before Proposition 9 ("exactly 6 types of cycles", line 401); it is what makes
   `networkClass` the `Q̃` of Definition 20.
 
-Part 2 (the extended line segment) is not needed: its equality is `NMSC.cut_alternatives`. -/
+Part 2 (the extended line segment) is not needed: its equality is `NMSC.cut_alternatives`. It is
+`proposition9_part2`, in `Proposition9Part2.lean`. -/
 structure Proposition9 (N : RootedNetwork V E X) (p : QuartetTree X → ℝ) : Prop where
   no_three_two : ∀ s : QuartetTree X, Displays (treeOfBlobs N) s → ¬ HasThreeTwoCycle N s.taxa →
     ∀ r ∈ s.alternatives, p r < p s
@@ -1233,8 +1216,8 @@ the taxa opposite on the cycle; and otherwise, when the grove displays no quarte
 the source's extension (lines 1964-1968). In a binary level-1 network there is no star tree, by
 `Proposition9.cycle_exists`.
 
-The source's `Q̃` is by the contraction `N_c⁻`, which is not formalized. That the two agree is not proved;
-`Proposition9.lean` says what is (`networkClass_eq_tree`, `networkClass_eq_cycle`, `not_isTreelike_iff`). -/
+The source's `Q̃` is by the contraction of the 2- and 3-cycles of the quartet network. On a binary level-1 network the two
+agree: `Quartet.networkClass_eq_tree_iff`, `Quartet.networkClass_eq_cycle_iff`, in `QuartetClass.lean`. -/
 def networkClass (N : RootedNetwork V E X) (q : Finset X) : QuartetClass X :=
   if h : ∃ s ∈ treesOn q, InducedCutSplit N s then .tree h.choose
   else if h' : ∃ s ∈ treesOn q, ¬ GroveDisplays N s ∧ ∃ r ∈ s.alternatives, GroveDisplays N r then .cycle h'.choose
@@ -1263,17 +1246,6 @@ def networkDistance (N : RootedNetwork V E X) : X → X → ℝ := nanuqDistance
 
 variable [Fintype V] [Fintype E]
 
-/-- Gene trees under the NMSC are binary. As in `src/TINNiK/T3.lean`, where it is private. -/
-theorem displaysOne_nmsc [Nonempty X] {N : RootedNetwork V E X} (hN : N.IsPhylogenetic) {θ : MetricData E} {ρ : ℝ} :
-    QuartetTests.DisplaysOne (geneTreeDist N θ ρ) (unroot (L := X)) := by
-  intro g hg q hq
-  obtain ⟨hH, hbin⟩ := isBinaryHierarchy_iff_card_childClusters.1 (geneTreeDist_support hN hg)
-  have hbt : IsBinaryTree (unroot g) := ⟨g, hH, rfl, hbin⟩
-  obtain ⟨s, hs, hd⟩ := hbt.exists_displays hq
-  refine ⟨s, ⟨hs, hd⟩, fun s' h' => ?_⟩
-  exact IsUnrootedTree.displays_unique ⟨g, hH, rfl⟩ h'.2 hd
-    (by rw [(Finset.mem_filter.mp h'.1).2, (Finset.mem_filter.mp hs).2])
-
 theorem isDist_geneTreeDist [Nonempty X] {N : RootedNetwork V E X} (hN : N.IsPhylogenetic) {θ : MetricData E}
     (hθ : N.IsMetric θ) {ρ : ℝ} (hρ : 0 ≤ ρ ∧ ρ ≤ 1) : IsDist (geneTreeDist N θ ρ) :=
   ⟨geneTreeDist_nonneg hN hθ hρ, sum_geneTreeDist hN hθ hρ⟩
@@ -1292,7 +1264,7 @@ theorem isT1Strict_of_inducedCutSplit [Nonempty X] {N : RootedNetwork V E X} (hN
   · by_cases h3 : HasThreeTwoCycle N s.taxa
     · have hq := s.card_taxa
       have hsum : ∑ r ∈ treesOn s.taxa, nmscCF N θ ρ r = 1 :=
-        QuartetTests.sum_displayCF_treesOn (isDist_geneTreeDist hN hθ hρ) (displaysOne_nmsc hN) hq
+        QuartetTests.sum_displayCF_treesOn (isDist_geneTreeDist hN hθ hρ) (TINNiK.displaysOne_nmsc hN) hq
       rcases cf_trichotomy hq hsum with huni | ⟨s', hs', hstrict⟩ | ⟨hnull, -⟩
       · exact absurd huni (hcen _ hq)
       · have hst : s'.taxa = s.taxa := mem_treesOn.1 hs'
@@ -1376,7 +1348,7 @@ theorem tendsto_classify_eq_networkClass [Nonempty X] {N : RootedNetwork V E X} 
         nanuqDistance (classify mlT mlC (α n) (β n) (quartetCount unroot ω)) = networkDistance N) atTop (𝓝 1) := by
   have hd := isDist_geneTreeDist hN hθ hρ
   refine tendsto_iidProb_of_imp hd (Eventually.of_forall fun n ω hω => ?_)
-    (tendsto_classify_eq_cfClass hd (displaysOne_nmsc hN) (fun r => nmscCF_pos hN hθ hρ r) hα₀ hrej hβ hβlog
+    (tendsto_classify_eq_cfClass hd (TINNiK.displaysOne_nmsc hN) (fun r => nmscCF_pos hN hθ hρ r) hα₀ hrej hβ hβlog
       (Or.inl hcen) hmlT hmlC)
   have hall : ∀ q : Finset X, q.card = 4 →
       classify mlT mlC (α n) (β n) (quartetCount unroot ω) q = networkClass N q := fun q hq =>
@@ -1398,7 +1370,7 @@ theorem theorem36_of_proposition9 [Nonempty X] {N : RootedNetwork V E X} (hN : N
           atTop (𝓝 1) := by
   have hρ : (0 : ℝ) ≤ 0 ∧ (0 : ℝ) ≤ 1 := ⟨le_rfl, zero_le_one⟩
   obtain ⟨α, hα₀, hαpos, hαlt, hrej⟩ :=
-    exists_levels (isDist_geneTreeDist hN hθ hρ) (displaysOne_nmsc (θ := θ) (ρ := 0) hN)
+    exists_levels (isDist_geneTreeDist hN hθ hρ) (TINNiK.displaysOne_nmsc (θ := θ) (ρ := 0) hN)
   refine ⟨α, hαpos, hαlt, hα₀, fun β hβ _ mlT mlC hmlT hmlC => ?_⟩
   exact tendsto_classify_eq_networkClass hN hLevel hθ hρ hP9 h32 hcen hα₀ hrej (β := fun _ => β)
     (fun _ => hβ) (tendsto_log_const_div β) hmlT hmlC
@@ -1509,7 +1481,7 @@ theorem not_theorem36AsPrinted {N : RootedNetwork V E X} [Nonempty X] (hN : N.Is
   obtain ⟨α, -, -, -, hlim⟩ := h θ hθ h32
   obtain ⟨mlT, hmlT⟩ := exists_isMaxCountSelection hq₀
   obtain ⟨mlC, hmlC⟩ := exists_isMinCountSelection hq₀
-  exact not_tendsto_of_centroid (isDist_geneTreeDist hN hθ hρ) (displaysOne_nmsc hN)
+  exact not_tendsto_of_centroid (isDist_geneTreeDist hN hθ hρ) (TINNiK.displaysOne_nmsc hN)
     (fun q hq => ⟨networkClass_isClassOn N q, networkClass_ne_star hcyc hq⟩) hq₀ huni
     (β := 1 / 2) (by norm_num) (by norm_num) α hmlT hmlC
     (hlim (1 / 2) (by norm_num) (by norm_num) mlT mlC hmlT hmlC)

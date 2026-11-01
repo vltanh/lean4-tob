@@ -1,7 +1,7 @@
 module
 
 public import Phylogenetics.NMSC.DisplayedTreeModel
-public import ECToBlob.Remark52
+public import Basic.NMSCChain
 public import TOBQMC.Wedge
 
 /-!
@@ -23,7 +23,7 @@ mass, at most that of `s`.
 @[expose] public noncomputable section
 
 open Phylogenetics Phylogenetics.RootedNetwork Phylogenetics.NMSC Finset
-open ECToBlob.Remark52 Phylogenetics.NMSC.Chain
+open Phylogenetics.NMSC.Chain
 open scoped Classical
 
 namespace External.AllmanBanosRhodes2019.Placement
@@ -235,21 +235,21 @@ private theorem dominatedInj_of_pair {q : Finset X} {P : X → V} {x y : X} {e :
     exact hdy
   · exact absurd (mem_belowSet.1 hu) (hoth z hzq hzx hzy)
 
-/-- What the forest at the top of the arc gives, in `isTL_pair_lift` and `lt_of_pair_lift`. -/
-private theorem isTL_lift_pair (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
-    {q : Finset X} {P : X → V} {x y : X} (hxq : x ∈ q) (hyq : y ∈ q) (hxy : x ≠ y) {s : QuartetTree X}
-    (hC : ({x, y} : Finset X) ∈ s.val) {e : E} (hbx : N.graph.Reaches (N.graph.target e) (P x))
+/-- **What the forest at the top of the arc gives**: the two lineages have coalesced, and their cherry arrives at the
+source of the arc, or they arrive there apart. -/
+theorem liftSet_pair_cases (hN : N.IsPhylogenetic)
+    {q : Finset X} {P : X → V} {x y : X} (hxq : x ∈ q) (hyq : y ∈ q) (hxy : x ≠ y) {e : E}
+    (hbx : N.graph.Reaches (N.graph.target e) (P x))
     (hby : N.graph.Reaches (N.graph.target e) (P y)) (hdx : ¬ N.AvoidingReach e N.root (P x))
     (hdy : ¬ N.AvoidingReach e N.root (P y))
     (hoth : ∀ z ∈ q, z ≠ x → z ≠ y → ¬ N.graph.Reaches (N.graph.target e) (P z))
-    (hTL : IsTL N θ ρ (placeInj q (movePair P x y (N.graph.source e))) s)
     {bot top : E → Finset (Finset X)}
     (hz : ∏ u ∈ belowSet N e, vertexWeight N θ ρ (placeInj q P) u bot top ≠ 0) :
-    IsTL N θ ρ (liftSet N (belowSet N e) (placeInj q P) top) s := by
+    ({x, y} : Finset X) ∈ liftSet N (belowSet N e) (placeInj q P) top (N.graph.source e) ∨
+      liftSet N (belowSet N e) (placeInj q P) top = placeInj q (movePair P x y (N.graph.source e)) := by
   have hv := validInj_placeInj q P
   have hdom := dominatedInj_of_pair hdx hdy hoth
   have hF := frontier_of_prod_ne_zero hN hv (downClosed_belowSet e) hz
-  have hl := validInj_liftSet hv hF
   have hse := source_notMem_belowSet hN e
   have htg := target_mem_belowSet (N := N) e
   have hlin : ∀ z, z ∈ lineages (top e) ↔ z = x ∨ z = y := by
@@ -273,12 +273,12 @@ private theorem isTL_lift_pair (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (h�
       have := (hlin z).1 (mem_lineages.2 ⟨C, hCt, hz'⟩)
       simpa using this
     subst hCe
-    have hmem : ({x, y} : Finset X) ∈ liftSet N (belowSet N e) (placeInj q P) top (N.graph.source e) := by
-      unfold liftSet
-      rw [ite_eq_right hse]
-      exact mem_union_right _ (mem_biUnion.2 ⟨e, mem_filter.2 ⟨mem_univ _, rfl, htg⟩, hCt⟩)
-    exact isTL_of_cherry hN hθ hρ hl hmem hC
-  · have hsing : ∀ f, N.graph.target f ∈ belowSet N e → N.graph.source f ∉ belowSet N e →
+    left
+    unfold liftSet
+    rw [ite_eq_right hse]
+    exact mem_union_right _ (mem_biUnion.2 ⟨e, mem_filter.2 ⟨mem_univ _, rfl, htg⟩, hCt⟩)
+  · right
+    have hsing : ∀ f, N.graph.target f ∈ belowSet N e → N.graph.source f ∉ belowSet N e →
         top f = (lineages (top f)).image fun x => ({x} : Finset X) := by
       intro f hft hfs
       by_cases hfe : f = e
@@ -286,20 +286,36 @@ private theorem isTL_lift_pair (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (h�
         exact (hF.good_top f htg).eq_singletons h2
       · rw [hemp f hft hfs hfe]
         simp
-    have heq : liftSet N (belowSet N e) (placeInj q P) top = placeInj q (movePair P x y (N.graph.source e)) := by
-      refine liftSet_eq_placeInj hF hsing (fun z hzq hzD => ?_) fun z hzq hzD => ?_
-      · refine ite_eq_right ?_
-        rintro (rfl | rfl)
-        · exact hzD (mem_belowSet.2 hbx)
-        · exact hzD (mem_belowSet.2 hby)
-      · have hzxy : z = x ∨ z = y := by
-          by_contra hne
-          push Not at hne
-          exact hoth z hzq hne.1 hne.2 (mem_belowSet.1 hzD)
-        have hm : movePair P x y (N.graph.source e) z = N.graph.source e := ite_eq_left hzxy
-        rw [hm]
-        exact ⟨hse, e, rfl, htg, (hlin z).2 hzxy⟩
-    rw [heq]
+    refine liftSet_eq_placeInj hF hsing (fun z hzq hzD => ?_) fun z hzq hzD => ?_
+    · refine ite_eq_right ?_
+      rintro (rfl | rfl)
+      · exact hzD (mem_belowSet.2 hbx)
+      · exact hzD (mem_belowSet.2 hby)
+    · have hzxy : z = x ∨ z = y := by
+        by_contra hne
+        push Not at hne
+        exact hoth z hzq hne.1 hne.2 (mem_belowSet.1 hzD)
+      have hm : movePair P x y (N.graph.source e) z = N.graph.source e := ite_eq_left hzxy
+      rw [hm]
+      exact ⟨hse, e, rfl, htg, (hlin z).2 hzxy⟩
+
+/-- What the forest at the top of the arc gives, in `isTL_pair_lift` and `lt_of_pair_lift`. -/
+private theorem isTL_lift_pair (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ : 0 ≤ ρ ∧ ρ ≤ 1)
+    {q : Finset X} {P : X → V} {x y : X} (hxq : x ∈ q) (hyq : y ∈ q) (hxy : x ≠ y) {s : QuartetTree X}
+    (hC : ({x, y} : Finset X) ∈ s.val) {e : E} (hbx : N.graph.Reaches (N.graph.target e) (P x))
+    (hby : N.graph.Reaches (N.graph.target e) (P y)) (hdx : ¬ N.AvoidingReach e N.root (P x))
+    (hdy : ¬ N.AvoidingReach e N.root (P y))
+    (hoth : ∀ z ∈ q, z ≠ x → z ≠ y → ¬ N.graph.Reaches (N.graph.target e) (P z))
+    (hTL : IsTL N θ ρ (placeInj q (movePair P x y (N.graph.source e))) s)
+    {bot top : E → Finset (Finset X)}
+    (hz : ∏ u ∈ belowSet N e, vertexWeight N θ ρ (placeInj q P) u bot top ≠ 0) :
+    IsTL N θ ρ (liftSet N (belowSet N e) (placeInj q P) top) s := by
+  have hv := validInj_placeInj q P
+  have hF := frontier_of_prod_ne_zero hN hv (downClosed_belowSet e) hz
+  have hl := validInj_liftSet hv hF
+  rcases liftSet_pair_cases hN hxq hyq hxy hbx hby hdx hdy hoth hz with hmem | heq
+  · exact isTL_of_cherry hN hθ hρ hl hmem hC
+  · rw [heq]
     exact hTL
 
 /-- **Two lineages below an arc dominating them**, a cherry of `s`: it is enough to have them apart at the source of
@@ -576,19 +592,6 @@ theorem isTL_two_reticulation (hN : N.IsPhylogenetic) (hθ : N.IsMetric θ) (hρ
       exact h₂₁
     · rw [key hk₂ hk₂ hx₂ hy₂]
       exact h₂₂
-
-/-- The Markov property as a mean, as in `src/ECToBlob/Remark33Counterexample.lean`. -/
-theorem cherryMass_eq_meanOn_lift (hN : N.IsPhylogenetic) (hθ : N.IsNormalized θ)
-    (hρ : 0 ≤ ρ) {inj : V → Finset (Finset X)} (hinj : ValidInj inj) {D : Finset V} (hD : DownClosed N D)
-    (hroot : N.root ∉ D) (r : QuartetTree X) :
-    cherryMass N θ ρ inj r = meanOn N θ ρ inj D fun top => cherryMass N θ ρ (liftSet N D inj top) r := by
-  have hB : (0 : ℝ) < ((Fintype.card (Finset (Finset X)) : ℕ) : ℝ) := by exact_mod_cast Fintype.card_pos
-  have hM := setMass_mul_cherryMass hN hθ hρ hinj hD hroot r
-  have hpos := setMass_pos (X := X) (N := N) D
-  unfold meanOn
-  rw [← hM]
-  unfold setMass arcsIn
-  field_simp
 
 /-- **One lineage at a reticulation, the exact mixture.** With nothing else at or below the reticulation, the lineage
 goes to each of its two parents with the inheritance probabilities. -/

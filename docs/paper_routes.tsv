@@ -1,4 +1,4 @@
-# The routes of the proofs in the five papers: which numbered results each proof uses.
+# The routes of the proofs in the five papers and in the sources they cite: which numbered results each proof uses.
 # Columns: label, environment, the paper proves it (1/0), results used.
 # Every label is assigned here or taken from the paper's TeX, and appears in the docstrings of the Lean results. Each paper has a section below.
 #
@@ -184,6 +184,13 @@ g:pp_invariant	claim	0
 g:pp_not_invariant	claim	0
 g:reduced_galled	claim	0	ext:reduced_galled
 g:reduced_galled_printed	claim	0
+g:reduced_exists	claim	0	ext:cor5_1
+g:reduced_poly	claim	0	ext:galled_build,ext:galled_ops
+g:reduced_optimal_rooted	claim	0	ext:thm8_3
+g:reduced_optimal	claim	0	ext:thm8_3
+g:line381_rooted	claim	0	g:reduced_optimal_rooted,ext:reduced_galled
+g:line381	claim	0	g:reduced_optimal,g:reduced_galled
+g:line381_of_galled	claim	0	g:line381,g:reduced_exists
 #
 # Section 3.1.
 g:compatible_dominant	claim	1
@@ -235,6 +242,11 @@ g:thm4_top_entry	claim	0
 g:thm4_top_moved	claim	0
 g:thm4_splits_rootfree	claim	0
 g:line341_false	claim	0
+g:efficient_entry_norecomb	claim	0	g:efficient,g:thm3,g:lem5
+g:efficient_entry_any	claim	0	g:efficient_any
+g:root_any_node	claim	0	g:tbar,g:lem4,g:inflate,g:thm4_entry,g:thm4_iff
+g:root_row	claim	0	g:tbar,g:lem4,g:inflate
+g:root_not_row	claim	0	g:thm4_entry
 #
 # Section 4.1: recurrent and back mutation as recombination (lines 358, 511), with what the Lean proofs of Section 5.2 need from them.
 g:tree_trim	claim	0
@@ -254,6 +266,10 @@ g:treeness_positive	claim	0
 g:treeness_positive_root	claim	0
 g:treeness_nonFD	claim	0
 g:treeness_strict	claim	0
+g:treeness_merged_false	claim	0	g:thm4
+g:treeness_siteFree	claim	0	g:treeness_positive
+g:treeness_merged	claim	0	g:tree_compatible
+g:treeness_merged_tie	claim	0	g:thm4
 #
 # Section 5.1.
 g:rooted_implies_unrooted	claim	1
@@ -285,7 +301,15 @@ g:visible_false	claim	0
 g:thm10_printed	theorem	1	ext:haplotype_equality,g:cor2
 g:haplotype_rooted	claim	0	ext:haplotype_bound
 g:thm10	theorem	1	g:haplotype_rooted,ext:haplotype_equality,g:cor2
-g:thm10_multiple	theorem	0	ext:haplotype_equality,g:cor2
+g:thm10_distinct	claim	0	ext:haplotype_equality,g:cor2
+g:thm10_pair	claim	0	ext:haplotype_equality
+g:thm10_unrooted	claim	0	g:thm10_pair,g:thm3
+g:line425_roots	claim	0
+g:line425_tight	claim	0	g:thm10_unrooted
+g:gap_restrict	claim	0
+g:thm10_printed_one_component	claim	0	g:thm10,g:gap_restrict,g:thm3
+g:thm10_printed_false	claim	0	g:thm10,g:thm3
+g:thm10_printed_multiple_search	claim	0	g:thm3
 g:thm6	theorem	1	g:thm10,g:haplotype_rooted
 g:galled_incompat	claim	0
 g:galled_graph	claim	0	g:galled_incompat
@@ -300,13 +324,249 @@ g:rooted_single_false	claim	1	ext:hudson_kaplan,g:F_ge_sum
 g:rooted_multiple_false	claim	1	g:rooted_implies_unrooted_conj,g:multiple_false
 g:figure10	claim	0
 g:Md_R_le	claim	0	ext:song_hein,g:figure10
+g:Md_R_eq	claim	0	g:Md_R_le
+g:Md2_RS	claim	0	g:Md_R_eq
 g:thm11	theorem	1	g:Md_R_le,ext:song_hein,g:F_ge_sum,ext:hudson_kaplan
 g:line608_incompatible	claim	0	g:thm9
 g:line608_thm8	claim	0	g:thm8
 g:line608_thm10	claim	0
 g:footnote2	claim	0	g:tbar
+# Line 590: Conjecture 1 of Huson and Klöpper, read from Conjecture 2.2 of Klöpper's thesis.
+g:hk_reticulate_network	definition	0
+g:hk_to_network	claim	0
+g:hk_of_network	claim	0
+g:hk_explains	claim	0
+g:hk_exists	claim	0
+g:hk_R_le	claim	0
+g:hk_common_cycle	claim	0
+g:cycle_transitive	claim	0
+g:hk_conjecture	definition	0
+g:hk_conjecture_network	definition	0
+g:hk_conjecture_false	claim	0	g:multiple_false
+g:hk_conjecture22_false	claim	0	g:multiple_false
 #
 # Tools of the Lean proofs, which the paper doesn't state: where a label can come from, trimming to the rows, and a network from the parents of its nodes.
 g:label_source	claim	0
 g:trim	claim	0
 g:prenet	claim	0	g:trim
+#
+# ==== The sources' other results ====
+# Written by hand from the sources that were read, each README saying which. Rows with paper-proves 1 are those whose printed proof the Lean proof is compared with.
+# Gusfield, Eddhu, Langley 2004.
+ext:same_cycle	theorem	0
+ext:cor2_1_printed	claim	0
+ext:thm2_2	theorem	0
+ext:thm2_6	theorem	0
+ext:thm2_7	theorem	0
+ext:cor5_1	corollary	0
+ext:thm8_1	theorem	0
+ext:lem8_1	lemma	0
+ext:lem8_2	lemma	0
+ext:lem8_5	lemma	0
+ext:lem8_6	lemma	0
+ext:thm8_2	theorem	0
+ext:thm8_3	theorem	0
+ext:galled_decide	theorem	0
+ext:galled_ops	theorem	0
+ext:galled_build	theorem	0	ext:galled_decide,ext:cor5_1
+ext:galled_steps	theorem	0
+# Myers, Griffiths 2003.
+ext:mg_algorithm1	definition	0
+ext:mg_lemma7	theorem	1
+ext:mg_prop6	theorem	1	ext:mg_lemma7
+ext:mg_cor8	theorem	1	ext:mg_lemma7
+ext:mg_algorithm1_correct	theorem	1	ext:mg_cor8,ext:mg_algorithm1
+ext:mg_rightmost	claim	0
+ext:mg_right_column	claim	0
+ext:mg_tight	claim	0
+ext:mg_top_row	claim	0
+ext:mg_right_endpoints	claim	0
+ext:mg_example	claim	0
+ext:mg_two_regions	claim	0
+ext:mg_two_regions_R	claim	0
+ext:mg_composite	theorem	0	ext:mg_algorithm1_correct
+ext:mg_composite_network	claim	0
+ext:mg_composite_rooted	claim	0
+ext:mg_events	claim	0
+ext:mg_local_region	claim	0
+ext:mg_local_haplotype	claim	0
+ext:mg_rh	definition	0
+ext:mg_rm	definition	0
+ext:mg_rh_le	claim	0	ext:mg_composite,ext:haplotype_bound
+ext:mg_rh_rooted	claim	0
+ext:mg_rm_le	claim	0
+ext:mg_rm_le_rh	claim	0
+ext:mg_example_sample	claim	0
+ext:mg_constraints	claim	0
+ext:mg_constraints_none	claim	0
+ext:mg_r_eq_zero	claim	0	ext:mg_algorithm1_correct
+ext:mg_r_eq_zero_none	claim	0
+ext:mg_lemma4_7	theorem	0
+ext:mg_lemma4_8	theorem	1
+ext:mg_cor5	theorem	1	ext:mg_lemma4_8,ext:mg_cor5_types
+ext:mg_cor5_types	claim	0
+ext:mg_prop2	theorem	1	ext:mg_prop2_back
+ext:mg_prop2_rooted	claim	0
+ext:mg_prop2_back	claim	0
+ext:mg_algorithm3	definition	0
+ext:mg_algorithm3_bound	claim	0
+ext:mg_algorithm3_le	theorem	1	ext:mg_prop2,ext:mg_algorithm3,ext:mg_algorithm3_bound
+ext:mg_history_mono	claim	0
+ext:mg_local_history	claim	0
+ext:mg_haplotype_le_history	claim	0
+ext:mg_rs	definition	0
+ext:mg_rs_known	definition	0
+ext:mg_rs_le	claim	0	ext:mg_algorithm3_le,ext:mg_composite
+ext:mg_rs_known_le	claim	0
+ext:mg_rh_le_rs	claim	1	ext:mg_lemma4_8,ext:mg_haplotype_le_history,ext:mg_rh,ext:mg_rs,ext:mg_algorithm1,ext:mg_algorithm3
+ext:mg_rh_le_rs_known	claim	0
+ext:mg_example_rs	claim	0
+ext:mg_example_true_min	claim	0
+# Hudson, Kaplan 1985.
+ext:hk_final_list	definition	0
+ext:hk_algorithm	definition	0
+ext:hk_disjoint	claim	0
+ext:hk_maximal	claim	0
+ext:hk_optimal_region	claim	0
+ext:hk_optimal	claim	1	ext:hk_disjoint,ext:hk_algorithm,ext:hk_final_list
+ext:hk_eq_mg	claim	0	ext:hk_optimal,ext:mg_algorithm1_correct
+ext:hk_figure1	claim	0
+ext:hk_monotone	claim	0
+ext:hk_rm	definition	0
+ext:hk_rm_le	claim	0	ext:hudson_kaplan
+# Song, Hein 2005.
+ext:sh_ordered	definition	0
+ext:sh_sampled_tree	definition	0
+ext:sh_choices	claim	0
+ext:sh_steps	claim	0
+ext:sh_compatible	claim	0
+ext:sh_out_degree	claim	0
+ext:sh_ordered_sampled	claim	0
+ext:sh_one_step	claim	0
+ext:song_hein_ordered	claim	0
+ext:song_hein_min	claim	0	ext:sh_one_step
+ext:song_hein_eq	claim	0	ext:song_hein,ext:song_hein_min
+ext:song_hein_eq_ordered	claim	0	ext:song_hein,ext:sh_one_step
+ext:song_hein_inf	claim	0
+# Mitchell, Allman, Rhodes 2019.
+ext:t3_lrt	claim	0
+ext:t3_approx	theorem	0
+ext:t3_density	theorem	0
+ext:t3_limit	theorem	0
+ext:t3_density_singularity	claim	0
+ext:t3_density_chisq	claim	0
+ext:t3_density_continuous	claim	0
+ext:t3_pvalue_true	claim	0
+ext:t3_not_chisq	claim	0
+ext:t1_lrt	claim	0
+ext:t1_approx	theorem	0
+ext:t1_density	theorem	0
+ext:t1_limit	theorem	0
+ext:t1_density_boundary	claim	0
+ext:t1_density_chisq	claim	0
+ext:t1_pvalue_true	claim	0
+ext:t1_pvalue_fitted	claim	0
+# Ané et al. 2024; Huber et al. 2025; Dinh, Baños 2025; Kane, Tao 2017; ASTRAL-III; TREE-QMC; Legried et al. 2021; Rhodes et al. 2025; Hoeffding.
+ext:ane2024-definition1	definition	0
+ext:ane2024-definition2	definition	0
+ext:ane2024-proposition12	proposition	0
+ext:ane2024-rule2	claim	0
+ext:huber_thm5_1	theorem	0
+ext:dinh_banos_thm1	theorem	0
+ext:dinh_banos_cor2	corollary	0
+ext:kane_tao_abc	claim	0
+ext:kane_tao_main	theorem	0	ext:kane_tao_abc
+ext:astral3_lemma1	lemma	0
+ext:astral3_theorem1	theorem	0	ext:kane_tao_main,ext:astral3_lemma1
+ext:treeqmc_theorem3	theorem	0
+ext:legried_lem1	lemma	0
+# Lemma 2 is one statement with Lemma 1, `exch_U`, whose docstring names both.
+ext:legried_lem2	lemma	0
+ext:legried_eq5	equation	0
+ext:legried_eq7	equation	0
+ext:legried_quartet	theorem	0
+ext:legried_eq5_quartet	equation	0
+ext:legried_thm1	theorem	0
+ext:rhodes2025_prop6_1	proposition	0
+ext:hoeffding	theorem	0
+#
+# ==== NANUQ (Allman, Baños, Rhodes 2019) ====
+nanuq:definition4	definition	0
+nanuq:definition5	definition	0
+nanuq:definition20	definition	0
+nanuq:definition22	definition	0
+nanuq:proposition9	proposition	0
+nanuq:proposition9-2	proposition	0
+nanuq:proposition9-source	proposition	0
+nanuq:theorem36	theorem	0
+nanuq:runtime	claim	0
+#
+# ==== What ECToBlob, TOB-QMC, TINNiK and Allman et al. say in passing ====
+# None has a printed proof to compare with.
+ecto:rem3_4	remark	0
+ecto:rem3_4_alleles	remark	0
+ecto:rem3_4_mixture	remark	0
+ecto:rem3_4_open	definition	0
+ecto:blob_biconnected	remark	0
+ecto:biconnected_blob	remark	0
+ecto:two_biconnected	remark	0
+ecto:star_equivalent	remark	0
+ecto:quartet_types_nested	remark	0
+ecto:sec10_any_test	remark	0
+ecto:sec10_cbc_edges	remark	0
+ecto:sec10_sp_identifiable	remark	0
+ecto:sec10_sp_test	remark	0
+ecto:sec10_sp_average	remark	0
+ecto:sec10_logdet_path	remark	0
+ecto:sec10_logdet_mixture	remark	0
+ecto:sec10_selection	remark	0
+ecto:bon_alt	remark	0
+ecto:cauchy_pair	remark	0
+ecto:step10_defined	remark	0
+ecto:early_le_late	remark	0
+ecto:early_eq_late	remark	0
+ecto:cor4_3_taxa	remark	0
+ecto:quartet_two_edges	remark	0
+ecto:inferred_gene_trees	remark	0
+ecto:oscillating_optimum	remark	0
+ecto:valid_alpha	remark	0
+ecto:valid_beta	remark	0
+ecto:cutoff_beta	remark	0
+ecto:cutoff_alpha	theorem	0
+ecto:cutoff_levels	theorem	0
+ecto:tree_p_not_monotone	remark	0
+ecto:line728	definition	0
+ecto:thm8_2_displayed	theorem	0
+ecto:thm8_2_displayed_binary	theorem	0
+ecto:thm8_2_displayed_nonbinary	theorem	0
+ecto:thm8_2_levels	theorem	0
+ecto:thm8_2_bic	theorem	0
+ecto:thm8_2_without_hpos	theorem	0
+ecto:displayed_cauchy_afterstar	theorem	0
+ecto:displayed_cauchy_false_edge	theorem	0
+tob2025:implementation	claim	0	tob2025:theorem2,tob2025:theorem1
+tob2025:refinement_not_displayed	claim	0
+tinnik:missing_taxa	claim	0	tinnik:theorem4
+a:claim:outline-consistent	claim	0
+a:claim:astral-length	claim	0
+a:claim:fig1-blobs	claim	0
+a:claim:fig1-lsa	claim	0
+a:claim:fig1-edges	claim	0
+a:claim:fig2R	claim	0
+a:claim:fig2-blobs	claim	0
+a:claim:fig2-planar	claim	0
+a:claim:fig3-abcf	claim	0
+a:claim:b-quartet-tree	claim	0
+a:claim:degree-examples	claim	0
+a:claim:root-degree	claim	0
+a:claim:tree-blobs	claim	0
+a:claim:tree-three	claim	0
+a:claim:tree-third	claim	0
+a:claim:degree-four	claim	0
+a:claim:cycles-share-edge	claim	0
+a:claim:level1-above-lsa	claim	0
+a:claim:theorem3-structure	claim	0
+a:claim:k-blobs	claim	0
+a:claim:cycle-splits	claim	0
+a:claim:tree-range	claim	0
+a:claim:banos-range	claim	0

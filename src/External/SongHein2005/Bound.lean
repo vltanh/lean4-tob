@@ -8,7 +8,7 @@ public import Mathlib.Data.EReal.Basic
 /-!
 # The bound of Song and Hein by ordered-SPR operations
 
-See the `README.md` of this directory. The source couldn't be read, so this is the standard construction of an ancestral recombination graph from a sequence of trees: going along the sites, each
+See the `README.md` of this directory. The source has no proof, only the construction in words: "a subtree that gets pruned and regrafted in an SPR operation corresponds to the descendant subtree of a recombination vertex in an ARG". This is that construction of an ancestral recombination graph from a sequence of trees: going along the sites, each
 ordered-SPR operation is one recombination node, just above the root of the pruned subtree.
 
 The network is built with the sites placed one by one, and it's kept in a state where the arcs followed to the right of the last crossover form the current tree. The state is described by times: a node `n` at
@@ -1309,9 +1309,9 @@ theorem exists_steps_of_ne_top {X : Type*} [Fintype X] [DecidableEq X] {T T' : T
   exact ⟨k, hk, hkeq⟩
 
 /-- **The fact of Song and Hein 2005** (`ext:song_hein`) (Gusfield et al., line 654): "if `P = T_1, T_2, ..., T_m` is a sequence of time-ordered leaf-labeled trees in which `T_i` is compatible with site `i`
-in `M`, for all `i`, then `R¹(M) ≤ L(P)`". The trees needn't be binary.
+in `M`, for all `i`, then `R¹(M) ≤ L(P)`". The trees needn't be binary, while those of the source are, with their internal nodes totally ordered: this is stronger than the source. The source's ordered-SPR operation keeps the order of the other internal nodes, where `TimeOrderedTree.IsOrderedSPR` keeps their times, and times can be chosen along a path of the source so that its steps are steps here. A constant column isn't compatible with any tree here, while the source calls it compatible with every tree.
 
-The source is closed and wasn't read, so this doesn't claim to follow it, and whether its trees are binary, and whether its ordered-SPR operation is exactly `TimeOrderedTree.IsOrderedSPR`, couldn't be compared. The proof is the standard construction of an ancestral recombination graph from a sequence of trees: see the `README.md`. -/
+The source's equations (3), (5) say more, that the minimum of `L(P)` is `R¹(M)`, and it gives no proof of either inequality: only the construction in words, followed here. The other inequality is `SongHein2005.exists_sprLength_eq_R`, in `External.SongHein2005.Minimal`. See the `README.md`. -/
 theorem R_le_sprLength {m : ℕ} (M : Finset (Fin m → Bool)) (hM : M.Nonempty) (P : Fin m → TimeOrderedTree M)
     (hP : ∀ i, (P i).CompatibleWith fun r => (r : Fin m → Bool) i) :
     (R .single M : ℕ∞) ≤ sprLength (List.ofFn P) := by

@@ -30,6 +30,14 @@ open scoped Classical
 
 namespace Phylogenetics
 
+/-- The number of elements with a property, as a `Set.ncard` or as the card of a filter. -/
+theorem ncard_setOf_eq_card_filter {α : Type*} [Fintype α] (p : α → Prop) [DecidablePred p] :
+    {a | p a}.ncard = (Finset.univ.filter p).card := by
+  rw [← Set.ncard_coe_finset]
+  congr 1
+  ext a
+  simp
+
 section ECToBlobAlgorithm
 
 variable {X : Type*} [Fintype X] [DecidableEq X]

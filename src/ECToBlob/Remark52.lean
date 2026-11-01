@@ -42,6 +42,8 @@ open scoped Classical
 
 namespace ECToBlob.Remark52
 
+export Phylogenetics.FinFour (Fab Cab Fall)
+
 /-! ### The concordance factors on `Fin 4` -/
 
 /-- A filter of all the elements, by the elements. -/
@@ -55,17 +57,8 @@ theorem filter_eq_finset {α : Type*} [Fintype α] {p : α → Prop} [DecidableP
 def cfOf (P : ℝ) (r : QuartetTree (Fin 4)) : ℝ :=
   if ({2, 3} : Finset (Fin 4)) ∈ r.val then 1 / 3 + 2 / 3 * P else (1 - P) / 3
 
-/-- The lineages of `a`, `b` before they coalesce. -/
-abbrev Fab : Finset (Finset (Fin 4)) := ({0, 1} : Finset (Fin 4)).image fun x => ({x} : Finset (Fin 4))
-
-/-- The lineages of `a`, `b` after they coalesce. -/
-abbrev Cab : Finset (Finset (Fin 4)) := insert ({0, 1} : Finset (Fin 4)) Fab
-
 /-- The lineages of `c`, `d` before they coalesce. -/
 abbrev Fcd : Finset (Finset (Fin 4)) := ({2, 3} : Finset (Fin 4)).image fun x => ({x} : Finset (Fin 4))
-
-/-- All the lineages at the root. -/
-abbrev Fall : Finset (Finset (Fin 4)) := (univ : Finset (Fin 4)).image fun x => ({x} : Finset (Fin 4))
 
 theorem isGoodForest_cherry : IsGoodForest (insert ({2, 3} : Finset (Fin 4)) Fall) := by
   unfold IsGoodForest IsForest IsBinaryForest

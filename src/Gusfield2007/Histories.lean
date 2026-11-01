@@ -308,7 +308,7 @@ theorem Gen.restrict {S : ι → Bool} {A : Finset (ι → Bool)} {U : Set ι} {
 recombination for at most one of them: `R¹(M) ≥ R(M(I)) + R(M(J))`.
 
 Checked against Myers and Griffiths 2003, pp. 376-377. They let `r_l` be the number of recombination events in the interval between consecutive sites, and combine local bounds `B_ij` on a region by the constraints `Σ_{l=i}^{j-1} r_l ≥ B_ij` of (1), (2). Two such constraints, on regions that share at most an endpoint, add up to
-`Σ r_l ≥ B + B'`. This is that instance, with `B = R(M(I))` and `B' = R(M(J))`, proved directly on a history rather than through the `r_l`. Their assumption that each event has "exactly one endpoint" in the region is `Gen .single`. Their integer program for many regions and their Algorithm 1 aren't formalized. `I` and `J` needn't be intervals, which is covered by their remark that a
+`Σ r_l ≥ B + B'`. This is that instance, with `B = R(M(I))` and `B' = R(M(J))`, proved directly on a history rather than through the `r_l`. Their assumption that each event has "exactly one endpoint" in the region is `Gen .single`. Their integer program for many regions and their Algorithm 1 are in `External.MyersGriffiths2003.Algorithm1`, and the bound on `R¹` is `MyersGriffiths2003.algorithm1_le_R` in `External.MyersGriffiths2003.Composite`, with `MyersGriffiths2003.add_R_le_R` for two intervals, keeping single crossovers on both. `I` and `J` needn't be intervals, which is covered by their remark that a
 bound can be taken on any subset of the sites of a region (p. 379). -/
 theorem Gen.split {κ' : Type*} [LinearOrder κ'] {S : ι → Bool} {A : Finset (ι → Bool)} {U : Set ι} {r : ℕ} (h : Gen .single S A U r)
     {f : κ → ι} {g : κ' → ι} (hf : StrictMono f) (hg : StrictMono g) (hfg : ∀ a b, f a ≤ g b) :

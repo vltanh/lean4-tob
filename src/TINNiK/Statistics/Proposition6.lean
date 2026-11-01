@@ -1,7 +1,7 @@
 module
 
 public import TINNiK.Statistics.AppendixC
-public import Basic.ForMathlib.Probability.GaussianPlane
+public import Basic.ForMathlib.Probability.GaussianStrip
 public import Basic.Testing.Defs
 
 /-!
@@ -36,7 +36,7 @@ For `i ≤ 5`, each `G_i` is computed as in the paper, and `G₆` follows from `
   paper's last line, which is `Gᵢ'_eq_h` (`IsPolarSector.integral_polarDensity_mul`).
 
 The density of `Λ` comes from the change of variable to the squared distance
-(`lintegral_sq_subst`).
+(`lintegral_Ioc_eq_lintegral_sq`).
 
 Two steps that the paper leaves implicit are proved here. Differentiating under the integral sign
 needs a dominating function, which exists for `x > 0`: on `(x₀ / 2, 2 x₀)` the integrand is at most
@@ -175,24 +175,6 @@ theorem lam_of_mem_R₅ {s c : ℝ} (hs : 0 < s) {z : ℝ × ℝ} (hz : z ∈ R�
   · exact pow_le_pow_left₀ hu (by linarith) 2
   · exact pow_le_pow_left₀ hu (by linarith) 2
 
-/-- The paper's last line for `d/dx G_i`: a normal density of mean `p` at `u`, times an `erf` term
-with slope `k` and mean `q`. -/
-def h (p q k u : ℝ) : ℝ :=
-  gaussianPDFReal p 1 u * (1 / 2 * (1 - Real.erf ((k * u - q) / √2)))
-
-theorem h_nonneg (p q k u : ℝ) : 0 ≤ h p q k u :=
-  mul_nonneg (gaussianPDFReal_nonneg _ _ _) (by linarith [Real.erf_le_one ((k * u - q) / √2)])
-
-theorem continuous_h (p q k : ℝ) : Continuous (h p q k) := by
-  have h1 : Continuous (gaussianPDFReal p 1) := by
-    unfold gaussianPDFReal
-    fun_prop
-  have := Real.continuous_erf
-  unfold h
-  fun_prop
-
-theorem measurable_h (p q k : ℝ) : Measurable (h p q k) := (continuous_h p q k).measurable
-
 section Polar
 
 open Real
@@ -205,12 +187,6 @@ theorem two_mul_β₀ (α : ℝ) : 2 * β₀ α = π / 2 - α := by
   ring
 
 variable {α : ℝ}
-
-theorem sin_pos_of_mem (hα : α ∈ Ioo 0 (π / 2)) : 0 < sin α :=
-  sin_pos_of_pos_of_lt_pi hα.1 (by linarith [hα.2, pi_pos])
-
-theorem cos_pos_of_mem (hα : α ∈ Ioo 0 (π / 2)) : 0 < cos α :=
-  cos_pos_of_mem_Ioo ⟨by linarith [hα.1, pi_pos], hα.2⟩
 
 theorem β₀_pos (hα : α ∈ Ioo 0 (π / 2)) : 0 < β₀ α := by
   have := hα.2
@@ -345,8 +321,8 @@ theorem hasDerivAt_G₁ (hα : α ∈ Ioo 0 (π / 2)) (μ : ℝ) {x : ℝ} (hx :
 
 /-- The paper's substitution `y = x tan β` in `d/dx G₁`. -/
 theorem G₁'_eq_h (hα : α ∈ Ioo 0 (π / 2)) (μ : ℝ) {x : ℝ} (hx : 0 < x) :
-    G₁' α μ x = h 0 μ ((1 + sin α) / cos α) x := by
-  rw [G₁'_eq, (sector₁ hα).integral_polarDensity_mul 0 μ hx, h, mul_zero]
+    G₁' α μ x = stripDensity 0 μ ((1 + sin α) / cos α) x := by
+  rw [G₁'_eq, (sector₁ hα).integral_polarDensity_mul 0 μ hx, stripDensity, mul_zero]
 
 /-- The paper's `G₂`, in polar coordinates, in the figure rotated by `2 β₀`. -/
 def G₂ (α μ x : ℝ) : ℝ :=
@@ -379,8 +355,8 @@ theorem hasDerivAt_G₂ (hα : α ∈ Ioo 0 (π / 2)) (μ : ℝ) {x : ℝ} (hx :
 
 /-- The substitution `y = -x tan β` in the paper's `d/dx G₂`. -/
 theorem G₂'_eq_h (hα : α ∈ Ioo 0 (π / 2)) (μ : ℝ) {x : ℝ} (hx : 0 < x) :
-    G₂' α μ x = h (μ * cos α) (μ * sin α) ((1 + sin α) / cos α) x := by
-  rw [G₂'_eq, (sector₂ hα).integral_polarDensity_mul _ _ hx, h,
+    G₂' α μ x = stripDensity (μ * cos α) (μ * sin α) ((1 + sin α) / cos α) x := by
+  rw [G₂'_eq, (sector₂ hα).integral_polarDensity_mul _ _ hx, stripDensity,
     show -1 * (-μ * cos α) = μ * cos α by ring]
 
 /-- The paper's `G₃`, in polar coordinates, in the figure rotated by `2 β₀`. -/
@@ -414,8 +390,8 @@ theorem hasDerivAt_G₃ (hα : α ∈ Ioo 0 (π / 2)) (μ : ℝ) {x : ℝ} (hx :
 
 /-- The substitution `y = x tan β` in the paper's `d/dx G₃`. -/
 theorem G₃'_eq_h (hα : α ∈ Ioo 0 (π / 2)) (μ : ℝ) {x : ℝ} (hx : 0 < x) :
-    G₃' α μ x = h (-μ * cos α) (μ * sin α) (cos α / sin α) x := by
-  rw [G₃'_eq, (sector₃ hα).integral_polarDensity_mul _ _ hx, h, one_mul]
+    G₃' α μ x = stripDensity (-μ * cos α) (μ * sin α) (cos α / sin α) x := by
+  rw [G₃'_eq, (sector₃ hα).integral_polarDensity_mul _ _ hx, stripDensity, one_mul]
 
 /-- The paper's `G₄`, in polar coordinates, in the figure rotated by `π / 2 + α₀`. -/
 def G₄ (α μ x : ℝ) : ℝ :=
@@ -448,8 +424,8 @@ theorem hasDerivAt_G₄ (hα : α ∈ Ioo 0 (π / 2)) (μ : ℝ) {x : ℝ} (hx :
 
 /-- The substitution `y = -x tan β` in the paper's `d/dx G₄`. -/
 theorem G₄'_eq_h (hα : α ∈ Ioo 0 (π / 2)) (μ : ℝ) {x : ℝ} (hx : 0 < x) :
-    G₄' α μ x = h (μ * cos α) (-μ * sin α) (cos α / sin α) x := by
-  rw [G₄'_eq, (sector₄ hα).integral_polarDensity_mul _ _ hx, h,
+    G₄' α μ x = stripDensity (μ * cos α) (-μ * sin α) (cos α / sin α) x := by
+  rw [G₄'_eq, (sector₄ hα).integral_polarDensity_mul _ _ hx, stripDensity,
     show -1 * (-μ * cos α) = μ * cos α by ring]
 
 /-- The paper's `G₅`, in polar coordinates, in the figure rotated by `π / 2 + α₀`. -/
@@ -483,8 +459,8 @@ theorem hasDerivAt_G₅ (hα : α ∈ Ioo 0 (π / 2)) (μ : ℝ) {x : ℝ} (hx :
 
 /-- The substitution `y = x tan β` in the paper's `d/dx G₅`. -/
 theorem G₅'_eq_h (hα : α ∈ Ioo 0 (π / 2)) (μ : ℝ) {x : ℝ} (hx : 0 < x) :
-    G₅' α μ x = h (-μ * cos α) (-μ * sin α) ((1 + sin α) / cos α) x := by
-  rw [G₅'_eq, (sector₅ hα).integral_polarDensity_mul _ _ hx, h, one_mul]
+    G₅' α μ x = stripDensity (-μ * cos α) (-μ * sin α) ((1 + sin α) / cos α) x := by
+  rw [G₅'_eq, (sector₅ hα).integral_polarDensity_mul _ _ hx, stripDensity, one_mul]
 
 /-! ### The rotated figures -/
 
@@ -523,7 +499,7 @@ theorem P_rotate_pi_div_two_add (α μ : ℝ) {A : Set (ℝ × ℝ)} (hA : Measu
 /-- `G₁`: the probability of the part of `R₁` within distance `√t` of `x = 0`. -/
 theorem measure_inter_R₁ (hα : α ∈ Ioo 0 (π / 2)) (μ t : ℝ) :
     normalSample μ ({z | lam (sin α) (cos α) z ≤ t} ∩ R₁ (sin α) (cos α)) =
-      ∫⁻ u in Ioc 0 √t, ENNReal.ofReal (h 0 μ ((1 + sin α) / cos α) u) := by
+      ∫⁻ u in Ioc 0 √t, ENNReal.ofReal (stripDensity 0 μ ((1 + sin α) / cos α) u) := by
   have hs := sin_pos_of_mem hα
   have hc := cos_pos_of_mem hα
   have hset : {z | lam (sin α) (cos α) z ≤ t} ∩ R₁ (sin α) (cos α) =
@@ -543,13 +519,13 @@ theorem measure_inter_R₁ (hα : α ∈ Ioo 0 (π / 2)) (μ t : ℝ) :
   exact measure_polarStrip_eq_lintegral_of_hasDerivAt 1 _ (normalSample μ) (G := G₁ α μ)
     (fun x hx => by rw [G₁_eq]; exact (sector₁ hα).toReal_measure_polarStrip 0 μ hx)
     (fun x hx => by rw [← G₁'_eq_h hα μ hx]; exact hasDerivAt_G₁ hα μ hx)
-    (continuous_h _ _ _) (h_nonneg _ _ _) _
+    (continuous_stripDensity _ _ _) (stripDensity_nonneg _ _ _) _
 
 /-- `G₂`: the probability of the part of `R₂` within distance `√t` of `y = x tan α₀`, in the figure
 rotated by `2 β₀`. -/
 theorem measure_inter_R₂ (hα : α ∈ Ioo 0 (π / 2)) (μ t : ℝ) :
     normalSample μ ({z | lam (sin α) (cos α) z ≤ t} ∩ R₂ (sin α) (cos α)) =
-      ∫⁻ u in Ioc 0 √t, ENNReal.ofReal (h (μ * cos α) (μ * sin α) ((1 + sin α) / cos α) u) := by
+      ∫⁻ u in Ioc 0 √t, ENNReal.ofReal (stripDensity (μ * cos α) (μ * sin α) ((1 + sin α) / cos α) u) := by
   have hs := sin_pos_of_mem hα
   have hc := cos_pos_of_mem hα
   have hsc := sin_sq_add_cos_sq α
@@ -577,13 +553,13 @@ theorem measure_inter_R₂ (hα : α ∈ Ioo 0 (π / 2)) (μ t : ℝ) :
   exact measure_polarStrip_eq_lintegral_of_hasDerivAt (-1) _ _ (G := G₂ α μ)
     (fun x hx => by rw [G₂_eq]; exact (sector₂ hα).toReal_measure_polarStrip _ _ hx)
     (fun x hx => by rw [← G₂'_eq_h hα μ hx]; exact hasDerivAt_G₂ hα μ hx)
-    (continuous_h _ _ _) (h_nonneg _ _ _) _
+    (continuous_stripDensity _ _ _) (stripDensity_nonneg _ _ _) _
 
 /-- `G₃`: the probability of the part of `R₃` within distance `√t` of `y = x tan α₀`, in the figure
 rotated by `2 β₀`. -/
 theorem measure_inter_R₃ (hα : α ∈ Ioo 0 (π / 2)) (μ t : ℝ) :
     normalSample μ ({z | lam (sin α) (cos α) z ≤ t} ∩ R₃ (sin α) (cos α)) =
-      ∫⁻ u in Ioc 0 √t, ENNReal.ofReal (h (-μ * cos α) (μ * sin α) (cos α / sin α) u) := by
+      ∫⁻ u in Ioc 0 √t, ENNReal.ofReal (stripDensity (-μ * cos α) (μ * sin α) (cos α / sin α) u) := by
   have hs := sin_pos_of_mem hα
   have hc := cos_pos_of_mem hα
   have hsc := sin_sq_add_cos_sq α
@@ -610,13 +586,13 @@ theorem measure_inter_R₃ (hα : α ∈ Ioo 0 (π / 2)) (μ t : ℝ) :
   exact measure_polarStrip_eq_lintegral_of_hasDerivAt 1 _ _ (G := G₃ α μ)
     (fun x hx => by rw [G₃_eq]; exact (sector₃ hα).toReal_measure_polarStrip _ _ hx)
     (fun x hx => by rw [← G₃'_eq_h hα μ hx]; exact hasDerivAt_G₃ hα μ hx)
-    (continuous_h _ _ _) (h_nonneg _ _ _) _
+    (continuous_stripDensity _ _ _) (stripDensity_nonneg _ _ _) _
 
 /-- `G₄`: the probability of the part of `R₄` within distance `√t` of `y = -x tan α₀`, in the figure
 rotated by `π / 2 + α₀`. -/
 theorem measure_inter_R₄ (hα : α ∈ Ioo 0 (π / 2)) (μ t : ℝ) :
     normalSample μ ({z | lam (sin α) (cos α) z ≤ t} ∩ R₄ (sin α) (cos α)) =
-      ∫⁻ u in Ioc 0 √t, ENNReal.ofReal (h (μ * cos α) (-μ * sin α) (cos α / sin α) u) := by
+      ∫⁻ u in Ioc 0 √t, ENNReal.ofReal (stripDensity (μ * cos α) (-μ * sin α) (cos α / sin α) u) := by
   have hs := sin_pos_of_mem hα
   have hc := cos_pos_of_mem hα
   have hsc := sin_sq_add_cos_sq α
@@ -643,14 +619,14 @@ theorem measure_inter_R₄ (hα : α ∈ Ioo 0 (π / 2)) (μ t : ℝ) :
   exact measure_polarStrip_eq_lintegral_of_hasDerivAt (-1) _ _ (G := G₄ α μ)
     (fun x hx => by rw [G₄_eq]; exact (sector₄ hα).toReal_measure_polarStrip _ _ hx)
     (fun x hx => by rw [← G₄'_eq_h hα μ hx]; exact hasDerivAt_G₄ hα μ hx)
-    (continuous_h _ _ _) (h_nonneg _ _ _) _
+    (continuous_stripDensity _ _ _) (stripDensity_nonneg _ _ _) _
 
 /-- `G₅`: the probability of the part of `R₅` within distance `√t` of `y = -x tan α₀`, in the figure
 rotated by `π / 2 + α₀`. -/
 theorem measure_inter_R₅ (hα : α ∈ Ioo 0 (π / 2)) (μ t : ℝ) :
     normalSample μ ({z | lam (sin α) (cos α) z ≤ t} ∩ R₅ (sin α) (cos α)) =
       ∫⁻ u in Ioc 0 √t, ENNReal.ofReal
-        (h (-μ * cos α) (-μ * sin α) ((1 + sin α) / cos α) u) := by
+        (stripDensity (-μ * cos α) (-μ * sin α) ((1 + sin α) / cos α) u) := by
   have hs := sin_pos_of_mem hα
   have hc := cos_pos_of_mem hα
   have hsc := sin_sq_add_cos_sq α
@@ -678,7 +654,7 @@ theorem measure_inter_R₅ (hα : α ∈ Ioo 0 (π / 2)) (μ t : ℝ) :
   exact measure_polarStrip_eq_lintegral_of_hasDerivAt 1 _ _ (G := G₅ α μ)
     (fun x hx => by rw [G₅_eq]; exact (sector₅ hα).toReal_measure_polarStrip _ _ hx)
     (fun x hx => by rw [← G₅'_eq_h hα μ hx]; exact hasDerivAt_G₅ hα μ hx)
-    (continuous_h _ _ _) (h_nonneg _ _ _) _
+    (continuous_stripDensity _ _ _) (stripDensity_nonneg _ _ _) _
 
 end Polar
 
@@ -730,19 +706,6 @@ theorem measure_quadrant {s c : ℝ} (hs : 0 < s) (hc : 0 < c) (μ t : ℝ) :
   rw [e3, h2] at h1
   exact h1
 
-/-- The reflection about the vertical axis preserves the law of the normal sample. -/
-theorem P_reflect_x (μ : ℝ) {A : Set (ℝ × ℝ)} (hA : MeasurableSet A) :
-    normalSample μ {z | (-z.1, z.2) ∈ A} = normalSample μ A := by
-  have h := gaussianReal_prod_map_orthonormal (a := -1) (b := 0) (a' := 0) (b' := 1)
-    (by norm_num) (by norm_num) (by norm_num) 0 μ
-  have e : (fun z : ℝ × ℝ => (-1 * z.1 + 0 * z.2, 0 * z.1 + 1 * z.2)) = fun z => (-z.1, z.2) := by
-    funext z; simp
-  rw [e, show (-1 : ℝ) * 0 + 0 * μ = 0 by ring, show (0 : ℝ) * 0 + 1 * μ = μ by ring] at h
-  have hm : Measurable (fun z : ℝ × ℝ => (-z.1, z.2)) := by fun_prop
-  calc normalSample μ {z | (-z.1, z.2) ∈ A} = ((normalSample μ).map fun z : ℝ × ℝ => (-z.1, z.2)) A :=
-        (Measure.map_apply hm hA).symm
-    _ = normalSample μ A := by rw [h]
-
 /-- The reflection about the horizontal axis changes the sign of the mean. -/
 theorem P_reflect_y (μ : ℝ) {A : Set (ℝ × ℝ)} (hA : MeasurableSet A) :
     normalSample μ {z | (z.1, -z.2) ∈ A} = normalSample (-μ) A := by
@@ -770,7 +733,7 @@ theorem measure_inter_reflect (s c μ t : ℝ) {A : Set (ℝ × ℝ)} (hA : Meas
 `(0, μ) ↦ (0, -μ)`, as in the paper. -/
 theorem measure_inter_R₆ {α : ℝ} (hα : α ∈ Ioo 0 (Real.pi / 2)) (μ t : ℝ) :
     normalSample μ ({z | lam (Real.sin α) (Real.cos α) z ≤ t} ∩ R₆ (Real.sin α) (Real.cos α)) =
-      ∫⁻ u in Ioc 0 √t, ENNReal.ofReal (h 0 (-μ) ((1 + Real.sin α) / Real.cos α) u) := by
+      ∫⁻ u in Ioc 0 √t, ENNReal.ofReal (stripDensity 0 (-μ) ((1 + Real.sin α) / Real.cos α) u) := by
   have hset : R₆ (Real.sin α) (Real.cos α) = {z | (z.1, -z.2) ∈ R₁ (Real.sin α) (Real.cos α)} := by
     ext z
     simp only [R₆, R₁, mem_ofPred_eq]
@@ -853,7 +816,7 @@ theorem measure_lam_le_eq_sum {s c : ℝ} (hs : 0 < s) (hc : 0 < c) (μ t : ℝ)
   have e4 : {z | lam s c z ≤ t} ∩ {z : ℝ × ℝ | 0 < z.1} ∩ {z : ℝ × ℝ | 0 * z.1 + 1 * z.2 < 0} =
       {z | lam s c z ≤ t} ∩ {z | 0 < z.1} ∩ {z | z.2 < 0} := by
     ext z; simp
-  rw [e1, e2, P_reflect_x μ (hE.inter hx)] at h1
+  rw [e1, e2, measure_reflect_x_preimage μ (hE.inter hx)] at h1
   rw [e3, e4, measure_quadrant hs hc, measure_quadrant' hs hc] at h2
   rw [h1, h2]
   ring
@@ -869,14 +832,14 @@ private lemma ofReal_add_six {a₁ a₂ a₃ a₄ a₅ a₆ : ℝ} (h₁ : 0 ≤
 
 /-- The paper's density `g` of the (non-squared) distance, `2 ∑_{i=1}^6 d/dx G_i`. -/
 def g (s c μ u : ℝ) : ℝ :=
-  2 * (h 0 μ ((1 + s) / c) u + h (μ * c) (μ * s) ((1 + s) / c) u + h (-μ * c) (μ * s) (c / s) u +
-    h (μ * c) (-μ * s) (c / s) u + h (-μ * c) (-μ * s) ((1 + s) / c) u + h 0 (-μ) ((1 + s) / c) u)
+  2 * (stripDensity 0 μ ((1 + s) / c) u + stripDensity (μ * c) (μ * s) ((1 + s) / c) u + stripDensity (-μ * c) (μ * s) (c / s) u +
+    stripDensity (μ * c) (-μ * s) (c / s) u + stripDensity (-μ * c) (-μ * s) ((1 + s) / c) u + stripDensity 0 (-μ) ((1 + s) / c) u)
 
 /-- The law of the statistic: `P(Λ ≤ t)` is the integral of `g` over `(0, √t]`. -/
 theorem measure_lam_le {α : ℝ} (hα : α ∈ Ioo 0 (Real.pi / 2)) (μ t : ℝ) :
     normalSample μ {z | lam (Real.sin α) (Real.cos α) z ≤ t} =
       ∫⁻ u in Ioc 0 √t, ENNReal.ofReal (g (Real.sin α) (Real.cos α) μ u) := by
-  rw [measure_lam_le_eq_sum (sin_pos_of_mem hα) (cos_pos_of_mem hα), measure_inter_R₁ hα,
+  rw [measure_lam_le_eq_sum (Real.sin_pos_of_mem hα) (Real.cos_pos_of_mem hα), measure_inter_R₁ hα,
     measure_inter_R₂ hα, measure_inter_R₃ hα, measure_inter_R₄ hα, measure_inter_R₅ hα,
     measure_inter_R₆ hα]
   set s := Real.sin α
@@ -884,43 +847,21 @@ theorem measure_lam_le {α : ℝ} (hα : α ∈ Ioo 0 (Real.pi / 2)) (μ t : ℝ
   set B := (1 + s) / c
   set A := c / s
   have hsplit : ∀ u, ENNReal.ofReal (g s c μ u) =
-      2 * (ENNReal.ofReal (h 0 μ B u) + ENNReal.ofReal (h (μ * c) (μ * s) B u) +
-        ENNReal.ofReal (h (-μ * c) (μ * s) A u) + ENNReal.ofReal (h (μ * c) (-μ * s) A u) +
-        ENNReal.ofReal (h (-μ * c) (-μ * s) B u) + ENNReal.ofReal (h 0 (-μ) B u)) := by
+      2 * (ENNReal.ofReal (stripDensity 0 μ B u) + ENNReal.ofReal (stripDensity (μ * c) (μ * s) B u) +
+        ENNReal.ofReal (stripDensity (-μ * c) (μ * s) A u) + ENNReal.ofReal (stripDensity (μ * c) (-μ * s) A u) +
+        ENNReal.ofReal (stripDensity (-μ * c) (-μ * s) B u) + ENNReal.ofReal (stripDensity 0 (-μ) B u)) := by
     intro u
     simp only [g]
     rw [ENNReal.ofReal_mul (by norm_num), ENNReal.ofReal_ofNat]
     congr 1
-    exact ofReal_add_six (h_nonneg _ _ _ _) (h_nonneg _ _ _ _) (h_nonneg _ _ _ _) (h_nonneg _ _ _ _)
-      (h_nonneg _ _ _ _) (h_nonneg _ _ _ _)
-  have hm : ∀ p q k, Measurable fun u => ENNReal.ofReal (h p q k u) :=
-    fun p q k => ENNReal.measurable_ofReal.comp (measurable_h p q k)
+    exact ofReal_add_six (stripDensity_nonneg _ _ _ _) (stripDensity_nonneg _ _ _ _) (stripDensity_nonneg _ _ _ _) (stripDensity_nonneg _ _ _ _)
+      (stripDensity_nonneg _ _ _ _) (stripDensity_nonneg _ _ _ _)
+  have hm : ∀ p q k, Measurable fun u => ENNReal.ofReal (stripDensity p q k u) :=
+    fun p q k => ENNReal.measurable_ofReal.comp (continuous_stripDensity p q k).measurable
   simp_rw [hsplit]
   rw [lintegral_const_mul' _ _ (by norm_num), lintegral_add_right _ (hm _ _ _),
     lintegral_add_right _ (hm _ _ _), lintegral_add_right _ (hm _ _ _),
     lintegral_add_right _ (hm _ _ _), lintegral_add_right _ (hm _ _ _)]
-
-/-- The image of `(0, √t]` under squaring is `(0, t]`, also when both are empty. -/
-theorem sq_image_Ioc_sqrt (t : ℝ) : (fun u : ℝ => u ^ 2) '' Ioc 0 √t = Ioc 0 t := by
-  ext v
-  simp only [mem_image, mem_Ioc]
-  constructor
-  · rintro ⟨u, ⟨hu, hut⟩, rfl⟩
-    exact ⟨by positivity, (Real.le_sqrt' hu).1 hut⟩
-  · rintro ⟨hv, hvt⟩
-    exact ⟨√v, ⟨Real.sqrt_pos.2 hv, Real.sqrt_le_sqrt hvt⟩, Real.sq_sqrt hv.le⟩
-
-/-- The final substitution of the paper: the change of variable to the squared distance. -/
-theorem lintegral_sq_subst (t : ℝ) (f : ℝ → ℝ≥0∞) :
-    ∫⁻ v in Ioc 0 t, f v = ∫⁻ u in Ioc 0 √t, ENNReal.ofReal (2 * u) * f (u ^ 2) := by
-  rw [← sq_image_Ioc_sqrt t, lintegral_image_eq_lintegral_abs_deriv_mul (f' := fun u => 2 * u)
-    measurableSet_Ioc]
-  · refine setLIntegral_congr_fun measurableSet_Ioc fun u hu => ?_
-    simp only [abs_of_pos (mul_pos two_pos hu.1)]
-  · intro u _
-    simpa using (hasDerivAt_pow 2 u).hasDerivWithinAt
-  · intro a ha b hb hab
-    exact (sq_eq_sq₀ ha.1.le hb.1.le).1 hab
 
 theorem alpha0_pos (φ : ℝ) (hφ : 0 < φ ∧ φ < 3 / 2) : 0 < alpha0 φ := by
   have h : 0 < 3 * (3 - 2 * φ) := by linarith [hφ.2]
@@ -963,7 +904,7 @@ theorem two_mul_mul_density (φ : ℝ) (hφ : 0 < φ ∧ φ < 3 / 2) (n : ℕ) {
   have hfac : 2 * u * (1 / (2 * (√(2 * Real.pi) * u))) = (√(2 * Real.pi))⁻¹ := by
     field_simp
   rw [← mul_assoc, hfac]
-  simp only [g, h, gaussianPDFReal_one]
+  simp only [g, stripDensity, gaussianPDFReal_one]
   ring_nf
 
 /-- The second part of Proposition 6: the law of `Λ_n`, from the distribution function of the
@@ -998,7 +939,7 @@ theorem lambdaLaw_eq (φ : ℝ) (hφ : 0 < φ ∧ φ < 3 / 2) (n : ℕ) :
       · rw [indicator_of_mem (show v ∈ Iic t from hvt), h0]
       · rw [indicator_of_notMem (show v ∉ Iic t from hvt)]
   have hIoc : MeasurableSet (Ioc 0 √t) := measurableSet_Ioc
-  rw [hind, lintegral_sq_subst t fun v => ENNReal.ofReal (density φ n v)]
+  rw [hind, lintegral_Ioc_eq_lintegral_sq t fun v => ENNReal.ofReal (density φ n v)]
   refine setLIntegral_congr_fun hIoc fun u hu => ?_
   rw [← ENNReal.ofReal_mul (mul_pos two_pos hu.1).le, two_mul_mul_density φ hφ n hu.1]
 

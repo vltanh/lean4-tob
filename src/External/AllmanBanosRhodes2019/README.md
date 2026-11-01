@@ -25,9 +25,18 @@ ECToBlob's Remark 8.3 says that the argument of its Theorem 8.2 strengthens the 
 * Proposition 9, parts 1 and 3, on binary level-1 networks, at any `0 ≤ ρ ≤ 1`: `proposition9`. The source takes it from
   its references and prints no proof, so the proof is new. It places lineages at vertices (`Placement.placeInj`) and
   moves them up by the Markov property; it has no formula in the branch lengths. `Proposition9.lean` has the argument.
+* Proposition 9, part 2: `proposition9_part2`, in `Proposition9Part2.lean`, with the bound `CF_AB|CD ≥ 1/6`. Two lineages at
+  a reticulation take one parent with probability at least `1/2`, and from there the masses are tree-like. "May or may not
+  be tree-like": `ThreeTwo.isT1Strict_N₃`, `ThreeTwo.exists_not_isT3Null_N₃`.
 * The structure of a `4₁`-cycle: `exists_cycle_of_not_isTreelike`, `not_isTreelike_iff`, and `exists_two_displayed` for the
   two quartet trees the grove displays.
 * Theorem 36 with Proposition 9 proved: `theorem36`, `theorem36_output`, `theorem36_generic`. Also `t3Detectable`.
+
+## What is formalized (`MissingTaxa.lean`, `Counts.lean`)
+
+* Gene trees on subsets of the taxa, as the source's input says: the counts of Step 1 are `Phylogenetics.quartetCountOn`, and `theorem36_missing`, `theorem36_generic_missing` are the theorem when each set of four taxa is on more and more gene trees (`TINNiK.Covers`). The
+  source does not state this.
+* The running time: `nanuqOperations_le`, `O(n⁴ m)`, with Steps 4 and 5 as costs bounded as the source says.
 
 ## What is a hypothesis
 
@@ -37,21 +46,36 @@ ECToBlob's Remark 8.3 says that the argument of its Theorem 8.2 strengthens the 
 `theorem36_output` also has the hypothesis that the steps after the distance return the wanted object on the theoretical
 distance. That is what the source's Theorem 34, Corollary 24 and its references [6, 7] say.
 
-## What is not proved: the definitions by contraction
+## The source's definitions (`Quartet.lean`, `QuartetSemidirected.lean`, `QuartetContract.lean`, `QuartetCycle.lean`, `QuartetForm.lean`, `QuartetClass.lean`)
 
-The source reads the types of cycle and `Q̃` on `N⁻` and `N_c⁻`, the unrooted induced network, with its 2- and 3-cycles
-contracted. Neither is formalized. `HasThreeTwoCycle` and `networkClass` are stated by blocks, cut edges and the grove, and
-**that these agree with the source's definitions by contraction is not proved.** The reader has to accept this
-reading. What is proved towards it: `not_isTreelike_iff`, `exists_two_displayed`, `networkClass_eq_tree`,
-`networkClass_eq_cycle`, `networkClass_ne_star_of_binary`, `isTreelike_of_hasThreeTwoCycle`.
+The source reads the types of cycle and `Q̃` on `N⁻` and `N_c⁻`. These are defined as printed, on a binary level-1 network:
+
+* Definition 5: `trekArcs`, the edges in simple treks of `N⁻`. `trekArcs_eq_wedgeArcs`: these are TOB-QMC's `wedgeArcs`, for every
+  network, since a simple semidirected trek is a directed one.
+* `m_k`-cycles (line 399): `HasCycleType`, with `cycleSize` the number of vertices of the cycle of degree other than two in the graph of
+  the kept edges.
+* `Q̃` (Definition 20): `tildeGraph`, the contraction of the 2- and 3-cycles, and `qTilde`, with `suppressDegreeTwo`. `HasQuartetTopology`
+  and `HasFourCycleTopology` are the literal tree and the literal 4-cycle.
+* `ρ_xy` (Definition 20), `d_{Q,N⁻}` (Definition 22): `rhoTilde`, `sourceDistance`.
+
+The bridges, all proved: `hasThreeTwoCycle_iff`; `hasCycleType_four_one_iff`; `networkClass_eq_tree_iff`, `networkClass_eq_cycle_iff`;
+`qTilde_tree_or_cycle`; `rho_networkClass_eq`; `networkDistance_eq_sourceDistance`. No difference was found. `proposition9_source` states
+Proposition 9 in these terms.
+
+The representation: `Quartet.lean` keeps `LSA(X)`, which Definition 4 suppresses. It is a vertex of degree two, which Definition 5 suppresses
+(`keptDegree_lsa_le`). `QuartetSemidirected.lean` reads Definition 5 on `AllmanEtAl2023.semidirected`, which carries the suppression out, and
+proves that the readings agree: an edge is kept exactly when its arc is (`mem_sTrekEdges_iff`), the edge merging the two arcs at `LSA(X)` is kept
+exactly when the arc it replaces is (`mem_sTrekEdges_merged_iff`), the kept edges are the kept arcs other than that one (`image_sTrekEdges`),
+and each vertex of `N⁻` has the same degree in both graphs of kept edges (`sKeptDegree_eq`). `cycleSize`, `qTilde` and what follows them are
+built from the kept arcs of `N`, and are not defined a second time on `N⁻`. Cycles are the blobs of the kept cycles, as the source says of a level-1 network (line 1381), and the contracted graph is
+proved to be a tree or a graph with one cycle, so that no other cycle is left.
 
 ## What is left out
 
-Gene trees on subsets of the taxa. NeighborNet and the Circular Network algorithm (Steps 4, 5), which are not
+NeighborNet and the Circular Network algorithm (Steps 4, 5), which are not
 characterized here. Splits graphs, and all the source's results about them and about split systems: Theorems 15, 23, 34,
-Corollaries 16, 24, 31, 35, Lemmas 19, 21, 25-28, 32, 33, Proposition 30. Proposition 9, part 2: its equality is `NMSC.cut_alternatives`, and its
-bound `CF_AB|CD ≥ 1/6` is not used and not proved. Proposition 10 is checked on the printed formula (`figure5_lt`) and on
-one network (`ThreeTwo.isT1Strict_N₃`), and is not stated for all level-1 networks. The running time, the data analyses.
+Corollaries 16, 24, 31, 35, Lemmas 19, 21, 25-28, 32, 33, Proposition 30. Proposition 10 is checked on the printed formula (`figure5_lt`) and on
+one network (`ThreeTwo.isT1Strict_N₃`), and is not stated for all level-1 networks. The data analyses. The running time is counted in `Counts.lean`, with NeighborNet and the Circular Network algorithm as parameters, not on a machine.
 
 ## Two errors in the proof of Theorem 36
 

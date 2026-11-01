@@ -1,5 +1,6 @@
 module
 
+public import Gusfield2007.SameCycles
 public import Gusfield2007.Surgery
 
 /-!
@@ -20,58 +21,6 @@ namespace Network
 universe u v w
 
 variable {ι : Type u} {V : Type v} {E : Type w}
-
-/-- If the recombination cycles of `N'` are the images of those of `N`, then so are its blobs. -/
-theorem isBlob_iff_of_isCycle_iff {ι : Type u} {V : Type v} {E : Type w} {V' E' : Type*} {N : Network ι V E} {N' : Network ι V' E'} (em : E → E') (hem : Function.Injective em)
-    (hc : ∀ Q', N'.IsCycle Q' ↔ ∃ Q, N.IsCycle Q ∧ Q' = em '' Q) (B' : Set E') : N'.IsBlob B' ↔ ∃ B, N.IsBlob B ∧ B' = em '' B := by
-  have hshare : ∀ {Q : Set E} {P' : Set E'}, Relation.ReflTransGen N'.ShareArc (em '' Q) P' → N.IsCycle Q →
-      ∃ P, Relation.ReflTransGen N.ShareArc Q P ∧ P' = em '' P := by
-    intro Q P' hP hQ
-    induction hP with
-    | refl => exact ⟨Q, Relation.ReflTransGen.refl, rfl⟩
-    | tail _ hs ih =>
-      obtain ⟨P₁, hP₁, rfl⟩ := ih
-      obtain ⟨-, hc', k, hk, hk'⟩ := hs
-      obtain ⟨P₂, hP₂, rfl⟩ := (hc _).1 hc'
-      obtain ⟨a, ha, rfl⟩ := hk
-      obtain ⟨a', ha', haa⟩ := hk'
-      obtain rfl : a' = a := hem haa
-      have hP₁c : N.IsCycle P₁ := by
-        clear ha
-        induction hP₁ with
-        | refl => exact hQ
-        | tail _ h' _ => exact h'.2.1
-      exact ⟨P₂, hP₁.tail ⟨hP₁c, hP₂, a', ha, ha'⟩, rfl⟩
-  have hshare' : ∀ {Q P : Set E}, Relation.ReflTransGen N.ShareArc Q P → N.IsCycle Q →
-      Relation.ReflTransGen N'.ShareArc (em '' Q) (em '' P) := by
-    intro Q P hP hQ
-    induction hP with
-    | refl => exact Relation.ReflTransGen.refl
-    | tail _ hs ih =>
-      obtain ⟨hP₁, hP₂, k, hk, hk'⟩ := hs
-      exact ih.tail ⟨(hc _).2 ⟨_, hP₁, rfl⟩, (hc _).2 ⟨_, hP₂, rfl⟩, em k, ⟨k, hk, rfl⟩, ⟨k, hk', rfl⟩⟩
-  constructor
-  · rintro ⟨Q', hQ', rfl⟩
-    obtain ⟨Q, hQ, rfl⟩ := (hc _).1 hQ'
-    refine ⟨_, ⟨Q, hQ, rfl⟩, ?_⟩
-    ext k
-    constructor
-    · rintro ⟨P', hP', hk⟩
-      obtain ⟨P, hP, rfl⟩ := hshare hP' hQ
-      obtain ⟨a, ha, rfl⟩ := hk
-      exact ⟨a, ⟨P, hP, ha⟩, rfl⟩
-    · rintro ⟨a, ⟨P, hP, ha⟩, rfl⟩
-      exact ⟨_, hshare' hP hQ, ⟨a, ha, rfl⟩⟩
-  · rintro ⟨B, ⟨Q, hQ, rfl⟩, rfl⟩
-    refine ⟨_, (hc _).2 ⟨Q, hQ, rfl⟩, ?_⟩
-    ext k
-    constructor
-    · rintro ⟨a, ⟨P, hP, ha⟩, rfl⟩
-      exact ⟨_, hshare' hP hQ, ⟨a, ha, rfl⟩⟩
-    · rintro ⟨P', hP', hk⟩
-      obtain ⟨P, hP, rfl⟩ := hshare hP' hQ
-      obtain ⟨a, ha, rfl⟩ := hk
-      exact ⟨a, ⟨P, hP, ha⟩, rfl⟩
 
 /-! ### Isomorphic networks -/
 
@@ -247,280 +196,65 @@ omit [Finite V] [Finite E] in
 theorem not_mem_of_onCycle (hX : N.HubCond X v₁) {e : E} (he : N.OnCycle e) : e ∉ X := fun hm => hX.tree e hm he
 
 omit [Finite E] in
-/-- A path of `N` off `X` is a path of the hub network. -/
-theorem hubNet_isPath : ∀ {l : List E} {u v : V}, N.IsPath u v l → (∀ h ∈ l, h ∉ X) →
-    (N.hubNet X v₁ hX).IsPath (some u) (some v) (l.map some)
-  | [], _, _, h, _ => by
-    cases h
-    rfl
-  | g :: _, _, _, h, hl => by
-    obtain ⟨rfl, h₂⟩ := h
-    exact ⟨hubNet_src_of_notMem (hl g List.mem_cons_self), hubNet_isPath h₂ fun k hk => hl k (List.mem_cons_of_mem _ hk)⟩
-
-omit [Finite E] in
-/-- A cycle of `N` is a cycle of the hub network. -/
-theorem hubNet_isCycleOn {w x : V} {p q : List E} (hc : N.IsCycleOn w x p q) (hX : N.HubCond X v₁) :
-    (N.hubNet X v₁ hX).IsCycleOn (some w) (some x) (p.map some) (q.map some) := by
-  obtain ⟨⟨e, f, hef, he, hf⟩, hp, hq, hpq, hdisj⟩ := hc
-  have hrec : N.IsCycleOn w x p q := ⟨⟨e, f, hef, he, hf⟩, hp, hq, hpq, hdisj⟩
-  refine ⟨⟨some e, some f, by simpa using hef, by simp [hubNet_tgt_some, he], by simp [hubNet_tgt_some, hf]⟩,
-    hubNet_isPath hp (fun h hh => not_mem_of_onCycle hX (hrec.onCycle_left hh)),
-    hubNet_isPath hq (fun h hh => not_mem_of_onCycle hX (hrec.onCycle_right hh)),
-    fun h => hpq (List.map_injective_iff.2 (Option.some_injective _) h), ?_⟩
-  intro e' he' f' hf' hee
-  obtain ⟨a, ha, rfl⟩ := List.mem_map.1 he'
-  obtain ⟨c, hc', rfl⟩ := List.mem_map.1 hf'
-  simp only [hubNet_tgt_some, Option.some.injEq] at hee ⊢
-  exact hdisj a ha c hc' hee
-
-omit [Finite E] in
-/-- The arcs into one node of the hub network have a coalescent node, by paths of `N`. -/
-theorem hubNet_paths (hX : N.HubCond X v₁) {f₁ f₂ : Option E} (hne : f₁ ≠ f₂) (h : (N.hubNet X v₁ hX).tgt f₁ = (N.hubNet X v₁ hX).tgt f₂) :
-    ∃ w p q, (N.hubNet X v₁ hX).IsPath w ((N.hubNet X v₁ hX).src f₁) p ∧ (N.hubNet X v₁ hX).IsPath w ((N.hubNet X v₁ hX).src f₂) q ∧
-      (∀ k ∈ p, ∃ k₀, k = some k₀ ∧ N.OnCycle k₀) ∧ ∀ k ∈ q, ∃ k₀, k = some k₀ ∧ N.OnCycle k₀ := by
-  rcases f₁ with _ | f₁
-  · rcases f₂ with _ | f₂
+/-- **The hub network has the recombination cycles of `N`**: the arcs of `X` are tree arcs, and the new arc ends at the hub, with no other arc into it. -/
+theorem hubNet_sameCycles (hX : N.HubCond X v₁) : SameCycles N (N.hubNet X v₁ hX) some some where
+  f_inj := Option.some_injective _
+  g_inj := Option.some_injective _
+  src _ he := hubNet_src_of_notMem (not_mem_of_onCycle hX he)
+  tgt _ _ := rfl
+  recomb := by
+    rintro (_ | e) (_ | l) hne ht
     · exact absurd rfl hne
-    · simp [hubNet_tgt_none, hubNet_tgt_some] at h
-  · rcases f₂ with _ | f₂
-    · simp [hubNet_tgt_none, hubNet_tgt_some] at h
-    · simp only [hubNet_tgt_some, Option.some.injEq] at h
-      have hne' : f₁ ≠ f₂ := fun h' => hne (by rw [h'])
-      obtain ⟨w, p, q, hp, hq, hc⟩ := exists_isCycleOn_of_tgt_eq hne' h
-      have hf₁ : f₁ ∉ X := not_mem_of_onCycle hX (hc.onCycle_left (by simp))
-      have hf₂ : f₂ ∉ X := not_mem_of_onCycle hX (hc.onCycle_right (by simp))
-      have honp : ∀ k ∈ p, N.OnCycle k := fun k hk => hc.onCycle_left (List.mem_append_left _ hk)
-      have honq : ∀ k ∈ q, N.OnCycle k := fun k hk => hc.onCycle_right (List.mem_append_left _ hk)
-      refine ⟨some w, p.map some, q.map some, ?_, ?_, ?_, ?_⟩
-      · rw [hubNet_src_of_notMem hf₁]
-        exact hubNet_isPath hp fun k hk => not_mem_of_onCycle hX (honp k hk)
-      · rw [hubNet_src_of_notMem hf₂]
-        exact hubNet_isPath hq fun k hk => not_mem_of_onCycle hX (honq k hk)
-      · intro k hk
-        obtain ⟨a, ha, rfl⟩ := List.mem_map.1 hk
-        exact ⟨a, rfl, honp a ha⟩
-      · intro k hk
-        obtain ⟨a, ha, rfl⟩ := List.mem_map.1 hk
-        exact ⟨a, rfl, honq a ha⟩
-
-omit [Finite E] in
-/-- The new arc is a tree arc. -/
-theorem hubNet_isTreeArc_none (hX : N.HubCond X v₁) : (N.hubNet X v₁ hX).IsTreeArc none := by
-  refine isTreeArc_of_forall_tgt_eq ?_ fun f₁ f₂ hne h => ?_
-  · rintro (_ | f) hf
-    · rfl
-    · simp [hubNet_tgt_none, hubNet_tgt_some] at hf
-  · obtain ⟨w, p, q, hp, hq, h₁, h₂⟩ := hubNet_paths hX hne h
-    refine ⟨w, p, q, hp, hq, fun hn => ?_, fun hn => ?_⟩
-    · obtain ⟨k₀, hk, -⟩ := h₁ none hn
-      simp at hk
-    · obtain ⟨k₀, hk, -⟩ := h₂ none hn
-      simp at hk
-
-omit [Finite E] in
-/-- A tree arc of `N` is a tree arc of the hub network. -/
-theorem hubNet_isTreeArc_some (hX : N.HubCond X v₁) {e : E} (he : N.IsTreeArc e) : (N.hubNet X v₁ hX).IsTreeArc (some e) := by
-  refine isTreeArc_of_forall_tgt_eq ?_ fun f₁ f₂ hne h => ?_
-  · rintro (_ | f) hf
-    · simp [hubNet_tgt_none, hubNet_tgt_some] at hf
-    · simp only [hubNet_tgt_some, Option.some.injEq] at hf
-      rw [he.eq_of_tgt_eq hf]
-  · obtain ⟨w, p, q, hp, hq, h₁, h₂⟩ := hubNet_paths hX hne h
-    refine ⟨w, p, q, hp, hq, fun hn => ?_, fun hn => ?_⟩
-    · obtain ⟨k₀, hk, hk'⟩ := h₁ _ hn
-      simp only [Option.some.injEq] at hk
-      exact he (hk ▸ hk')
-    · obtain ⟨k₀, hk, hk'⟩ := h₂ _ hn
-      simp only [Option.some.injEq] at hk
-      exact he (hk ▸ hk')
-
-omit [Finite E] in
-/-- An arc on a cycle of the hub network is an arc on a cycle of `N`. -/
-theorem hubNet_onCycle (hX : N.HubCond X v₁) {e' : Option E} (he : (N.hubNet X v₁ hX).OnCycle e') : ∃ e, e' = some e ∧ N.OnCycle e := by
-  rcases e' with _ | e
-  · exact absurd he (hubNet_isTreeArc_none hX)
-  · refine ⟨e, rfl, ?_⟩
-    by_contra hnot
-    exact hubNet_isTreeArc_some hX hnot he
-
-omit [Finite E] in
-/-- A path of the hub network on arcs of cycles is a path of `N`. -/
-theorem hubNet_unmap_path (hX : N.HubCond X v₁) : ∀ {l : List (Option E)} {u v : Option V}, (N.hubNet X v₁ hX).IsPath u v l →
-    (∀ k ∈ l, (N.hubNet X v₁ hX).OnCycle k) → ∀ {x : V}, v = some x → ∃ w l₀, u = some w ∧ l = l₀.map some ∧ N.IsPath w x l₀
-  | [], _, _, h, _, x, hx => by
-    cases h
-    exact ⟨x, [], hx, rfl, rfl⟩
-  | k :: l, _, _, h, hl, x, hx => by
-    obtain ⟨rfl, h₂⟩ := h
-    obtain ⟨k₀, rfl, hk₀⟩ := hubNet_onCycle hX (hl k List.mem_cons_self)
-    obtain ⟨w, l₀, hw, hl₀, hp⟩ := hubNet_unmap_path hX h₂ (fun k' hk' => hl k' (List.mem_cons_of_mem _ hk')) hx
-    simp only [hubNet_tgt_some, Option.some.injEq] at hw
-    refine ⟨N.src k₀, k₀ :: l₀, hubNet_src_of_notMem (not_mem_of_onCycle hX hk₀), by simp [hl₀], rfl, ?_⟩
-    rw [hw]
-    exact hp
-
-omit [Finite E] in
-/-- A cycle of the hub network is a cycle of `N`. -/
-theorem hubNet_unmap_cycle (hX : N.HubCond X v₁) {w' x' : Option V} {p' q' : List (Option E)} (hc : (N.hubNet X v₁ hX).IsCycleOn w' x' p' q') :
-    ∃ w x p q, p' = p.map some ∧ q' = q.map some ∧ N.IsCycleOn w x p q := by
-  obtain ⟨⟨e', f', hef, he, hf⟩, hp, hq, hpq, hdisj⟩ := id hc
-  have hmem : ∀ {k}, (k ∈ p' ∨ k ∈ q') → (N.hubNet X v₁ hX).OnCycle k := by
-    intro k hk
-    rcases hk with hk | hk
-    · exact hc.onCycle_left hk
-    · exact hc.onCycle_right hk
-  rcases e' with _ | e
-  · rcases f' with _ | f
-    · exact absurd rfl hef
-    · simp [hubNet_tgt_none, hubNet_tgt_some] at he hf
-      subst he
-      simp at hf
-  · rcases f' with _ | f
-    · simp only [hubNet_tgt_none, hubNet_tgt_some] at he hf
-      subst hf
-      simp at he
-    · simp only [hubNet_tgt_some] at he hf
-      subst he
-      simp only [Option.some.injEq] at hf
-      obtain ⟨w, p, hw, rfl, hpN⟩ := hubNet_unmap_path hX hp (fun k hk => hmem (Or.inl hk)) rfl
-      obtain ⟨w₂, q, hw₂, rfl, hqN⟩ := hubNet_unmap_path hX hq (fun k hk => hmem (Or.inr hk)) rfl
-      have hww : w₂ = w := by
-        rw [hw] at hw₂
-        simpa using hw₂.symm
-      subst hww
-      refine ⟨w₂, N.tgt e, p, q, rfl, rfl, ⟨e, f, fun h' => hef (by rw [h']), rfl, hf⟩, hpN, hqN, fun h' => hpq (by rw [h']), ?_⟩
-      intro a ha c hc' hac
-      have := hdisj (some a) (List.mem_map_of_mem ha) (some c) (List.mem_map_of_mem hc') (by simp [hubNet_tgt_some, hac])
-      simpa [hubNet_tgt_some] using this
+    · simp [hubNet_tgt_none, hubNet_tgt_some] at ht
+    · simp [hubNet_tgt_none, hubNet_tgt_some] at ht
+    · exact ⟨e, l, fun h => hne (by rw [h]), by simpa [hubNet_tgt_some] using ht, rfl, rfl⟩
 
 omit [Finite E] in
 /-- **The cycles of the hub network are those of `N`.** -/
 theorem hubNet_isCycle_iff (hX : N.HubCond X v₁) (Q' : Set (Option E)) :
-    (N.hubNet X v₁ hX).IsCycle Q' ↔ ∃ Q, N.IsCycle Q ∧ Q' = some '' Q := by
-  constructor
-  · rintro ⟨w', x', p', q', hc, rfl⟩
-    obtain ⟨w, x, p, q, rfl, rfl, hc₀⟩ := hubNet_unmap_cycle hX hc
-    refine ⟨_, ⟨w, x, p, q, hc₀, rfl⟩, ?_⟩
-    ext k
-    simp only [Set.mem_ofPred_eq, List.mem_map, Set.mem_image]
-    constructor
-    · rintro (⟨a, ha, rfl⟩ | ⟨a, ha, rfl⟩)
-      · exact ⟨a, Or.inl ha, rfl⟩
-      · exact ⟨a, Or.inr ha, rfl⟩
-    · rintro ⟨a, ha | ha, rfl⟩
-      · exact Or.inl ⟨a, ha, rfl⟩
-      · exact Or.inr ⟨a, ha, rfl⟩
-  · rintro ⟨Q, ⟨w, x, p, q, hc, rfl⟩, rfl⟩
-    refine ⟨_, _, _, _, hubNet_isCycleOn hc hX, ?_⟩
-    ext k
-    simp only [Set.mem_ofPred_eq, List.mem_map, Set.mem_image]
-    constructor
-    · rintro ⟨a, ha | ha, rfl⟩
-      · exact Or.inl ⟨a, ha, rfl⟩
-      · exact Or.inr ⟨a, ha, rfl⟩
-    · rintro (⟨a, ha, rfl⟩ | ⟨a, ha, rfl⟩)
-      · exact ⟨a, Or.inl ha, rfl⟩
-      · exact ⟨a, Or.inr ha, rfl⟩
+    (N.hubNet X v₁ hX).IsCycle Q' ↔ ∃ Q, N.IsCycle Q ∧ Q' = some '' Q :=
+  (hubNet_sameCycles hX).isCycle_iff Q'
 
 omit [Finite E] in
 /-- **The blobs of the hub network are those of `N`.** -/
 theorem hubNet_isBlob_iff (hX : N.HubCond X v₁) (B' : Set (Option E)) :
     (N.hubNet X v₁ hX).IsBlob B' ↔ ∃ B, N.IsBlob B ∧ B' = some '' B :=
-  isBlob_iff_of_isCycle_iff some (Option.some_injective _) (hubNet_isCycle_iff hX) B'
+  (hubNet_sameCycles hX).isBlob_iff B'
 
 omit [Finite E] in
 /-- The nodes of a blob of the hub network are those of `N`. -/
-theorem hubNet_blobVerts (hX : N.HubCond X v₁) {B : Set E} (hB : N.IsBlob B) : (N.hubNet X v₁ hX).blobVerts (some '' B) = some '' N.blobVerts B := by
-  have hsrc : ∀ {a}, a ∈ B → (N.hubNet X v₁ hX).src (some a) = some (N.src a) := fun ha =>
-    hubNet_src_of_notMem (not_mem_of_onCycle hX (hB.onCycle_of_mem ha))
-  ext z
-  constructor
-  · rintro (⟨_, ⟨a, ha, rfl⟩, rfl⟩ | ⟨_, ⟨a, ha, rfl⟩, rfl⟩)
-    · exact ⟨_, src_mem_blobVerts ha, (hsrc ha).symm⟩
-    · exact ⟨_, tgt_mem_blobVerts ha, rfl⟩
-  · rintro ⟨_, ⟨a, ha, rfl⟩ | ⟨a, ha, rfl⟩, rfl⟩
-    · exact Or.inl ⟨some a, ⟨a, ha, rfl⟩, hsrc ha⟩
-    · exact Or.inr ⟨some a, ⟨a, ha, rfl⟩, rfl⟩
+theorem hubNet_blobVerts (hX : N.HubCond X v₁) {B : Set E} (hB : N.IsBlob B) : (N.hubNet X v₁ hX).blobVerts (some '' B) = some '' N.blobVerts B :=
+  (hubNet_sameCycles hX).blobVerts_image hB
 
 omit [Finite E] in
 /-- Blobs that are node-disjoint stay so. -/
-theorem hubNet_blobsNodeDisjoint (hX : N.HubCond X v₁) (h : N.BlobsNodeDisjoint) : (N.hubNet X v₁ hX).BlobsNodeDisjoint := by
-  intro B₁ B₂ hB₁ hB₂ hne
-  obtain ⟨B₁, hB₁', rfl⟩ := (hubNet_isBlob_iff hX _).1 hB₁
-  obtain ⟨B₂, hB₂', rfl⟩ := (hubNet_isBlob_iff hX _).1 hB₂
-  rw [hubNet_blobVerts hX hB₁', hubNet_blobVerts hX hB₂']
-  have hne' : B₁ ≠ B₂ := fun h' => hne (by rw [h'])
-  exact (Set.disjoint_image_iff (Option.some_injective _)).2 (h B₁ B₂ hB₁' hB₂' hne')
+theorem hubNet_blobsNodeDisjoint (hX : N.HubCond X v₁) (h : N.BlobsNodeDisjoint) : (N.hubNet X v₁ hX).BlobsNodeDisjoint :=
+  (hubNet_sameCycles hX).blobsNodeDisjoint_iff.2 h
 
 omit [Finite E] in
 /-- **The hub network is fully decomposed, if `N` is.** "If `N` is fully-decomposed, then the efficient network derived from it is also fully-decomposed" (line 330). -/
 theorem hubNet_isFullyDecomposedFor (hX : N.HubCond X v₁) {G : SimpleGraph ι} (hf : N.IsFullyDecomposedFor G) :
-    (N.hubNet X v₁ hX).IsFullyDecomposedFor G where
-  blob_component B' hB' := by
-    obtain ⟨B, hB, rfl⟩ := (hubNet_isBlob_iff hX _).1 hB'
-    obtain ⟨c, hc, hi⟩ := hf.blob_component B hB
-    refine ⟨c, hc, fun i => ?_⟩
-    rw [← hi i, hubNet_site]
-    simp
-  isolated_treeArc i hi := hubNet_isTreeArc_some hX (hf.isolated_treeArc i hi)
-  nodeDisjoint := hubNet_blobsNodeDisjoint hX hf.nodeDisjoint
+    (N.hubNet X v₁ hX).IsFullyDecomposedFor G :=
+  ((hubNet_sameCycles hX).isFullyDecomposedFor_iff hubNet_site).2 hf
 
 omit [Finite E] in
-theorem hubNet_isRecomb_some {z : V} : (N.hubNet X v₁ hX).IsRecomb (some z) ↔ N.IsRecomb z := by
-  constructor
-  · rintro ⟨e, f, hef, he, hf⟩
-    rcases e with _ | e
-    · simp [hubNet_tgt_none] at he
-    · rcases f with _ | f
-      · simp [hubNet_tgt_none] at hf
-      · exact ⟨e, f, fun h => hef (by rw [h]), by simpa [hubNet_tgt_some] using he, by simpa [hubNet_tgt_some] using hf⟩
-  · rintro ⟨e, f, hef, rfl, hf⟩
-    exact ⟨some e, some f, by simpa using hef, rfl, by simp [hubNet_tgt_some, hf]⟩
+theorem hubNet_isRecomb_some {z : V} : (N.hubNet X v₁ hX).IsRecomb (some z) ↔ N.IsRecomb z :=
+  (hubNet_sameCycles hX).isRecomb_iff
 
 omit [Finite E] in
-theorem hubNet_not_isRecomb_none : ¬ (N.hubNet X v₁ hX).IsRecomb none := by
-  rintro ⟨e, f, hef, he, hf⟩
-  rcases e with _ | e
-  · rcases f with _ | f
-    · exact hef rfl
-    · simp [hubNet_tgt_some] at hf
-  · simp [hubNet_tgt_some] at he
+theorem hubNet_not_isRecomb_none : ¬ (N.hubNet X v₁ hX).IsRecomb none := fun h => by
+  obtain ⟨x, hx, -⟩ := (hubNet_sameCycles hX).exists_of_isRecomb h
+  simp at hx
 
 omit [Finite E] in
 /-- The hub network has the recombination nodes of `N`. -/
-theorem hubNet_recombCount : (N.hubNet X v₁ hX).recombCount = N.recombCount := by
-  refine Nat.card_congr ⟨fun x => ⟨?_, ?_⟩, fun x => ⟨some x.1, hubNet_isRecomb_some.2 x.2⟩, ?_, ?_⟩
-  · exact (x.1).getD v₁
-  · obtain ⟨_ | z, hz⟩ := x
-    · exact absurd hz hubNet_not_isRecomb_none
-    · exact hubNet_isRecomb_some.1 hz
-  · rintro ⟨_ | z, hz⟩
-    · exact absurd hz hubNet_not_isRecomb_none
-    · rfl
-  · rintro ⟨z, hz⟩
-    rfl
+theorem hubNet_recombCount : (N.hubNet X v₁ hX).recombCount = N.recombCount :=
+  (hubNet_sameCycles hX).recombCount_eq
 
 omit [Finite E] in
 /-- The hub network obeys the crossover models of `N`. -/
-theorem hubNet_obeys [LinearOrder ι] (hX : N.HubCond X v₁) {c : Crossover} (hc : N.Obeys c) : (N.hubNet X v₁ hX).Obeys c := by
-  have hsrc : ∀ {e f : E}, e ≠ f → N.tgt e = N.tgt f → (N.hubNet X v₁ hX).src (some e) = some (N.src e) := fun hef h =>
-    hubNet_src_of_notMem (not_mem_of_onCycle hX (onCycle_of_tgt_eq hef h))
-  cases c with
-  | single =>
-    rintro (_ | z) hx
-    · exact absurd hx hubNet_not_isRecomb_none
-    · obtain ⟨e, f, hef, he, hf, L, hL⟩ := hc z (hubNet_isRecomb_some.1 hx)
-      refine ⟨some e, some f, by simpa using hef, by simp [hubNet_tgt_some, he], by simp [hubNet_tgt_some, hf], L, fun i => ?_⟩
-      rw [hsrc hef (he.trans hf.symm), hsrc hef.symm (hf.trans he.symm)]
-      exact hL i
-  | multiple => trivial
-  | pointwise =>
-    rintro (_ | z) hx
-    · exact absurd hx hubNet_not_isRecomb_none
-    · obtain ⟨e, f, hef, he, hf, j, hL⟩ := hc z (hubNet_isRecomb_some.1 hx)
-      refine ⟨some e, some f, by simpa using hef, by simp [hubNet_tgt_some, he], by simp [hubNet_tgt_some, hf], j, fun i => ?_⟩
-      rw [hsrc hef (he.trans hf.symm), hsrc hef.symm (hf.trans he.symm)]
-      exact hL i
+theorem hubNet_obeys [LinearOrder ι] (hX : N.HubCond X v₁) {c : Crossover} (hc : N.Obeys c) : (N.hubNet X v₁ hX).Obeys c :=
+  (hubNet_sameCycles hX).obeys (fun _ => rfl) hc
 
 omit [Finite E] in
 /-- The hub network derives what `N` derives, if the arcs of `X` don't leave a new leaf. -/
@@ -751,136 +485,35 @@ theorem RerootCond.isTreeArc (ha : N.RerootCond a) : N.IsTreeArc a :=
   isTreeArc_of_cut (N := N) (fun z => z ≠ N.root) (N.tgt_ne_root a) (by simp [ha.src_root]) (fun f _ => N.tgt_ne_root f)
     (fun f _ hs => ha.uniq_out f (by simpa using hs)) ha.uniq_in
 
-/-- The arc to the old root isn't on a cycle. -/
-theorem rerootNet_isTreeArc_self (ha : N.RerootCond a) : (N.rerootNet a ha).IsTreeArc a := by
-  refine isTreeArc_of_cut (N := N.rerootNet a ha) (fun z => z = N.root) rerootNet_tgt_self ?_ ?_ ?_ ?_
-  · rw [rerootNet_src_self]
-    exact N.tgt_ne_root a
-  · intro f hf
-    by_cases hfa : f = a
-    · rw [hfa, rerootNet_src_self] at hf
-      exact absurd hf (N.tgt_ne_root a)
-    · rw [rerootNet_src_ne hfa] at hf
-      exact absurd (ha.uniq_out f hf) hfa
-  · intro f hf _
-    by_contra hfa
-    rw [rerootNet_tgt_ne hfa] at hf
-    exact N.tgt_ne_root f hf
-  · intro f hf
-    by_contra hfa
-    rw [rerootNet_tgt_self, rerootNet_tgt_ne hfa] at hf
-    exact N.tgt_ne_root f hf
+/-- **The network with the root moved has the recombination cycles of `N`**: the arc out of the root isn't on a cycle of either. -/
+theorem rerootNet_sameCycles (ha : N.RerootCond a) : SameCycles N (N.rerootNet a ha) id id where
+  f_inj := Function.injective_id
+  g_inj := Function.injective_id
+  src _ he := rerootNet_src_ne fun h => ha.isTreeArc (h ▸ he)
+  tgt _ he := rerootNet_tgt_ne fun h => ha.isTreeArc (h ▸ he)
+  recomb e f hef h := by
+    have hne : ∀ {e f : E}, e ≠ f → (N.rerootNet a ha).tgt e = (N.rerootNet a ha).tgt f → e ≠ a := by
+      intro e f hef h hea
+      by_cases hf : f = a
+      · exact hef (hea.trans hf.symm)
+      · rw [hea, rerootNet_tgt_self, rerootNet_tgt_ne hf] at h
+        exact N.tgt_ne_root f h.symm
+    refine ⟨e, f, hef, ?_, rfl, rfl⟩
+    rw [← rerootNet_tgt_ne (ha := ha) (hne hef h), ← rerootNet_tgt_ne (ha := ha) (hne hef.symm h.symm)]
+    exact h
 
-theorem rerootNet_isPath (ha : N.RerootCond a) {l : List E} : ∀ {u v : V}, a ∉ l → ((N.rerootNet a ha).IsPath u v l ↔ N.IsPath u v l) := by
-  induction l with
-  | nil => exact fun _ => Iff.rfl
-  | cons e l ih =>
-    intro u v h
-    have he : e ≠ a := fun h' => h (h' ▸ List.mem_cons_self)
-    have hl : a ∉ l := fun h' => h (List.mem_cons_of_mem _ h')
-    simp only [IsPath, rerootNet_src_ne he, rerootNet_tgt_ne he, ih hl]
+theorem rerootNet_isRecomb {x : V} : (N.rerootNet a ha).IsRecomb x ↔ N.IsRecomb x :=
+  (rerootNet_sameCycles ha).isRecomb_iff
 
-theorem rerootNet_isRecomb {x : V} : (N.rerootNet a ha).IsRecomb x ↔ N.IsRecomb x := by
-  have hne : ∀ {e f : E}, e ≠ f → (N.rerootNet a ha).tgt e = (N.rerootNet a ha).tgt f → e ≠ a := by
-    intro e f hef h hea
-    by_cases hf : f = a
-    · exact hef (hea.trans hf.symm)
-    · rw [hea, rerootNet_tgt_self, rerootNet_tgt_ne hf] at h
-      exact N.tgt_ne_root f h.symm
-  have hne' : ∀ {e f : E}, e ≠ f → N.tgt e = N.tgt f → e ≠ a := by
-    intro e f hef h hea
-    exact hef (hea.trans (ha.uniq_in f (by rw [← h, hea])).symm)
-  constructor
-  · rintro ⟨e, f, hef, he, hf⟩
-    have h₁ := hne hef (he.trans hf.symm)
-    have h₂ := hne hef.symm (hf.trans he.symm)
-    exact ⟨e, f, hef, (rerootNet_tgt_ne h₁).symm.trans he, (rerootNet_tgt_ne h₂).symm.trans hf⟩
-  · rintro ⟨e, f, hef, he, hf⟩
-    have h₁ := hne' hef (he.trans hf.symm)
-    have h₂ := hne' hef.symm (hf.trans he.symm)
-    exact ⟨e, f, hef, (rerootNet_tgt_ne h₁).trans he, (rerootNet_tgt_ne h₂).trans hf⟩
-
-/-- **The cycles of the network with the root moved are those of `N`.** -/
-theorem rerootNet_isCycleOn (ha : N.RerootCond a) {w x : V} {p q : List E} : (N.rerootNet a ha).IsCycleOn w x p q ↔ N.IsCycleOn w x p q := by
-  constructor
-  · intro hc
-    have hp : a ∉ p := fun h => rerootNet_isTreeArc_self ha (hc.onCycle_left h)
-    have hq : a ∉ q := fun h => rerootNet_isTreeArc_self ha (hc.onCycle_right h)
-    obtain ⟨h₁, h₂, h₃, h₄, h₅⟩ := hc
-    refine ⟨rerootNet_isRecomb.1 h₁, (rerootNet_isPath ha hp).1 h₂, (rerootNet_isPath ha hq).1 h₃, h₄, fun e he f hf hef => ?_⟩
-    have hea : e ≠ a := fun h => hp (h ▸ he)
-    have hfa : f ≠ a := fun h => hq (h ▸ hf)
-    have := h₅ e he f hf (by rw [rerootNet_tgt_ne hea, rerootNet_tgt_ne hfa, hef])
-    rwa [rerootNet_tgt_ne hea] at this
-  · intro hc
-    have hp : a ∉ p := fun h => ha.isTreeArc (hc.onCycle_left h)
-    have hq : a ∉ q := fun h => ha.isTreeArc (hc.onCycle_right h)
-    obtain ⟨h₁, h₂, h₃, h₄, h₅⟩ := hc
-    refine ⟨rerootNet_isRecomb.2 h₁, (rerootNet_isPath ha hp).2 h₂, (rerootNet_isPath ha hq).2 h₃, h₄, fun e he f hf hef => ?_⟩
-    have hea : e ≠ a := fun h => hp (h ▸ he)
-    have hfa : f ≠ a := fun h => hq (h ▸ hf)
-    rw [rerootNet_tgt_ne hea, rerootNet_tgt_ne hfa] at hef
-    rw [rerootNet_tgt_ne hea]
-    exact h₅ e he f hf hef
-
-theorem rerootNet_isCycle (ha : N.RerootCond a) (Q : Set E) : (N.rerootNet a ha).IsCycle Q ↔ N.IsCycle Q := by
-  unfold IsCycle
-  simp only [rerootNet_isCycleOn ha]
-
-theorem rerootNet_onCycle (ha : N.RerootCond a) (e : E) : (N.rerootNet a ha).OnCycle e ↔ N.OnCycle e := by
-  unfold OnCycle
-  simp only [rerootNet_isCycle ha]
-
-theorem rerootNet_isBlob (ha : N.RerootCond a) (B : Set E) : (N.rerootNet a ha).IsBlob B ↔ N.IsBlob B := by
-  rw [isBlob_iff_of_isCycle_iff (N := N) (N' := N.rerootNet a ha) id Function.injective_id (fun Q' => by simp [rerootNet_isCycle ha])]
-  simp
-
-theorem rerootNet_blobVerts (ha : N.RerootCond a) {B : Set E} (hB : N.IsBlob B) : (N.rerootNet a ha).blobVerts B = N.blobVerts B := by
-  have hne : ∀ {e}, e ∈ B → e ≠ a := fun he h => ha.isTreeArc (hB.onCycle_of_mem (h ▸ he))
-  ext z
-  constructor
-  · rintro (⟨e, he, rfl⟩ | ⟨e, he, rfl⟩)
-    · rw [rerootNet_src_ne (hne he)]
-      exact src_mem_blobVerts he
-    · rw [rerootNet_tgt_ne (hne he)]
-      exact tgt_mem_blobVerts he
-  · rintro (⟨e, he, rfl⟩ | ⟨e, he, rfl⟩)
-    · exact Or.inl ⟨e, he, rerootNet_src_ne (hne he)⟩
-    · exact Or.inr ⟨e, he, rerootNet_tgt_ne (hne he)⟩
+theorem rerootNet_onCycle (ha : N.RerootCond a) (e : E) : (N.rerootNet a ha).OnCycle e ↔ N.OnCycle e :=
+  (rerootNet_sameCycles ha).onCycle_iff
 
 /-- The network with the root moved is fully decomposed, if `N` is. -/
-theorem rerootNet_isFullyDecomposedFor (ha : N.RerootCond a) {G : SimpleGraph ι} (hf : N.IsFullyDecomposedFor G) : (N.rerootNet a ha).IsFullyDecomposedFor G where
-  blob_component B hB := hf.blob_component B ((rerootNet_isBlob ha B).1 hB)
-  isolated_treeArc i hi := fun hc => hf.isolated_treeArc i hi ((rerootNet_onCycle ha _).1 hc)
-  nodeDisjoint := by
-    intro B₁ B₂ h₁ h₂ hne
-    have h₁' := (rerootNet_isBlob ha B₁).1 h₁
-    have h₂' := (rerootNet_isBlob ha B₂).1 h₂
-    rw [rerootNet_blobVerts ha h₁', rerootNet_blobVerts ha h₂']
-    exact hf.nodeDisjoint B₁ B₂ h₁' h₂' hne
+theorem rerootNet_isFullyDecomposedFor (ha : N.RerootCond a) {G : SimpleGraph ι} (hf : N.IsFullyDecomposedFor G) : (N.rerootNet a ha).IsFullyDecomposedFor G :=
+  ((rerootNet_sameCycles ha).isFullyDecomposedFor_iff fun _ => rfl).2 hf
 
-theorem rerootNet_obeys [LinearOrder ι] (ha : N.RerootCond a) {c : Crossover} (hc : N.Obeys c) : (N.rerootNet a ha).Obeys c := by
-  have hne : ∀ {e f : E}, e ≠ f → N.tgt e = N.tgt f → e ≠ a := by
-    intro e f hef h hea
-    exact hef (hea.trans (ha.uniq_in f (by rw [← h, hea])).symm)
-  cases c with
-  | single =>
-    intro x hx
-    obtain ⟨e, f, hef, he, hf, L, hL⟩ := hc x (rerootNet_isRecomb.1 hx)
-    have h₁ := hne hef (he.trans hf.symm)
-    have h₂ := hne hef.symm (hf.trans he.symm)
-    refine ⟨e, f, hef, (rerootNet_tgt_ne h₁).trans he, (rerootNet_tgt_ne h₂).trans hf, L, fun i => ?_⟩
-    rw [rerootNet_src_ne h₁, rerootNet_src_ne h₂]
-    exact hL i
-  | multiple => trivial
-  | pointwise =>
-    intro x hx
-    obtain ⟨e, f, hef, he, hf, j, hL⟩ := hc x (rerootNet_isRecomb.1 hx)
-    have h₁ := hne hef (he.trans hf.symm)
-    have h₂ := hne hef.symm (hf.trans he.symm)
-    refine ⟨e, f, hef, (rerootNet_tgt_ne h₁).trans he, (rerootNet_tgt_ne h₂).trans hf, j, fun i => ?_⟩
-    rw [rerootNet_src_ne h₁, rerootNet_src_ne h₂]
-    exact hL i
+theorem rerootNet_obeys [LinearOrder ι] (ha : N.RerootCond a) {c : Crossover} (hc : N.Obeys c) : (N.rerootNet a ha).Obeys c :=
+  (rerootNet_sameCycles ha).obeys (fun _ => rfl) hc
 
 /-- The leaves of the network with the root moved are the old root and the leaves of `N`, if the target of the arc wasn't a leaf. -/
 theorem rerootNet_isLeaf (ha : N.RerootCond a) (hy : ¬ N.IsLeaf (N.tgt a)) (v : V) : (N.rerootNet a ha).IsLeaf v ↔ v = N.root ∨ N.IsLeaf v := by

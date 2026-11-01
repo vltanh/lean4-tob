@@ -60,7 +60,7 @@ private theorem treesOn_taxa_eq {s r₁ r₂ : QuartetTree X} (h : s.alternative
     · rfl
     · exact (hr.1 h').1
 
-private theorem alternatives_facts {s r₁ r₂ : QuartetTree X} (hne : r₁ ≠ r₂)
+theorem alternatives_facts {s r₁ r₂ : QuartetTree X} (hne : r₁ ≠ r₂)
     (h : s.alternatives = {r₁, r₂}) :
     s ≠ r₁ ∧ s ≠ r₂ ∧ r₁.alternatives = {s, r₂} ∧ r₂.alternatives = {s, r₁} := by
   have hr : ∀ r, r ∈ s.alternatives ↔ r.taxa = s.taxa ∧ r ≠ s := by
@@ -101,18 +101,25 @@ private theorem alternatives_facts {s r₁ r₂ : QuartetTree X} (hne : r₁ ≠
       · exact ⟨h₂.1.symm, h₂.2.symm⟩
       · exact ⟨h₁.1.trans h₂.1.symm, hne⟩
 
-private theorem lineStat_eq_lineS (c : QuartetTree X → ℝ) {s r₁ r₂ : QuartetTree X} (hne : r₁ ≠ r₂)
+/-- As `alternatives_facts`, with the taxa of the alternatives. -/
+theorem alternatives_taxa {s r₁ r₂ : QuartetTree X} (hne : r₁ ≠ r₂) (h : s.alternatives = {r₁, r₂}) :
+    s ≠ r₁ ∧ s ≠ r₂ ∧ r₁.alternatives = {s, r₂} ∧ r₁.taxa = s.taxa ∧ r₂.taxa = s.taxa := by
+  have hr : ∀ r, r ∈ s.alternatives ↔ r.taxa = s.taxa ∧ r ≠ s := fun r => QuartetTree.mem_alternatives
+  obtain ⟨h₁, h₂, h₃, -⟩ := alternatives_facts hne h
+  exact ⟨h₁, h₂, h₃, ((hr r₁).1 (by rw [h]; simp)).1, ((hr r₂).1 (by rw [h]; simp)).1⟩
+
+theorem lineStat_eq_lineS (c : QuartetTree X → ℝ) {s r₁ r₂ : QuartetTree X} (hne : r₁ ≠ r₂)
     (h : s.alternatives = {r₁, r₂}) : lineStat c s = lineS (c r₁) (c r₂) := by
   unfold lineStat lineS
   rw [h, Finset.sum_pair hne, Finset.sum_pair hne]
 
-private theorem sum_treesOn (f : QuartetTree X → ℝ) {s r₁ r₂ : QuartetTree X} (hne : r₁ ≠ r₂)
+theorem sum_treesOn (f : QuartetTree X → ℝ) {s r₁ r₂ : QuartetTree X} (hne : r₁ ≠ r₂)
     (h : s.alternatives = {r₁, r₂}) : ∑ r ∈ treesOn s.taxa, f r = f s + f r₁ + f r₂ := by
   obtain ⟨h₁, h₂, -, -⟩ := alternatives_facts hne h
   rw [treesOn_taxa_eq h, Finset.sum_insert (by simp [h₁, h₂]), Finset.sum_pair hne]
   ring
 
-private theorem starStat_eq_starS (c : QuartetTree X → ℝ) {s r₁ r₂ : QuartetTree X} (hne : r₁ ≠ r₂)
+theorem starStat_eq_starS (c : QuartetTree X → ℝ) {s r₁ r₂ : QuartetTree X} (hne : r₁ ≠ r₂)
     (h : s.alternatives = {r₁, r₂}) : starStat c s.taxa = starS (c s) (c r₁) (c r₂) := by
   unfold starStat starS
   rw [sum_treesOn _ hne h, sum_treesOn _ hne h]
@@ -123,7 +130,7 @@ private theorem pearsonStat_eq_pearsonS (c : QuartetTree X → ℝ) {s r₁ r₂
   unfold pearsonStat pearsonS
   rw [sum_treesOn _ hne h, sum_treesOn _ hne h]
 
-private theorem t1PValue_eq_t1PValueR (c : QuartetTree X → ℝ) {s r₁ r₂ : QuartetTree X}
+theorem t1PValue_eq_t1PValueR (c : QuartetTree X → ℝ) {s r₁ r₂ : QuartetTree X}
     (hne : r₁ ≠ r₂) (h : s.alternatives = {r₁, r₂}) :
     t1PValue c s = t1PValueR (c s) (c r₁) (c r₂) := by
   unfold t1PValue t1PValueR t1Stat t1Phi
@@ -174,15 +181,15 @@ private theorem cutPValue_eq_cutPValueR (c : QuartetTree X → ℝ) {s r₁ r₂
 /-! ### Reduction of the sample to three classes -/
 
 /-- The class of a gene tree: the quartet tree `s`, `r₁`, or else `r₂`. -/
-private def label (sides : Γ → Finset (Finset X)) (s r₁ : QuartetTree X) (g : Γ) : Fin 3 :=
+def threeLabel (sides : Γ → Finset (Finset X)) (s r₁ : QuartetTree X) (g : Γ) : Fin 3 :=
   if Displays (sides g) s then 0 else if Displays (sides g) r₁ then 1 else 2
 
 omit [Fintype Γ] in
-private theorem label_spec (hs : DisplaysOne dist sides) {s r₁ r₂ : QuartetTree X} (hne : r₁ ≠ r₂)
+theorem threeLabel_spec (hs : DisplaysOne dist sides) {s r₁ r₂ : QuartetTree X} (hne : r₁ ≠ r₂)
     (h : s.alternatives = {r₁, r₂}) {g : Γ} (hg : dist g ≠ 0) :
-    (label sides s r₁ g = 0 ↔ Displays (sides g) s) ∧
-      (label sides s r₁ g = 1 ↔ Displays (sides g) r₁) ∧
-      (label sides s r₁ g = 2 ↔ Displays (sides g) r₂) := by
+    (threeLabel sides s r₁ g = 0 ↔ Displays (sides g) s) ∧
+      (threeLabel sides s r₁ g = 1 ↔ Displays (sides g) r₁) ∧
+      (threeLabel sides s r₁ g = 2 ↔ Displays (sides g) r₂) := by
   obtain ⟨h₁, h₂, -, -⟩ := alternatives_facts hne h
   have hT := treesOn_taxa_eq h
   obtain ⟨t, ⟨ht, htd⟩, huniq⟩ := hs g hg s.taxa s.card_taxa
@@ -193,7 +200,7 @@ private theorem label_spec (hs : DisplaysOne dist sides) {s r₁ r₂ : QuartetT
   simp only [Finset.mem_insert, Finset.mem_singleton] at ht
   have hU : ∀ t', t' ∈ treesOn s.taxa → Displays (sides g) t' → t' = t :=
     fun t' h₃ h₄ ↦ huniq t' ⟨h₃, h₄⟩
-  unfold label
+  unfold threeLabel
   rcases ht with rfl | rfl | rfl
   · have hn₁ : ¬ Displays (sides g) r₁ := fun hd ↦ h₁ (hU r₁ hr₁ hd).symm
     have hn₂ : ¬ Displays (sides g) r₂ := fun hd ↦ h₂ (hU r₂ hr₂ hd).symm
@@ -206,64 +213,64 @@ private theorem label_spec (hs : DisplaysOne dist sides) {s r₁ r₂ : QuartetT
     simp [htd, hn₁, hn₂]
 
 omit [Fintype Γ] in
-private theorem count_label (hs : DisplaysOne dist sides) {s r₁ r₂ : QuartetTree X} (hne : r₁ ≠ r₂)
+theorem count_threeLabel (hs : DisplaysOne dist sides) {s r₁ r₂ : QuartetTree X} (hne : r₁ ≠ r₂)
     (h : s.alternatives = {r₁, r₂}) {n : ℕ} {ω : Fin n → Γ} (hω : ∏ i, dist (ω i) ≠ 0) :
-    quartetCount sides ω s = count (fun i ↦ label sides s r₁ (ω i)) 0 ∧
-      quartetCount sides ω r₁ = count (fun i ↦ label sides s r₁ (ω i)) 1 ∧
-      quartetCount sides ω r₂ = count (fun i ↦ label sides s r₁ (ω i)) 2 := by
+    quartetCount sides ω s = count (fun i ↦ threeLabel sides s r₁ (ω i)) 0 ∧
+      quartetCount sides ω r₁ = count (fun i ↦ threeLabel sides s r₁ (ω i)) 1 ∧
+      quartetCount sides ω r₂ = count (fun i ↦ threeLabel sides s r₁ (ω i)) 2 := by
   have hpos : ∀ i, dist (ω i) ≠ 0 := Finset.prod_ne_zero_iff.1 hω |> fun h' i ↦ h' i (Finset.mem_univ i)
   unfold quartetCount count
   refine ⟨?_, ?_, ?_⟩ <;> congr 2 <;> ext i <;> simp only [Finset.mem_filter, Finset.mem_univ, true_and]
-  · exact (label_spec hs hne h (hpos i)).1.symm
-  · exact (label_spec hs hne h (hpos i)).2.1.symm
-  · exact (label_spec hs hne h (hpos i)).2.2.symm
+  · exact (threeLabel_spec hs hne h (hpos i)).1.symm
+  · exact (threeLabel_spec hs hne h (hpos i)).2.1.symm
+  · exact (threeLabel_spec hs hne h (hpos i)).2.2.symm
 
-private theorem pushDist_label (hs : DisplaysOne dist sides) {s r₁ r₂ : QuartetTree X} (hne : r₁ ≠ r₂)
+theorem pushDist_three (hs : DisplaysOne dist sides) {s r₁ r₂ : QuartetTree X} (hne : r₁ ≠ r₂)
     (h : s.alternatives = {r₁, r₂}) :
-    pushDist dist (label sides s r₁) 0 = displayCF dist sides s ∧
-      pushDist dist (label sides s r₁) 1 = displayCF dist sides r₁ ∧
-      pushDist dist (label sides s r₁) 2 = displayCF dist sides r₂ := by
+    pushDist dist (threeLabel sides s r₁) 0 = displayCF dist sides s ∧
+      pushDist dist (threeLabel sides s r₁) 1 = displayCF dist sides r₁ ∧
+      pushDist dist (threeLabel sides s r₁) 2 = displayCF dist sides r₂ := by
   unfold pushDist displayCF
   refine ⟨Finset.sum_congr rfl fun g _ ↦ ?_, Finset.sum_congr rfl fun g _ ↦ ?_,
     Finset.sum_congr rfl fun g _ ↦ ?_⟩ <;> by_cases hg : dist g = 0
   · simp [hg]
-  · simp only [(label_spec hs hne h hg).1]
+  · simp only [(threeLabel_spec hs hne h hg).1]
   · simp [hg]
-  · simp only [(label_spec hs hne h hg).2.1]
+  · simp only [(threeLabel_spec hs hne h hg).2.1]
   · simp [hg]
-  · simp only [(label_spec hs hne h hg).2.2]
+  · simp only [(threeLabel_spec hs hne h hg).2.2]
 
 /-- The sample of gene trees, through the three counts. -/
-private theorem iidProb_counts (hs : DisplaysOne dist sides) {s r₁ r₂ : QuartetTree X} (hne : r₁ ≠ r₂)
+theorem iidProb_three_counts (hs : DisplaysOne dist sides) {s r₁ r₂ : QuartetTree X} (hne : r₁ ≠ r₂)
     (h : s.alternatives = {r₁, r₂}) (n : ℕ) (E : ℝ → ℝ → ℝ → Prop) :
     iidProb dist n (fun ω ↦
         E (quartetCount sides ω s) (quartetCount sides ω r₁) (quartetCount sides ω r₂)) =
-      iidProb (pushDist dist (label sides s r₁)) n (fun η ↦ E (count η 0) (count η 1) (count η 2)) := by
-  rw [← iidProb_comp_label (label sides s r₁) n (fun η ↦ E (count η 0) (count η 1) (count η 2))]
+      iidProb (pushDist dist (threeLabel sides s r₁)) n (fun η ↦ E (count η 0) (count η 1) (count η 2)) := by
+  rw [← iidProb_comp_label (threeLabel sides s r₁) n (fun η ↦ E (count η 0) (count η 1) (count η 2))]
   unfold iidProb
   refine Finset.sum_congr rfl fun ω _ ↦ ?_
   by_cases hω : ∏ i, dist (ω i) = 0
   · simp [hω]
-  · obtain ⟨h₁, h₂, h₃⟩ := count_label hs hne h hω
+  · obtain ⟨h₁, h₂, h₃⟩ := count_threeLabel hs hne h hω
     simp only [h₁, h₂, h₃]
 
 /-- The law of the three classes when two of them have equal probability. -/
-private theorem pushDist_eq_cutPoint (hd : IsDist dist) (hs : DisplaysOne dist sides)
+theorem pushDist_eq_cutPoint (hd : IsDist dist) (hs : DisplaysOne dist sides)
     {s r₁ r₂ : QuartetTree X} (hne : r₁ ≠ r₂) (h : s.alternatives = {r₁, r₂})
     (heq : displayCF dist sides r₁ = displayCF dist sides r₂) :
-    pushDist dist (label sides s r₁) = cutPoint (3 * displayCF dist sides r₁) := by
-  obtain ⟨h₀, h₁, h₂⟩ := pushDist_label hs hne h
+    pushDist dist (threeLabel sides s r₁) = cutPoint (3 * displayCF dist sides r₁) := by
+  obtain ⟨h₀, h₁, h₂⟩ := pushDist_three hs hne h
   have hsum := sum_displayCF_treesOn hd hs s.card_taxa
   rw [sum_treesOn _ hne h, ← heq] at hsum
   funext i
   fin_cases i
-  · change pushDist dist (label sides s r₁) 0 = 1 - 2 * (3 * displayCF dist sides r₁) / 3
+  · change pushDist dist (threeLabel sides s r₁) 0 = 1 - 2 * (3 * displayCF dist sides r₁) / 3
     rw [h₀]
     linarith
-  · change pushDist dist (label sides s r₁) 1 = 3 * displayCF dist sides r₁ / 3
+  · change pushDist dist (threeLabel sides s r₁) 1 = 3 * displayCF dist sides r₁ / 3
     rw [h₁]
     ring
-  · change pushDist dist (label sides s r₁) 2 = 3 * displayCF dist sides r₁ / 3
+  · change pushDist dist (threeLabel sides s r₁) 2 = 3 * displayCF dist sides r₁ / 3
     rw [h₂, ← heq]
     ring
 
@@ -281,7 +288,7 @@ theorem starPValue_asymptoticallyUniform (k : StarTest) (hd : IsDist dist) (hs :
   have h₀ := h t (by rw [hT]; simp)
   have h₁ := h r₁ (by rw [hT]; simp)
   have h₂ := h r₂ (by rw [hT]; simp)
-  have hp : pushDist dist (label sides t r₁) = cutPoint 1 := by
+  have hp : pushDist dist (threeLabel sides t r₁) = cutPoint 1 := by
     rw [pushDist_eq_cutPoint hd hs hne hr (by rw [h₁, h₂]), h₁]
     norm_num
   intro x hx0 hx1
@@ -290,13 +297,13 @@ theorem starPValue_asymptoticallyUniform (k : StarTest) (hd : IsDist dist) (hs :
     have := tendsto_star_lrt hx0 hx1
     rw [← hp] at this
     refine this.congr fun n ↦ ?_
-    rw [← iidProb_counts hs hne hr n (fun a b c ↦ chiSqTwoTail (starS a b c) ≤ x)]
+    rw [← iidProb_three_counts hs hne hr n (fun a b c ↦ chiSqTwoTail (starS a b c) ≤ x)]
     simp only [starPValue, starStat_eq_starS _ hne hr]
   | pearson =>
     have := tendsto_star_pearson hx0 hx1
     rw [← hp] at this
     refine this.congr fun n ↦ ?_
-    rw [← iidProb_counts hs hne hr n (fun a b c ↦ chiSqTwoTail (pearsonS a b c) ≤ x)]
+    rw [← iidProb_three_counts hs hne hr n (fun a b c ↦ chiSqTwoTail (pearsonS a b c) ≤ x)]
     simp only [starPValue, pearsonStat_eq_pearsonS _ hne hr]
 
 /-- Under the null of the T1 test away from its boundary, with positive probabilities, its p-value is
@@ -324,7 +331,7 @@ theorem t1PValue_asymptoticallyUniform (hd : IsDist dist) (hs : DisplaysOne dist
   have := tendsto_t1 hφ hφ1 hx0 hx1
   rw [← hp] at this
   refine this.congr fun n ↦ ?_
-  rw [← iidProb_counts hs hne hr n (fun a b c ↦ t1PValueR a b c ≤ x)]
+  rw [← iidProb_three_counts hs hne hr n (fun a b c ↦ t1PValueR a b c ≤ x)]
   simp only [t1PValue_eq_t1PValueR _ hne hr]
 
 /-- The null of the T1 test with an alternative of probability zero: the alternatives have count zero,
@@ -375,14 +382,14 @@ theorem t1PValue_centroid_tight (hd : IsDist dist) (hs : DisplaysOne dist sides)
   have hT := treesOn_taxa_eq hr
   have h₁ := h r₁ (by rw [hT]; simp)
   have h₂ := h r₂ (by rw [hT]; simp)
-  have hp : pushDist dist (label sides s r₁) = cutPoint 1 := by
+  have hp : pushDist dist (threeLabel sides s r₁) = cutPoint 1 := by
     rw [pushDist_eq_cutPoint hd hs hne hr (by rw [h₁, h₂]), h₁]
     norm_num
   obtain ⟨δ, hδ₀, hδ₁, hev⟩ := centroid_tight hε
   refine ⟨δ, hδ₀, hδ₁, ?_⟩
   filter_upwards [hev] with n hn
   rw [← hp] at hn
-  rw [← iidProb_counts hs hne hr n
+  rw [← iidProb_three_counts hs hne hr n
     (fun a b c ↦ δ ≤ t1PValueR a b c ∧ t1PValueR a b c ≤ 1 - δ)] at hn
   simpa only [t1PValue_eq_t1PValueR _ hne hr] using hn
 
@@ -394,7 +401,7 @@ private theorem strictlyCut_facts (hd : IsDist dist) (hs : DisplaysOne dist side
     (heq : ∀ r ∈ s.alternatives, ∀ r' ∈ s.alternatives,
       displayCF dist sides r = displayCF dist sides r')
     (hpos : ∀ r ∈ treesOn s.taxa, 0 < displayCF dist sides r) :
-    pushDist dist (label sides s r₁) = cutPoint (3 * displayCF dist sides r₁) ∧
+    pushDist dist (threeLabel sides s r₁) = cutPoint (3 * displayCF dist sides r₁) ∧
       (0 < 3 * displayCF dist sides r₁ ∧ 3 * displayCF dist sides r₁ < 3 / 2) ∧
       3 * displayCF dist sides r₁ ≠ 1 := by
   have hT := treesOn_taxa_eq hr
@@ -426,7 +433,7 @@ theorem cutPValue_asymptoticallyUniform (hd : IsDist dist) (hs : DisplaysOne dis
   have := tendsto_cut hφ hφ1 hx0 hx1
   rw [← hp] at this
   refine this.congr fun n ↦ ?_
-  rw [← iidProb_counts hs hrr hr n (fun a b c ↦ cutPValueR a b c ≤ x)]
+  rw [← iidProb_three_counts hs hrr hr n (fun a b c ↦ cutPValueR a b c ≤ x)]
   simp only [cutPValue_eq_cutPValueR _ hrr hr]
 
 /-- The cut test on a strictly cut, positive concordance factor (the null, off its singularity): the
@@ -457,7 +464,7 @@ theorem cutTest_null (hd : IsDist dist) (hs : DisplaysOne dist sides) {s : Quart
   have := tendsto_cut_null hφ hφ1 hα
   rw [← hp] at this
   refine this.congr fun n ↦ ?_
-  rw [← iidProb_counts hs hrr hr n (fun a b c ↦ (lineS b c < lineS a c ∧ lineS b c < lineS a b) ∧
+  rw [← iidProb_three_counts hs hrr hr n (fun a b c ↦ (lineS b c < lineS a c ∧ lineS b c < lineS a b) ∧
     α n ≤ cutPValueR a b c)]
   congr 1
   funext ω

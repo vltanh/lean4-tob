@@ -34,6 +34,8 @@ open scoped Classical
 
 namespace ECToBlob.Remark52
 
+export Phylogenetics.FinFour (taxa_eq_univ abcd acbd adbc)
+
 /-! ### Concrete networks -/
 
 section Generic
@@ -84,10 +86,6 @@ theorem card_compl_of_mem_quartet {s : QuartetTree (Fin 4)} {B : Finset (Fin 4)}
   refine ⟨h, ?_⟩
   rw [card_compl, h]
   rfl
-
-/-- A quartet tree on `Fin 4` has all the taxa. -/
-theorem taxa_eq_univ (s : QuartetTree (Fin 4)) : s.taxa = univ :=
-  eq_univ_of_card _ (by rw [QuartetTree.card_taxa]; rfl)
 
 /-- A star of paths excludes the induced cut-edge splits on `Fin 4`. -/
 theorem not_inducedCutSplit_of_star {V E : Type*} [Fintype V] [Fintype E]
@@ -249,15 +247,6 @@ theorem isPhylogenetic_N₂ : N₂.IsPhylogenetic := by
     · exact absurd rfl (hv 3)
 
 /-! ### The quartet trees -/
-
-/-- The quartet tree `ab|cd`. -/
-def abcd : QuartetTree (Fin 4) := ⟨{{0, 1}, {2, 3}}, by unfold IsQuartetTree; decide⟩
-
-/-- The quartet tree `ac|bd`. -/
-def acbd : QuartetTree (Fin 4) := ⟨{{0, 2}, {1, 3}}, by unfold IsQuartetTree; decide⟩
-
-/-- The quartet tree `ad|bc`. -/
-def adbc : QuartetTree (Fin 4) := ⟨{{0, 3}, {1, 2}}, by unfold IsQuartetTree; decide⟩
 
 /-! ### Cut edges -/
 

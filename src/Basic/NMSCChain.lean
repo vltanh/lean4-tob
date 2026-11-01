@@ -1096,3 +1096,31 @@ theorem inheritance_add_eq_one (hθ : N.IsNormalized θ) {v : V} {k₁ k₂ : E}
 end Chain
 
 end Phylogenetics.NMSC.Chain
+
+namespace Phylogenetics.FinFour
+
+/-! ### The quartet trees and the forests on `Fin 4` -/
+
+/-- A quartet tree on `Fin 4` has all the taxa. -/
+theorem taxa_eq_univ (s : QuartetTree (Fin 4)) : s.taxa = univ :=
+  eq_univ_of_card _ (by rw [QuartetTree.card_taxa]; rfl)
+
+/-- The quartet tree `ab|cd`. -/
+def abcd : QuartetTree (Fin 4) := ⟨{{0, 1}, {2, 3}}, by unfold IsQuartetTree; decide⟩
+
+/-- The quartet tree `ac|bd`. -/
+def acbd : QuartetTree (Fin 4) := ⟨{{0, 2}, {1, 3}}, by unfold IsQuartetTree; decide⟩
+
+/-- The quartet tree `ad|bc`. -/
+def adbc : QuartetTree (Fin 4) := ⟨{{0, 3}, {1, 2}}, by unfold IsQuartetTree; decide⟩
+
+/-- The lineages of `a`, `b` before they coalesce. -/
+abbrev Fab : Finset (Finset (Fin 4)) := ({0, 1} : Finset (Fin 4)).image fun x => ({x} : Finset (Fin 4))
+
+/-- The lineages of `a`, `b` after they coalesce. -/
+abbrev Cab : Finset (Finset (Fin 4)) := insert ({0, 1} : Finset (Fin 4)) Fab
+
+/-- All the lineages at the root. -/
+abbrev Fall : Finset (Finset (Fin 4)) := (univ : Finset (Fin 4)).image fun x => ({x} : Finset (Fin 4))
+
+end Phylogenetics.FinFour

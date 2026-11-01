@@ -14,6 +14,8 @@ Huson and Klöpper 2007 (RECOMB, LNBI 4453, pp. 211-225) is closed and wasn't re
 * `Network.IsNonDegenerate` is from the authors' errata to that paper, which corrects the definition there, and credits Gusfield with pointing it out;
 * `Network.IsGalled` is Definition 1 of Huson, Rupp, Berry, Gambette, Paul 2009, *Computing galled networks from real data* (Bioinformatics 25, PMC2687971), which continues that paper. It may be worded differently in the 2007 paper.
 
+The conjecture of that paper, which line 590 refutes, is in `Gusfield2007.HusonKloepper`, read from the thesis of the second author, whose Section 2.4 also has a galled network, as a "weakly dependent" reticulate network, and its own "degenerated" vertices. These are worded differently from the definitions here, and weren't compared further.
+
 As printed, the sentence is false: the root can give a fourth pair (`galledIncompatPrinted_false`). What's true, and what Theorem 5 needs, has the ancestral sequence: a pair of sites is incompatible in `L` if and only if it is incompatible in `M + S` (`incompatible_labelSet_iff`), so that `G_S(L) = G_S(M)` (`conflictGraph_labelSet_eq`).
 -/
 

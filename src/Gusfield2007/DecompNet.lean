@@ -1,6 +1,7 @@
 module
 
 public import Gusfield2007.Blobs
+public import Gusfield2007.SameCycles
 public import Mathlib.Data.Fintype.Option
 public import Mathlib.SetTheory.Cardinal.Finite
 
@@ -357,11 +358,18 @@ noncomputable def addLeaf (v : V) : Network ι (Option V) (Option E) where
 
 variable {N} {v : V}
 
-theorem addLeaf_emb : Network.Emb N (addLeaf N v) some some where
+/-- `addLeaf N v` has the recombination cycles of `N`: the new arc ends at the new leaf, with no other arc into it. -/
+theorem addLeaf_sameCycles [Finite V] : Network.SameCycles N (addLeaf N v) some some where
   f_inj := Option.some_injective _
   g_inj := Option.some_injective _
-  src _ := rfl
-  tgt _ := rfl
+  src _ _ := rfl
+  tgt _ _ := rfl
+  recomb := by
+    rintro (_ | e) (_ | f) hne ht
+    · exact absurd rfl hne
+    · simp [addLeaf] at ht
+    · simp [addLeaf] at ht
+    · exact ⟨e, f, fun h => hne (by rw [h]), by simpa [addLeaf] using ht, rfl, rfl⟩
 
 theorem isRecomb_addLeaf {x : Option V} : (addLeaf N v).IsRecomb x ↔ ∃ y, x = some y ∧ N.IsRecomb y := by
   constructor
@@ -441,73 +449,9 @@ theorem addLeaf_derives {M : Finset (ι → Bool)} (hN : N.Derives M) (hv : ¬ N
     · obtain ⟨y, hy, rfl⟩ := hN.surjOn (Finset.mem_coe.2 hr)
       exact ⟨some y, (hleaf _).2 (Or.inr ⟨y, rfl, hy⟩), rfl⟩
 
-/-- A cycle of `addLeaf N v` is a cycle of `N`: the new arc ends at a leaf that's not a recombination node. -/
-theorem addLeaf_cycle_back {Q' : Set (Option E)} (hQ' : (addLeaf N v).IsCycle Q') : ∃ Q, N.IsCycle Q ∧ Q' = some '' Q := by
-  refine (addLeaf_emb (N := N) (v := v)).cycle_back (fun x hx => ?_) hQ' ?_
-  · obtain ⟨y, hy, hr⟩ := isRecomb_addLeaf.1 hx
-    rwa [Option.some.inj hy]
-  · obtain ⟨w, x, p, q, ⟨hrec, hp, hq, -, -⟩, rfl⟩ := hQ'
-    have hxs : x ≠ none := by
-      rintro rfl
-      obtain ⟨y, hy, -⟩ := isRecomb_addLeaf.1 hrec
-      simp at hy
-    have key : ∀ {l : List (Option E)} {u : Option V}, (addLeaf N v).IsPath u x l → ∀ a ∈ l, a ∈ Set.range some := by
-      intro l
-      induction l with
-      | nil => simp
-      | cons b t ih =>
-        rintro u ⟨-, h₂⟩ a ha
-        rcases List.mem_cons.1 ha with rfl | ha
-        · cases a with
-          | some e => exact ⟨e, rfl⟩
-          | none =>
-            exfalso
-            cases t with
-            | nil => exact hxs (Eq.symm h₂)
-            | cons c t' =>
-              obtain ⟨h₃, -⟩ := h₂
-              cases c <;> simp [addLeaf] at h₃
-        · exact ih h₂ a ha
-    rintro a (ha | ha)
-    · exact key hp a ha
-    · exact key hq a ha
-
-theorem addLeaf_fullyDecomposed {G : SimpleGraph ι} (hN : N.IsFullyDecomposedFor G) :
-    (addLeaf N v).IsFullyDecomposedFor G := by
-  have hE := addLeaf_emb (N := N) (v := v)
-  have hback : ∀ Q', (addLeaf N v).IsCycle Q' → (∃ e ∈ Q', e ∈ Set.range some) → ∃ Q, N.IsCycle Q ∧ Q' = some '' Q :=
-    fun Q' hQ' _ => addLeaf_cycle_back hQ'
-  have hblob : ∀ {B'}, (addLeaf N v).IsBlob B' → ∃ B, N.IsBlob B ∧ B' = some '' B := by
-    rintro B' ⟨Q', hQ', rfl⟩
-    obtain ⟨Q, hQ, rfl⟩ := addLeaf_cycle_back hQ'
-    exact ⟨_, ⟨Q, hQ, rfl⟩, hE.blob_image hback hQ⟩
-  have hverts : ∀ B : Set E, (addLeaf N v).blobVerts (some '' B) = some '' N.blobVerts B := by
-    intro B
-    ext x
-    constructor
-    · rintro (⟨a, ⟨e, he, rfl⟩, rfl⟩ | ⟨a, ⟨e, he, rfl⟩, rfl⟩)
-      · exact ⟨N.src e, Or.inl ⟨e, he, rfl⟩, rfl⟩
-      · exact ⟨N.tgt e, Or.inr ⟨e, he, rfl⟩, rfl⟩
-    · rintro ⟨y, ⟨e, he, rfl⟩ | ⟨e, he, rfl⟩, rfl⟩
-      · exact Or.inl ⟨some e, ⟨e, he, rfl⟩, rfl⟩
-      · exact Or.inr ⟨some e, ⟨e, he, rfl⟩, rfl⟩
-  refine ⟨fun B' hB' => ?_, fun i hi => ?_, fun B₁ B₂ h₁ h₂ hne => ?_⟩
-  · obtain ⟨B, hB, rfl⟩ := hblob hB'
-    obtain ⟨c, hc, hs⟩ := hN.blob_component B hB
-    refine ⟨c, hc, fun i => ?_⟩
-    rw [← hs i]
-    change some (N.site i) ∈ some '' B ↔ _
-    simp
-  · rintro ⟨Q', hQ', hmem⟩
-    obtain ⟨Q, hQ, rfl⟩ := addLeaf_cycle_back hQ'
-    obtain ⟨e, he, heq⟩ := hmem
-    obtain rfl : e = N.site i := Option.some.inj heq
-    exact hN.isolated_treeArc i hi ⟨Q, hQ, he⟩
-  · obtain ⟨B, hB, rfl⟩ := hblob h₁
-    obtain ⟨B', hB', rfl⟩ := hblob h₂
-    have hd := hN.nodeDisjoint B B' hB hB' (fun heq => hne (by rw [heq]))
-    rw [hverts, hverts]
-    exact (Set.disjoint_image_iff (Option.some_injective _)).2 hd
+theorem addLeaf_fullyDecomposed [Finite V] {G : SimpleGraph ι} (hN : N.IsFullyDecomposedFor G) :
+    (addLeaf N v).IsFullyDecomposedFor G :=
+  (addLeaf_sameCycles.isFullyDecomposedFor_iff fun _ => rfl).2 hN
 
 end AddLeaf
 

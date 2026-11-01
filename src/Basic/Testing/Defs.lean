@@ -107,6 +107,18 @@ def cutStat (c : QuartetTree X → ℝ) (q : Finset X) : ℝ := ⨅ s : {s // s 
 /-- The angle `α₀` of TINNiK Appendix C.2. -/
 def alphaZero (φ : ℝ) : ℝ := Real.arctan (1 / Real.sqrt (3 * (3 - 2 * φ)))
 
+theorem cos_alphaZero_pos (φ : ℝ) : 0 < Real.cos (alphaZero φ) := Real.cos_arctan_pos _
+
+/-- At the singularity `φ = 1`, the angle is `π / 6`. -/
+theorem alphaZero_one : alphaZero 1 = Real.pi / 6 := by
+  have h : (1 : ℝ) / √(3 * (3 - 2 * 1)) = (√3)⁻¹ := by norm_num
+  unfold alphaZero
+  rw [h, Real.arctan_inv_sqrt_three]
+
+/-- At the singularity `φ = 1`, the mean is `0`. -/
+theorem muZero_one (n : ℝ) : muZero 1 n = 0 := by
+  simp [muZero]
+
 /-- The upper tail at `t` of the distribution of TINNiK Proposition 5 for `φ` and sample size `n`:
 that of `min(Z², (sin α₀ Z + cos α₀ Z̄)², (sin α₀ Z - cos α₀ Z̄)²)` for independent `Z ~ N(0,1)`
 and `Z̄ ~ N(μ₀,1)`. -/

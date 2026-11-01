@@ -13,7 +13,7 @@ proofs. A statement with a crossover model `c` covers the two cases of the paper
 back and recurrent mutation that Corollary 3 needs.
 
 The proofs follow the paper. Where it says "the resulting network derives", Lean has to trim the network, because `Derives` has the rows exactly at the leaves: `Network.exists_derives_of_displays`. The statements that aren't in the paper as printed are at
-`theorem10`, `theorem10_multiple` and `visibleOfTightPrinted_false`. Two more sentences of the paper are here: `unrootedParsimonyScore_eq_sum` (line 411) and `sum_le_RS_of_sMinDecomposable` (line 420).
+`Theorem10Printed`, `theorem10` and `visibleOfTightPrinted_false`. Two more sentences of the paper are here: `unrootedParsimonyScore_eq_sum` (line 411) and `sum_le_RS_of_sMinDecomposable` (line 420).
 -/
 
 @[expose] public section
@@ -555,14 +555,13 @@ theorem visibleOfTightPrinted_false : ¬ VisibleOfTightPrinted .single twoEqualC
 /-- **Theorem 10, the first part as printed** (`g:thm10_printed`). "For a set of sequences `M` and a specified ancestral sequence `S`, if `H(M + S) = R¹(M + S)` then `M` is
 S-min-1 decomposable, and if `H(M + S) = R(M + S)` then `M` is S-min decomposable" (line 568).
 
-As printed it's unproved here, and not refuted. `R(M + S)` is a notation slip for the rooted count `R_S(M)`, as at line 525: the proof reasons on an optimal network for `M` with ancestral sequence `S`, using `R_S(M)` nodes, and treats that number
+As printed it's false for single crossovers: `theorem10Printed_single_false`, on fourteen rows and eight sites, in `Gusfield2007.OpenStatements`. For multiple crossovers, `theorem10Printed_multiple_false_of_search` has a counterexample given one computation that the kernel hasn't completed. The proof reasons on an optimal network for `M` with ancestral sequence `S`, using `R_S(M)` nodes, and treats that number
 as `R(M + S)`, the minimum over all ancestral sequences (lines 560 to 563). They can differ under the hypothesis: for `M + S = {0000, 0101, 1000, 1010, 1110, 1111}` and `S = 0101`, with multiple
-crossovers, `H(M + S) = R(M + S) = 1` and `R_S(M) = 2`. If `R_S(M) > R(M + S)`, the tight network has another root, and the proof doesn't apply. That example has one component, so the conclusion holds.
-A search for an example with two components where the conclusion fails found none, within these limits: rows of the form `(x, 0)` or `(0, y)`, `S` a row, no compatible sites, and small sizes, of which the larger were only sampled. Its programs aren't in this repository. The form with `R_S(M)` is `theorem10`, which is what the proof of Theorem 6 needs. -/
+crossovers, `H(M + S) = R(M + S) = 1` and `R_S(M) = 2`. If `R_S(M) > R(M + S)`, the tight network has another root, and the proof doesn't apply. The form with `R_S(M)`, as at line 525, is `theorem10`, which is what the proof of Theorem 6 needs. The printed form holds when the tight root differs from `S` in at most one component (`sMinDecomposable_of_tight_root`). -/
 def Theorem10Printed (c : Crossover) (M : Finset (ι → Bool)) (S : ι → Bool) : Prop :=
   haplotypeBound (addRow M S) = R c (addRow M S) → SMinDecomposable c S M
 
-/-- The proof of Theorem 10 at lines 560 to 564, when the columns of `M + S` are distinct: an optimal network with `H(M + S)` recombination nodes has every node visible (`allVisible_of_eq`), and Corollary 2 applies. -/
+/-- **The proof of Theorem 10 as the paper gives it** (`g:thm10_distinct`), at lines 560 to 564, when the columns of `M + S` are distinct: an optimal network with `H(M + S)` recombination nodes has every node visible (`allVisible_of_eq`), and Corollary 2 applies. `theorem10` has no hypothesis on the columns, and a different step. -/
 theorem sMinDecomposable_of_haplotype_tight {c : Crossover} {M : Finset (ι → Bool)} {S : ι → Bool} (hM : M.Nonempty) (hC : NoConstantColumn M)
     (hinj : Function.Injective fun i : ι => fun r : addRow M S => (r : ι → Bool) i)
     (h : haplotypeBound (addRow M S) = RS c S M) : SMinDecomposable c S M := by
@@ -570,196 +569,135 @@ theorem sMinDecomposable_of_haplotype_tight {c : Crossover} {M : Finset (ι → 
   have hN : N.IsOptimalRooted c S M := ⟨hc, hd, hS, hcount⟩
   exact corollary2 hC N hN (MyersGriffiths2003.allVisible_of_eq N hd hS hinj (by rw [h, hcount]; rfl))
 
-/-- **Theorem 10, multiple crossovers, without distinct columns** (`g:thm10_multiple`). If `H(M + S) = R_S(M)` then `M` is S-min decomposable. Line 560 is false when `M + S` has identical columns (`g:visible_false`), so the proof of the paper doesn't apply as it stands. So the route is this: restrict to one site for each class of identical columns of `M + S`, where the columns are distinct and `H` has the same value; `allVisible_of_eq` and Corollary 2 apply there; then put each duplicate on the arc of its representative, which keeps the blobs, the
-number of recombination nodes and the crossover model, which is unconstrained. -/
-theorem theorem10_multiple {M : Finset (ι → Bool)} {S : ι → Bool} (hM : M.Nonempty) (hC : NoConstantColumn M)
-    (h : haplotypeBound (addRow M S) = RS .multiple S M) : SMinDecomposable .multiple S M := by
-  set col : ι → addRow M S → Bool := fun i r => (r : ι → Bool) i with hcol
-  set rep : ι → ι := fun i => Set.rangeSplitting col ⟨col i, i, rfl⟩ with hrep
-  have hcol_rep : ∀ i, col (rep i) = col i := fun i => Set.apply_rangeSplitting col ⟨col i, i, rfl⟩
-  have hrep_rep : ∀ i, rep (rep i) = rep i := fun i => congrArg (Set.rangeSplitting col) (Subtype.ext (hcol_rep i))
-  have hrep_eq : ∀ {i j}, col i = col j → rep i = rep j := fun {i j} hij =>
-    congrArg (Set.rangeSplitting col) (Subtype.ext hij)
-  have hval : ∀ r ∈ addRow M S, ∀ i, r (rep i) = r i := fun r hr i => congrFun (hcol_rep i) ⟨r, hr⟩
-  have hvalM : ∀ r ∈ M, ∀ i, r (rep i) = r i := fun r hr => hval r (mem_addRow.2 (Or.inr hr))
-  have hvalS : ∀ i, S (rep i) = S i := hval S (mem_addRow.2 (Or.inl rfl))
-  set A : Set ι := Set.range rep with hA
-  have hrepA : ∀ a : A, rep a.1 = a.1 := by
-    rintro ⟨_, i, rfl⟩
-    exact hrep_rep i
-  set ρ : ι → A := fun i => ⟨rep i, i, rfl⟩ with hρ
-  have hρA : ∀ a : A, ρ a.1 = a := fun a => Subtype.ext (hrepA a)
-  set MA := restrictRows A M with hMA
-  set SA := A.domRestrict S with hSA
-  have hMAne : MA.Nonempty := by
-    obtain ⟨r, hr⟩ := hM
-    exact ⟨_, mem_restrictRows.2 ⟨r, hr, rfl⟩⟩
-  have hCA : NoConstantColumn MA := hC.restrictRows A
-  -- `M + S` on `A`.
-  have hadd : addRow MA SA = (addRow M S).image A.domRestrict := by
-    simp only [addRow, hMA, restrictRows, Finset.image_insert, hSA]
-  have hinjOn : Set.InjOn A.domRestrict (addRow M S : Set (ι → Bool)) := by
+/-! ### Labels of a tight network, on sites with different columns -/
+
+/-- The column of a site, on the rows `T`. -/
+abbrev columnOf (T : Finset (ι → Bool)) (i : ι) : T → Bool := fun r => (r : ι → Bool) i
+
+omit [LinearOrder ι] [Fintype V] [Finite E] in
+/-- **The equality case of the haplotype bound, on a choice of one site per distinct column.** If the rows `T` label nodes of `N`, which has `H(T)` recombination nodes, and `ρ` picks a site for each distinct column of `T`, then
+the labels of `N` on the picked sites are those of a row of `T`. It is `MyersGriffiths2003.allVisible_of_eq` with the sites restricted, and its proof is the same count. -/
+theorem exists_row_of_section [Finite V] (N : Network ι V E) {T : Finset (ι → Bool)} (hT : ∀ r ∈ T, ∃ v, N.label v = r)
+    (h : (N.recombCount : ℤ) = haplotypeBound T) (ρ : Set.range (columnOf T) → ι)
+    (hρ : ∀ k, columnOf T (ρ k) = k.1) (v : V) : ∃ r ∈ T, ∀ k, r (ρ k) = N.label v (ρ k) := by
+  have hcard := MyersGriffiths2003.ncard_labels_le N ρ
+  have hdist : Nat.card (Set.range (columnOf T)) = distinctColumns T := rfl
+  rw [hdist] at hcard
+  unfold haplotypeBound at h
+  have hval : ∀ (r : T) (i : ι), (r : ι → Bool) (ρ ⟨columnOf T i, i, rfl⟩) = (r : ι → Bool) i := fun r i =>
+    congrFun (hρ ⟨columnOf T i, i, rfl⟩) r
+  have hinj : Set.InjOn (fun (r : ι → Bool) (k : Set.range (columnOf T)) => r (ρ k)) (T : Set (ι → Bool)) := by
     intro r hr r' hr' hrr
     funext i
-    have h₁ := congrFun hrr (ρ i)
-    change r (rep i) = r' (rep i) at h₁
-    rw [hval r hr i, hval r' hr' i] at h₁
-    exact h₁
-  have hcard : (addRow MA SA).card = (addRow M S).card := by
-    rw [hadd]
-    exact Finset.card_image_of_injOn hinjOn
-  have hinjA : Function.Injective fun a : A => fun r : addRow MA SA => (r : A → Bool) a := by
-    intro a b hab
-    have hcolab : col a.1 = col b.1 := by
-      funext r
-      have := congrFun hab ⟨A.domRestrict r.1, by rw [hadd]; exact Finset.mem_image_of_mem _ r.2⟩
-      exact this
-    exact Subtype.ext ((hrepA a).symm.trans ((hrep_eq hcolab).trans (hrepA b)))
-  have hdist : distinctColumns (addRow MA SA) = distinctColumns (addRow M S) := by
-    rw [distinctColumns, distinctColumns, Set.ncard_range_of_injective hinjA]
-    have himg : col '' A = Set.range col := by
-      ext f
-      constructor
-      · rintro ⟨_, -, rfl⟩
-        exact ⟨_, rfl⟩
-      · rintro ⟨i, rfl⟩
-        exact ⟨rep i, ⟨i, rfl⟩, hcol_rep i⟩
-    have hinjcol : Set.InjOn col A := by
-      rintro _ ⟨i, rfl⟩ _ ⟨j, rfl⟩ hij
-      rw [← hrep_rep i, ← hrep_rep j]
-      exact hrep_eq hij
-    change A.ncard = (Set.range col).ncard
-    rw [← himg, hinjcol.ncard_image]
-  have hH : haplotypeBound (addRow MA SA) = haplotypeBound (addRow M S) := by
-    rw [haplotypeBound, haplotypeBound, hcard, hdist]
-  -- `R_S(M)` on `A`.
-  have hle : RS .multiple SA MA ≤ RS .multiple S M := by
-    obtain ⟨a, b, N, hc, hd, hS, hcount⟩ := Nat.sInf_mem (rootedRecombSet_nonempty .multiple S hM)
-    change N.recombCount = RS .multiple S M at hcount
-    rw [← hcount]
-    refine (hS ▸ Network.RS_le_card_breaksAt hc hd hC A : RS .multiple (A.domRestrict S) (restrictRows A M) ≤ _).trans
-      (Set.ncard_le_ncard (s := {x | N.IsRecomb x ∧ N.BreaksAt x A}) (t := {x | N.IsRecomb x}) (fun x hx => hx.1) (Set.toFinite _))
-  have hge := MyersGriffiths2003.haplotypeBound_addRow_le_RS .multiple SA MA hMAne
-  have heq : haplotypeBound (addRow MA SA) = RS .multiple SA MA := by
-    rw [hH, h] at hge ⊢
-    exact le_antisymm hge (by exact_mod_cast hle)
-  have heqR : RS .multiple SA MA = RS .multiple S M := by
-    rw [hH, h] at heq
-    exact_mod_cast heq.symm
-  obtain ⟨a, b, N₁, hc₁, hd₁, hS₁, hfd, hcount₁⟩ := sMinDecomposable_of_haplotype_tight hMAne hCA hinjA heq
-  -- The graphs.
-  set G := conflictGraph S M with hG
-  set GA := conflictGraph SA MA with hGA
-  have hAdjA : ∀ a b : A, GA.Adj a b ↔ G.Adj a.1 b.1 := by
-    intro a b
-    change Conflict SA MA a b ↔ Conflict S M a.1 b.1
-    constructor
-    · intro hab x y hxy
-      obtain ⟨r, hr, h₁, h₂⟩ := hab x y hxy
-      obtain ⟨r', hr', rfl⟩ := mem_restrictRows.1 hr
-      exact ⟨r', hr', h₁, h₂⟩
-    · intro hab x y hxy
-      obtain ⟨r, hr, h₁, h₂⟩ := hab x y hxy
-      exact ⟨_, mem_restrictRows.2 ⟨r, hr, rfl⟩, h₁, h₂⟩
-  have hAdjRep : ∀ i j, G.Adj i j ↔ G.Adj (rep i) (rep j) := by
-    intro i j
-    rw [hG, conflictGraph_eq_incompatGraph_addRow]
-    change Incompatible _ i j ↔ Incompatible _ (rep i) (rep j)
-    refine forall₂_congr fun x y => exists_congr fun r => and_congr_right fun hr => ?_
-    rw [hval r hr i, hval r hr j]
-  have hAdjρ : ∀ i j, G.Adj i j ↔ GA.Adj (ρ i) (ρ j) := fun i j => (hAdjRep i j).trans (hAdjA (ρ i) (ρ j)).symm
-  have hAdjMap : ∀ {a b : A}, GA.Reachable a b → G.Reachable a.1 b.1 := by
-    intro a b hab
-    rw [SimpleGraph.reachable_iff_reflTransGen] at hab
-    induction hab with
-    | refl => exact SimpleGraph.Reachable.refl _
-    | tail _ hbc ih => exact ih.trans (SimpleGraph.Adj.reachable ((hAdjA _ _).1 hbc))
-  refine ⟨a, b, N₁.liftSites ρ, trivial, ⟨?_, ?_, ?_⟩, ?_, ⟨?_, ?_, ?_⟩, hcount₁.trans heqR⟩
-  -- `Derives M`.
-  · intro v hv
-    obtain ⟨r, hr, hrv⟩ := mem_restrictRows.1 (hd₁.mapsTo hv)
-    have : (N₁.liftSites ρ).label v = r := by
-      funext i
-      change N₁.label v (ρ i) = r i
-      rw [← hrv]
-      exact hvalM r hr i
-    rw [this]
-    exact hr
-  · intro v hv w hw hvw
-    refine hd₁.injOn hv hw (funext fun x => ?_)
-    have := congrFun hvw x.1
-    change N₁.label v (ρ x.1) = N₁.label w (ρ x.1) at this
-    rwa [hρA] at this
-  · intro r hr
-    obtain ⟨v, hv, hrv⟩ := hd₁.surjOn (mem_restrictRows.2 ⟨r, hr, rfl⟩)
-    refine ⟨v, hv, funext fun i => ?_⟩
-    change N₁.label v (ρ i) = r i
-    rw [hrv]
-    exact hvalM r hr i
-  -- The ancestral sequence.
-  · funext i
-    change N₁.label N₁.root (ρ i) = S i
-    have := congrFun hS₁ (ρ i)
-    change N₁.label N₁.root (ρ i) = S (rep i) at this
-    rw [this, hvalS]
-  -- Fully decomposed.
-  · intro B hB
-    obtain ⟨cA, hnt, hmem⟩ := hfd.blob_component B ((Network.isBlob_liftSites N₁ ρ B).1 hB)
-    obtain ⟨a₀, ha₀⟩ := cA.nonempty_supp
-    have hK₁ : ∀ a ∈ cA.supp, G.Reachable a₀.1 a.1 := fun a ha => hAdjMap (cA.reachable_of_mem_supp ha₀ ha)
-    have hK₂ : ∀ i, ρ i ∈ cA.supp → G.Reachable (rep i) i := by
-      intro i hi
-      obtain ⟨b', hb', hne⟩ := hnt.exists_ne (ρ i)
-      obtain ⟨p⟩ := cA.reachable_of_mem_supp hi hb'
-      cases p with
-      | nil => exact absurd rfl hne
-      | @cons _ c _ hadj _ =>
-        have h₁ : G.Adj (rep i) c.1 := (hAdjA _ _).1 hadj
-        have h₂ : G.Adj i c.1 := by
-          rw [hAdjRep, hrepA]
-          exact h₁
-        exact (SimpleGraph.Adj.reachable h₁).trans (SimpleGraph.Adj.reachable h₂).symm
-    have hK₃ : ∀ i, G.Reachable a₀.1 i → ρ i ∈ cA.supp := by
-      intro i hi
-      rw [SimpleGraph.reachable_iff_reflTransGen] at hi
-      induction hi with
-      | refl => rwa [hρA]
-      | tail _ hbc ih =>
-        have : GA.Reachable _ _ := SimpleGraph.Adj.reachable ((hAdjρ _ _).1 hbc)
-        rw [SimpleGraph.ConnectedComponent.mem_supp_iff] at ih ⊢
-        rw [← ih]
-        exact SimpleGraph.ConnectedComponent.sound this.symm
-    refine ⟨G.connectedComponentMk a₀.1, ?_, fun i => ?_⟩
-    · obtain ⟨x, hx, y, hy, hxy⟩ := hnt
-      refine ⟨x.1, ?_, y.1, ?_, fun h' => hxy (Subtype.ext h')⟩
-      · rw [SimpleGraph.ConnectedComponent.mem_supp_iff]
-        exact SimpleGraph.ConnectedComponent.sound (hK₁ x hx).symm
-      · rw [SimpleGraph.ConnectedComponent.mem_supp_iff]
-        exact SimpleGraph.ConnectedComponent.sound (hK₁ y hy).symm
-    · rw [SimpleGraph.ConnectedComponent.mem_supp_iff]
-      change N₁.site (ρ i) ∈ B ↔ _
-      rw [hmem]
-      constructor
-      · intro hi
-        exact SimpleGraph.ConnectedComponent.sound ((hK₁ _ hi).trans (hK₂ i hi)).symm
-      · intro hi
-        exact hK₃ i (SimpleGraph.ConnectedComponent.exact hi).symm
-  · intro i hi
-    refine (Network.isTreeArc_liftSites N₁ ρ _).2 (hfd.isolated_treeArc (ρ i) fun b hb => ?_)
-    have h₁ : G.Adj (rep i) b.1 := (hAdjA _ _).1 hb
-    exact hi b.1 (by rw [hAdjRep, hrepA]; exact h₁)
-  · exact (Network.blobsNodeDisjoint_liftSites N₁ ρ).2 hfd.nodeDisjoint
+    have := congrFun hrr ⟨columnOf T i, i, rfl⟩
+    exact (hval ⟨r, hr⟩ i).symm.trans (this.trans (hval ⟨r', hr'⟩ i))
+  have hsub : (fun (r : ι → Bool) (k : Set.range (columnOf T)) => r (ρ k)) '' (T : Set (ι → Bool)) ⊆
+      Set.range fun (u : V) (k : Set.range (columnOf T)) => N.label u (ρ k) := by
+    rintro _ ⟨r, hr, rfl⟩
+    obtain ⟨u, rfl⟩ := hT r hr
+    exact ⟨u, rfl⟩
+  have heq := Set.eq_of_subset_of_ncard_le hsub (by
+    rw [hinj.ncard_image, Set.ncard_coe_finset]
+    omega) (Set.toFinite _)
+  have hmem : (fun k : Set.range (columnOf T) => N.label v (ρ k)) ∈
+      (fun (r : ι → Bool) (k : Set.range (columnOf T)) => r (ρ k)) '' (T : Set (ι → Bool)) := heq ▸ ⟨v, rfl⟩
+  obtain ⟨r, hr, hrv⟩ := hmem
+  exact ⟨r, hr, fun k => congrFun hrv k⟩
 
-/-- **Theorem 10, with the ancestral sequence** (`g:thm10`). The proof at lines 560 to 564 is for this form: if `H(M + S) = R¹_S(M)` then `M` is S-min-1 decomposable, and if `H(M + S) = R_S(M)` then `M` is S-min decomposable. Departure from the paper: `R¹_S(M)`, `R_S(M)` in place of
-`R¹(M + S)`, `R(M + S)`, because the proof's network has ancestral sequence `S`; and, for `single` only, distinct columns in `M + S`, because the equality case at line 560 needs them (`g:visible_false`). For `multiple` the hypothesis isn't needed, by `theorem10_multiple`, and for the recombinations that model
-back and recurrent mutation it isn't either, by Corollary 3. Whether it can be dropped for `single` is open: re-inserting a duplicate site on its representative's arc can break the prefix-suffix form of a crossover between them. -/
+omit [LinearOrder ι] [Fintype V] [Finite E] in
+/-- **A tight network, on two sites with different columns** (`g:thm10_pair`). If the rows `T` label nodes of `N`, which has `H(T)` recombination nodes, then the labels of any node of `N`, on two sites with different columns of `T`,
+are a pair that occurs in `T`. A node needn't be visible (`visibleOfTightPrinted_false`): a node can tell apart two sites with one column. -/
+theorem exists_row_of_eq_haplotypeBound [Finite V] (N : Network ι V E) {T : Finset (ι → Bool)} (hT : ∀ r ∈ T, ∃ v, N.label v = r)
+    (h : (N.recombCount : ℤ) = haplotypeBound T) {i j : ι} (hij : columnOf T i ≠ columnOf T j) (v : V) :
+    ∃ r ∈ T, r i = N.label v i ∧ r j = N.label v j := by
+  let ρ : Set.range (columnOf T) → ι := fun k =>
+    if k.1 = columnOf T i then i else if k.1 = columnOf T j then j else Set.rangeSplitting (columnOf T) k
+  have hρ : ∀ k, columnOf T (ρ k) = k.1 := by
+    intro k
+    simp only [ρ]
+    split_ifs with h₁ h₂
+    · exact h₁.symm
+    · exact h₂.symm
+    · exact Set.apply_rangeSplitting (columnOf T) k
+  obtain ⟨r, hr, hrv⟩ := exists_row_of_section N hT h ρ hρ v
+  refine ⟨r, hr, ?_, ?_⟩
+  · have := hrv ⟨columnOf T i, i, rfl⟩
+    simpa [ρ] using this
+  · have := hrv ⟨columnOf T j, j, rfl⟩
+    simpa [ρ, hij.symm] using this
+
+/-! ### No recombination node breaks two components -/
+
+omit [LinearOrder ι] [Finite ι] in
+/-- Two sites with one column, one in a non-trivial component, are in that component. -/
+theorem reachable_of_columnOf_eq {T : Finset (ι → Bool)} {i j k : ι} (hik : (incompatGraph T).Reachable i k) (hne : i ≠ k)
+    (hij : columnOf T i = columnOf T j) : (incompatGraph T).Reachable i j := by
+  obtain ⟨l, hl⟩ := exists_adj_of_reachable hik hne
+  have hval : ∀ r ∈ T, r i = r j := fun r hr => congrFun hij ⟨r, hr⟩
+  have hjl : (incompatGraph T).Adj j l := fun a b => by
+    obtain ⟨r, hr, h₁, h₂⟩ := hl a b
+    exact ⟨r, hr, (hval r hr).symm.trans h₁, h₂⟩
+  exact hl.reachable.trans hjl.reachable.symm
+
+omit [LinearOrder ι] [Finite E] in
+/-- **The step of Theorem 10, without distinct columns.** If the rows `T` label nodes of `N`, which has `H(T)` recombination nodes, no recombination node of `N` breaks two components of `G(T)`. On each node, one of the two components has its
+dominant sequence, as the rows of `T` have by Corollary 1, and `breaksAt_aux` is the case split of the proof of Theorem 9. -/
+theorem breaksAt_unique_of_eq_haplotypeBound (N : Network ι V E) {T : Finset (ι → Bool)} (hT : ∀ r ∈ T, ∃ v, N.label v = r)
+    (h : (N.recombCount : ℤ) = haplotypeBound T) {x : V} (hx : N.IsRecomb x)
+    {c c' : (incompatGraph T).ConnectedComponent} (hne : c ≠ c') (hb : N.BreaksAt x c.supp) (hb' : N.BreaksAt x c'.supp) : False := by
+  have hnt : c.supp.Nontrivial := by
+    by_contra hn
+    exact not_breaksAt_of_subsingleton N hx (Set.not_nontrivial_iff.1 hn) hb
+  have hnt' : c'.supp.Nontrivial := by
+    by_contra hn
+    exact not_breaksAt_of_subsingleton N hx (Set.not_nontrivial_iff.1 hn) hb'
+  obtain ⟨d, d', hdom⟩ := exists_isDominantFor T hne
+  have hcol : ∀ i : c.supp, ∀ j : c'.supp, columnOf T i.1 ≠ columnOf T j.1 := by
+    intro i j hij
+    obtain ⟨k, hk, hki⟩ := hnt.exists_ne i.1
+    refine hne ?_
+    have hr := reachable_of_columnOf_eq (c.reachable_of_mem_supp i.2 hk) (Ne.symm hki) hij
+    rw [← (SimpleGraph.ConnectedComponent.mem_supp_iff _ _).1 i.2, ← (SimpleGraph.ConnectedComponent.mem_supp_iff _ _).1 j.2]
+    exact SimpleGraph.ConnectedComponent.sound hr
+  have hcor : ∀ r ∈ N.labelSet, (∀ i : c.supp, r i = d i) ∨ ∀ i : c'.supp, r i = d' i := by
+    intro r hr
+    obtain ⟨v, -, rfl⟩ := Finset.mem_image.1 hr
+    by_contra hcon
+    push Not at hcon
+    obtain ⟨⟨i, hi⟩, ⟨j, hj⟩⟩ := hcon
+    obtain ⟨r, hr, h₁, h₂⟩ := exists_row_of_eq_haplotypeBound N hT h (hcol i j) v
+    rcases hdom i j r hr with h₃ | h₃
+    · exact hi (h₁.symm.trans h₃)
+    · exact hj (h₂.symm.trans h₃)
+  have hL : ∀ v, N.label v ∈ N.labelSet := fun v => Finset.mem_image_of_mem _ (Finset.mem_univ v)
+  rcases hcor _ (hL x) with h₁ | h₁
+  · exact breaksAt_aux N hL hx hcor hb hb' h₁
+  · exact breaksAt_aux N hL hx (fun r hr => (hcor r hr).symm) hb' hb h₁
+
+/-- **Theorem 10, with the ancestral sequence** (`g:thm10`). The proof at lines 560 to 564 is for this form: if `H(M + S) = R¹_S(M)` then `M` is S-min-1 decomposable, and if `H(M + S) = R_S(M)` then `M` is S-min decomposable; here for each crossover model, with no hypothesis on the columns.
+
+Departures from the paper. `R¹_S(M)`, `R_S(M)` in place of `R¹(M + S)`, `R(M + S)`, because the proof's network has ancestral sequence `S`: the form with `R(M + S)` is `Theorem10Printed`, which is false for single crossovers (`theorem10Printed_single_false`). And the paper's proof has every node visible, at line 560, which is false when `M + S` has identical columns (`visibleOfTightPrinted_false`). Lean has the pair of labels on two sites with different columns (`exists_row_of_eq_haplotypeBound`), which is what the proof of Corollary 2 uses from visibility, and then Theorem 7 applies as in that proof. When the columns are distinct the paper's proof goes through: `sMinDecomposable_of_haplotype_tight`. -/
 theorem theorem10 {c : Crossover} {M : Finset (ι → Bool)} {S : ι → Bool} (hM : M.Nonempty) (hC : NoConstantColumn M)
-    (hinj : c = .single → Function.Injective fun i : ι => fun r : addRow M S => (r : ι → Bool) i)
     (h : haplotypeBound (addRow M S) = RS c S M) : SMinDecomposable c S M := by
-  cases c
-  · exact sMinDecomposable_of_haplotype_tight hM hC (hinj rfl) h
-  · exact theorem10_multiple hM hC h
-  · exact (corollary3 M S hM hC).1
+  obtain ⟨a, b, N, hc, hd, hS, hcount⟩ := Nat.sInf_mem (rootedRecombSet_nonempty c S hM)
+  have hN : N.IsOptimalRooted c S M := ⟨hc, hd, hS, hcount⟩
+  have hH : (N.recombCount : ℤ) = haplotypeBound (addRow M S) := by rw [h, hcount]; rfl
+  have hT : ∀ r ∈ addRow M S, ∃ v, N.label v = r := fun r hr => by
+    rcases mem_addRow.1 hr with rfl | hr
+    · exact ⟨N.root, hS⟩
+    · exact hd.displays r hr
+  refine sMinDecomposable_of_isOptimalRooted hC N hN fun x hx => ?_
+  rw [conflictGraph_eq_incompatGraph_addRow]
+  by_cases hz : N.IsZeroComponent (incompatGraph (addRow M S)) x
+  · exact Or.inl hz
+  · right
+    unfold Network.IsZeroComponent at hz
+    push Not at hz
+    obtain ⟨C, hC'⟩ := hz
+    refine ⟨C, hC', fun C' hb => ?_⟩
+    by_contra hne
+    exact breaksAt_unique_of_eq_haplotypeBound N hT hH hx hne hb hC'
+
 
 section Theorem6
 
@@ -846,8 +784,8 @@ end Theorem6
 /-- **Theorem 6** (`g:thm6`). "Let `N` be a phylogenetic network (which might not be optimal) for `M` with ancestral sequence `S`. Then `M` is S-min or S-min-1 decomposable
 (depending on the type of crossovers used in `N`), if every node in `N` is visible, and every edge in `N` is labeled by at most one site" (line 449).
 
-A network using only single crossovers also obeys `multiple`, and then the proof gives both conclusions. The columns of `M + S` are distinct under these hypotheses, so `theorem10` applies. The proof of the paper modifies `N` first (line 576), and that part is
-`exists_tight_of_allVisible`; the count is an inequality here, which is enough. -/
+A network using only single crossovers also obeys `multiple`, and then the proof gives both conclusions. The proof of the paper modifies `N` first (line 576), and that part is
+`exists_tight_of_allVisible`; the count is an inequality here, which is enough. It gives `H(M + S) = R_S(M)`, so `theorem10` applies. -/
 theorem theorem6 {c : Crossover} {M : Finset (ι → Bool)} {S : ι → Bool} (hC : NoConstantColumn M) (N : Network ι V E)
     (hc : N.Obeys c) (hd : N.Derives M) (hS : N.ancestral = S) (hv : N.AllVisible M S)
     (he : Function.Injective N.site) : SMinDecomposable c S M := by
@@ -860,11 +798,7 @@ theorem theorem6 {c : Crossover} {M : Finset (ι → Bool)} {S : ι → Bool} (h
     rw [distinctColumns, ← Set.image_univ]
     exact (Set.ncard_image_le Set.finite_univ).trans (by rw [Set.ncard_univ])
   unfold haplotypeBound at hH
-  have hdist : distinctColumns (addRow M S) = Nat.card ι := by omega
-  have hinj : Function.Injective fun i : ι => fun r : addRow M S => (r : ι → Bool) i := by
-    rw [← Set.injOn_univ, ← Set.ncard_image_iff Set.finite_univ, Set.image_univ, Set.ncard_univ]
-    exact hdist
-  refine theorem10 hM hC (fun _ => hinj) ?_
+  refine theorem10 hM hC ?_
   unfold haplotypeBound
   omega
 

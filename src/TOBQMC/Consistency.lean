@@ -18,7 +18,7 @@ The unnumbered claim at the end of §4.3 (`tob2025:consistency`), combining Theo
 the tests of TINNiK Theorem 4: for level-1 networks, with levels `α_k → 0` and any `β > 0`, labelling the edges of
 any optimal solution of Weighted Quartet Consensus by hypothesis tests on a disjoint cover and
 contracting those labelled false positives returns the tree of blobs with probability tending to one.
-The tests are TINNiK's star and cut tests; the T3 option is not treated.
+The tests are TINNiK's star and cut tests; the T3 option is in `TOBQMC.ConsistencyT3`.
 -/
 
 @[expose] public noncomputable section
@@ -32,12 +32,12 @@ variable {V E X : Type*} [Fintype X] [DecidableEq X]
 
 /-- The answer of Theorem 1 on counts `c`: every optimal solution of Weighted Quartet Consensus for `c`
 is a refinement of the tree of blobs. -/
-private def OptimaRefine {V E : Type*} (N : RootedNetwork V E X) (c : QuartetTree X → ℝ) : Prop :=
+def OptimaRefine {V E : Type*} (N : RootedNetwork V E X) (c : QuartetTree X → ℝ) : Prop :=
   ∀ B, IsBinaryTree B → (∀ T, IsBinaryTree T → quartetSupport c T ≤ quartetSupport c B) →
     treeOfBlobs N ⊆ B
 
 /-- The counts of the first `k` terms of a sequence of gene trees. -/
-private theorem geneCount_coords (k : ℕ) (ω : ℕ → Finset (Finset X)) :
+theorem geneCount_coords (k : ℕ) (ω : ℕ → Finset (Finset X)) :
     geneCount (fun i ω => ω i) k ω = quartetCount unroot (fun i : Fin k => ω i) := by
   funext s
   simp only [geneCount, quartetCount]
@@ -46,7 +46,7 @@ private theorem geneCount_coords (k : ℕ) (ω : ℕ → Finset (Finset X)) :
     (fun i => if Displays (unroot (ω i)) s then 1 else 0)]
 
 /-- The coordinates of the independent sequence of draws from the NMSC are a gene tree sample. -/
-private theorem isGeneTreeSample_iidSeq {V E : Type*} [Fintype V] [Fintype E] {N : RootedNetwork V E X}
+theorem isGeneTreeSample_iidSeq {V E : Type*} [Fintype V] [Fintype E] {N : RootedNetwork V E X}
     {θ : MetricData E} {ρ : ℝ} [MeasurableSpace (Finset (Finset X))]
     [MeasurableSingletonClass (Finset (Finset X))] (hd : IsDist (geneTreeDist N θ ρ)) :
     IsGeneTreeSample N θ ρ (Trinomial.iidSeq (geneTreeDist N θ ρ) hd) (fun i ω => ω i) := by
@@ -75,7 +75,7 @@ private theorem isGeneTreeSample_iidSeq {V E : Type*} [Fintype V] [Fintype E] {N
 /-- **Theorem 1 for finite samples**: every optimal solution of Weighted Quartet Consensus on `k` independent
 gene trees is a refinement of the tree of blobs, with probability tending to one. From
 `theorem1_optimal` on the independent sequence, by continuity from below. -/
-private theorem tendsto_optimaRefine {V E : Type*} [Fintype V] [Fintype E] {N : RootedNetwork V E X}
+theorem tendsto_optimaRefine {V E : Type*} [Fintype V] [Fintype E] {N : RootedNetwork V E X}
     {θ : MetricData E} {ρ : ℝ} (hStd : StandardAssumptions N θ ρ)
     (hNon : IsTQuartetNonanomalous N (nmscCF N θ ρ)) (hX : 4 ≤ Fintype.card X)
     (hd : IsDist (geneTreeDist N θ ρ)) :

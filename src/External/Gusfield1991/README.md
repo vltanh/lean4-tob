@@ -2,8 +2,7 @@
 
 Source: D. Gusfield, *Efficient algorithms for inferring evolutionary trees*, Networks 21 (1991), 19--28, as recalled in
 Gusfield et al. 2007, line 154 (the line numbers are explained in `src/Gusfield2007/README.md`), which also points to Gusfield 1997, Semple, Steel
-2003, Theorem 3.1.4, and the Pairwise Compatibility Theorem of Felsenstein 2004. The paper wasn't read: the publisher refused the
-download, and no open copy was found. The proofs are the standard argument, as recalled.
+2003, Theorem 3.1.4, and the Pairwise Compatibility Theorem of Felsenstein 2004. **The paper wasn't read.** It was looked for again: Wiley answers 403 to both the abstract and the PDF, and the Internet Archive has only the abstract page; OpenAlex and Semantic Scholar list no open copy, Gusfield's own list of papers has no link to it, and no copy of the 1988 technical report it began as was found. Unpaywall wasn't used, since it asks for an email address. Gusfield's book *ReCombinatorics* (2014) has the theorem as its Theorem 2.1.1, and the rooted form as Theorem 2.2.2, seen only as short snippets of a public search, which show the statements and not the proofs. So the proofs are the standard argument, as recalled, and whether they follow the source isn't known. The statements are those of line 154, which is what Gusfield et al. use.
 
 Gusfield et al. 2007 use it at line 264, to get the tree `T̄` from Lemma 3, and for the case with no recombination.
 

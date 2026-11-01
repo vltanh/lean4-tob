@@ -870,10 +870,11 @@ which the overall p-value combines the edge p-values tends to the limit tree, on
 so to the tree of blobs on a resolution of it (`consistency_edge_combination`). For `cauchy`, the
 hypothesis on the alternatives is that of Theorem 8.2.
 
-For `cbc` this proof does not apply, and the variant is not consistent (a sketch, not formalized): the
+For `cbc` this proof does not apply, and the variant is not consistent: the
 Bonferroni p-value of a cut edge with two or more quartets is `1` with probability bounded below, so its
 CBC p-value is `1`, and a CBC combination with a `1` is `1` whatever the other p-values
-(`combineP_cbc_eq_one`), so a tree with a false edge and such a cut edge is not rejected. -/
+(`combineP_cbc_eq_one`), so a tree with a false edge and such a cut edge is not rejected. This is proved on one
+law that meets Assumption 1, `ECToBlob.BinaryLaw.OnBinary.not_consistency_edge_combination_cbc`. In general, under the NMSC, it is a sketch. -/
 theorem tendsto_ectoblobEdge_limitTree (N : RootedNetwork V E X) (hN : N.IsPhylogenetic)
     (dist : BinaryGeneTree X → ℝ) (hd : IsDist dist)
     (h₁ : Assumption1Forward N (displayCF dist Subtype.val))

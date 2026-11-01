@@ -124,24 +124,16 @@ theorem displays_treeOfBlobs_abcd : Displays (treeOfBlobs cycleNet) abcd := by
 theorem inducedCutSplit_abcd : InducedCutSplit cycleNet abcd :=
   inducedCutSplit_of_displays_treeOfBlobs isPhylogenetic_cycleNet displays_treeOfBlobs_abcd
 
-/-- The degree of a vertex, by counting. -/
-private theorem ncard_filter {α : Type*} [Fintype α] (p : α → Prop) [DecidablePred p] :
-    {a | p a}.ncard = #(univ.filter p) := by
-  rw [← Set.ncard_coe_finset]
-  congr 1
-  ext a
-  simp
-
 /-- The network is binary, as Definition 2 of [8] asks. -/
 theorem isBinary_cycleNet : cycleNet.IsBinary := by
   refine ⟨?_, fun v hv hout => ?_⟩
   · unfold DirectedMultigraph.outdegree
-    rw [ncard_filter]
+    rw [ncard_setOf_eq_card_filter]
     decide
   · unfold DirectedMultigraph.outdegree at hout
     unfold DirectedMultigraph.indegree DirectedMultigraph.outdegree
-    rw [ncard_filter] at hout
-    rw [ncard_filter, ncard_filter]
+    rw [ncard_setOf_eq_card_filter] at hout
+    rw [ncard_setOf_eq_card_filter, ncard_setOf_eq_card_filter]
     revert hv hout
     cases v <;> decide
 
@@ -542,7 +534,7 @@ theorem indegree_cycleNet (v : V₃) :
       | .h => 2
       | _ => 1 := by
   unfold DirectedMultigraph.indegree
-  rw [ncard_filter]
+  rw [ncard_setOf_eq_card_filter]
   cases v <;> decide
 
 /-- **The parameters of the tie are valid.** -/
