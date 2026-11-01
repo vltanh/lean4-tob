@@ -13,7 +13,7 @@ Blobs, the tree of blobs, its reduced forms, and B- and T-quartets, as objects.
 * Definition 8: `IsDeterminedBy`.
 * Definition 9: `IsChainOfBlobs`.
 * Definition 10: `treeOfBlobsRooted` and, for a semidirected network, `SemidirectedNetwork.treeOfBlobs`.
-  `SemidirectedNetwork.treeOfBlobs_isTree`: it is a tree. `nodeDegree_bridgeQuotient`: "a blob with `m` incident cut
+  `treeOfBlobs_semidirected_isTree`: it is a tree. `nodeDegree_bridgeQuotient`: "a blob with `m` incident cut
   edges produces an `m`-multifurcation".
 * Definition 11: `reducedRootedTree` and `Trd`. `Trd` is a labelled simple graph, in which the nodes of degree 2 of
   `T(𝒩⁻)` are gone and two nodes are adjacent when a path through nodes of degree 2 joins them.
@@ -134,25 +134,54 @@ theorem nodeDegree_bridgeQuotient [Finite F] (b : G.BlobVertex) :
     exact blobOf_source_ne_target he.1 (he'.2.trans he.2.symm)
   rw [nodeDegree, hin, hout, cutDegree, hunion, Set.ncard_union_eq hdisj (Set.toFinite _) (Set.toFinite _)]
 
-/-- `v` is a node with a single edge `g`, which is not a loop: a degree-one node. -/
-def IsPendantAt (G : DirectedMultigraph W F) (v : W) (g : F) : Prop :=
-  G.source g ≠ G.target g ∧ (G.source g = v ∨ G.target g = v) ∧
-    ∀ f, (G.source f = v ∨ G.target f = v) → f = g
+/-- A node of degree 1 has a single edge, which is not a loop. -/
+theorem nodeDegree_eq_one_iff [Finite F] {v : W} : nodeDegree G v = 1 ↔ ∃ g, G.source g ≠ G.target g ∧ (G.source g = v ∨ G.target g = v) ∧
+    ∀ f, (G.source f = v ∨ G.target f = v) → f = g := by
+  constructor
+  · intro hd
+    unfold nodeDegree at hd
+    have hcases : (G.indegree v = 1 ∧ G.outdegree v = 0) ∨ (G.indegree v = 0 ∧ G.outdegree v = 1) := by
+      omega
+    rcases hcases with ⟨h₁, h₀⟩ | ⟨h₀, h₁⟩
+    · obtain ⟨g, hg⟩ := (G.indegree_eq_one_iff _).mp h₁
+      have hno := (G.outdegree_eq_zero_iff _).mp h₀
+      refine ⟨g, fun h => hno g (h.trans ((hg g).mpr rfl)), Or.inr ((hg g).mpr rfl), fun f hf => ?_⟩
+      rcases hf with hf | hf
+      · exact absurd hf (hno f)
+      · exact (hg f).mp hf
+    · obtain ⟨g, hg⟩ := (G.outdegree_eq_one_iff _).mp h₁
+      have hno := (G.indegree_eq_zero_iff _).mp h₀
+      refine ⟨g, fun h => hno g (h.symm.trans ((hg g).mpr rfl)), Or.inl ((hg g).mpr rfl), fun f hf => ?_⟩
+      rcases hf with hf | hf
+      · exact (hg f).mp hf
+      · exact absurd hf (hno f)
+  · rintro ⟨g, hne, hg, hu⟩
+    unfold nodeDegree
+    rcases hg with hs | ht
+    · have h₀ : G.indegree v = 0 := (G.indegree_eq_zero_iff _).mpr fun f hf => hne (hs.trans (hu f (Or.inr hf) ▸ hf).symm)
+      have h₁ : G.outdegree v = 1 := (G.outdegree_eq_one_iff _).mpr ⟨g, fun f => ⟨fun hf => hu f (Or.inl hf), fun h => h ▸ hs⟩⟩
+      omega
+    · have h₀ : G.outdegree v = 0 := (G.outdegree_eq_zero_iff _).mpr fun f hf => hne ((hu f (Or.inl hf) ▸ hf).trans ht.symm)
+      have h₁ : G.indegree v = 1 := (G.indegree_eq_one_iff _).mpr ⟨g, fun f => ⟨fun hf => hu f (Or.inr hf), fun h => h ▸ ht⟩⟩
+      omega
+
+/-- The single edge at a node, not a loop, is the only edge crossing the node. -/
+theorem crosses_singleton_iff {v : W} {g : F} (hne : G.source g ≠ G.target g) (hg : G.source g = v ∨ G.target g = v)
+    (huniq : ∀ f, (G.source f = v ∨ G.target f = v) → f = g) (f : F) : G.Crosses f {v} ↔ f = g := by
+  constructor
+  · rintro (⟨hs, -⟩ | ⟨ht, -⟩)
+    · exact huniq f (Or.inl hs)
+    · exact huniq f (Or.inr ht)
+  · rintro rfl
+    rcases hg with hs | ht
+    · exact Or.inl ⟨hs, fun ht => hne (hs.trans ht.symm)⟩
+    · exact Or.inr ⟨ht, fun hs => hne (hs.trans ht.symm)⟩
 
 /-- A degree-one node is a trivial blob, and a node of degree one in the tree of blobs. -/
-theorem nodeDegree_bridgeQuotient_of_isPendantAt {v : W} {g : F} (h : IsPendantAt G v g) :
+theorem nodeDegree_bridgeQuotient_of_nodeDegree_eq_one [Finite F] {v : W} (h : nodeDegree G v = 1) :
     nodeDegree G.bridgeQuotient (blobOf G v) = 1 := by
-  obtain ⟨hne, hg, huniq⟩ := h
-  have hcut : ∀ f, G.Crosses f {v} ↔ f = g := by
-    intro f
-    constructor
-    · rintro (⟨hs, -⟩ | ⟨ht, -⟩)
-      · exact huniq f (Or.inl hs)
-      · exact huniq f (Or.inr ht)
-    · rintro rfl
-      rcases hg with hs | ht
-      · exact Or.inl ⟨hs, fun ht => hne (hs.trans ht.symm)⟩
-      · exact Or.inr ⟨ht, fun hs => hne (hs.trans ht.symm)⟩
+  obtain ⟨g, hne, hg, huniq⟩ := nodeDegree_eq_one_iff.mp h
+  have hcut := crosses_singleton_iff hne hg huniq
   have hb : G.underlying.IsBridge g := (G.isBridge_iff g).mpr ⟨{v}, hcut⟩
   have hclass : ∀ u, blobOf G u = blobOf G v → u = v := fun u hu =>
     (G.mem_iff_of_blobSetoid hcut hu).mpr rfl
@@ -229,9 +258,10 @@ variable (hM : M.IsPhylogenetic) {e₀ : E} (he₀ : M.graph.source e₀ = M.roo
 
 include he₀ hout in
 /-- A taxon is a node with one edge in a semidirected network. -/
-theorem exists_isPendantAt_unrootAt (x : X) :
-    ∃ g, IsPendantAt (unrootAt M hM e₀).graph ((unrootAt M hM e₀).leaf x) g := by
+theorem nodeDegree_unrootAt_leaf (x : X) :
+    nodeDegree (unrootAt M hM e₀).graph ((unrootAt M hM e₀).leaf x) = 1 := by
   have : Finite E := hM.finite_arcs
+  rw [nodeDegree_eq_one_iff]
   obtain ⟨e₁, hne₁, hroot⟩ := exists_other_root_arc hout he₀
   obtain ⟨g₀, hg₀⟩ := (M.graph.indegree_eq_one_iff _).mp (hM.leaf_indegree x)
   have hno : ∀ f, M.graph.source f ≠ M.leaf x :=
@@ -371,13 +401,17 @@ section Trd
 
 variable {N : RootedNetwork V E X}
 
+/-- A taxon is a node of degree 1 of a network. -/
+theorem nodeDegree_leaf (hN : N.IsPhylogenetic) (x : X) : nodeDegree N.graph (N.leaf x) = 1 := by
+  rw [nodeDegree, hN.leaf_indegree, (hN.leaves _).mpr ⟨x, rfl⟩]
+
 /-- A taxon is a node of degree 1 in `T(𝒩⁻)`, hence not suppressed. -/
 theorem nodeDegree_treeOfBlobs_leaf (hN : IsBinaryNetwork N) (hX : Nontrivial X) (x : X) :
     nodeDegree (semidirected hN hX).treeOfBlobs
       (blobOf (semidirected hN hX).graph ((semidirected hN hX).leaf x)) = 1 := by
-  obtain ⟨g, hg⟩ := exists_isPendantAt_unrootAt (lsaPlus_isPhylogenetic hN hX) (rootTreeArc_spec hN hX).1
-    (lsaPlus_outdegree_root hN hX) x
-  exact nodeDegree_bridgeQuotient_of_isPendantAt hg
+  have := (lsaPlus_isPhylogenetic hN hX).finite_arcs
+  exact nodeDegree_bridgeQuotient_of_nodeDegree_eq_one
+    (nodeDegree_unrootAt_leaf (lsaPlus_isPhylogenetic hN hX) (rootTreeArc_spec hN hX).1 (lsaPlus_outdegree_root hN hX) x)
 
 /-- The nodes of `T_rd(𝒩⁻)`. -/
 abbrev TrdV (hN : IsBinaryNetwork N) (hX : Nontrivial X) :=

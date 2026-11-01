@@ -17,7 +17,7 @@ independent or correlated inheritance satisfies (3.1) provided the network has n
 that cut edges (which are necessarily tree edges) have positive lengths [8]. The NMSC with common
 inheritance, and the displayed tree model (with no coalescent process) also satisfy (3.1) provided only that
 cut edges have positive lengths. All of these models also satisfy assumption 2 of Theorem 3.1."
-(`notes/paper2026/paper.txt`, lines 401-406.)
+(the paper's text, lines 401-406.)
 
 `Theorem31Assumptions` packages the two assumptions in the form in which `theorem3_1` uses them.
 

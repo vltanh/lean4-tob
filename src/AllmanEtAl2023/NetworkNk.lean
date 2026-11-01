@@ -15,8 +15,8 @@ for concreteness, we make the network ultrametric by choosing the remaining inte
 edges to `a, b, c, d` to be of lengths `1, 1, 1 + (k + 1)ε, 2 + (k + 1)ε + (2^k - 1)M`, respectively. We set all
 hybridization parameters equal to `1/2`."
 
-The lengths of the pendant edges are the arXiv version's. The published text prints "`1, 1, 1 + (k + 1)ε + (2^k - 1)M`", three
-lengths for four edges, a misprint: the arXiv lengths make the network ultrametric, as the sentence says.
+The lengths of the pendant edges are the arXiv version's. The PMC manuscript prints "`1, 1, 1 + (k + 1)ε + (2^k - 1)M`", three
+lengths for four edges, a misprint: Figure 6 has the arXiv lengths, which make the network ultrametric, as the sentence says. The journal's text wasn't read.
 
 The nodes of the inverted subtree are numbered as a binary heap: `1` is its 'root', the node `n` has parents `2n` and
 `2n + 1`, and the 'leaves' are `2^k, …, 2^(k+1) - 1`, in the order of the path. The node numbered `n` is `Vertex.heap (n - 1)`.

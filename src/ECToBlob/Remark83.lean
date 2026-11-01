@@ -16,7 +16,7 @@ public import Phylogenetics.Tree.Metric
 "The argument in the proof of Theorem 8.2 is easily adapted to strengthen the consistency results for the NANUQ [1]
 and TINNiK [5] algorithms, which use quartet hypothesis tests in a similar way (though without combining p-values).
 This makes explicit some valid choices of sequences of test levels for those algorithms."
-(`notes/paper2026/paper.txt`, lines 1179-1182.)
+(the paper's text, lines 1179-1182.)
 
 The levels are those of the proof of Theorem 8.2, `alphaSeq` and `betaSeq`, which depend on nothing about the network.
 The argument of that proof is: under the null, the p-value does not collapse, so it stays above any level tending to

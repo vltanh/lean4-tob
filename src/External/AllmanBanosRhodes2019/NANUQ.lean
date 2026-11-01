@@ -8,8 +8,8 @@ public import TOBQMC.Level1CF
 # NANUQ (Allman, Baños, Rhodes 2019)
 
 E. Allman, H. Baños, J. Rhodes, *NANUQ: a method for inferring species networks from gene trees under the coalescent
-model*, Algorithms Mol. Biol. 14 (2019), 24, <https://doi.org/10.1186/s13015-019-0159-2>, read in arXiv v1,
-`notes/sources/nanuq2019.txt` (line numbers below), and compared with the published text on the passages quoted.
+model*, Algorithms Mol. Biol. 14 (2019), 24, <https://doi.org/10.1186/s13015-019-0159-2>, read in arXiv v1 (the line numbers below are those of its
+plain text), and compared with the published text on the passages quoted.
 
 ## The algorithm
 

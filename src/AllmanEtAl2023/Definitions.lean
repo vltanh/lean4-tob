@@ -190,11 +190,12 @@ theorem isTreeArc_iff (hN : IsBinaryNetwork N) (e : E) : N.IsTreeArc e ↔ IsTre
 
 end Definition1
 
-/-! ### Definition 2
+/-! ### Definition 2 -/
 
-**Definition 2** (`a:def:cutedge`). A *cut edge*: an edge whose deletion increases the number of connected components. This is
+/-- **Definition 2** (`a:def:cutedge`). A *cut edge*: an edge whose deletion increases the number of connected components. This is
 `G.underlying.IsBridge e`, Mathlib's bridge of the undirected graph, which keeps parallel edges apart;
 `DirectedMultigraph.isBridge_iff_not_walks_delete` says that it is an edge whose deletion separates its ends. -/
+abbrev IsCutEdge {W F : Type*} (G : DirectedMultigraph W F) (e : F) : Prop := G.underlying.IsBridge e
 
 
 /-! ### Definition 3 -/

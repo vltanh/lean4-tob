@@ -29,7 +29,7 @@ variable {V E X : Type*} [Fintype X] [DecidableEq X] {N : RootedNetwork V E X}
 `aᵢ ∈ Aᵢ`, `bᵢ ∈ Bᵢ` the split `a₁a₂|b₁b₂` is a cut-edge split of the induced 4-taxon network, then
 `A|B` is a cut-edge split of `N`.
 
-The proof is the paper's, `notes/paper2026/paper.txt` lines 588-627, in its order. Choose
+The proof is the paper's, lines 588-627 of its text, in its order. Choose
 `ã₁, ã₂, b̃₁, b̃₂` so that the subgraph `G̃₄` induced on these taxa has the fewest cut edges inducing
 `ã₁ã₂|b̃₁b̃₂`, the set `E` (`quartetCuts`), which is nonempty. The subgraph `G̃₃` induced on `ã₂, b̃₁, b̃₂`
 also contains `E` (`Induces.threeTaxa`). By the minimality of `|E|`, the funnel of any `a₁ ∈ A₁` can only

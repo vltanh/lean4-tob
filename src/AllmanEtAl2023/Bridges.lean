@@ -3,24 +3,28 @@ module
 public import AllmanEtAl2023.Basic
 public import AllmanEtAl2023.Concordance
 public import AllmanEtAl2023.Lemma2
-public import AllmanEtAl2023.TreeSuppression
+public import AllmanEtAl2023.TrdTree
+public import AllmanEtAl2023.BlobsPass
 
 /-!
-# Allman, Baños, Mitchell, Rhodes 2023: bridges between the paper's objects and the older representation
+# Allman, Baños, Mitchell, Rhodes 2023: bridges between the paper's objects and the subgraph language
 
-The numbered results are stated on the paper's objects, in `AllmanEtAl2023.Printed`. `src/AllmanEtAl2023/SubgraphBlobs.lean`, `CutOrder.lean`,
-`CycleLemma.lean`, `Reduction.lean`, `Basic.lean`, `Theorem1.lean`, `Corollary1.lean` are stated on another representation, through split
+The numbered results are stated on the paper's objects. `src/AllmanEtAl2023/SubgraphBlobs.lean`, `CutOrder.lean`,
+`CycleLemma.lean`, `Reduction.lean`, `Basic.lean`, `GenericCF.lean`, `CFDetectable.lean` are stated on subgraphs of a fixed network, through split
 families and cut-edge splits on ancestral subgraphs. These are the bridges:
 
 * `isBlobQuartet_iff_isBQuartet`: Definition 12 and `Phylogenetics.IsBQuartet` (proved).
 * `isBlobQuartet_iff_exists_determines`, `exists_isDeterminedBy_three` (proved).
 * `removeStem_hasCutSplit_iff`, `induced_hasCutSplit_iff` (proved): the cut-edge splits of the paper's induced network are
   `RootedNetwork.HasCutSplitOn` of the library, with both sides nonempty.
-* `isBlobQuartetOnInduced_iff`, `isBlobQuartetOnInduced_self_iff`, `isTreelike_iff_resolves` (proved): a B-quartet on the induced network, in the older forms.
+* `isBlobQuartetOnInduced_iff` (proved, in `AllmanEtAl2023.BlobsPass`, as the paper says, by blobs and cut edges through the steps of Definition 6), `isBlobQuartetOnInduced_self_iff`, `isTreelike_iff_resolves` (proved): a
+  B-quartet on the induced network, in the subgraph language.
 * `inducedHasQuartetTopology_iff`: the resolved topology on the induced network is `InducedCutSplit`, from `hasQuartetTopology_iff_displays`.
 * `unrootAt_cut_iff`, `lsaPlus_hasCutSplit_iff`, `splits_Trd` (proved): the splits of the graph `T_rd(𝒩⁻)` are `Phylogenetics.treeOfBlobs`.
-* `hasQuartetTopology_iff_displays`, `hasStarTopology_iff_displaysUnresolved`: on four taxa, the literal topologies are the displayed
-  ones (`sorry`; the content of the last sentences of Lemma 1).
+* `isTree_Trd`, `ncard_neighborSet_Trd_leaf`, `three_le_ncard_neighborSet_Trd` (proved): `T_rd(𝒩⁻)` is a tree, whose labelled nodes have degree 1 and whose other nodes have
+  degree at least 3.
+* `hasQuartetTopology_iff_displays`, `hasStarTopology_iff_displaysUnresolved` (proved): on four taxa, the literal topologies are the displayed
+  ones. This is the content of the last sentences of Lemma 1, by the count of `LabelledGraph.hasStar_or_hasQuartet`.
 -/
 
 @[expose] public noncomputable section
@@ -46,16 +50,16 @@ theorem ancestralVertices_univ (hN : N.IsPhylogenetic) : N.ancestralVertices Set
   obtain ⟨x, hx⟩ := exists_reaches_leaf hN v
   exact ⟨x, Set.mem_univ x, hx⟩
 
-/-- **Definition 12 in the language of the older code.** -/
+/-- **Definition 12 in the subgraph language.** -/
 theorem isBlobQuartet_iff_exists_determines {Q : Finset X} (hQ : Q.card = 4) :
     IsBlobQuartet N Q ↔ ∃ v, Determines N.graph Set.univ v N.leaf Q := by
   have h3 : 3 ≤ Q.card := by omega
   constructor
   · rintro ⟨-, b, hb⟩
     induction b using Quotient.inductionOn with
-    | h v => exact ⟨v, (Printed.isDeterminedBy_blobOf_iff.mp hb).2⟩
+    | h v => exact ⟨v, (isDeterminedBy_blobOf_iff.mp hb).2⟩
   · rintro ⟨v, hv⟩
-    exact ⟨hQ, blobOf _ v, Printed.isDeterminedBy_blobOf_iff.mpr ⟨h3, hv⟩⟩
+    exact ⟨hQ, blobOf _ v, isDeterminedBy_blobOf_iff.mpr ⟨h3, hv⟩⟩
 
 /-- **Definition 12 is the library's B-quartet**, on phylogenetic networks. The library says that the tree of blobs resolves no
 quartet tree on the set, and Definition 12 says that a blob is determined by the set. -/
@@ -74,7 +78,7 @@ theorem exists_isDeterminedBy_three [DecidableEq X] (hN : N.IsPhylogenetic) {a b
   rw [ancestralArcs_univ hN] at hv
   have h3 : ({a, b, c} : Finset X).card = 3 := by
     rw [Finset.card_insert_of_notMem (by simp [hab, hac]), Finset.card_pair hbc]
-  exact ⟨blobOf _ v, Printed.isDeterminedBy_blobOf_iff.mpr ⟨h3.ge, hv⟩⟩
+  exact ⟨blobOf _ v, isDeterminedBy_blobOf_iff.mpr ⟨h3.ge, hv⟩⟩
 
 /-! ### Cut-edge splits of the induced network -/
 
@@ -370,102 +374,269 @@ theorem splits_Trd [Fintype X] [DecidableEq X] (hN : IsBinaryNetwork N) (hX : No
   exact (hasCutSplitOn_iff_lsaNetwork_hasCutSplit hP Set.nontrivial_univ h₁' h₂').symm.trans
     (hasCutSplit_iff_hasCutSplitOn_univ hP _).symm
 
+/-! ### The shape of `T_rd(𝒩⁻)` -/
+
+section TrdShape
+
+/-- A directed path from a node of `S` to a node off `S` leaves `S` by an edge. -/
+theorem exists_exit_of_reaches {G : DirectedMultigraph V E} {S : Set V} {a b : V} (h : G.Reaches a b) (ha : a ∈ S) (hb : b ∉ S) :
+    ∃ f, G.source f ∈ S ∧ G.target f ∉ S := by
+  induction h with
+  | refl => exact absurd ha hb
+  | @tail c t _ hct ih =>
+    by_cases hc : c ∈ S
+    · obtain ⟨f, rfl, rfl⟩ := hct
+      exact ⟨f, hc, hb⟩
+    · exact ih hc
+
+/-- **A cut edge of the LSA network has a taxon on each side.** Off the root, a side reached through its edge cannot be left, and no taxon is there. At the root, every path to a taxon leaves through the edge,
+whose child would be a stable ancestor below the LSA. -/
+theorem lsaPlus_not_hasCutSplit_empty (hN : IsBinaryNetwork N) (hX : Nontrivial X) :
+    ¬ (lsaPlus hN hX).HasCutSplit (∅ : Set X) := by
+  rintro ⟨e, S, hS, hA⟩
+  have hM := lsaPlus_isPhylogenetic hN hX
+  have hnot : ∀ x, (lsaPlus hN hX).leaf x ∉ S := fun x hx => by
+    have : x ∈ (lsaPlus hN hX).leaf ⁻¹' S := hx
+    rw [hA] at this
+    exact this
+  by_cases hroot : (lsaPlus hN hX).root ∈ S
+  · have hst : (lsaPlus hN hX).IsStableAncestor Set.univ ((lsaPlus hN hX).graph.target e) := by
+      rintro x - ⟨-, -, hp⟩
+      have hmem : ∀ z, Relation.ReflTransGen (fun a b => (lsaPlus hN hX).graph.Adj a b ∧ a ≠ (lsaPlus hN hX).graph.target e ∧
+          b ≠ (lsaPlus hN hX).graph.target e) (lsaPlus hN hX).root z → z ∈ S := by
+        intro z hz
+        induction hz with
+        | refl => exact hroot
+        | @tail a b _ hab ih =>
+          obtain ⟨⟨f, rfl, rfl⟩, -, hb⟩ := hab
+          by_contra hbS
+          exact hb (by rw [(hS f).mp (Or.inl ⟨ih, hbS⟩)])
+      exact hnot x (hmem _ hp)
+    have hr := lsaPlus_reaches_root_of_isStableAncestor hN hX hst
+    exact target_ne_root hM e (eq_of_reaches_of_reaches hM.acyclic hr (hM.root_reaches _))
+  · -- a node of the side reaches a taxon, and is reached from the root
+    obtain ⟨p, hp⟩ : ∃ p, p ∈ S := by
+      rcases (hS e).mpr rfl with ⟨h, -⟩ | ⟨h, -⟩ <;> exact ⟨_, h⟩
+    obtain ⟨x, hx⟩ := exists_reaches_leaf hM p
+    obtain ⟨f, hf, hf'⟩ := exists_exit_of_reaches hx hp (hnot x)
+    obtain ⟨g, hg, hg'⟩ := exists_exit_of_reaches (S := Sᶜ) (hM.root_reaches p) hroot (not_not.mpr hp)
+    have hfe : f = e := (hS f).mp (Or.inl ⟨hf, hf'⟩)
+    have hge : g = e := (hS g).mp (Or.inr ⟨not_not.mp hg', hg⟩)
+    subst hfe
+    subst hge
+    exact hf' (not_not.mp hg')
+
+/-- **A blob of `𝒩⁻` with no taxon is not a leaf of `T(𝒩⁻)`** : the paper's statement that the leaves of the tree of blobs are the taxa, for any number of taxa. -/
+theorem nodeDegree_treeOfBlobs_ne_one (hN : IsBinaryNetwork N) (hX : Nontrivial X) {b : (semidirected hN hX).graph.BlobVertex}
+    (hb : ∀ x, blobOf (semidirected hN hX).graph ((semidirected hN hX).leaf x) ≠ b) :
+    nodeDegree (semidirected hN hX).treeOfBlobs b ≠ 1 := by
+  intro h1
+  have : Finite V := hN.finite_vertices
+  have : Finite E := hN.finite_arcs
+  have hTree := treeOfBlobs_semidirected_isTree hN hX
+  rw [TreeSuppression.nodeDegree_eq_ncard_edgesAt hTree] at h1
+  obtain ⟨e, he⟩ := Set.ncard_eq_one.mp h1
+  have hat : ∀ f, f ∈ TreeSuppression.edgesAt (semidirected hN hX).treeOfBlobs b ↔ f = e := fun f => by
+    rw [he]
+    rfl
+  have hside : ∀ f, (semidirected hN hX).treeOfBlobs.Crosses f {b} ↔ f = e := by
+    intro f
+    constructor
+    · rintro (⟨hs, -⟩ | ⟨ht, -⟩)
+      · exact (hat f).mp (Or.inl hs)
+      · exact (hat f).mp (Or.inr ht)
+    · rintro rfl
+      rcases (hat f).mpr rfl with hs | ht
+      · exact Or.inl ⟨hs, fun ht => TreeSuppression.source_ne_target hTree f (hs.trans (Eq.symm ht))⟩
+      · exact Or.inr ⟨ht, fun hs => TreeSuppression.source_ne_target hTree f (Eq.trans hs (Eq.symm ht))⟩
+  have hcut := ((semidirected hN hX).graph.labelled_cut_iff_quotient (semidirected hN hX).leaf ∅).mpr
+    ⟨e, {b}, hside, Set.eq_empty_of_forall_notMem fun x hx => hb x hx⟩
+  exact lsaPlus_not_hasCutSplit_empty hN hX
+    ((unrootAt_cut_iff (lsaPlus_isPhylogenetic hN hX) (rootTreeArc_spec hN hX).1 (lsaPlus_outdegree_root hN hX) ∅).mp hcut)
+
+/-- A blob of `𝒩⁻` with no taxon is not isolated in `T(𝒩⁻)`. -/
+theorem nodeDegree_treeOfBlobs_ne_zero (hN : IsBinaryNetwork N) (hX : Nontrivial X) {b : (semidirected hN hX).graph.BlobVertex}
+    (hb : ∀ x, blobOf (semidirected hN hX).graph ((semidirected hN hX).leaf x) ≠ b) :
+    nodeDegree (semidirected hN hX).treeOfBlobs b ≠ 0 := by
+  intro h0
+  have : Finite V := hN.finite_vertices
+  have : Finite E := hN.finite_arcs
+  have hTree := treeOfBlobs_semidirected_isTree hN hX
+  rw [TreeSuppression.nodeDegree_eq_ncard_edgesAt hTree, Set.ncard_eq_zero (Set.toFinite _)] at h0
+  obtain ⟨x⟩ : Nonempty X := hX.to_nonempty
+  rcases Relation.ReflTransGen.cases_head (hTree.1 b (blobOf (semidirected hN hX).graph ((semidirected hN hX).leaf x))) with h | ⟨c, ⟨f, -, hf⟩, -⟩
+  · exact hb x h.symm
+  · have : f ∈ TreeSuppression.edgesAt (semidirected hN hX).treeOfBlobs b := by
+      rcases hf with ⟨h, -⟩ | ⟨-, h⟩
+      · exact Or.inl h
+      · exact Or.inr h
+    rw [h0] at this
+    exact this
+
+/-- **`T_rd(𝒩⁻)` is a tree** (`a:claim:trd-tree`). The paper calls it one. -/
+theorem isTree_Trd (hN : IsBinaryNetwork N) (hX : Nontrivial X) : (Trd hN hX).graph.IsTree := by
+  have : Finite V := hN.finite_vertices
+  have : Finite E := hN.finite_arcs
+  obtain ⟨x⟩ : Nonempty X := hX.to_nonempty
+  have : Nonempty {w // nodeDegree (semidirected hN hX).treeOfBlobs w ≠ 2} := ⟨(Trd hN hX).leaf x⟩
+  exact TreeSuppression.isTree_suppressDegreeTwo (treeOfBlobs_semidirected_isTree hN hX)
+
+/-- A pendant node is alone in its blob. -/
+theorem eq_of_blobOf_eq_of_nodeDegree_eq_one {W F : Type*} [Finite F] {G : DirectedMultigraph W F} {v u : W} (h : nodeDegree G v = 1)
+    (hu : blobOf G u = blobOf G v) : u = v := by
+  obtain ⟨g, hne, hg, huniq⟩ := nodeDegree_eq_one_iff.mp h
+  exact (G.mem_iff_of_blobSetoid (crosses_singleton_iff hne hg huniq) hu).mpr rfl
+
+/-- **Distinct taxa are distinct nodes of `T_rd(𝒩⁻)`.** -/
+theorem Trd_leaf_injective (hN : IsBinaryNetwork N) (hX : Nontrivial X) : Function.Injective (Trd hN hX).leaf := by
+  intro x y hxy
+  have hb : blobOf (semidirected hN hX).graph ((semidirected hN hX).leaf x) =
+      blobOf (semidirected hN hX).graph ((semidirected hN hX).leaf y) := congrArg Subtype.val hxy
+  have := (lsaPlus_isPhylogenetic hN hX).finite_arcs
+  have hv := eq_of_blobOf_eq_of_nodeDegree_eq_one
+    (nodeDegree_unrootAt_leaf (lsaPlus_isPhylogenetic hN hX) (rootTreeArc_spec hN hX).1 (lsaPlus_outdegree_root hN hX) y) hb
+  have hv' : (lsaPlus hN hX).leaf x = (lsaPlus hN hX).leaf y := congrArg Subtype.val hv
+  exact (lsaPlus_isPhylogenetic hN hX).leaf_injective hv'
+
+/-- **A taxon has degree 1 in `T_rd(𝒩⁻)`.** -/
+theorem ncard_neighborSet_Trd_leaf (hN : IsBinaryNetwork N) (hX : Nontrivial X) (x : X) :
+    ((Trd hN hX).graph.neighborSet ((Trd hN hX).leaf x)).ncard = 1 := by
+  have : Finite V := hN.finite_vertices
+  have : Finite E := hN.finite_arcs
+  exact (TreeSuppression.ncard_neighborSet_suppressDegreeTwo (treeOfBlobs_semidirected_isTree hN hX) _).trans
+    (nodeDegree_treeOfBlobs_leaf hN hX x)
+
+/-- **A node of `T_rd(𝒩⁻)` other than a taxon has degree at least 3.** -/
+theorem three_le_ncard_neighborSet_Trd (hN : IsBinaryNetwork N) (hX : Nontrivial X) (v : TrdV hN hX)
+    (hv : ∀ x, (Trd hN hX).leaf x ≠ v) : 3 ≤ ((Trd hN hX).graph.neighborSet v).ncard := by
+  have : Finite V := hN.finite_vertices
+  have : Finite E := hN.finite_arcs
+  have hb : ∀ x, blobOf (semidirected hN hX).graph ((semidirected hN hX).leaf x) ≠ v.1 := fun x h =>
+    hv x (Subtype.ext h)
+  have h₀ := nodeDegree_treeOfBlobs_ne_zero hN hX hb
+  have h₁ := nodeDegree_treeOfBlobs_ne_one hN hX hb
+  have h₂ := v.2
+  have heq := TreeSuppression.ncard_neighborSet_suppressDegreeTwo (treeOfBlobs_semidirected_isTree hN hX) v
+  change ((Trd hN hX).graph.neighborSet v).ncard = _ at heq
+  omega
+
+/-- **`T_rd(𝒩⁻)` is a reduced tree.** -/
+theorem isReducedTree_Trd (hN : IsBinaryNetwork N) (hX : Nontrivial X) : (Trd hN hX).IsReducedTree := by
+  have : Finite V := hN.finite_vertices
+  have : Finite E := hN.finite_arcs
+  exact ⟨isTree_Trd hN hX, inferInstance, Trd_leaf_injective hN hX, ncard_neighborSet_Trd_leaf hN hX, three_le_ncard_neighborSet_Trd hN hX⟩
+
+/-- On four taxa, `T_rd(𝒩⁻)` has one of the literal topologies. -/
+theorem Trd_hasStar_or_hasQuartet [Fintype X] [DecidableEq X] (hN : IsBinaryNetwork N) (hcard : Fintype.card X = 4)
+    {a b c d : X} (h : ({a, b, c, d} : Finset X).card = 4) :
+    (Trd hN (nontrivial_of_card_four hcard)).HasStarTopology a b c d ∨
+      (Trd hN (nontrivial_of_card_four hcard)).HasQuartetTopology a b c d ∨
+      (Trd hN (nontrivial_of_card_four hcard)).HasQuartetTopology a c b d ∨
+      (Trd hN (nontrivial_of_card_four hcard)).HasQuartetTopology a d b c := by
+  have : Finite V := hN.finite_vertices
+  have : Finite E := hN.finite_arcs
+  exact LabelledGraph.hasStar_or_hasQuartet _ (isTree_Trd hN _) (Trd_leaf_injective hN _) hcard
+    (ncard_neighborSet_Trd_leaf hN _) (three_le_ncard_neighborSet_Trd hN _) h
+
+/-- Four distinct taxa of four are all of them. -/
+theorem forall_eq_of_card_four [Fintype X] [DecidableEq X] (hcard : Fintype.card X = 4) {a b c d : X}
+    (h : ({a, b, c, d} : Finset X).card = 4) (x : X) : x = a ∨ x = b ∨ x = c ∨ x = d := by
+  have hu : ({a, b, c, d} : Finset X) = Finset.univ := Finset.eq_univ_of_card _ (h.trans hcard.symm)
+  have := Finset.mem_univ x
+  rw [← hu] at this
+  simpa using this
+
+/-- `T_rd(𝒩⁻)` displays what its literal quartet topology says. -/
+theorem displays_of_hasQuartetTopology [Fintype X] [DecidableEq X] (hN : IsBinaryNetwork N) (hX : Nontrivial X) (hcard : Fintype.card X = 4)
+    {a b c d : X} (h : ({a, b, c, d} : Finset X).card = 4) (hT : (Trd hN hX).HasQuartetTopology a b c d) :
+    Displays (Trd hN hX).splits (quartetTree a b c d h) := by
+  obtain ⟨hab, hac, had, hbc, hbd, hcd⟩ := ne_of_card_four h
+  have hU : IsUnrootedTree (Trd hN hX).splits := by
+    rw [splits_Trd]
+    exact isUnrootedTree_treeOfBlobs hN.isPhylogenetic
+  have hS : IsSplitFamily (Trd hN hX).splits := hU.isSplitFamily (by omega)
+  refine (TreeMetric.displays_quartetTree_iff hS h).mpr ⟨{a, b}, hT.pair_mem_splits (forall_eq_of_card_four hcard h), by simp, by simp, ?_, ?_⟩
+  · simp [hac.symm, hbc.symm]
+  · simp [had.symm, hbd.symm]
+
 /-- On four taxa, `T_rd(𝒩⁻)` has the quartet tree topology `ab|cd` exactly when it displays `ab|cd`. -/
 theorem hasQuartetTopology_iff_displays [Fintype X] [DecidableEq X] (hN : IsBinaryNetwork N) (hcard : Fintype.card X = 4)
     {a b c d : X} (h : ({a, b, c, d} : Finset X).card = 4) :
     (Trd hN (nontrivial_of_card_four hcard)).HasQuartetTopology a b c d ↔
       Displays (Trd hN (nontrivial_of_card_four hcard)).splits (quartetTree a b c d h) := by
-  sorry
+  have hX := nontrivial_of_card_four hcard
+  obtain ⟨hab, hac, had, hbc, hbd, hcd⟩ := ne_of_card_four h
+  have hU : IsUnrootedTree (Trd hN hX).splits := by
+    rw [splits_Trd]
+    exact isUnrootedTree_treeOfBlobs hN.isPhylogenetic
+  have hS : IsSplitFamily (Trd hN hX).splits := hU.isSplitFamily (by omega)
+  refine ⟨displays_of_hasQuartetTopology hN hX hcard h, fun hD => ?_⟩
+  rcases Trd_hasStar_or_hasQuartet hN hcard h with hst | h₁ | h₂ | h₃
+  · exfalso
+    obtain ⟨A, hA, ha, hb, hc, hd⟩ := (TreeMetric.displays_quartetTree_iff hS h).mp hD
+    rcases hst.card_of_mem_splits (forall_eq_of_card_four hcard h) hA with h' | h'
+    · have := Finset.one_lt_card.mpr ⟨a, ha, b, hb, hab⟩
+      omega
+    · have := Finset.one_lt_card.mpr ⟨c, Finset.mem_compl.mpr hc, d, Finset.mem_compl.mpr hd, hcd⟩
+      omega
+  · exact h₁
+  · exfalso
+    have hD' := displays_of_hasQuartetTopology hN hX hcard (card_acbd h) h₂
+    refine quartetTree_ne_acbd h (hU.displays_unique hD hD' ?_)
+    rw [quartetTree_taxa, quartetTree_taxa]
+    ext x
+    simp only [Finset.mem_insert, Finset.mem_singleton]
+    tauto
+  · exfalso
+    have hD' := displays_of_hasQuartetTopology hN hX hcard (card_adbc h) h₃
+    refine quartetTree_ne_adbc h (hU.displays_unique hD hD' ?_)
+    rw [quartetTree_taxa, quartetTree_taxa]
+    ext x
+    simp only [Finset.mem_insert, Finset.mem_singleton]
+    tauto
 
 /-- On four taxa, `T_rd(𝒩⁻)` has the unresolved quartet topology exactly when it displays no resolved quartet. -/
 theorem hasStarTopology_iff_displaysUnresolved [Fintype X] [DecidableEq X] (hN : IsBinaryNetwork N)
     (hcard : Fintype.card X = 4) {a b c d : X} (h : ({a, b, c, d} : Finset X).card = 4) :
     (Trd hN (nontrivial_of_card_four hcard)).HasStarTopology a b c d ↔
       (Trd hN (nontrivial_of_card_four hcard)).DisplaysUnresolved {a, b, c, d} := by
-  sorry
+  have hX := nontrivial_of_card_four hcard
+  constructor
+  · intro hst
+    refine ⟨h, fun s hs hd => ?_⟩
+    obtain ⟨A, hA, hAs⟩ := hd
+    have hst' : s.taxa = {a, b, c, d} := mem_treesOn.1 hs
+    have hu : ({a, b, c, d} : Finset X) = Finset.univ := Finset.eq_univ_of_card _ (h.trans hcard.symm)
+    have hc := s.2.2.1 _ hAs
+    rw [hst', hu, Finset.inter_univ] at hc
+    have hc' : Aᶜ.card = 2 := by
+      rw [Finset.card_compl, hc, hcard]
+    rcases hst.card_of_mem_splits (forall_eq_of_card_four hcard h) hA with h' | h' <;> omega
+  · intro hu
+    rcases Trd_hasStar_or_hasQuartet hN hcard h with hst | h₁ | h₂ | h₃
+    · exact hst
+    · exact absurd (displays_of_hasQuartetTopology hN hX hcard h h₁) (hu.2 _ (mem_treesOn.2 (quartetTree_taxa _ _ _ _ _)))
+    · refine absurd (displays_of_hasQuartetTopology hN hX hcard (card_acbd h) h₂) (hu.2 _ (mem_treesOn.2 ((quartetTree_taxa _ _ _ _ _).trans ?_)))
+      ext x
+      simp only [Finset.mem_insert, Finset.mem_singleton]
+      tauto
+    · refine absurd (displays_of_hasQuartetTopology hN hX hcard (card_adbc h) h₃) (hu.2 _ (mem_treesOn.2 ((quartetTree_taxa _ _ _ _ _).trans ?_)))
+      ext x
+      simp only [Finset.mem_insert, Finset.mem_singleton]
+      tauto
+
+end TrdShape
 
 /-! ### Quartets on induced networks -/
 
 section InducedQuartets
 
-/-- The elements of `Q` in `A`, as taxa of `Y` or of `X`. -/
-theorem card_inter_subtype {Y : Set X} [Fintype Y] (Q : Finset X) (A : Finset Y) :
-    (A ∩ Q.subtype (· ∈ Y)).card = (Q.filter (· ∈ Subtype.val '' (A : Set Y))).card := by
-  rw [← Finset.card_map (Function.Embedding.subtype (· ∈ Y))]
-  congr 1
-  ext x
-  simp only [Finset.mem_map, Finset.mem_inter, Finset.mem_subtype, Function.Embedding.subtype_apply,
-    Finset.mem_filter, Set.mem_image, Finset.mem_coe]
-  constructor
-  · rintro ⟨y, ⟨hA, hq⟩, rfl⟩
-    exact ⟨hq, y, hA, rfl⟩
-  · rintro ⟨hq, y, hA, rfl⟩
-    exact ⟨y, ⟨hA, hq⟩, rfl⟩
-
 /-- **"Under this operation, blobs pass to blobs, and cut edges to cut edges"** (`a:claim:suppress-blobs`, before Corollary 2): a B-quartet on the induced network is a set that
-determines a blob of the subnetwork of the edges ancestral to `Y`. This proof goes through cut-edge splits. -/
+determines a blob of the subnetwork of the edges ancestral to `Y`. The proof is in `AllmanEtAl2023.BlobsPass`. -/
 theorem isBlobQuartetOnInduced_iff (hN : IsBinaryNetwork N) (Y : Set X) (hY : Y.Nontrivial) {Q : Finset X}
     (hQ : (Q : Set X) ⊆ Y) (h4 : Q.card = 4) :
-    IsBlobQuartetOnInduced hN Y hY Q ↔ ∃ v ∈ N.ancestralVertices Y, Determines N.graph (N.ancestralArcs Y) v N.leaf Q := by
-  have hP := hN.isPhylogenetic
-  have : Finite X := hP.finite_taxa
-  let _ : Fintype Y := Fintype.ofFinite Y
-  have hY' : ((Y.toFinset : Finset X) : Set X) = Y := Set.coe_toFinset Y
-  have hQY' : Q ⊆ Y.toFinset := fun x hx => Set.mem_toFinset.mpr (hQ hx)
-  have hc : (Q.subtype (· ∈ Y)).card = 4 := by
-    rw [Finset.card_subtype, Finset.filter_true_of_mem (fun x hx => hQ hx), h4]
-  have hM := induced_isPhylogenetic hN Y hY
-  rw [IsBlobQuartetOnInduced, isBlobQuartet_iff_isBQuartet hM hc, IsBQuartet, TreeMetric.forall_not_displays_iff hc]
-  have key := not_resolves_iff_exists_determines hP hQY' h4
-  rw [hY'] at key
-  rw [← key]
-  constructor
-  · rintro hno ⟨e, he, h2⟩
-    have hbelow : (Q.filter (N.IsBelow e)).Nonempty := Finset.card_pos.mp (by omega)
-    obtain ⟨x, hx⟩ := hbelow
-    obtain ⟨hxq, hxb⟩ := Finset.mem_filter.mp hx
-    have hc2 : (Q.filter fun x => ¬ N.IsBelow e x).card = 2 := by
-      have := Finset.card_filter_add_card_filter_not (s := Q) (N.IsBelow e)
-      omega
-    obtain ⟨y, hy⟩ : (Q.filter fun x => ¬ N.IsBelow e x).Nonempty := Finset.card_pos.mp (by omega)
-    obtain ⟨hyq, hyb⟩ := Finset.mem_filter.mp hy
-    have hcut := hasCutSplitOn_of_isCutOn (A := {x | N.IsBelow e x}) hP he (fun _ _ => Iff.rfl) (hQY' hxq) hxb
-    rw [hY'] at hcut
-    have hind := (induced_hasCutSplit_iff hN hY (A := {x | N.IsBelow e x}) ⟨x, hQ hxq, hxb⟩ ⟨y, hQ hyq, hyb⟩).mpr hcut
-    let A : Finset Y := Finset.univ.filter fun z => N.IsBelow e z.1
-    have hA : (A : Set Y) = Subtype.val ⁻¹' {x | N.IsBelow e x} := by
-      ext z
-      simp [A]
-    refine hno A ((mem_treeOfBlobs_iff A).mpr ⟨⟨⟨x, hQ hxq⟩, by simp [A, hxb]⟩, ⟨⟨y, hQ hyq⟩, by simp [A, hyb]⟩, ?_⟩) ?_
-    · rw [hA]
-      exact hind
-    · rw [card_inter_subtype Q A, ← h2]
-      congr 1
-      refine Finset.filter_congr fun z hz => ?_
-      simp only [Set.mem_image, Finset.mem_coe, A, Finset.mem_filter, Finset.mem_univ, true_and]
-      constructor
-      · rintro ⟨w, hw, rfl⟩
-        exact hw
-      · exact fun hb => ⟨⟨z, hQ hz⟩, hb, rfl⟩
-  · rintro hR A hA h2
-    obtain ⟨h₁, h₂, hcut⟩ := (mem_treeOfBlobs_iff A).mp hA
-    obtain ⟨x, hx⟩ := h₁
-    obtain ⟨y, hy⟩ := h₂
-    have hpre : Subtype.val ⁻¹' (Subtype.val '' (A : Set Y)) = (A : Set Y) :=
-      Set.preimage_image_eq _ Subtype.val_injective
-    have hN₁ : (Y ∩ Subtype.val '' (A : Set Y)).Nonempty := ⟨x.1, x.2, x, hx, rfl⟩
-    have hN₂ : (Y \ Subtype.val '' (A : Set Y)).Nonempty := by
-      refine ⟨y.1, y.2, ?_⟩
-      rintro ⟨z, hz, hzy⟩
-      have : z = y := Subtype.ext hzy
-      exact (Finset.mem_compl.mp hy) (this ▸ hz)
-    have hon := (induced_hasCutSplit_iff hN hY hN₁ hN₂).mp (by rw [hpre]; exact hcut)
-    have hon' : ∀ B : Set X, N.HasCutSplitOn Y B → N.HasCutSplitOn ((Y.toFinset : Finset X) : Set X) B := fun B h => by
-      rw [hY']
-      exact h
-    refine hR (resolves_of_hasCutSplitOn hP (hon' _ hon) hQY' h4 ?_)
-    rw [← card_inter_subtype Q A]
-    exact h2
+    IsBlobQuartetOnInduced hN Y hY Q ↔ ∃ v ∈ N.ancestralVertices Y, Determines N.graph (N.ancestralArcs Y) v N.leaf Q :=
+  BlobsPass.isBlobQuartetOnInduced_iff hN hY hQ h4
 
 /-- The B-quartet of Definition 12 is unresolved on the whole network. -/
 theorem isBlobQuartet_iff_not_resolves [Fintype X] [DecidableEq X] (hN : IsBinaryNetwork N) {Q : Finset X} (hQ : Q.card = 4) :

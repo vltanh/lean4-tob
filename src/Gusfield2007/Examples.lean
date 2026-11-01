@@ -18,6 +18,13 @@ namespace Gusfield2007
 /-- A row, from its bits. -/
 def ofBits {m : ℕ} (l : List ℕ) : Fin m → Bool := fun i => l.getD i 0 == 1
 
+/-- The matrix of Figures 1, 2 and 3: the rows `a, b, c, d, e, f, g`. -/
+def fig1 : Finset (Fin 5 → Bool) :=
+  {ofBits [0, 0, 0, 1, 0], ofBits [1, 0, 0, 1, 0], ofBits [0, 0, 1, 0, 0], ofBits [1, 0, 1, 0, 0], ofBits [0, 1, 1, 0, 0], ofBits [0, 1, 1, 0, 1], ofBits [0, 0, 1, 0, 1]}
+
+/-- The component `C` of Figure 3: the sites 1, 3, 4 of the paper. -/
+def fig1C : Set (Fin 5) := {i | i = 0 ∨ i = 2 ∨ i = 3}
+
 /-- The matrix of Figure 5. -/
 def fig5 : Finset (Fin 8 → Bool) :=
   {ofBits [1, 1, 1, 1, 0, 0, 0, 0], ofBits [1, 1, 0, 0, 0, 0, 0, 0], ofBits [1, 1, 1, 0, 0, 0, 0, 0],
@@ -69,6 +76,17 @@ def MdC₁ (d : ℕ) : Set (Fin (6 * d)) := {j | j.val % 6 = 1 ∨ j.val % 6 = 2
 
 /-- The component `C₂` of `G(M_d)`: the columns of type `u` or `v` (line 641). -/
 def MdC₂ (d : ℕ) : Set (Fin (6 * d)) := {j | j.val % 6 = 0 ∨ j.val % 6 = 3 ∨ j.val % 6 = 5}
+
+/-- A smaller counterexample to the multiple-crossover conjecture than Figure 8, with 7 rows and 6 sites against 13 and 10. It isn't in the paper: an independent review of the statements found it. -/
+def evenRows : Finset (Fin 6 → Bool) :=
+  {ofBits [0, 0, 0, 0, 0, 0], ofBits [0, 0, 0, 0, 1, 1], ofBits [0, 0, 0, 1, 0, 1], ofBits [0, 0, 0, 1, 1, 0], ofBits [0, 1, 1, 0, 0, 0],
+   ofBits [1, 0, 1, 0, 0, 0], ofBits [1, 1, 0, 0, 0, 0]}
+
+/-- The component of `evenRows` with the first three sites. -/
+def evenC₁ : Set (Fin 6) := {i | i.val < 3}
+
+/-- The component of `evenRows` with the last three sites. -/
+def evenC₂ : Set (Fin 6) := {i | 3 ≤ i.val}
 
 /-- The rows `0`, `1` on one site: the shortest counterexample to Theorem 4 as printed. -/
 def oneSiteRows : Finset (Fin 1 → Bool) := {fun _ => false, fun _ => true}

@@ -8,7 +8,7 @@ public import TOBQMC.WQC
 /-!
 # TOB-QMC §4.2: the tree that ASTRAL's dynamic program returns refines the tree of blobs
 
-TOB-QMC (`notes/paper2025/v5.txt`, embedded lines 517-521): "A corollary of Theorem 1 is that ASTRAL (version 3 or
+TOB-QMC (v5, embedded lines 517-521): "A corollary of Theorem 1 is that ASTRAL (version 3 or
 earlier) returns a TOB refinement almost surely, as the number of gene trees goes to infinity. This is because ASTRAL
 solves WQC within a constrained search space, defined by the bipartitions induced by the input gene trees, and all
 bipartitions have probability strictly greater than zero under the NMSC and thus will appear as the number of gene

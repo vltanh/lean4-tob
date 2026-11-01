@@ -1,9 +1,9 @@
 module
 
 public import AllmanEtAl2023.Basic
-public import AllmanEtAl2023.Corollary1
+public import AllmanEtAl2023.CFDetectable
 public import AllmanEtAl2023.CutOrder
-public import AllmanEtAl2023.Theorem1
+public import AllmanEtAl2023.GenericCF
 public import Basic.Defs
 public import External.Rhodes2020.Theorem2
 public import Phylogenetics.NMSC.Analytic
@@ -17,8 +17,8 @@ public import TINNiK.Statistics.AppendixC
 # TINNiK: consistency of the algorithm
 
 The count of Step 3(a)(i) (E29 of the report), and Theorem 4. Theorem 4 takes the CF-detectability of 4-blobs from
-`AllmanEtAl2023.corollary1` (TINNiK's Theorem 1 on the induced 4-taxon networks, proved in
-`src/AllmanEtAl2023/Corollary1.lean`), and excludes the centroid by the analytic argument of the paper
+`AllmanEtAl2023.cfDetectable_generic` (TINNiK's Theorem 1 on the induced 4-taxon networks, from the proof of Allman et al.'s Corollary 1, in
+`src/AllmanEtAl2023/CFDetectable.lean`), and excludes the centroid by the analytic argument of the paper
 (`isGenericNull_centroid`). Theorem 2 and the combinatorial part of Theorem 3 are proved in
 `src/AllmanEtAl2023/Basic.lean`.
 -/
@@ -333,7 +333,7 @@ private theorem tendsto_good_cut {V E : Type*} [Fintype V] [Fintype E] [Nonempty
     {ρ : ℝ} (hρ : 0 ≤ ρ ∧ ρ ≤ 1) {α : ℕ → ℝ} (hα₀ : Tendsto α atTop (𝓝 0))
     {ml : (QuartetTree X → ℝ) → Finset X → QuartetTree X}
     (hml : IsMLSelection ml) {s₀ : QuartetTree X}
-    (hc : AllmanEtAl2023.IsStrictlyCut (nmscCF N θ ρ) s₀) :
+    (hc : AllmanEtAl2023.IsStrictlyCutAt (nmscCF N θ ρ) s₀) :
     Tendsto (fun m => iidProb (geneTreeDist N θ ρ) m fun ω =>
       ml (quartetCount unroot ω) s₀.taxa = s₀ ∧
         α m ≤ cutPValue (quartetCount unroot ω) s₀) atTop (𝓝 1) := by
@@ -433,7 +433,7 @@ private theorem exists_isDeletion_unique_parent {V E : Type*} [Fintype E] {N : R
       exact Finset.card_le_one.1 hc1 _ (NMSC.mem_arcsInto.2 rfl) _ (NMSC.mem_arcsInto.2 hfg.symm)
 
 /-- **The centroid is excluded for generic parameters**, as the paper does before its Theorem 4
-(`notes/tinnik/readable.txt`, line 206): no induced 4-taxon network has `CF = (1/3, 1/3, 1/3)`. With a 4-blob
+(TINNiK's text, line 206): no induced 4-taxon network has `CF = (1/3, 1/3, 1/3)`. With a 4-blob
 this follows from the non-cut CF of TINNiK's Theorem 1. Without one, at hybridization parameters `0` or `1` the
 network is a resolved tree off the deleted arcs, whose CF is off the centroid: with long arcs, the CF of the
 cut split is more than `3/4`. Analyticity then gives the inequality for generic parameters.
@@ -451,7 +451,7 @@ theorem isGenericNull_centroid [Fintype V] [Fintype E] {N : RootedNetwork V E X}
     by_cases htl : IsTreelike N q
     · obtain ⟨s, hs, hc⟩ := htl
       obtain ⟨D, hD, -⟩ := exists_isDeletion_unique_parent hN
-      obtain ⟨e, he⟩ := AllmanEtAl2023.exists_splitOffAt_of_inducedCutSplit hN hc
+      obtain ⟨e, he⟩ := (AllmanEtAl2023.inducedCutSplit_iff_exists_splitOffAt hN _).mp hc
       have hlt := AllmanEtAl2023.three_quarters_lt_nmscCF hN hD (ℓ := fun _ => 3)
         (fun _ => by norm_num) rfl (he.mono (Set.empty_subset D))
       have hne : nmscCF N (AllmanEtAl2023.deletionMetric N D fun _ => 3) 0 s ≠ 1 / 3 := by
@@ -655,8 +655,8 @@ sequence `α_m → 0` such that for any `β > 0` and `2 > δ ≥ 0`, the TINNiK 
 `m` independent gene trees from the NMSC infers the tree of blobs with probability tending to one. The
 sequence is the paper's (`exists_levels`), built from the limits `d` of the statistics. The generic parameters
 are the paper's: those with CF-detectability on all induced 4-taxon networks
-(`AllmanEtAl2023.corollary1`, TINNiK's Theorem 1) and no centroid CF (`isGenericNull_centroid`). That
-`N` is binary is used by these two results, through `AllmanEtAl2023.exists_reduction`, and `0 ≤ δ` is
+(`AllmanEtAl2023.cfDetectable_generic`, TINNiK's Theorem 1) and no centroid CF (`isGenericNull_centroid`). That
+`N` is binary is used by these two results, and `0 ≤ δ` is
 not used. -/
 theorem theorem4 [Fintype V] [Fintype E] {N : RootedNetwork V E X}
     (hN : N.IsPhylogenetic) (hX : 4 ≤ Fintype.card X) (hBin : N.IsBinary) :
@@ -671,7 +671,7 @@ theorem theorem4 [Fintype V] [Fintype E] {N : RootedNetwork V E X}
   have hne : Nonempty X := Fintype.card_pos_iff.mp (by omega)
   refine ⟨{θ | N.IsMetric θ ∧ ¬ AllmanEtAl2023.CFDetectable N (nmscCF N θ 0)} ∪
       {θ | N.IsMetric θ ∧ ¬ NoCentroidCF (nmscCF N θ 0)},
-    (AllmanEtAl2023.corollary1 hN hBin).union (isGenericNull_centroid hN hBin),
+    (AllmanEtAl2023.cfDetectable_generic hN hBin).union (isGenericNull_centroid hN hBin),
     fun θ hθ hA => ?_⟩
   have hdet : AllmanEtAl2023.CFDetectable N (nmscCF N θ 0) := by
     by_contra hn

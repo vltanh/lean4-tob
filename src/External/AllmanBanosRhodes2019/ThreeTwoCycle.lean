@@ -14,7 +14,7 @@ two taxa below the reticulation.
 ## Main results
 
 * `nmscCF_N₃`: its concordance factors from the definition of the NMSC, at any `ρ`, by the chain of
-  `src/ECToBlob/Remark52.lean`, with two new steps: `stepOf_three` for three lineages on an arc, and `stepOf_cherry`.
+  `src/Basic/NMSCChain.lean`, with two new steps: `stepOf_three` for three lineages on an arc, and `stepOf_cherry`.
 * `nmscCF_N₃_abcd`, `nmscCF_N₃_acbd`, `nmscCF_N₃_adbc`: at `ρ = 0` they are the source's formula, `figure5CFab`,
   `figure5CFac`, with `x₃` for the edge `u v` of the unrooted network. The source takes the formula from its references.
 * `isBinary_N₃`, `isLevelOne_N₃`, `hasThreeTwoCycle_N₃`, `inducedCutSplit_N₃`.
@@ -28,7 +28,7 @@ two taxa below the reticulation.
 @[expose] public noncomputable section
 
 open Phylogenetics Phylogenetics.RootedNetwork Phylogenetics.NMSC Finset
-open ECToBlob.Remark52
+open ECToBlob.Remark52 Phylogenetics.NMSC.Chain
 open scoped Classical
 
 namespace External.AllmanBanosRhodes2019.ThreeTwo

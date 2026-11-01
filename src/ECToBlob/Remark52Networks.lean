@@ -4,6 +4,7 @@ public import Phylogenetics.Network.Cuts
 public import Phylogenetics.Tree.Splits
 public import TOBQMC.Level1Blobs
 public import ECToBlob.Section5
+public import Basic.NMSCChain
 
 /-!
 # ECToBlob Remark 5.2: the three networks of Figure 1
@@ -38,63 +39,6 @@ namespace ECToBlob.Remark52
 section Generic
 
 variable {V E X : Type*} [Fintype V] [Fintype E] [Fintype X]
-
-/-- The laws of a phylogenetic network, from a rank function that increases along the arcs. -/
-theorem isPhylogenetic_of_rank {N : RootedNetwork V E X} (rank : V → ℕ)
-    (hrank : ∀ e, rank (N.graph.source e) < rank (N.graph.target e))
-    (h0 : ∀ e, N.graph.target e ≠ N.root)
-    (h1 : ∀ v, v ≠ N.root → ∃ e, N.graph.target e = v)
-    (hinj : Function.Injective N.leaf)
-    (hleaf : ∀ x, ∃ e, N.graph.target e = N.leaf x ∧ ∀ f, N.graph.target f = N.leaf x → f = e)
-    (hs : ∀ x e, N.graph.source e ≠ N.leaf x)
-    (hint : ∀ v, (∀ x, N.leaf x ≠ v) → ∃ e, N.graph.source e = v) : N.IsPhylogenetic := by
-  have hreach : ∀ n v, rank v = n → N.graph.Reaches N.root v := by
-    intro n
-    induction n using Nat.strong_induction_on with
-    | _ n ih =>
-      intro v hv
-      by_cases hvr : v = N.root
-      · exact hvr ▸ .refl
-      · obtain ⟨e, he⟩ := h1 v hvr
-        have hlt := hrank e
-        rw [he, hv] at hlt
-        exact (ih _ hlt _ rfl).tail ⟨e, rfl, he⟩
-  have hTrans : ∀ u v, Relation.TransGen N.graph.Adj u v → rank u < rank v := by
-    intro u v h
-    induction h with
-    | single h =>
-      obtain ⟨e, rfl, rfl⟩ := h
-      exact hrank e
-    | tail _ h ih =>
-      obtain ⟨e, rfl, rfl⟩ := h
-      exact ih.trans (hrank e)
-  refine ⟨inferInstance, inferInstance, inferInstance, fun v h => lt_irrefl _ (hTrans _ _ h),
-    fun v => hreach _ v rfl, ?_, ?_, hinj, ?_, ?_⟩
-  · unfold DirectedMultigraph.indegree
-    rw [Set.ncard_eq_zero (Set.toFinite _)]
-    exact Set.eq_empty_of_forall_notMem fun e he => h0 e he
-  · intro v hv
-    obtain ⟨e, he⟩ := h1 v hv
-    unfold DirectedMultigraph.indegree
-    exact (Set.ncard_pos (Set.toFinite _)).2 ⟨e, he⟩
-  · intro x
-    obtain ⟨e, he, hu⟩ := hleaf x
-    unfold DirectedMultigraph.indegree
-    rw [Set.ncard_eq_one]
-    exact ⟨e, Set.ext fun f => ⟨fun hf => hu f hf, fun hf => by rw [Set.mem_singleton_iff.1 hf]; exact he⟩⟩
-  · intro v
-    unfold DirectedMultigraph.outdegree
-    rw [Set.ncard_eq_zero (Set.toFinite _)]
-    constructor
-    · intro h
-      by_contra hne
-      push Not at hne
-      obtain ⟨e, he⟩ := hint v hne
-      have : e ∈ {e | N.graph.source e = v} := he
-      rw [h] at this
-      exact this
-    · rintro ⟨x, rfl⟩
-      exact Set.eq_empty_of_forall_notMem fun e he => hs x e he
 
 variable {N : RootedNetwork V E X}
 

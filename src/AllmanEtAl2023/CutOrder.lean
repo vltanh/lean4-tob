@@ -1,6 +1,7 @@
 module
 
 public import Phylogenetics.Network.Cuts
+public import Phylogenetics.Network.DeletedArcs
 public import Phylogenetics.Tree.Metric
 
 /-!
@@ -205,5 +206,32 @@ theorem inducedCutSplit_of_hasCutSplit (hN : N.IsPhylogenetic) {A : Finset X}
   · rintro ⟨hx, rfl | rfl⟩
     · exact ⟨hx, ha⟩
     · exact ⟨hx, hb⟩
+
+omit [Fintype X] [DecidableEq X] in
+/-- Off the empty deletion, an arc separates taxa as it does in the network. -/
+theorem separatesOff_empty_iff {e : E} {P Q : Set X} : N.SeparatesOff ∅ e P Q ↔ N.Separates e P Q := by
+  simp only [SeparatesOff, Separates, dominatesOff_empty_iff, isBelowOff_empty_iff]
+
+omit [Fintype X] in
+/-- A cut-edge split of the induced network is a split off the empty deletion, by `hasCutSplitOn_iff_separates`. -/
+theorem inducedCutSplit_iff_exists_splitOffAt (hN : N.IsPhylogenetic) (s : QuartetTree X) :
+    InducedCutSplit N s ↔ ∃ e, N.SplitOffAt ∅ e s := by
+  have hinter : ∀ P : Finset X, P ∈ s.val → (s.taxa : Set X) ∩ P = P := fun P hP =>
+    Set.inter_eq_right.mpr (Finset.coe_subset.mpr (s.subset_taxa hP))
+  have hdiff : ∀ P : Finset X, (s.taxa : Set X) \ P = ((s.taxa \ P : Finset X) : Set X) := fun P => by
+    simp
+  constructor
+  · rintro ⟨P, hP, hcut⟩
+    obtain ⟨e, ⟨-, hsp⟩ | ⟨-, hsp⟩⟩ := (hasCutSplitOn_iff_separates hN _ _).mp hcut
+    · rw [hinter P hP, hdiff] at hsp
+      exact ⟨e, P, hP, separatesOff_empty_iff.mpr hsp⟩
+    · rw [hinter P hP, hdiff] at hsp
+      refine ⟨e, s.taxa \ P, s.sdiff_mem hP, ?_⟩
+      rw [Finset.sdiff_sdiff_eq_self (s.subset_taxa hP)]
+      exact separatesOff_empty_iff.mpr hsp
+  · rintro ⟨e, P, hP, hsp⟩
+    refine ⟨P, hP, (hasCutSplitOn_iff_separates hN _ _).mpr ⟨e, Or.inl ?_⟩⟩
+    rw [hinter P hP, hdiff]
+    exact ⟨Finset.card_pos.mp (by rw [s.card_of_mem hP]; norm_num), separatesOff_empty_iff.mp hsp⟩
 
 end AllmanEtAl2023

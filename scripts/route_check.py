@@ -4,7 +4,7 @@
 The *route* of a proof is the set of numbered results of the paper that it uses. For the paper,
 these are the results that the proof cites (`\\cref`, `\\Cref`, `\\ref`, `\\autoref`); for the
 formalization, the numbered results that the Lean proof reaches through the library's helper
-lemmas, which `scripts/Audit.lean` (from the skill's `assets/`) writes to `.lake/route_deps.tsv`.
+lemmas, which `scripts/Audit.lean` writes to `.lake/route_deps.tsv`.
 A formal proof that follows the paper's argument cites the same results. Every difference is
 either a proof to fix or a departure from the paper to record.
 

@@ -1,7 +1,7 @@
 module
 
 public import AllmanEtAl2023.Basic
-public import AllmanEtAl2023.Corollary1
+public import AllmanEtAl2023.CFDetectable
 public import AllmanEtAl2023.CutOrder
 public import Basic.Defs
 public import External.MitchellAllmanRhodes2019.T3Test
@@ -14,7 +14,7 @@ public import TINNiK.Basic
 /-!
 # TINNiK with the T3 test
 
-TINNiK's B-quartet Inference Algorithm takes "a choice of test `T3` or `cut`" (`notes/tinnik/readable.txt`, lines 174,
+TINNiK's B-quartet Inference Algorithm takes "a choice of test `T3` or `cut`" (TINNiK's text, lines 174,
 192), and the default in MSCquartets is T3. Its Theorem 4 is stated "using the cut test". This file gives the
 analogue with the T3 test, whose null is the T3 model of `src/External/MitchellAllmanRhodes2019/T3Test.lean`.
 
@@ -515,8 +515,8 @@ theorem exists_levels_t3 [Fintype V] [Fintype E] [Nonempty X] {N : RootedNetwork
 the T3 test on `m` independent gene trees from the NMSC infers the tree of blobs with probability tending to one.
 
 TINNiK states Theorem 4 "using the cut test", and states no consistency theorem for the T3 test; it says that it "can be reasonable
-to assume that an unknown network has no anomalous quartets and use a T3 hypothesis test" (`notes/tinnik/readable.txt`, line 144).
-The generic parameters are those with CF-detectability on all induced 4-taxon networks (`AllmanEtAl2023.corollary1`, TINNiK's
+to assume that an unknown network has no anomalous quartets and use a T3 hypothesis test" (TINNiK's text, line 144).
+The generic parameters are those with CF-detectability on all induced 4-taxon networks (`AllmanEtAl2023.cfDetectable_generic`, TINNiK's
 Theorem 1). Having no anomalous quartets is a hypothesis on the parameters, not a generic property: anomalous quartets occur "for some
 numerical parameter settings" (TOB-QMC v5, lines 118–120). It excludes the centroid (`noCentroidCF_of_t3Detectable`), so that the paper's
 separate generic step for the centroid (`isGenericNull_centroid`) is not needed. -/
@@ -532,7 +532,7 @@ theorem theorem4T3 [Fintype V] [Fintype E] {N : RootedNetwork V E X}
               tinnikT3 ml (α m) β δ M (quartetCount unroot ω) = treeOfBlobs N) atTop (𝓝 1) := by
   have hne : Nonempty X := Fintype.card_pos_iff.mp (by omega)
   refine ⟨{θ | N.IsMetric θ ∧ ¬ AllmanEtAl2023.CFDetectable N (nmscCF N θ 0)},
-    AllmanEtAl2023.corollary1 hN hBin, fun θ hθ hA hno => ?_⟩
+    AllmanEtAl2023.cfDetectable_generic hN hBin, fun θ hθ hA hno => ?_⟩
   have hdet : AllmanEtAl2023.CFDetectable N (nmscCF N θ 0) := by
     by_contra hn
     exact hA ⟨hθ, hn⟩

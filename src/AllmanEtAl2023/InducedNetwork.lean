@@ -5,7 +5,7 @@ public import AllmanEtAl2023.Definitions
 /-!
 # Allman, Baños, Mitchell, Rhodes 2023: Definition 6, the induced network
 
-The published Definition 6 has three steps, of which the arXiv version has the first two: "1) retaining only those
+Definition 6 of the PMC manuscript has three steps, of which the arXiv version has the first two: "1) retaining only those
 nodes and edges ancestral to one or more taxa in `Y`, 2) suppressing all nodes with both in- and out-degree 1, and
 3) if the root then has outdegree 1, removing it and its descendant edge and designating its child as the root".
 
@@ -235,6 +235,25 @@ theorem removeStem_isBinary [Nontrivial X] (hroot : M.graph.outdegree M.root = 1
 
 end Stem
 
+/-- **Steps 2 and 3 of Definition 6 give a network of Definition 1**, from the degrees before suppressing: the root has out-degree at most 2, and every other internal node that isn't suppressed has
+degree 3. -/
+theorem isBinaryNetwork_suppressStem {V' E' X' : Type*} [Nontrivial X'] {R : RootedNetwork V' E' X'} (hR : R.IsPhylogenetic) (hroot : R.graph.outdegree R.root ≤ 2)
+    (hdeg : ∀ v, v ≠ R.root → ¬ R.IsChainVertex v → R.graph.outdegree v ≠ 0 → R.graph.indegree v + R.graph.outdegree v = 3) :
+    IsBinaryNetwork (removeStem (R.suppress hR) (suppress_isPhylogenetic hR)) := by
+  have hS := suppress_isPhylogenetic hR
+  have h₁ : (R.suppress hR).graph.outdegree (R.suppress hR).root = 1 ∨ (R.suppress hR).graph.outdegree (R.suppress hR).root = 2 := by
+    have h1 : (R.suppress hR).graph.outdegree (R.suppress hR).root ≠ 0 := by
+      intro h
+      obtain ⟨x, hx⟩ := (hS.leaves _).mp h
+      exact R.leaf_ne_root hR x (congrArg Subtype.val hx)
+    have h2 : (R.suppress hR).graph.outdegree (R.suppress hR).root ≤ 2 := (suppress_outdegree hR _).le.trans hroot
+    omega
+  refine isBinaryNetwork_iff.mpr ⟨removeStem_isPhylogenetic hS, removeStem_isBinary hS h₁ fun v hv h0 => ?_⟩
+  have hv1 : v.1 ≠ R.root := fun h => hv (Subtype.ext h)
+  rw [suppress_indegree hR v]
+  rw [suppress_outdegree hR v] at h0 ⊢
+  exact hdeg v.1 hv1 v.2 h0
+
 /-! ### The induced network -/
 
 section Induced
@@ -254,7 +273,7 @@ theorem retained_isPhylogenetic : (retained hN Y hY).IsPhylogenetic :=
   belowNetwork_isPhylogenetic hN.isPhylogenetic hY (N.root_isStableAncestor Y)
 
 /-- **Steps 1 and 2 of Definition 6**. -/
-def retainedSuppressed :
+abbrev retainedSuppressed :
     RootedNetwork {v // ¬ (retained hN Y hY).IsChainVertex v}
       {e // ¬ (retained hN Y hY).IsChainVertex ((retained hN Y hY).graph.source e)} Y :=
   (retained hN Y hY).suppress (retained_isPhylogenetic hN Y hY)
@@ -269,11 +288,11 @@ abbrev InducedV := {v // ¬ (HasStem (retainedSuppressed hN Y hY) ∧ v = (retai
 abbrev InducedE := {e // ¬ (HasStem (retainedSuppressed hN Y hY) ∧
   (retainedSuppressed hN Y hY).graph.source e = (retainedSuppressed hN Y hY).root)}
 
-/-- **Definition 6** (`a:def:induced`). The *induced rooted binary network* `𝒩⁺_Y` on `Y ⊂ X`, as published: "1) retaining
+/-- **Definition 6** (`a:def:induced`). The *induced rooted binary network* `𝒩⁺_Y` on `Y ⊂ X`, as in the PMC manuscript: "1) retaining
 only those nodes and edges ancestral to one or more taxa in `Y`, 2) suppressing all nodes with both in- and
 out-degree 1, and 3) if the root then has outdegree 1, removing it and its descendant edge and designating its
 child as the root. We then say `𝒩⁺` *displays* `𝒩⁺_Y`." The arXiv version has steps 1 and 2 only. It is for `Y` with at
-least two taxa: on one taxon step 3 leaves a single node, which is not a network of Definition 1. -/
+least two taxa: on one taxon step 3 may leave a single node, which is not a network of Definition 1. The paper never uses that case. -/
 def induced : RootedNetwork (InducedV hN Y hY) (InducedE hN Y hY) Y :=
   removeStem (retainedSuppressed hN Y hY) (retainedSuppressed_isPhylogenetic hN Y hY)
 
@@ -281,50 +300,22 @@ theorem induced_isPhylogenetic : (induced hN Y hY).IsPhylogenetic :=
   have : Nontrivial Y := hY.coe_sort
   removeStem_isPhylogenetic _
 
-/-- The degrees after steps 1 and 2 of Definition 6: the root has out-degree 1 or 2, and every other internal node
-has degree 3. A retained node of in-degree 1 with one retained child is suppressed, and a hybrid node keeps its two
+/-- **The induced network of a network of Definition 1 is one**, on at least two taxa. A retained node of in-degree 1 with one retained child is suppressed, and a hybrid node keeps its two
 parents, since a parent of a retained node is retained. -/
-theorem retainedSuppressed_degree :
-    ((retainedSuppressed hN Y hY).graph.outdegree (retainedSuppressed hN Y hY).root = 1 ∨
-        (retainedSuppressed hN Y hY).graph.outdegree (retainedSuppressed hN Y hY).root = 2) ∧
-      ∀ v, v ≠ (retainedSuppressed hN Y hY).root → (retainedSuppressed hN Y hY).graph.outdegree v ≠ 0 →
-        (retainedSuppressed hN Y hY).graph.indegree v + (retainedSuppressed hN Y hY).graph.outdegree v = 3 := by
+theorem induced_isBinaryNetwork : IsBinaryNetwork (induced hN Y hY) := by
+  have : Nontrivial Y := hY.coe_sort
   have hP := hN.isPhylogenetic
   have hB := hN.isBinary
   have : Finite E := hP.finite_arcs
-  have hR := retained_isPhylogenetic hN Y hY
-  have hS := retainedSuppressed_isPhylogenetic hN Y hY
   have hst := N.root_isStableAncestor Y
-  refine ⟨?_, fun v hv h0 => ?_⟩
-  · have h1 : (retainedSuppressed hN Y hY).graph.outdegree (retainedSuppressed hN Y hY).root ≠ 0 := by
-      intro h
-      obtain ⟨x, hx⟩ := (hS.leaves _).mp h
-      exact N.leaf_ne_root hP x.1 (congrArg (fun v => v.1.1) hx)
-    have h2 : (retainedSuppressed hN Y hY).graph.outdegree (retainedSuppressed hN Y hY).root ≤ 2 := by
-      refine (suppress_outdegree hR _).le.trans ?_
-      refine (belowNetwork_outdegree_le _).trans ?_
-      exact hB.1.le
-    omega
-  · have hv1 : v.1.1 ≠ N.root := fun h => hv (Subtype.ext (Subtype.ext h))
-    have hin : (retainedSuppressed hN Y hY).graph.indegree v = N.graph.indegree v.1.1 :=
-      (suppress_indegree hR v).trans (belowNetwork_indegree hP hst v.1 hv1)
-    have hout : (retainedSuppressed hN Y hY).graph.outdegree v = (retained hN Y hY).graph.outdegree v.1 :=
-      suppress_outdegree hR v
-    have hle : (retained hN Y hY).graph.outdegree v.1 ≤ N.graph.outdegree v.1.1 :=
-      belowNetwork_outdegree_le _
-    have h3 := hB.2 v.1.1 hv1 (by omega)
-    have h1 := hP.nonroot_indegree _ hv1
-    have hnc : ¬ ((retained hN Y hY).graph.indegree v.1 = 1 ∧ (retained hN Y hY).graph.outdegree v.1 = 1) := v.2
-    have hin' : (retained hN Y hY).graph.indegree v.1 = N.graph.indegree v.1.1 :=
-      belowNetwork_indegree hP hst v.1 hv1
-    omega
-
-/-- **The induced network of a network of Definition 1 is one**, on at least two taxa. -/
-theorem induced_isBinaryNetwork : IsBinaryNetwork (induced hN Y hY) := by
-  have : Nontrivial Y := hY.coe_sort
-  obtain ⟨h₁, h₂⟩ := retainedSuppressed_degree hN Y hY
-  exact isBinaryNetwork_iff.mpr
-    ⟨induced_isPhylogenetic hN Y hY, removeStem_isBinary _ h₁ h₂⟩
+  refine isBinaryNetwork_suppressStem (retained_isPhylogenetic hN Y hY) ((belowNetwork_outdegree_le _).trans hB.1.le) fun v hv hnc h0 => ?_
+  have hv1 : v.1 ≠ N.root := fun h => hv (Subtype.ext h)
+  have hle : (retained hN Y hY).graph.outdegree v ≤ N.graph.outdegree v.1 := belowNetwork_outdegree_le _
+  have hin : (retained hN Y hY).graph.indegree v = N.graph.indegree v.1 := belowNetwork_indegree hP hst v hv1
+  have h3 := hB.2 v.1 hv1 (by omega)
+  have h1 := hP.nonroot_indegree _ hv1
+  have hnc' : ¬ ((retained hN Y hY).graph.indegree v = 1 ∧ (retained hN Y hY).graph.outdegree v = 1) := hnc
+  omega
 
 /-- **The parameters of Definition 6**: lengths along a suppressed path add, the hybridization parameter is that of the
 last edge, and the descendant edge of a removed root is forgotten. -/

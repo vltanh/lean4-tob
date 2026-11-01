@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """Generate scripts/Audit.lean from its template, with one `import all` line per module.
 
-The modules are those of the libraries below and of the library `Phylogenetics`, whose proofs the audit
-must see too: the module system hides them from a plain `import`. The template lists no module.
-`Gusfield2007`, the statement files of `AllmanEtAl2023`, and the directories of `External` that serve those
-two papers are left out while they are being written.
+The modules are all those of this project's libraries and of the library `Phylogenetics`, whose proofs the
+audit must see too: the module system hides them from a plain `import`. The template lists no module.
 
 Run from the repository root: python3 scripts/gen_audit.py [--check]
 """
@@ -13,9 +11,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE = (ROOT / 'scripts' / 'Audit.lean.in').read_text()
-PROJECT_LIBRARIES = ['Basic', 'External/AllmanBanosRhodes2019', 'External/AneEtAl2024', 'External/HuberEtAl2025',
-                     'External/MitchellAllmanRhodes2019', 'External/Rhodes2020', 'ECToBlob', 'TOBQMC', 'TINNiK']
-ALLMAN = ['SubgraphBlobs', 'CutOrder', 'CycleLemma', 'Reduction', 'Basic', 'Theorem1', 'Corollary1']
+PROJECT_LIBRARIES = ['Basic', 'External', 'AllmanEtAl2023', 'Gusfield2007', 'ECToBlob', 'TOBQMC', 'TINNiK']
 
 
 def library_dir():
@@ -28,7 +24,7 @@ def modules(root, library):
 
 
 def main():
-    mods = [m for lib in PROJECT_LIBRARIES for m in modules(ROOT / 'src', lib)] + [f'AllmanEtAl2023.{m}' for m in ALLMAN]
+    mods = [m for lib in PROJECT_LIBRARIES for m in modules(ROOT / 'src', lib)]
     mods += modules(library_dir(), 'Phylogenetics')
     imports = '\n'.join(f'import all {m}' for m in mods) + '\nimport all MainResults'
     text = TEMPLATE.replace('-- IMPORTS --', imports)

@@ -6,10 +6,14 @@ public import AllmanEtAl2023.SubgraphBlobs
 /-!
 # Allman, Baños, Mitchell, Rhodes 2023: Lemma 2
 
-Read with a *connected* subnetwork `M`, the paper's proof begins "there exist undirected paths in `M` from `ℬ₀` to each `s ∈ S`".
-For a disconnected `M`, the statement is false: see `lemma2_false_of_not_connected`, whose network is a caterpillar on five taxa.
+Lemma 2 needs `M` connected, or at least each `s` joined to `ℬ₀` in `M`. Its proof assumes this ("there exist undirected paths in `M` from `ℬ₀` to each `s ∈ S`") and all its uses
+satisfy it, but the word is missing. For disconnected `M`, Definition 8 can hold vacuously and the conclusion fails: `lemma2_needs_connected`, on the caterpillar `(((a, b), c), d)`.
+No result of the paper is affected.
 
-The proof is `AllmanEtAl2023.lemma2` of `src/AllmanEtAl2023/SubgraphBlobs.lean`, which follows the paper's, on arcs of a subgraph.
+"With degree-1 nodes bijectively labelled by `X`" is more than the uses satisfy: Lemma 3 applies Lemma 2 with `N := M`, a subnetwork of a rooted network, whose root can have degree 1 there
+with no label. So `IsLabelledNetwork` asks only what the proof uses: distinct labels, on nodes of degree 1. This is a gap of the paper, with no effect on its results.
+
+The proof is `AllmanEtAl2023.determines_of_subnetwork` of `src/AllmanEtAl2023/SubgraphBlobs.lean`, which follows the paper's, on arcs of a subgraph.
 -/
 
 @[expose] public noncomputable section
@@ -17,14 +21,15 @@ The proof is `AllmanEtAl2023.lemma2` of `src/AllmanEtAl2023/SubgraphBlobs.lean`,
 open Phylogenetics Phylogenetics.DirectedMultigraph
 open scoped Classical
 
-namespace AllmanEtAl2023.Printed
+namespace AllmanEtAl2023
 
 variable {W F X : Type*}
 
-/-- "A network with degree-1 nodes bijectively labelled by `X`". -/
+/-- "A network with degree-1 nodes bijectively labelled by `X`", as Lemma 2 uses it: distinct labels, on nodes of degree 1. Not every node of degree 1 need have a label: Lemma 3 applies Lemma 2 to
+a subnetwork of a rooted network, whose root can have degree 1 there. See the module docstring. -/
 structure IsLabelledNetwork (G : DirectedMultigraph W F) (ℓ : X → W) : Prop where
   injective : Function.Injective ℓ
-  degree_one_iff : ∀ v, nodeDegree G v = 1 ↔ ∃ x, ℓ x = v
+  degree_one : ∀ x, nodeDegree G (ℓ x) = 1
 
 /-- The nodes of the subnetwork with the edges `M`. -/
 def nodesOf (G : DirectedMultigraph W F) (M : Set F) : Set W :=
@@ -78,73 +83,66 @@ theorem isDeterminedBy_blobOf_restrict_iff {G : DirectedMultigraph W F} {M : Set
   unfold IsDeterminedBy Determines
   simp only [walks_restrict_iff, himg]
 
+/-- A cut edge of the whole network is a bridge. -/
+theorem isCutIn_univ_iff {G : DirectedMultigraph W F} {e : F} : IsCutIn G Set.univ e ↔ G.underlying.IsBridge e := by
+  rw [G.isBridge_iff_not_walks_delete, Set.compl_eq_univ_sdiff]
+  exact ⟨fun h' => h'.2, fun h' => ⟨Set.mem_univ e, h'⟩⟩
+
+/-- On the whole network, `SameBlobIn` is the blob relation: `SameBlobIn` of `SubgraphBlobs` is that of the paper's blobs. -/
+theorem sameBlobIn_univ_iff {G : DirectedMultigraph W F} {u w : W} : SameBlobIn G Set.univ u w ↔ blobOf G u = blobOf G w := by
+  constructor
+  · intro h
+    refine Quotient.sound (Relation.ReflTransGen.mono ?_ _ _ h)
+    rintro a b ⟨e, he, hl⟩
+    exact ⟨e, fun hb => he.2 (isCutIn_univ_iff.mpr hb), hl⟩
+  · intro h
+    refine Relation.ReflTransGen.mono ?_ _ _ (Quotient.exact h)
+    rintro a b ⟨e, he, hl⟩
+    exact ⟨e, ⟨Set.mem_univ e, fun hc => he (isCutIn_univ_iff.mp hc)⟩, hl⟩
+
+/-- On the whole network, the incident cut edges of a blob are `incidentCuts`. -/
+theorem incidentCutEdges_blobOf {G : DirectedMultigraph W F} {v : W} :
+    incidentCutEdges G (blobOf G v) = incidentCuts G Set.univ v := by
+  have hcut : ∀ {e}, IsCutIn G Set.univ e ↔ G.underlying.IsBridge e := isCutIn_univ_iff
+  have hclass : ∀ u, blobOf G u = blobOf G v ↔ SameBlobIn G Set.univ v u := fun u => by
+    rw [sameBlobIn_univ_iff]
+    exact eq_comm
+  ext e
+  constructor
+  · rintro ⟨hb, hi⟩
+    refine ⟨hcut.mpr hb, ?_⟩
+    rcases hi with ⟨h, -⟩ | ⟨h, -⟩
+    · exact Or.inl ((hclass _).mp h)
+    · exact Or.inr ((hclass _).mp h)
+  · rintro ⟨hc, hb⟩
+    have hb' := hcut.mp hc
+    have hne := blobOf_source_ne_target hb'
+    refine ⟨hb', ?_⟩
+    rcases hb with hb | hb
+    · have h := (hclass _).mpr hb
+      exact Or.inl ⟨h, fun h' => hne (h.trans h'.symm)⟩
+    · have h := (hclass _).mpr hb
+      exact Or.inr ⟨h, fun h' => hne (h'.trans h.symm)⟩
+
 /-- On the whole network, `IsDeterminedBy` is the library's `Determines`. -/
 theorem isDeterminedBy_blobOf_iff {G : DirectedMultigraph W F} {v : W} {ℓ : X → W} {S : Finset X} :
     IsDeterminedBy G ℓ (blobOf G v) S ↔ 3 ≤ S.card ∧ Determines G Set.univ v ℓ S := by
-  have hcut : ∀ {e}, IsCutIn G Set.univ e ↔ G.underlying.IsBridge e := fun {e} => by
-    rw [G.isBridge_iff_not_walks_delete, Set.compl_eq_univ_sdiff]
-    exact ⟨fun h' => h'.2, fun h' => ⟨Set.mem_univ e, h'⟩⟩
-  have hsame : ∀ {u w}, SameBlobIn G Set.univ u w ↔ G.blobSetoid u w := fun {u w} => by
-    constructor
-    · intro h
-      refine Relation.ReflTransGen.mono ?_ _ _ h
-      rintro a b ⟨e, he, hl⟩
-      exact ⟨e, fun hb => he.2 (hcut.mpr hb), hl⟩
-    · intro h
-      refine Relation.ReflTransGen.mono ?_ _ _ h
-      rintro a b ⟨e, he, hl⟩
-      exact ⟨e, ⟨Set.mem_univ e, fun hc => he (hcut.mp hc)⟩, hl⟩
-  have hclass : ∀ u, blobOf G u = blobOf G v ↔ SameBlobIn G Set.univ v u := fun u => by
-    rw [hsame]
-    exact ⟨fun h => G.blobSetoid.symm (Quotient.exact h), fun h => Quotient.sound (G.blobSetoid.symm h)⟩
-  have heq : incidentCutEdges G (blobOf G v) = incidentCuts G Set.univ v := by
-    ext e
-    constructor
-    · rintro ⟨hb, hi⟩
-      refine ⟨hcut.mpr hb, ?_⟩
-      rcases hi with ⟨h, -⟩ | ⟨h, -⟩
-      · exact Or.inl ((hclass _).mp h)
-      · exact Or.inr ((hclass _).mp h)
-    · rintro ⟨hc, hb⟩
-      have hb' := hcut.mp hc
-      have hne := blobOf_source_ne_target hb'
-      refine ⟨hb', ?_⟩
-      rcases hb with hb | hb
-      · have h := (hclass _).mpr hb
-        exact Or.inl ⟨h, fun h' => hne (h.trans h'.symm)⟩
-      · have h := (hclass _).mpr hb
-        exact Or.inr ⟨h, fun h' => hne (h'.trans h.symm)⟩
   unfold IsDeterminedBy Determines
-  rw [heq, Set.compl_eq_univ_sdiff]
+  rw [incidentCutEdges_blobOf, Set.compl_eq_univ_sdiff]
 
 /-- A labelled node is pendant. -/
 theorem IsLabelledNetwork.isPendantIn [Finite F] {G : DirectedMultigraph W F} {ℓ : X → W}
     (hG : IsLabelledNetwork G ℓ) (x : X) : IsPendantIn G Set.univ (ℓ x) := by
-  have hd := (hG.degree_one_iff (ℓ x)).mpr ⟨x, rfl⟩
-  unfold nodeDegree at hd
-  have hcases : (G.indegree (ℓ x) = 1 ∧ G.outdegree (ℓ x) = 0) ∨ (G.indegree (ℓ x) = 0 ∧ G.outdegree (ℓ x) = 1) := by
-    omega
-  rcases hcases with ⟨h₁, h₀⟩ | ⟨h₀, h₁⟩
-  · obtain ⟨g, hg⟩ := (G.indegree_eq_one_iff _).mp h₁
-    have hno := (G.outdegree_eq_zero_iff _).mp h₀
-    refine ⟨g, fun h => hno g (h.trans ((hg g).mpr rfl)), fun f _ hf => ?_⟩
-    rcases hf with hf | hf
-    · exact absurd hf (hno f)
-    · exact (hg f).mp hf
-  · obtain ⟨g, hg⟩ := (G.outdegree_eq_one_iff _).mp h₁
-    have hno := (G.indegree_eq_zero_iff _).mp h₀
-    refine ⟨g, fun h => hno g (h.symm.trans ((hg g).mpr rfl)), fun f _ hf => ?_⟩
-    rcases hf with hf | hf
-    · exact (hg f).mp hf
-    · exact absurd hf (hno f)
+  obtain ⟨g, hne, -, hu⟩ := nodeDegree_eq_one_iff.mp (hG.degree_one x)
+  exact ⟨g, hne, fun f _ hf => hu f hf⟩
 
 /-- **Lemma 2** (`a:lem:inducedB`). Consider a network `N` with degree-1 nodes bijectively labelled by `X`, and a subnetwork `M` of `N`
 with the restricted labelling of some degree-1 nodes by `Y ⊆ X`. If a set `S ⊆ Y` determines a blob on `M`, then `S` determines a blob
 on `N`. Moreover, the incident cut edges of the blob on `N` leading to elements of `S` are in `M`.
 
-`M` is read as connected: see the module docstring. The blob on `N` is named: it is the one containing the blob on `M`, which the proof
+`M` is connected, which the paper's proof assumes: see the module docstring, also for "bijectively". The blob on `N` is named: it is the one containing the blob on `M`, which the proof
 says and Lemma 3 uses. "Leading to `s`" is that deleting the edge separates `s` from the blob. The proof is the paper's, in
-`AllmanEtAl2023.lemma2`. -/
+`AllmanEtAl2023.determines_of_subnetwork`. -/
 theorem lemma2 [Finite F] {G : DirectedMultigraph W F} {ℓ : X → W} (hG : IsLabelledNetwork G ℓ) {M : Set F}
     (hM : IsConnectedSubnetwork G M) {Y : Set X} (hY : ∀ y ∈ Y, ℓ y ∈ nodesOf G M) {S : Finset X} (hS : (S : Set X) ⊆ Y)
     {v : W} (hv : v ∈ nodesOf G M)
@@ -152,7 +150,7 @@ theorem lemma2 [Finite F] {G : DirectedMultigraph W F} {ℓ : X → W} (hG : IsL
     IsDeterminedBy G ℓ (blobOf G v) S ∧
       ∀ s ∈ S, ∃ e ∈ M, e ∈ incidentCutEdges G (blobOf G v) ∧ ¬ G.Walks {e}ᶜ v (ℓ s) := by
   obtain ⟨h3, hd⟩ := isDeterminedBy_blobOf_restrict_iff.mp hdet
-  obtain ⟨h₁, h₂⟩ := AllmanEtAl2023.lemma2 (F := Set.univ) (Set.subset_univ M) h3
+  obtain ⟨h₁, h₂⟩ := AllmanEtAl2023.determines_of_subnetwork (F := Set.univ) (Set.subset_univ M) h3
     (fun s _ => hG.isPendantIn s) (fun s hs => hM _ hv _ (hY s (hS hs)))
     (fun f hf => hM _ hv _ ⟨f, hf, Or.inl rfl⟩) hd
   have hdetN := isDeterminedBy_blobOf_iff.mpr ⟨h3, h₁⟩
@@ -180,4 +178,4 @@ theorem lemma2 [Finite F] {G : DirectedMultigraph W F} {ℓ : X → W} (hG : IsL
   refine ⟨e, he, hcut, fun hwalk => hw ?_⟩
   rwa [Set.compl_eq_univ_sdiff] at hwalk
 
-end AllmanEtAl2023.Printed
+end AllmanEtAl2023

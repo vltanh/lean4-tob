@@ -26,6 +26,7 @@ import argparse
 import json
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -33,7 +34,9 @@ from pathlib import Path
 # The Markdown documents to process.
 DOCS = ['README.md', 'docs/REPORT.md', 'docs/CREDITS.md']
 # Namespaces in which the documents name declarations without their prefix, most specific last.
-NAMESPACES = ['ECToBlob', 'TOBQMC', 'TINNiK', 'AllmanEtAl2023', 'External', 'Phylogenetics', 'TreeOfBlobs', 'ProbabilityTheory']
+NAMESPACES = ['ECToBlob', 'TOBQMC', 'TINNiK', 'AllmanEtAl2023', 'Gusfield2007', 'External', 'SempleSteel2003', 'Gusfield1991',
+              'GusfieldEtAl2004', 'MyersGriffiths2003', 'HudsonKaplan1985', 'SongHein2005', 'Phylogenetics', 'TreeOfBlobs',
+              'ProbabilityTheory']
 # Top-level module names of the project: a code span naming such a module links to its file.
 MODULE_ROOTS = ('ECToBlob', 'TOBQMC', 'TINNiK', 'AllmanEtAl2023', 'Gusfield2007', 'External', 'Basic', 'MainResults')
 # The module whose declarations win when a name is declared in several modules.
@@ -41,8 +44,6 @@ PREFERRED_MODULE = 'MainResults'
 # Directories, besides the repository root, against which the paths in the documents of a
 # given directory are resolved.
 PATH_BASES = {'': ['src', '.github/workflows'], 'docs': ['src', 'docs', '.github/workflows']}
-# Files named in the documents that are not in the repository, so that a local copy is not linked.
-UNLINKED = {'NEXT.md'}
 # The directory of the project's modules.
 SRC_DIR = 'src'
 # The library that this project requires, and where its source is published.
@@ -73,6 +74,11 @@ FENCE = re.compile(r'^\s*(`{3,}|~{3,})')
 
 def warn(message):
     print('warning: ' + message, file=sys.stderr)
+
+
+def git_ignores(path):
+    """Whether git ignores `path`: a local file that the repository doesn't have, and so can't link to."""
+    return subprocess.run(['git', 'check-ignore', '-q', path], cwd=ROOT).returncode == 0
 
 
 def module_file(module):
@@ -145,13 +151,11 @@ class Linker:
 
     def target(self, text, doc_dir):
         """The repository path or URL that `text` names, or None."""
-        if text in UNLINKED:
-            return None
         path = text.rstrip('/')
         if path and not path.startswith(('/', '.')) and ' ' not in path:
             for base in [''] + PATH_BASES.get(doc_dir, []):
                 candidate = os.path.normpath(os.path.join(base, path))
-                if (ROOT / candidate).exists():
+                if (ROOT / candidate).exists() and not git_ignores(candidate):
                     return candidate
         if not IDENT.match(text):
             return None

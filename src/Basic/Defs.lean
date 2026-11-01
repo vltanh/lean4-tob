@@ -175,7 +175,7 @@ quartet-nonanomalous, "for every subset of four taxa whose relationship is treel
 matches the TOB of the subnetwork".
 
 Departure from ECToBlob: this reads "no anomalous quartets" strictly. The definition the paper cites (Definition 2 of
-[8], Ané et al. 2024, `notes/sources/ane2024.txt`, lines 295-297) calls a network anomalous when `p_ab|cd < 1/3`, so its
+[8], Ané et al. 2024) calls a network anomalous when `p_ab|cd < 1/3`, so its
 absence is only `1/3 ≤ p_ab|cd`. That does not give the strict inequality of (5.2) at lines 403, 716 and 722: by Example 1
 of [8] there are valid parameters with a cut edge and all three concordance factors `1/3`. This is forced, and the example
 is worked out at `ECToBlob.remark3_3_nmsc` (`src/ECToBlob/Remark33.lean`). -/

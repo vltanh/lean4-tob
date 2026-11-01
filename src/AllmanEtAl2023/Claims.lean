@@ -1,17 +1,14 @@
 module
 
-public import AllmanEtAl2023.Bridges
+public import AllmanEtAl2023.InducedTransfer
 public import AllmanEtAl2023.Theorem2
 
 /-!
-# Allman, Baños, Mitchell, Rhodes 2023: the unnumbered claims that the proofs use
+# Allman, Baños, Mitchell, Rhodes 2023: the unnumbered claims that Theorems 3 and 4 use
 
-Each has a label of our own, `a:claim:…`, in `notes/routes_allman.tsv`. The paper says each of these in passing, and proves none of them except by a
-sentence. Those proved here are short, from the bridges.
+Each has a label of our own, `a:claim:…`, in `docs/paper_routes.tsv`. The paper says each of these in passing, and proves none of them except by a
+sentence. Those proved here are short, from the bridges. The claims for Theorem 1 and Corollary 1 are in `AllmanEtAl2023.ClaimsTheorem1`.
 
-* `a:claim:cf-induced`: "In passing to an induced network, B-quartets may become T-quartets, although `CF`s remain unchanged": `nmscCF_induced`.
-* `a:claim:generic-induced`: "the generic conditions ... give rise to a generic condition on numerical parameter values on the `n`-taxon network":
-  `isMetric_inducedParams`, `isGenericNull_inducedParams`. And `induced_isBinaryNetwork` (proved, in `src/AllmanEtAl2023/InducedNetwork.lean`).
 * `a:claim:three-taxa`: "On a network `𝒩⁺` every subset of 3 taxa determines a blob": `Bridges.exists_isDeterminedBy_three` (proved).
 * `a:claim:b-unresolved`: "the unresolved quartet `abcd` is displayed on the tree of blobs": `isBlobQuartet_iff_displaysUnresolved`.
 * `a:claim:t-resolved`: "If `{a, b, c, d}` is not a B-quartet ... the tree of blobs displays a resolved quartet tree for these taxa":
@@ -21,16 +18,14 @@ sentence. Those proved here are short, from the bridges.
 * `a:claim:suppress-blobs`: "induced networks are obtained from subnetworks by suppressing degree-2 nodes. Under this operation, blobs pass to blobs, and
   cut edges to cut edges": `Bridges.isBlobQuartetOnInduced_iff` (proved).
 * `a:claim:induced-induced`: an induced network of an induced network is an induced network, as far as quartets go; the induction of Theorem 3 uses this
-  without saying so: `inducedHasQuartetTopology_induced`, `inducedHasStarTopology_induced`.
+  without saying so: `inducedHasQuartetTopology_induced`, `inducedHasStarTopology_induced`, by the steps of Definition 6 in `InducedTransfer`.
 * `a:claim:thm3-representatives`: "Choose one taxon from each component which contains a taxon ... all edges in `ℬ` are retained":
   `exists_representatives_induced`.
-* `a:claim:rooted-forms`: "the reduced rooted tree of blobs thus has topology `(((a, b), c), d)`, `((a, b), (c, d))`, or `((a, b), c, d)`": `rootedForms`.
 * `a:claim:displayed-determine`: "the collection of displayed quartets determine the tree" (Semple and Steel 2005; Rhodes 2020):
   `treeFromQuartets_displays` (proved, from the library's Steel theorem `mem_of_forall_displays`).
-* `a:claim:thm4-displayed`: "we thus can identify the topology of every displayed quartet tree on `T_rd(𝒩⁻)`": `displayedFromCF_eq`.
+* `a:claim:thm4-displayed`: "we thus can identify the topology of every displayed quartet tree on `T_rd(𝒩⁻)`": `displayedFromCF_eq`, in `AllmanEtAl2023.Theorem4`, since it uses Theorem 3.
 
-The geometric statements after Proposition 1 are used by no proof, so they are not stated. The first equivalent condition after Definition 12, on deleting the
-edges of a blob, is used by no proof either.
+The geometric statements after Proposition 1 are used by no proof, so they are not stated. What else the paper says in passing, and no proof uses, is in `AllmanEtAl2023.InPassing`.
 -/
 
 @[expose] public noncomputable section
@@ -38,38 +33,9 @@ edges of a blob, is used by no proof either.
 open Phylogenetics Phylogenetics.RootedNetwork
 open scoped Classical
 
-namespace AllmanEtAl2023.Printed
+namespace AllmanEtAl2023
 
 variable {V E X : Type*} {N : RootedNetwork V E X}
-
-/-! ### `CF`s of an induced network -/
-
-section CF
-
-variable [Fintype V] [Fintype E] [Fintype X] [DecidableEq X]
-
-/-- **"In passing to an induced network, ... `CF`s remain unchanged"** (`a:claim:cf-induced`; also in Section 4: "The `CF`s computed from the induced 4-taxon networks
-are the same as gene tree probabilities from the large network marginalized to 4-taxon sets, by the structure of the NMSC model"). -/
-theorem nmscCF_induced (hN : IsBinaryNetwork N) {θ : MetricData E} (hθ : N.IsMetric θ) (Y : Set X) (hY : Y.Nontrivial)
-    [Fintype Y] [DecidableEq Y] [Fintype (InducedV hN Y hY)] [Fintype (InducedE hN Y hY)] (s : QuartetTree Y) :
-    nmscCF (induced hN Y hY) (inducedParams hN Y hY θ) 0 s = nmscCF N θ 0 (s.map Subtype.val_injective) := by
-  sorry
-
-/-- The map of parameters sends valid parameters to valid parameters (`a:claim:generic-induced`). -/
-theorem isMetric_inducedParams (hN : IsBinaryNetwork N) {θ : MetricData E} (hθ : N.IsMetric θ) (Y : Set X)
-    (hY : Y.Nontrivial) [Fintype (InducedE hN Y hY)] :
-    (induced hN Y hY).IsMetric (inducedParams hN Y hY θ) := by
-  sorry
-
-/-- **"They give rise to a generic condition on numerical parameter values on the `n`-taxon network"** (`a:claim:generic-induced`, in the proof of Corollary 1):
-preimages of null sets under the map of parameters are null. -/
-theorem isGenericNull_inducedParams (hN : IsBinaryNetwork N) (Y : Set X) (hY : Y.Nontrivial)
-    [Fintype (InducedE hN Y hY)] {A' : Set (MetricData (InducedE hN Y hY))}
-    (hA' : (induced hN Y hY).IsGenericNull A') :
-    N.IsGenericNull {θ | N.IsMetric θ ∧ inducedParams hN Y hY θ ∈ A'} := by
-  sorry
-
-end CF
 
 /-! ### The B-quartets and the tree of blobs -/
 
@@ -141,14 +107,22 @@ theorem inducedHasQuartetTopology_induced (hN : IsBinaryNetwork N) {Y : Set X} (
     (h : ({a, b, c, d} : Finset Y).card = 4) (h' : ({a.1, b.1, c.1, d.1} : Finset X).card = 4) :
     InducedHasQuartetTopology (induced_isBinaryNetwork hN Y hY) a b c d h ↔
       InducedHasQuartetTopology hN a.1 b.1 c.1 d.1 h' := by
-  sorry
+  have : Finite X := hN.finite_taxa
+  let _ : Fintype X := Fintype.ofFinite X
+  let _ : Fintype Y := Fintype.ofFinite Y
+  rw [Bridges.inducedHasQuartetTopology_iff _ h, Bridges.inducedHasQuartetTopology_iff hN h',
+    Bridges.inducedCutSplit_induced_iff hN hY, Bridges.map_quartetTree h h']
 
 /-- An induced network of an induced network, as far as unresolved quartets go (`a:claim:induced-induced`). -/
 theorem inducedHasStarTopology_induced (hN : IsBinaryNetwork N) {Y : Set X} (hY : Y.Nontrivial) {a b c d : Y}
     (h : ({a, b, c, d} : Finset Y).card = 4) (h' : ({a.1, b.1, c.1, d.1} : Finset X).card = 4) :
     InducedHasStarTopology (induced_isBinaryNetwork hN Y hY) a b c d h ↔
       InducedHasStarTopology hN a.1 b.1 c.1 d.1 h' := by
-  sorry
+  have : Finite X := hN.finite_taxa
+  let _ : Fintype X := Fintype.ofFinite X
+  let _ : Fintype Y := Fintype.ofFinite Y
+  rw [Bridges.inducedHasStarTopology_iff _ h, Bridges.inducedHasStarTopology_iff hN h',
+    Bridges.isTreelike_induced_iff hN hY h h']
 
 /-- **The first step of the proof of Theorem 3** (`a:claim:thm3-representatives`): "consider the connected components of the graph obtained by deleting `ℬ`. Choose one taxon from each
 component which contains a taxon, with four of these being `a, b, c, d`. Passing to the induced network on those taxa, all edges in `ℬ` are retained." So `Q` is a B-quartet there. -/
@@ -157,31 +131,76 @@ theorem exists_representatives_induced (hN : IsBinaryNetwork N) {Q : Finset X} {
     ∃ R : Finset X, Q ⊆ R ∧ IsDeterminedBy N.graph N.leaf B R ∧
       (∀ x, ∃ r ∈ R, N.graph.Walks (incidentCutEdges N.graph B)ᶜ (N.leaf x) (N.leaf r)) ∧
       ∃ hR : (R : Set X).Nontrivial, IsBlobQuartetOnInduced hN (R : Set X) hR Q := by
-  sorry
-
-/-- The non-singleton clusters of a rooted tree: the taxa below an edge. -/
-def rootedClusters {V' E' : Type*} (R : RootedNetwork V' E' X) : Set (Set X) :=
-  {A | 2 ≤ A.ncard ∧ ∃ e, A = {x | R.IsBelow e x}}
-
-/-- **"Permuting taxon names if necessary, we may assume that the reduced rooted tree of blobs thus has topology `(((a, b), c), d)`, `((a, b), (c, d))`, or `((a, b), c, d)`"**
-(`a:claim:rooted-forms`, in the proof of Theorem 1). Here are the seven rooted forms before the permutation: the root on a pendant edge, on the internal edge, or at one of the two nodes.
-`AllmanEtAl2023.rootedForm_cases` (`Theorem1.lean`) is a tautology, and doesn't say this. -/
-theorem rootedForms [Fintype X] (hN : IsBinaryNetwork N) (hcard : Fintype.card X = 4) {a b c d : X}
-    (hT : (Trd hN (nontrivial_of_card_four hcard)).HasQuartetTopology a b c d) :
-    rootedClusters (reducedRootedTree hN (nontrivial_of_card_four hcard)) = {{a, b}, {a, b, c}} ∨
-      rootedClusters (reducedRootedTree hN (nontrivial_of_card_four hcard)) = {{a, b}, {a, b, d}} ∨
-      rootedClusters (reducedRootedTree hN (nontrivial_of_card_four hcard)) = {{c, d}, {c, d, a}} ∨
-      rootedClusters (reducedRootedTree hN (nontrivial_of_card_four hcard)) = {{c, d}, {c, d, b}} ∨
-      rootedClusters (reducedRootedTree hN (nontrivial_of_card_four hcard)) = {{a, b}, {c, d}} ∨
-      rootedClusters (reducedRootedTree hN (nontrivial_of_card_four hcard)) = {{a, b}} ∨
-      rootedClusters (reducedRootedTree hN (nontrivial_of_card_four hcard)) = {{c, d}} := by
-  sorry
-
-/-- **"Treating B-quartets on `𝒩⁺` as unresolved, we thus can identify the topology of every displayed quartet tree on `T_rd(𝒩⁻)`"** (`a:claim:thm4-displayed`, in the proof of Theorem 4). -/
-theorem displayedFromCF_eq [Fintype V] [Fintype E] [Fintype X] (hN : IsBinaryNetwork N) (hX : Nontrivial X) :
-    ForGenericParams N fun θ => displayedFromCF (nmscCF N θ 0) = {s | Displays (Trd hN hX).splits s} := by
-  sorry
+  have hP := hN.isPhylogenetic
+  have : Finite X := hP.finite_taxa
+  let _ : Fintype X := Fintype.ofFinite X
+  have : Finite E := hP.finite_arcs
+  induction B using Quotient.inductionOn with
+  | h v =>
+    change IsDeterminedBy N.graph N.leaf (blobOf N.graph v) Q at hB
+    change ∃ R : Finset X, Q ⊆ R ∧ IsDeterminedBy N.graph N.leaf (blobOf N.graph v) R ∧
+      (∀ x, ∃ r ∈ R, N.graph.Walks (incidentCutEdges N.graph (blobOf N.graph v))ᶜ (N.leaf x) (N.leaf r)) ∧
+      ∃ hR : (R : Set X).Nontrivial, IsBlobQuartetOnInduced hN (R : Set X) hR Q
+    obtain ⟨h3, hd⟩ := isDeterminedBy_blobOf_iff.mp hB
+    have huniv : ((Finset.univ : Finset X) : Set X) = Set.univ := Finset.coe_univ
+    have hanc : N.ancestralArcs ((Finset.univ : Finset X) : Set X) = Set.univ := by
+      rw [huniv]
+      exact Bridges.ancestralArcs_univ hP
+    have hv : v ∈ N.ancestralVertices ((Finset.univ : Finset X) : Set X) := by
+      rw [huniv, Bridges.ancestralVertices_univ hP]
+      exact Set.mem_univ v
+    have hdet : Determines N.graph (N.ancestralArcs ((Finset.univ : Finset X) : Set X)) v N.leaf Q := by
+      rw [hanc]
+      exact hd
+    -- one taxon from each component: a largest set containing `Q` with no two in one component
+    have hmemq : Q ∈ Finset.univ.powerset.filter fun R => Q ⊆ R ∧ Determines N.graph Set.univ v N.leaf R :=
+      Finset.mem_filter.mpr ⟨Finset.mem_powerset.mpr (Finset.subset_univ _), Finset.Subset.refl _, hd⟩
+    obtain ⟨R, hqR, hmem, hmax⟩ := Finset.exists_le_maximal _ hmemq
+    obtain ⟨-, -, hdetR⟩ := Finset.mem_filter.mp hmem
+    have hcov : ∀ x, ∃ r ∈ R, N.graph.Walks (Set.univ \ incidentCuts N.graph Set.univ v) (N.leaf x) (N.leaf r) := by
+      intro x
+      by_contra hno
+      push Not at hno
+      have hins : insert x R ∈ Finset.univ.powerset.filter fun R => Q ⊆ R ∧ Determines N.graph Set.univ v N.leaf R := by
+        refine Finset.mem_filter.mpr ⟨Finset.mem_powerset.mpr (Finset.subset_univ _),
+          hqR.trans (Finset.subset_insert _ _), fun s hs t ht hst hw => ?_⟩
+        rcases Finset.mem_insert.mp hs with rfl | hs' <;> rcases Finset.mem_insert.mp ht with rfl | ht'
+        · exact hst rfl
+        · exact hno t ht' hw
+        · exact hno s hs' (N.graph.walks_symm hw)
+        · exact hdetR s hs' t ht' hst hw
+      have hxR : x ∈ R := hmax hins (Finset.subset_insert _ _) (Finset.mem_insert_self _ _)
+      exact hno x hxR .refl
+    have hR4 : 4 ≤ R.card := h4 ▸ Finset.card_le_card hqR
+    have hRnt : (R : Set X).Nontrivial := Finset.one_lt_card_iff_nontrivial.mp (by omega)
+    refine ⟨R, hqR, isDeterminedBy_blobOf_iff.mpr ⟨by omega, hdetR⟩, ?_, hRnt, ?_⟩
+    · intro x
+      obtain ⟨r, hr, hw⟩ := hcov x
+      refine ⟨r, hr, ?_⟩
+      rwa [incidentCutEdges_blobOf, Set.compl_eq_univ_sdiff]
+    · -- all edges of `ℬ` are retained
+      have hcov' : ∀ x ∈ (Finset.univ : Finset X), ∃ r ∈ R, N.graph.Walks
+          (N.ancestralArcs ((Finset.univ : Finset X) : Set X) \ incidentCuts N.graph (N.ancestralArcs ((Finset.univ : Finset X) : Set X)) v)
+          (N.leaf x) (N.leaf r) := by
+        intro x _
+        rw [hanc]
+        exact hcov x
+      have hsub : ((R : Finset X) : Set X) ⊆ ((Finset.univ : Finset X) : Set X) := by
+        rw [huniv]
+        exact Set.subset_univ _
+      have harcs : blobArcsIn N.graph (N.ancestralArcs ((Finset.univ : Finset X) : Set X)) v ⊆ N.ancestralArcs (R : Set X) := by
+        intro f hf
+        obtain ⟨r, hr, hreach⟩ := exists_reaches_rep hP hv (Finset.subset_univ Q) h3 hdet (Finset.subset_univ R) hcov'
+          (Relation.ReflTransGen.tail hf.2 ⟨f, hf.1, Or.inl ⟨rfl, rfl⟩⟩)
+        exact ⟨r, Finset.mem_coe.mpr hr, hreach⟩
+      have hblob : ∀ x, SameBlobIn N.graph (N.ancestralArcs ((Finset.univ : Finset X) : Set X)) v x →
+          SameBlobIn N.graph (N.ancestralArcs (R : Set X)) v x := fun x hx =>
+        sameBlobIn_of_isBridgelessSubgraph (isBridgelessSubgraph_blob v) harcs Relation.ReflTransGen.refl hx
+      obtain ⟨r, hr, hreach⟩ := exists_reaches_rep hP hv (Finset.subset_univ Q) h3 hdet (Finset.subset_univ R) hcov'
+        Relation.ReflTransGen.refl
+      exact (Bridges.isBlobQuartetOnInduced_iff hN (R : Set X) hRnt (Finset.coe_subset.mpr hqR) h4).mpr
+        ⟨v, ⟨r, Finset.mem_coe.mpr hr, hreach⟩, hdet.of_subset (N.ancestralArcs_mono hsub) hblob⟩
 
 end Induced
 
-end AllmanEtAl2023.Printed
+end AllmanEtAl2023

@@ -23,7 +23,7 @@ mass, at most that of `s`.
 @[expose] public noncomputable section
 
 open Phylogenetics Phylogenetics.RootedNetwork Phylogenetics.NMSC Finset
-open ECToBlob.Remark52
+open ECToBlob.Remark52 Phylogenetics.NMSC.Chain
 open scoped Classical
 
 namespace External.AllmanBanosRhodes2019.Placement

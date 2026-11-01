@@ -15,7 +15,7 @@ in the interval `[0, 1]`. Since `γ`s of 0 and 1 correspond to displayed trees, 
 sufficiently close to 0 and 1, MQS will infer displayed trees as well. Thus, for a positive-measure subset of parameter
 space MQS will select a displayed tree of the network. Varying `γ`s continuously between choices of parameters leading to
 different trees also shows that there must be parameter values for which multiple optimal MQS trees exist."
-(`notes/paper2026/paper.txt`, lines 363-369.)
+(the paper's text, lines 363-369.)
 
 The boundary is a parent choice `c` (`N.choiceMetric θ c`): inheritance `0` on the deleted arcs `N.deletedArcs c`, for
 any number of parents at a reticulation. `IsMQSOptimal p T` says that the tree `T` has the largest score.
@@ -983,7 +983,7 @@ end Tie
 
 section Example
 
-open ECToBlob.Remark52
+open ECToBlob.Remark52 Phylogenetics.NMSC.Chain
 
 /-- The vertices of the 4-cycle network: `h` is the reticulation, and `t`, `u`, `h`, `v` is the cycle. -/
 inductive V₄ | r | t | u | v | h | a | b | c | d
@@ -1198,7 +1198,7 @@ end Generic
 
 section ZeroLength
 
-open ECToBlob.Remark52 ECToBlob.Remark33Counterexample
+open ECToBlob.Remark52 Phylogenetics.NMSC.Chain ECToBlob.Remark33Counterexample
 
 /-- The parent choice of the network `N₁` of Figure 1 that keeps the arc `e₁` of the two parallel arcs. -/
 def choiceE₁ : N₁.ParentChoice := fun p => ⟨match p.val with

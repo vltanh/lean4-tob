@@ -11,7 +11,7 @@ public import TOBQMC.Counts
 /-!
 # ECToBlob: operation counts
 
-The running time of the ECToBlob algorithm (`notes/paper2026/paper.txt`, lines 922-935). No machine model is used:
+The running time of the ECToBlob algorithm (the paper's text, lines 922-935). No machine model is used:
 each theorem counts the objects that a step enumerates, and says what each one costs in the paper's terms; the bounds
 are explicit.
 
@@ -402,7 +402,7 @@ theorem card_childClusters_add_le {T₀ T : Finset (Finset X)} (hT₀ : IsBinary
   rw [card_union_of_disjoint hdis, card_image_of_injective _ compl_injective, card_union_of_disjoint hdis₁₂] at hcard
   omega
 
-/-- **The bound of ECToBlob on incident edges** (`notes/paper2026/paper.txt`, line 933): for a binary `T₀`, an
+/-- **The bound of ECToBlob on incident edges** (the paper's text, line 933): for a binary `T₀`, an
 internal edge of a contraction `T` of `T₀`, with `k = (T₀ \ T).card / 2` edges contracted, is incident to at most `4 +
 k` other edges. Here `k` counts all edges contracted so far, in Step 3 too, and the count has the pendant edges among
 the `4 + k`. -/
@@ -648,7 +648,7 @@ theorem sum_sub_mul_le (k : ℕ → ℕ) (hk : ∀ i, k i ≤ k (i + 1)) (L : �
 
 variable {o : ECToBlobOptions} {β : ℝ} {c : QuartetTree X → ℝ} {T₀ : Finset (Finset X)}
 
-/-- **"`∑_{k=0}^{s-3} (4 + k) = O(s²)` new edge computations may be needed"** (`notes/paper2026/paper.txt`, lines
+/-- **"`∑_{k=0}^{s-3} (4 + k) = O(s²)` new edge computations may be needed"** (the paper's text, lines
 932-934), over any number of iterations of `treeSeq`, for a binary `T₀`, on `s ≥ 3` taxa. Counted: the sides, two per
 edge, whose quartets of `mul` may change at an iteration (`recomputedSides`). -/
 theorem sum_card_recomputedSides_le (hT₀ : IsBinaryTree T₀) (h3 : 3 ≤ Fintype.card X) (L : ℕ) :
@@ -808,7 +808,7 @@ theorem card_fourSets_add_card_quartetTree :
   ring
 
 /-- The operations of Algorithm 7.1 for `bi` or `quad`, on `s` taxa, as the paper counts them
-(`notes/paper2026/paper.txt`, lines 922-928). Counted:
+(the paper's text, lines 922-928). Counted:
 
 * `4 C(s, 4)` p-values (`card_fourSets_add_card_quartetTree`);
 * for each of at most `s - 3` edges (`card_edgeSides_add_three_le`), and for the star and T1 tests, deciding

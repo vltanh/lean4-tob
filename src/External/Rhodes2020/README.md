@@ -18,5 +18,4 @@ theorem.
 
 The source has one indexing slip. In the display before equation (2), and in equations (2) and (3), the
 sums over the blocks `C_v^i` run up to `k` or `k(v)`, and there are `k - 2` such blocks. With `k - 2` the
-proof is correct. `notes/sources/rhodes2020.txt` lacks the displayed equations; they are in
-`notes/sources/PMC7650847.xml`.
+proof is correct. The plain text of the PMC page (PMC7650847) lacks the displayed equations; they are in the page's XML.

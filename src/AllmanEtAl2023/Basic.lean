@@ -13,17 +13,17 @@ public import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 E. S. Allman, H. Baños, J. D. Mitchell, J. A. Rhodes, *The tree of blobs of a species network:
 identifiability under the coalescent*, J. Math. Biol. 86 (2023), 10.
 
-* `theorem2`, the B-quartet inference rule, is proved by the source's argument, on the node `v` of the
-  tree of blobs that `b, c, d` determine (`rule_core`).
-* `lemma3` and `closure_complete`, the combinatorial content of Theorem 3, are proved: from the
-  B-quartets detected on induced 4-taxon networks, the inference rule reaches all B-quartets.
-  `lemma3` follows the source's cycle through `A`, `K_ab`, `e₀`, `K_cd` (`lemma3_blob`, in
-  `src/AllmanEtAl2023/CycleLemma.lean`), and uses its Lemma 2 (`lemma2`, in
+This file holds the paper's Theorems 2 and 3 in the language of cut-edge splits and domination on a fixed network, which the later papers use. The numbered results, on the paper's objects, are `theorem2` (from `rule_core` here), `lemma3`, `theorem3`.
+
+* `rule_core`: the B-quartet inference rule, by the source's argument, on the node `v` of the
+  tree of blobs that `b, c, d` determine.
+* `lemma3_resolves` follows the source's cycle through `A`, `K_ab`, `e₀`, `K_cd` (`lemma3_blob`, in
+  `src/AllmanEtAl2023/CycleLemma.lean`), and uses its Lemma 2 (`determines_of_subnetwork`, in
   `src/AllmanEtAl2023/SubgraphBlobs.lean`). `not_resolves_iff_exists_determines` and
   `isBQuartet_iff_not_resolves` translate between the source's "determines a blob" and the
   description by domination used here.
-* `Corollary1`, the CF-detectability of 4-blobs for generic parameters, is defined here. Theorem 1 is proved in
-  `src/AllmanEtAl2023/Theorem1.lean`, and Corollary 1 in `src/AllmanEtAl2023/Corollary1.lean`.
+* `closure_complete`, `closure_sound`: the closure under the inference rule is the set of B-quartets, at any degree.
+* `IsStrictlyCutAt`, `IsNonCut`, `CFDetectable`: the CF-detectability of 4-blobs, on a function of quartet trees.
 -/
 
 @[expose] public noncomputable section
@@ -44,9 +44,9 @@ variable {X : Type*} [Fintype X] [DecidableEq X]
 def IsNonCut (p : QuartetTree X → ℝ) (q : Finset X) : Prop :=
   ∀ r ∈ treesOn q, ∀ r' ∈ treesOn q, r ≠ r' → p r ≠ p r'
 
-/-- **Definition 15** (`a:def:cutCF`), on a function `p` of quartet trees: the concordance factors are *strictly `s`-cut*:
-the alternatives of `s` are equal, and differ from `s`. -/
-def IsStrictlyCut (p : QuartetTree X → ℝ) (s : QuartetTree X) : Prop :=
+/-- **Definition 15** (`a:def:cutCF`), on a function `p` of quartet trees: the concordance factors are *strictly `s`-cut*, at the tree `s`:
+the alternatives of `s` are equal, and differ from `s`. On the triple `CF_abcd` with `s = ab|cd` this is `IsStrictlyCutAtFirst` (`isStrictlyCutAtFirst_iff`). -/
+def IsStrictlyCutAt (p : QuartetTree X → ℝ) (s : QuartetTree X) : Prop :=
   (∀ r ∈ s.alternatives, p r ≠ p s) ∧ ∀ r ∈ s.alternatives, ∀ r' ∈ s.alternatives, p r = p r'
 
 /-- CF-detectability of the induced 4-taxon networks at given concordance factors: a cut-edge split
@@ -54,14 +54,9 @@ of the induced network gives strictly cut concordance factors, and an induced ne
 (with a 4-blob) gives non-cut concordance factors. -/
 structure CFDetectable {V E : Type*} (N : RootedNetwork V E X) (p : QuartetTree X → ℝ) : Prop where
   /-- A cut-edge split of the induced network gives strictly cut concordance factors. -/
-  cut : ∀ s : QuartetTree X, InducedCutSplit N s → IsStrictlyCut p s
+  cut : ∀ s : QuartetTree X, InducedCutSplit N s → IsStrictlyCutAt p s
   /-- An induced network with a 4-blob gives non-cut concordance factors. -/
   blob : ∀ q : Finset X, q.card = 4 → ¬ IsTreelike N q → IsNonCut p q
-
-/-- **Corollary 1** as a statement: CF-detectability of the induced 4-taxon networks holds for generic numerical
-parameters, under the NMSC with independent inheritance: the parameters at which it fails form a null set. -/
-def Corollary1 {V E : Type*} [Fintype V] [Fintype E] (N : RootedNetwork V E X) : Prop :=
-  N.IsGenericNull {θ | N.IsMetric θ ∧ ¬ CFDetectable N (nmscCF N θ 0)}
 
 end Patterns
 
@@ -237,26 +232,12 @@ theorem not_resolves_iff_exists_determines (hN : N.IsPhylogenetic) {Y q : Finset
     · exact hst (hdet.eq_of_mem_side hO hvT hsq htq (hW s hsq) (hW t htq) (he s (hq hsq) hsb)
         (he t (hq htq) htb))
 
-omit [Fintype X] [DecidableEq X] in
-/-- **Corollary 2 of the source**, for taxon sets: a B-quartet on the subgraph induced on a set of
-taxa is one on the subgraph induced on any larger set. From Lemma 2. -/
-theorem corollary2 (hN : N.IsPhylogenetic) {Y Z q : Finset X} (hYZ : Y ⊆ Z) (hq : q ⊆ Y)
-    (h4 : q.card = 4) (hR : ¬ Resolves N Y q) : ¬ Resolves N Z q := by
-  obtain ⟨v, hv, hdet⟩ := (not_resolves_iff_exists_determines hN hq h4).mp hR
-  have hsub : ((Y : Finset X) : Set X) ⊆ Z := Finset.coe_subset.mpr hYZ
-  refine (not_resolves_iff_exists_determines hN (hq.trans hYZ) h4).mpr
-    ⟨v, N.ancestralVertices_mono hsub hv, (lemma2 (N.ancestralArcs_mono hsub) (by omega)
-      (fun s _ => isPendantIn_leaf hN s _) ?_ ?_ hdet).1⟩
-  · exact fun s hs => walks_ancestral hN hv
-      (N.leaf_mem_ancestralVertices (Finset.mem_coe.mpr (hq hs)))
-  · exact fun f hf => walks_ancestral hN hv (N.source_mem_ancestralVertices hf)
-
 omit [Fintype X] in
 /-- **Lemma 3 of the source**, in the fixed network, for the subgraphs induced on subsets `Y`. Its
 proof is `lemma3_blob` in the source's language of blobs: `¬ Resolves` is translated to and from
 "determines a blob" by `not_resolves_iff_exists_determines`, and the hypotheses on `e₀` give a side
 of a cut edge of the subgraph induced on `Y \ {α}`. -/
-theorem lemma3 (hN : N.IsPhylogenetic) {Y : Finset X} {a b c d α : X} {e₀ : E}
+theorem lemma3_resolves (hN : N.IsPhylogenetic) {Y : Finset X} {a b c d α : X} {e₀ : E}
     (h4 : ({a, b, c, d} : Finset X).card = 4) (ha : a ∈ Y) (hb : b ∈ Y) (hc : c ∈ Y) (hd : d ∈ Y)
     (hα : α ∈ Y) (hαa : α ≠ a) (hαb : α ≠ b) (hαc : α ≠ c) (hαd : α ≠ d)
     (hcut : ∀ x ∈ Y, x ≠ α → N.IsBelow e₀ x → N.Dominates e₀ x)
@@ -302,6 +283,22 @@ theorem lemma3 (hN : N.IsPhylogenetic) {Y : Finset X} {a b c d α : X} {e₀ : E
         hcut c hc hαc.symm bc, hcut d hd hαd.symm bd⟩
   obtain ⟨v, hv, hdet'⟩ := lemma3_blob hN h4 ha hb hc hd hα hαa hαb hαc hαd hv₀ hdet hT₁ ha₁ hb₁ hc₁ hd₁
   exact (not_resolves_iff_exists_determines hN hq' h4').mpr ⟨v, hv, hdet'⟩
+
+omit [Fintype X] in
+/-- The separated taxa of a quartet `ab|cd`, as the rule uses them: `a, d` are on different sides. -/
+theorem separated_quartetTree {a b c d : X} (h : ({a, b, c, d} : Finset X).card = 4) : Separated (quartetTree a b c d h) a d := by
+  obtain ⟨hab, hac, had, hbc, hbd, hcd⟩ := ne_of_card_four h
+  refine ⟨by simp, by simp, fun B hB ⟨h1, h2⟩ => ?_⟩
+  simp only [quartetTree_val, Finset.mem_insert, Finset.mem_singleton] at hB
+  rcases hB with rfl | rfl
+  · simp only [Finset.mem_insert, Finset.mem_singleton] at h2
+    rcases h2 with h2 | h2
+    · exact had h2.symm
+    · exact hbd h2.symm
+  · simp only [Finset.mem_insert, Finset.mem_singleton] at h1
+    rcases h1 with h1 | h1
+    · exact hac h1
+    · exact had h1
 
 omit [Fintype X] [DecidableEq X] in
 /-- **"All edges in `ℬ` are retained"**, in the first step of the source's proof of Theorem 3. Let
@@ -468,10 +465,10 @@ private theorem closure_aux (hN : N.IsPhylogenetic) (n : ℕ) :
         fun x hx hxα hb' => hcut x (Finset.mem_erase.mpr ⟨hxα, hx⟩) hb'
       rw [hqe] at hR
       -- Lemma 3, twice
-      have hL₁ := lemma3 hN h4 ha hb hc hd hαY hαa hαb hαc hαd hcut' (Or.inl ⟨Ba, Bb, Nc, Nd⟩) hR
+      have hL₁ := lemma3_resolves hN h4 ha hb hc hd hαY hαa hαb hαc hαd hcut' (Or.inl ⟨Ba, Bb, Nc, Nd⟩) hR
       have h4r : ({d, c, b, a} : Finset X).card = 4 :=
         TreeMetric.card_four_of_ne hcd'.symm hbd.symm had.symm hbc.symm hac.symm hab'.symm
-      have hL₂ := lemma3 hN h4r hd hc hb ha hαY hαd hαc hαb hαa hcut' (Or.inr ⟨Nd, Nc, Bb, Ba⟩)
+      have hL₂ := lemma3_resolves hN h4r hd hc hb ha hαY hαd hαc hαb hαa hcut' (Or.inr ⟨Nd, Nc, Bb, Ba⟩)
         (by
           rwa [show ({d, c, b, a} : Finset X) = {a, b, c, d} by
             ext x; simp only [Finset.mem_insert, Finset.mem_singleton]; tauto])
@@ -521,18 +518,7 @@ private theorem closure_aux (hN : N.IsPhylogenetic) (n : ℕ) :
         rw [Finset.card_insert_of_notMem (by simp [hab', hac, had, hαa.symm]),
           Finset.card_insert_of_notMem (by simp [hbc, hbd, hαb.symm]),
           Finset.card_insert_of_notMem (by simp [hcd', hαc.symm]), Finset.card_pair hαd]
-      have hsep : Separated (quartetTree a b c d h4) a d := by
-        refine ⟨by simp, by simp, fun B hB ⟨h1, h2⟩ => ?_⟩
-        simp only [quartetTree_val, Finset.mem_insert, Finset.mem_singleton] at hB
-        rcases hB with rfl | rfl
-        · simp only [Finset.mem_insert, Finset.mem_singleton] at h2
-          rcases h2 with h2 | h2
-          · exact had h2.symm
-          · exact hbd h2.symm
-        · simp only [Finset.mem_insert, Finset.mem_singleton] at h1
-          rcases h1 with h1 | h1
-          · exact hac h1
-          · exact had h1
+      have hsep : Separated (quartetTree a b c d h4) a d := separated_quartetTree h4
       rw [hqe]
       exact BInferred.ruleT a b c α d (quartetTree a b c d h4) {a, b, c, d} h5 hI₁ hI₂ hs
         (by rw [quartetTree_taxa]; simp) hsep (by simp)
@@ -619,7 +605,7 @@ B-quartet of the network, which may be treelike when induced (`closure_sound`). 
 applies unchanged, since a cut edge separating `a, e` from `b, c, d` also resolves the set on the
 network (`not_separating`).
 
-The proof is the source's, `notes/sources/allman2023.txt` lines 199-200, in its order. The taxa `b, c, d`
+The proof is the source's, lines 199-200 of the PMC text, in its order. The taxa `b, c, d`
 determine a blob, a node `v` of the tree of blobs, and the two B-quartets make `a` and `e` first meet them
 at `v` (`determines_of_isBQuartet`). If the paths from `a`, `e` met before `v`, they would use one incident
 cut edge of the blob, separating `a, e` from `b, c, d` (`filter_mem_treeOfBlobs`), and picking any two of
@@ -732,25 +718,9 @@ theorem rule_core (hN : N.IsPhylogenetic) {a b c d e : X} (h5 : ({a, b, c, d, e}
   · exact hfin _ (hsub (by simp) (by simp) (by simp) (by simp))
       (TreeMetric.card_four_of_ne hac had hae hcd hce hde)
 
-/-- **Theorem 2 of the source (B-quartet Inference Rule; TINNiK Theorem 2).** If `{a,b,c,d}`
-and `{b,c,d,e}` are B-quartets of the network, and on the induced 4-taxon network one of
-`{a,b,c,e}`, `{a,b,d,e}`, `{a,c,d,e}` is a T-quartet with `a, e` separated or a B-quartet, then all
-three are B-quartets. The source treats binary networks; the binary condition is not needed. -/
-theorem theorem2 (hN : N.IsPhylogenetic) {a b c d e : X} (h5 : ({a, b, c, d, e} : Finset X).card = 5)
-    (habcd : IsBQuartet N {a, b, c, d}) (hbcde : IsBQuartet N {b, c, d, e})
-    {t : Finset X} (ht : t ∈ ({{a, b, c, e}, {a, b, d, e}, {a, c, d, e}} : Finset (Finset X)))
-    (hrule : ¬ IsTreelike N t ∨ ∃ s ∈ treesOn t, InducedCutSplit N s ∧ Separated s a e)
-    {q : Finset X} (hq : q ∈ ({{a, b, c, e}, {a, b, d, e}, {a, c, d, e}} : Finset (Finset X))) :
-    IsBQuartet N q :=
-  rule_core hN h5 habcd hbcde ht (hrule.imp_left (isBQuartet_of_not_isTreelike hN)) hq
+/-- **The closure under the inference rule reaches every B-quartet, at any degree.** This is the form for the later papers, which `ECToBlob.remark83_tinnik` needs, since that statement has no hypothesis on the degrees: from the 4-taxon sets with no cut-edge split on their induced networks, and the quartet trees of the others, the closure reaches every B-quartet of the network. The induction is on the taxa of an induced subgraph, in `closure_aux`, on the fixed network throughout.
 
-/-- **Theorem 3 of the source, combinatorial part.** From the 4-taxon sets with no cut-edge split on
-their induced networks, and the quartet trees of the others, the closure under the inference rule
-reaches every B-quartet of the network. With soundness (`theorem2`) this is what Theorem 3 uses of
-Theorem 1. The induction is on the taxa of an induced subgraph, as in the source, in `closure_aux`.
-The source concludes on the induced networks and transfers to `𝒩⁺` by its Corollary 2
-(`corollary2`). Here the closure is taken on the fixed network throughout, so the transfer is built
-in. -/
+The paper's Theorem 3 is `theorem3`, by its induction. This is kept for the generality at any degree, not as a second proof of a numbered result for the paper's own setting. -/
 theorem closure_complete (hN : N.IsPhylogenetic) {q : Finset X} (hq : q.card = 4)
     (hB : IsBQuartet N q) :
     BInferred {q' | q'.card = 4 ∧ ¬ IsTreelike N q'} {s | InducedCutSplit N s} q :=

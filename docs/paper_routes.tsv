@@ -1,7 +1,9 @@
-# The routes of the proofs in the three papers: which numbered results each proof uses.
-# No author TeX exists for two of the papers, so this was written by hand from the PDFs and publisher XML, and
-# checked against them; `route_check.py extract` could not be used. All labels are assigned here and appear in
-# the docstrings of the Lean results. Columns: label, environment, the paper proves it (1/0), results used.
+# The routes of the proofs in the five papers: which numbered results each proof uses.
+# Columns: label, environment, the paper proves it (1/0), results used.
+# Every label is assigned here or taken from the paper's TeX, and appears in the docstrings of the Lean results. Each paper has a section below.
+#
+# ECToBlob, TOB-QMC, TINNiK. No author TeX exists for them, so these rows were written by hand from the PDFs and publisher XML, and
+# checked against them; `route_check.py extract` could not be used.
 #
 # ECToBlob (bioRxiv v1). Equations are rows because later proofs use them.
 ecto:eq3_1	equation	0
@@ -46,3 +48,265 @@ tinnik:full_log_likelihood	claim	1
 tinnik:proposition5	proposition	1
 tinnik:proposition6	proposition	1
 tinnik:theorem4	theorem	1	tinnik:proposition5,tinnik:proposition6
+#
+# ==== Allman, Baños, Mitchell, Rhodes 2023 ====
+# Written from a reading of the proofs in the arXiv TeX and the PMC author manuscript NIHMS1884071 (the journal text is unverified), and checked against
+# `route_check.py extract` on the TeX, which gives the rows for lemmas, theorems, corollaries and the proposition. Labels are the TeX's, with `a:`.
+# The definitions have rows because statements use them; the TeX labels some of them (a:def::network, a:def::LSA, a:def::undirected, a:def:induced, a:def:Bquartet,
+# a:def:Tquartet, a:def:cutCF), and the others are assigned here.
+a:def::network	definition	0
+a:def:cutedge	definition	0
+a:def:metric	definition	0
+a:def::LSA	definition	0
+a:def::undirected	definition	0
+a:def:induced	definition	0
+a:def:blob	definition	0
+a:def:determined	definition	0
+a:def:chain	definition	0
+a:def:tob	definition	0
+a:def:trd	definition	0
+a:def:Bquartet	definition	0
+a:def:Tquartet	definition	0
+a:def:cf	definition	0
+a:def:cutCF	definition	0
+a:def:Nk	definition	0
+#
+# Claims of Sections 2 and 3 that no environment holds, and that later proofs use. The paper gives a sentence or nothing. Labels assigned here.
+a:claim:three-taxa	claim	0
+a:claim:b-unresolved	claim	0
+a:claim:t-resolved	claim	0
+a:claim:t-induced	claim	0	a:cor:inducedB
+a:claim:cf-induced	claim	0
+a:claim:generic-induced	claim	0
+a:claim:suppress-blobs	claim	1
+a:claim:induced-induced	claim	0
+a:claim:rooted-forms	claim	0
+a:claim:displayed-determine	claim	0
+#
+# Section 3.
+a:lem:4netblobs	lemma	0
+# The two statements (a), (b) of the proof of Theorem 1. (b) applies (a) to the deleted networks N_1, N_2, and uses Lemma 1 after removing the 2-blobs. `thm1-cut` is the sentence
+# "Thus CF is (ab|cd)-cut for all parameters" inside (a), which Proposition 1 needs, though it cites statement 1.
+a:claim:thm1-cut	claim	1	a:claim:rooted-forms
+a:claim:thm1a	claim	1	a:claim:rooted-forms,a:claim:thm1-cut
+# Steps of (b): the 2-blob step, the mixture ("since a is the only taxon below the hybrid node"), and the contradiction with the subnetwork N_3.
+a:claim:thm1b-two-blobs	claim	0
+a:claim:mixture	claim	0
+a:claim:thm1b-contradiction	claim	1	a:claim:three-taxa
+a:claim:thm1b	claim	1	a:lem:4netblobs,a:claim:thm1a,a:claim:thm1b-two-blobs,a:claim:mixture,a:claim:thm1b-contradiction
+a:thm:CFdetect	theorem	1	a:lem:4netblobs,a:claim:thm1a,a:claim:thm1b
+a:cor:largeCFdetect	corollary	1	a:thm:CFdetect,a:claim:cf-induced,a:claim:generic-induced
+# The steps of the proof of the converse of Proposition 1: the probability of each level, the probability alpha, the mixture, and CF_1 from the species trees.
+a:claim:prop1-level	claim	1	a:def:Nk
+a:claim:prop1-alpha	claim	1	a:claim:prop1-level
+a:claim:prop1-mixture	claim	1	a:claim:prop1-alpha
+a:claim:prop1-cf1	claim	1	a:claim:prop1-alpha,a:def:Nk
+a:prop:Nk	proposition	1	a:thm:CFdetect,a:def:Nk,a:claim:prop1-alpha,a:claim:prop1-mixture,a:claim:prop1-cf1
+#
+# Section 4. The TeX has no proof environment for Corollary 2; its proof is the sentence before it, so it is marked proved here.
+a:lem:inducedB	lemma	1
+a:cor:inducedB	corollary	1	a:lem:inducedB,a:claim:suppress-blobs
+a:thm:infrule	theorem	1	a:claim:three-taxa,a:claim:b-unresolved,a:claim:t-induced
+a:lem:main	lemma	1	a:lem:inducedB,a:claim:three-taxa,a:claim:suppress-blobs
+# The first step of the proof of Theorem 3, and its induction, which the proof's first sentence separates from the parameters.
+a:claim:thm3-representatives	claim	1	a:claim:suppress-blobs
+# The sentence of the proof "Theorem 1 thus shows that CF_abcd is (ab|cd)-cut" is not part of the route of the core: the rule in the core reads the topology.
+# "Although the proof of Theorem 3 shows that only part (a) of Theorem 2 is needed": the induction is on part (a).
+a:claim:part-a	claim	1	a:cor:inducedB,a:lem:main,a:thm:infrule,a:claim:thm3-representatives,a:claim:t-resolved,a:claim:induced-induced
+a:claim:thm3-core	claim	1	a:claim:part-a,a:cor:inducedB,a:lem:main,a:thm:infrule,a:claim:thm3-representatives,a:claim:t-resolved,a:claim:induced-induced
+a:thm:infer	theorem	1	a:cor:inducedB,a:cor:largeCFdetect,a:lem:main,a:thm:CFdetect,a:thm:infrule,a:claim:thm3-core
+#
+# Section 5.
+a:claim:thm4-displayed	claim	1	a:thm:infer,a:cor:largeCFdetect,a:claim:b-unresolved,a:claim:t-resolved,a:claim:t-induced
+a:claim:splits-tree	claim	0
+a:thm:ToBident	theorem	1	a:cor:largeCFdetect,a:thm:infer,a:claim:thm4-displayed,a:claim:displayed-determine
+# What the paper says in passing, and no proof uses; `AllmanEtAl2023.InPassing` and the modules beside it. The paper gives a sentence or nothing.
+a:claim:hybrid-not-cut	claim	0
+a:claim:m-ge-k	claim	0
+a:claim:b-deletion	claim	0
+a:claim:trd-rooted	claim	0
+a:claim:trd-tree	claim	0
+a:claim:displayed-trees	claim	0
+a:claim:blob-distance	claim	0
+a:claim:two-blobs-any	claim	0
+# "Thus for generic parameters CF_abcd is cut if, and only if, it is strictly cut", in the proof of Theorem 1.
+a:claim:cut-strict	claim	1	a:claim:thm1a,a:claim:thm1b
+# After Definition 8, and after Definition 9: blobs and the LSA.
+a:claim:det-below	claim	0
+a:claim:det-above	claim	0
+a:claim:det-lsa	claim	0
+a:claim:chain-shape	claim	0
+a:claim:chain-above	claim	0
+a:claim:chain-root-lsa	claim	0
+# After Definition 7 and Definition 11: the blob containing the LSA.
+a:claim:lsa-degree	claim	0
+a:claim:lsa-multifurcation	claim	0
+a:claim:lsa-three	claim	0
+# The geometry after Proposition 1, and Banos's theorem, cited there.
+a:claim:cf-simplex	claim	0
+a:claim:cf-off-lines	claim	0
+a:claim:cf-banos	claim	0
+# Section 5: a sentence, "straightforward to see"; it needs "internal", and on the root "the sum".
+a:claim:trivial-edges	claim	0
+# The examples of Figures 3 and 9, which the text works through without proof environments.
+a:claim:fig3	claim	0
+a:claim:fig9L	claim	0
+a:claim:fig9R	claim	0
+# Not a result of the paper: the reading that Lemma 2 needs a connected subnetwork, with a counterexample.
+a:claim:lem2-connected	claim	1
+#
+# ==== Gusfield, Bansal, Bafna, Song 2007 ====
+# No author TeX exists: written by hand from the PMC author manuscript, PMC2581772 (the line numbers in the Lean docstrings are those of its plain text).
+# Labels of the form g:thm1, g:lem1 are for numbered results; the others are claims made in running text that a proof uses, assigned here.
+# A cited source is a row with paper-proves 0 and the prefix ext:.
+# Cited results.
+ext:perfect_phylogeny	theorem	0
+ext:splits_equivalence	theorem	0
+ext:hudson_kaplan	theorem	0
+ext:haplotype_bound	theorem	0
+ext:haplotype_equality	theorem	0
+ext:song_hein	theorem	0
+ext:same_blob	theorem	0
+ext:reduced_galled	theorem	0
+ext:song_hein_init	claim	0
+ext:song_hein_step	claim	0
+#
+# Section 2.
+g:separate	claim	0
+g:blob_welldefined	claim	0
+g:blobtree	claim	1	g:blob_welldefined
+g:gs_eq	claim	0
+g:converse	claim	0	ext:same_blob
+g:converse_rooted	claim	0	ext:same_blob,g:gs_eq
+g:fd_iff	claim	0	g:converse
+g:rooted_unique	claim	0	ext:perfect_phylogeny
+g:pp_invariant	claim	0
+g:pp_not_invariant	claim	0
+g:reduced_galled	claim	0	ext:reduced_galled
+g:reduced_galled_printed	claim	0
+#
+# Section 3.1.
+g:compatible_dominant	claim	1
+g:lem1	lemma	1	g:compatible_dominant
+g:dom_exists	claim	1	g:lem1
+g:dom_unique	claim	1	g:compatible_dominant,g:lem1
+g:thm2	theorem	1	g:lem1,g:dom_exists
+g:dom_mem	claim	0	g:thm2
+g:cor1	corollary	1	g:thm2
+g:three_pairs	claim	1
+g:lem2	lemma	1	g:three_pairs
+#
+# Sections 3.2, 3.3.
+g:char_unique	claim	0
+g:four_chars	claim	1
+g:lem3	lemma	1	g:cor1
+g:tbar	claim	1	g:lem3,ext:perfect_phylogeny
+g:tbar_unique	claim	1	ext:splits_equivalence
+g:lem4	lemma	1	g:cor1,g:four_chars,g:char_unique,g:tbar
+g:vC_only	claim	0	g:lem4,g:char_unique
+#
+# Sections 3.4, 3.5.
+g:inflate	claim	0
+g:thm1	theorem	1	g:tbar,g:lem4,g:inflate
+g:thm1_rooted	theorem	1	g:thm1,g:gs_eq
+g:thm3	theorem	1	g:thm1,g:gs_eq,g:lem4,g:converse_rooted
+#
+# Section 3.7.
+g:efficient	claim	0
+g:efficient_exists	claim	1	g:thm1,g:efficient
+g:thm4_printed	theorem	1	g:thm1,g:tbar,ext:splits_equivalence
+g:thm4_false_root	claim	0
+g:thm4_false_leaf	claim	0
+g:thm4_false_top	claim	0
+g:thm4_splits	theorem	1
+g:thm4	theorem	1	g:thm4_splits,ext:splits_equivalence
+g:tree_compatible	claim	0	g:converse
+g:efficient_any	claim	0
+g:efficient_entry	claim	0
+g:efficient_entry_exists	claim	0
+g:thm4_iff	theorem	0
+g:thm4_entry	theorem	0
+g:thm4_realizable	claim	0
+g:thm4_false_small	claim	0
+g:thm4_false_sitefree	claim	0
+g:thm4_root_exit	claim	0
+g:thm4_root_entry	claim	0
+g:thm4_top_entry	claim	0
+g:thm4_top_moved	claim	0
+g:thm4_splits_rootfree	claim	0
+g:line341_false	claim	0
+#
+# Section 4.1: recurrent and back mutation as recombination (lines 358, 511), with what the Lean proofs of Section 5.2 need from them.
+g:tree_trim	claim	0
+g:tree_bound	claim	0
+g:reroot	claim	0
+g:parsimony_row	claim	0
+g:network_tree	claim	0
+g:tree_history	claim	0
+g:history_prenet	claim	0
+#
+# Section 4.2.
+g:treeness	claim	1	g:thm1,g:converse
+g:treeness_false	claim	0
+g:treeness_example1	claim	0
+g:treeness_example2	claim	0
+g:treeness_positive	claim	0
+g:treeness_positive_root	claim	0
+g:treeness_nonFD	claim	0
+g:treeness_strict	claim	0
+#
+# Section 5.1.
+g:rooted_implies_unrooted	claim	1
+g:rooted_implies_unrooted_conj	claim	1	g:rooted_implies_unrooted
+g:rooted_equiv	claim	0	g:thm3,g:lem5
+g:compute_FS	claim	1	g:thm3,g:lem5
+g:F_ge_sum	claim	0
+g:compute_F	claim	1	g:thm4,g:root_interior,g:compute_F_roots
+g:compute_F_roots	claim	0	g:compute_FS,g:converse_rooted
+g:root_interior	claim	0
+g:lower_bound_sum	claim	0	g:F_ge_sum
+g:lower_bound_sum_rooted	claim	0	g:compute_FS
+g:fig5	claim	0
+g:fig5_caption	claim	0
+#
+# Section 5.2, in the order of the proofs. Theorem 5 and Corollary 2 "follow immediately" from Theorem 9 (line 554).
+g:lem5	lemma	1
+g:thm7	theorem	1	g:lem5,g:thm3
+g:parsimony_bridge	claim	0
+g:mutation_split	claim	0
+g:cor3	corollary	1	g:thm7,g:parsimony_bridge
+g:mutation_min	claim	0
+g:thm8	theorem	1	g:thm7
+g:respects_iff	claim	1
+g:thm9	theorem	1	g:lem2,g:cor1,g:thm7
+g:thm5	theorem	1	g:thm9,g:respects_iff
+g:cor2	corollary	1	g:thm9
+g:visible_false	claim	0
+g:thm10_printed	theorem	1	ext:haplotype_equality,g:cor2
+g:haplotype_rooted	claim	0	ext:haplotype_bound
+g:thm10	theorem	1	g:haplotype_rooted,ext:haplotype_equality,g:cor2
+g:thm10_multiple	theorem	0	ext:haplotype_equality,g:cor2
+g:thm6	theorem	1	g:thm10,g:haplotype_rooted
+g:galled_incompat	claim	0
+g:galled_graph	claim	0	g:galled_incompat
+g:galled_thm5	claim	0	g:thm5,g:galled_graph
+g:galled_false	claim	0
+#
+# Section 5.3.
+g:single_false	claim	1	ext:hudson_kaplan,g:F_ge_sum
+g:multiple_false	claim	1	g:F_ge_sum
+# Line 608: the example of Section 5.3.1 refutes the rooted conjecture too. Line 590: the failure of the unrooted conjectures "also implies that the rooted versions are false", by line 403.
+g:rooted_single_false	claim	1	ext:hudson_kaplan,g:F_ge_sum
+g:rooted_multiple_false	claim	1	g:rooted_implies_unrooted_conj,g:multiple_false
+g:figure10	claim	0
+g:Md_R_le	claim	0	ext:song_hein,g:figure10
+g:thm11	theorem	1	g:Md_R_le,ext:song_hein,g:F_ge_sum,ext:hudson_kaplan
+g:line608_incompatible	claim	0	g:thm9
+g:line608_thm8	claim	0	g:thm8
+g:line608_thm10	claim	0
+g:footnote2	claim	0	g:tbar
+#
+# Tools of the Lean proofs, which the paper doesn't state: where a label can come from, trimming to the rows, and a network from the parents of its nodes.
+g:label_source	claim	0
+g:trim	claim	0
+g:prenet	claim	0	g:trim

@@ -11,14 +11,14 @@ public import TOBQMC.Consistency
 /-!
 # TOB-QMC §4.3: the bipartition search (Algorithm 2) combined with 3-fix-1-alter
 
-TOB-QMC (`notes/paper2025/v5.txt`, embedded lines 616-623): "This motivated us to implement a 3f1a-like algorithm that
+TOB-QMC (v5, embedded lines 616-623): "This motivated us to implement a 3f1a-like algorithm that
 tests taxa around the induced bipartition [...] until a predetermined number of tests have been performed (see
 Algorithm 2 in the Supplement). [...] Lastly, we note that combining the bipartition search heuristic with 3f1a yields
 a consistent method for level-1 networks and does not increase time complexity."
 
 ## The search
 
-Algorithm 2 (`notes/paper2025/tob-qmc_supp.txt`, lines 654-676) is written out as a function, with its "random" picks
+Algorithm 2 (the supplement's text, lines 654-676) is written out as a function, with its "random" picks
 a parameter `pick`, its tie-breaking at the `argmin` a parameter `argmin`, and its iteration limit a parameter
 `limit`: `neighbours` is lines 7-9, `repeatLoop` lines 6-13, `whileLoop` lines 4-14, `bipartitionSearch` the whole,
 `SearchOut.pValue` line 15. The counter `i` is the printed one, and `SearchOut.restarts` counts the executions of line

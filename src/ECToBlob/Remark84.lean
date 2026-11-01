@@ -12,7 +12,7 @@ public import ECToBlob.Section8
 /-!
 # ECToBlob Remark 8.4: an input tree that is not a resolution of the tree of blobs
 
-Remark 8.4 of the paper (`notes/paper2026/paper.txt`, lines 1183-1187): "If ECToBlob is given an
+Remark 8.4 of the paper (the paper's text, lines 1183-1187): "If ECToBlob is given an
 input tree `T0` that is not a resolution of the tree of blobs, the argument above indicates it would
 still contract any edges of `T0` that do not define cut-edge splits in the true network. That is,
 asymptotically it should return a 'coarsened' version of the tree of blobs, so that the cut edges in

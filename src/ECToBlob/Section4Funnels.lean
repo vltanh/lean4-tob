@@ -9,7 +9,7 @@ public import Phylogenetics.Tree.Splits
 /-!
 # ECToBlob §4: funnels, the subgraphs `G̃₃`, `G̃₄`, and their cut edges
 
-The objects of the proof of Theorem 4.1 (`notes/paper2026/paper.txt`, lines 588-627), in the paper's
+The objects of the proof of Theorem 4.1 (the paper's text, lines 588-627), in the paper's
 order, on the subgraphs induced on sets of taxa, which keep degree-2 nodes and everything above the LSA
 (line 571). All of this is undirected, as in the paper, by the tools of
 `src/AllmanEtAl2023/SubgraphBlobs.lean`. The root is used only to know that the induced subgraphs

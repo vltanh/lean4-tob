@@ -11,6 +11,7 @@ move as they are.
 * `RootedNetwork.isWeakMetric_choiceNetworkMetric`, `RootedNetwork.nmscCF_choiceMetric_eq_third_of_nonneg`: taxa
   that a parent choice leaves unresolved have concordance factors `1/3` in the parameters of the choice, for all
   correlations. The library has the case `ρ = 1`, `RootedNetwork.nmscCF_choiceMetric_eq_third`.
+* `RootedNetwork.IsGenericNull.mono`, `.union`, `.iUnion`: null sets of parameters are closed under subsets, and countable unions.
 -/
 
 @[expose] public noncomputable section
@@ -19,6 +20,35 @@ open Finset
 open scoped Classical
 
 namespace Phylogenetics.RootedNetwork
+
+section GenericNull
+
+variable {V E X : Type*} [Fintype E] {N : RootedNetwork V E X}
+
+/-- A subset of a null set of parameters is null. -/
+theorem IsGenericNull.mono {A B : Set (MetricData E)} (hB : IsGenericNull N B) (h : A ⊆ B) :
+    IsGenericNull N A := by
+  intro d hd
+  refine MeasureTheory.measure_mono_null ?_ (hB d hd)
+  rintro x ⟨θ, hθ, rest⟩
+  exact ⟨θ, h hθ, rest⟩
+
+/-- A countable union of null sets of parameters is null. -/
+theorem IsGenericNull.iUnion {ι : Type*} [Countable ι] {A : ι → Set (MetricData E)}
+    (h : ∀ i, IsGenericNull N (A i)) : IsGenericNull N (⋃ i, A i) := by
+  intro d hd
+  refine MeasureTheory.measure_mono_null ?_ (MeasureTheory.measure_iUnion_null fun i => h i d hd)
+  rintro x ⟨θ, hθ, rest⟩
+  obtain ⟨i, hi⟩ := Set.mem_iUnion.1 hθ
+  exact Set.mem_iUnion.2 ⟨i, θ, hi, rest⟩
+
+/-- The union of two null sets of parameters is null. -/
+theorem IsGenericNull.union {A B : Set (MetricData E)} (hA : IsGenericNull N A)
+    (hB : IsGenericNull N B) : IsGenericNull N (A ∪ B) := by
+  rw [Set.union_eq_iUnion]
+  exact IsGenericNull.iUnion fun b => by cases b <;> assumption
+
+end GenericNull
 
 section ChoiceMetric
 

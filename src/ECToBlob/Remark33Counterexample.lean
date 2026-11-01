@@ -16,7 +16,7 @@ This file gives a network on four taxa with a 3₂-cycle, at valid parameters wi
 `p_ab|cd = p_ac|bd = p_ad|bc = 1/3`. It is not anomalous in that sense, (3.1) fails, and so does the conclusion of
 Theorem 3.1: all three binary trees are optimal.
 
-The claim holds with the definition of TINNiK ([5] of the paper, `notes/tinnik/readable.txt`, line 144): "An anomalous
+The claim holds with the definition of TINNiK ([5] of the paper, TINNiK's text, line 144): "An anomalous
 quartet {a,b,c,d} is one whose CF is ab|cd cut of the form (p, q, q) with q ≥ 1/3", for which `q = 1/3` is anomalous. The
 paper's use agrees with it: "the inequality uses the no-anomalous quartets assumption" (line 722, of the strict (5.2)), and
 without it "the correct quartet topology need not be indicated by the largest entry of the expected CF" (lines 1459-1460).
@@ -42,7 +42,7 @@ semidirected form is the 3₂-cycle of Figure 3 of [8], whose tree edge has leng
 @[expose] public noncomputable section
 
 open Phylogenetics Phylogenetics.RootedNetwork Phylogenetics.NMSC Finset Filter Topology
-open ECToBlob.Remark52
+open ECToBlob.Remark52 Phylogenetics.NMSC.Chain
 open scoped Classical
 
 namespace ECToBlob.Remark33Counterexample
@@ -195,20 +195,6 @@ theorem liftSet_D₂ (τ : E₃ → Finset (Finset (Fin 4))) :
       filter_eq_of _ (S := {.hy, .yd}) fun f => by cases f <;> decide]
     simp [twoInj, biUnion_insert]
   all_goals rw [ite_eq_left (by decide)]; rfl
-
-/-- The Markov property as a mean. -/
-theorem cherryMass_eq_meanOn_lift {V E X : Type*} [Fintype V] [Fintype E] [Fintype X] [DecidableEq X]
-    {N : RootedNetwork V E X} {θ : MetricData E} {ρ : ℝ} (hN : N.IsPhylogenetic) (hθ : N.IsNormalized θ)
-    (hρ : 0 ≤ ρ) {inj : V → Finset (Finset X)} (hinj : ValidInj inj) {D : Finset V} (hD : DownClosed N D)
-    (hroot : N.root ∉ D) (r : QuartetTree X) :
-    cherryMass N θ ρ inj r = meanOn N θ ρ inj D fun top => cherryMass N θ ρ (liftSet N D inj top) r := by
-  have hB : (0 : ℝ) < ((Fintype.card (Finset (Finset X)) : ℕ) : ℝ) := by exact_mod_cast Fintype.card_pos
-  have hM := setMass_mul_cherryMass hN hθ hρ hinj hD hroot r
-  have hpos := setMass_pos (X := X) (N := N) D
-  unfold meanOn
-  rw [← hM]
-  unfold setMass arcsIn
-  field_simp
 
 theorem target_u {f : E₃} : cycleNet.graph.target f = .u → f = .cut := by
   cases f <;> decide

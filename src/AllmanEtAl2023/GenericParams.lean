@@ -1,7 +1,7 @@
 module
 
 public import AllmanEtAl2023.Concordance
-public import AllmanEtAl2023.Theorem1
+public import AllmanEtAl2023.GenericCF
 
 /-!
 # Generic parameters exist
@@ -66,28 +66,22 @@ theorem isMetric_coordMetric {d : V → E} (hd : ∀ v, 2 ≤ N.graph.indegree v
     ring
 
 omit [Fintype V] [Fintype X] [DecidableEq X] in
-/-- **Generic parameters exist**: the valid parameters of a phylogenetic network do not form a null set. -/
-theorem not_isGenericNull_isMetric (hN : N.IsPhylogenetic) (hE : Nonempty E) : ¬ N.IsGenericNull {θ | N.IsMetric θ} := by
+/-- **Generic parameters exist**: the valid parameters of a network with an edge do not form a null set. -/
+theorem not_isGenericNull_isMetric (hE : Nonempty E) : ¬ N.IsGenericNull {θ | N.IsMetric θ} := by
   intro hnull
   obtain ⟨e₀⟩ := hE
-  have hfin : Finite E := hN.finite_arcs
-  let d : V → E := fun v => if h : ∃ e, N.graph.target e = v then Classical.choose h else e₀
-  have hd : ∀ v, 2 ≤ N.graph.indegree v → N.graph.target (d v) = v := by
-    intro v hv
-    have h : ∃ e, N.graph.target e = v := (N.graph.one_le_indegree_iff v).mp (by omega)
-    simp only [d, dite_eq_left h]
-    exact Classical.choose_spec h
+  obtain ⟨d, hd⟩ := exists_leftOutParent (N := N) e₀
   obtain ⟨x, hx, hnot⟩ := exists_isStochasticCoords_notMem (E := E) (hnull d hd)
   have hm := isMetric_coordMetric hd hx
   exact hnot ⟨_, hm, hm, rfl, fun e he hne => coordMetric_inheritance_of_ne he hne⟩
 
 omit [Fintype V] [Fintype X] [DecidableEq X] in
 /-- A statement for generic parameters holds somewhere. -/
-theorem ForGenericParams.exists (hN : N.IsPhylogenetic) (hE : Nonempty E) {P : MetricData E → Prop} (h : ForGenericParams N P) :
+theorem ForGenericParams.exists (hE : Nonempty E) {P : MetricData E → Prop} (h : ForGenericParams N P) :
     ∃ θ, N.IsMetric θ ∧ P θ := by
   by_contra hno
   push Not at hno
-  refine not_isGenericNull_isMetric hN hE (h.mono ?_)
+  refine not_isGenericNull_isMetric hE (h.mono ?_)
   exact fun θ hθ => ⟨hθ, hno θ hθ⟩
 
 end AllmanEtAl2023

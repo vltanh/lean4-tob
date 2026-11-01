@@ -5,7 +5,7 @@ public import TOBQMC.Level1Blobs
 /-!
 # TOB-QMC supplement, Lemma 8: a reticulation at the boundary of a blob
 
-`notes/paper2025/tob-qmc_supp.txt`, lines 560-575: "Let `N⁺` be a directed binary phylogenetic network with a finite
+The supplement's text, lines 560-575: "Let `N⁺` be a directed binary phylogenetic network with a finite
 number of vertices. If `B` is a blob of `N⁺`, then there exists a reticulation node in `B` that is incident to a cut
 edge of `B`."
 
@@ -18,7 +18,7 @@ Two slips of the printed text:
 
 * The statement needs `B` non-trivial, as the theorem says. A trivial blob, such as a single taxon, has no
   reticulation (`not_two_le_indegree_of_sameBlob_leaf`), and the paper's definition of a blob allows a single vertex
-  ("A blob is trivial if it consists of a single vertex", `notes/paper2025/v5.txt`, embedded line 357).
+  ("A blob is trivial if it consists of a single vertex", v5, embedded line 357).
 * "assume all reticulation nodes in `v`" is meant to read "in `B`".
 -/
 

@@ -4,6 +4,14 @@ public import AllmanEtAl2023.Theorem2
 
 /-!
 # Allman, Baños, Mitchell, Rhodes 2023: Lemma 3
+
+**An omitted step of the paper.** "Since `{a, b, c}` determines `ℬ′` in `N′` and hence in `M ∩ N′`, by Lemma 2 `{a, b, c}` determines `ℬ` in `M`": "and hence" goes from a larger network to a smaller one, the
+direction Lemma 2 doesn't give. It holds because `ℬ′` lies on the side `K_ab` of `e₀`, and the edges above `d` alone, which `M ∩ N′` loses, all lie in `K_cd`: so `ℬ′` is untouched. `AllmanEtAl2023.CutEdgeData.near_reaches`
+and `Determines.of_subset` prove this, in `CutEdgeData.determines_off`.
+
+Lemma 2 is applied here to `M` in the role of its network `N`, and `M`'s root can have degree 1 there, with no label: so "bijectively labelled" in Lemma 2 is too strong, as in `IsLabelledNetwork`.
+
+The stem removal in Definition 6 isn't mentioned in the proof, which says that `N′`, `M` give the induced networks "by suppressing degree-2 nodes": `Bridges.induced_hasCutSplit_iff` covers it.
 -/
 
 @[expose] public noncomputable section
@@ -11,7 +19,7 @@ public import AllmanEtAl2023.Theorem2
 open Phylogenetics Phylogenetics.RootedNetwork
 open scoped Classical
 
-namespace AllmanEtAl2023.Printed
+namespace AllmanEtAl2023
 
 variable {V E X : Type*} [DecidableEq X] {N : RootedNetwork V E X}
 
@@ -19,8 +27,6 @@ variable {V E X : Type*} [DecidableEq X] {N : RootedNetwork V E X}
 def HasCutEdgeSeparating {V' E' X' : Type*} (M : RootedNetwork V' E' X') (P Q : Set X') : Prop :=
   ∃ (e : E') (T : Set V'), (∀ f, M.graph.Crosses f T ↔ f = e) ∧ (∀ x ∈ P, M.leaf x ∈ T) ∧ ∀ x ∈ Q, M.leaf x ∉ T
 
-/- Inventory. Proved from `AllmanEtAl2023.lemma3` and `exists_determines_erase`, which follow the paper's proof on subgraphs, with its gaps repaired and documented; and `Bridges.induced_hasCutSplit_iff`,
-`Bridges.isBlobQuartetOnInduced_iff`. -/
 /-- **Lemma 3** (`a:lem:main`). Let `𝒩⁺` be a rooted binary phylogenetic network on taxa `X` for which `{a, b, c, d}` is a B-quartet,
 and suppose for some `α ∈ X` the induced network `𝒩′` on `X ∖ {α}` has a cut edge in `𝒩′` separating `a, b` from `c, d`. Then
 `{a, b, c, α}` is a B-quartet on the induced network `ℳ⁺` on `X ∖ {d}`.
@@ -36,7 +42,7 @@ theorem lemma3 (hN : IsBinaryNetwork N) {a b c d α : X} (h : ({a, b, c, d} : Fi
   have : Finite X := hP.finite_taxa
   let _ : Fintype X := Fintype.ofFinite X
   obtain ⟨hab, hac, had, hbc, hbd, hcd⟩ := ne_of_card_four h
-  -- the cut edge of `𝒩′`, in the older form
+  -- the cut edge of `𝒩′`, in the language of domination
   obtain ⟨e', T, hT, hP₁, hP₂⟩ := hcut
   have hαmem : ∀ x, x ≠ α → x ∈ ({α}ᶜ : Set X) := fun x hx => hx
   let A : Set ({α}ᶜ : Set X) := (induced hN ({α}ᶜ : Set X) hY).leaf ⁻¹' T
@@ -80,7 +86,7 @@ theorem lemma3 (hN : IsBinaryNetwork N) {a b c d α : X} (h : ({a, b, c, d} : Fi
     · exact Or.inr ⟨h₂ a (hin a hαa.symm ha'), h₂ b (hin b hαb.symm hb'),
         (h₁ c (hout c hαc.symm hc')).isBelow hP, (h₁ d (hout d hαd.symm hd')).isBelow hP⟩
   have hB' := (Bridges.isBlobQuartet_iff_not_resolves hN h).mp hB
-  have hres := AllmanEtAl2023.lemma3 hP (Y := Finset.univ) h (Finset.mem_univ a) (Finset.mem_univ b) (Finset.mem_univ c)
+  have hres := AllmanEtAl2023.lemma3_resolves hP (Y := Finset.univ) h (Finset.mem_univ a) (Finset.mem_univ b) (Finset.mem_univ c)
     (Finset.mem_univ d) (Finset.mem_univ α) hαa hαb hαc hαd hcutold hor hB'
   have h4' : ({a, b, c, α} : Finset X).card = 4 :=
     TreeMetric.card_four_of_ne hab hac hαa.symm hbc hαb.symm hαc.symm
@@ -106,4 +112,4 @@ theorem lemma3 (hN : IsBinaryNetwork N) {a b c d α : X} (h : ({a, b, c, d} : Fi
     simpa using this
   exact (Bridges.isBlobQuartetOnInduced_iff hN _ hY' hsubset h4').mpr ⟨v, hv, hdet⟩
 
-end AllmanEtAl2023.Printed
+end AllmanEtAl2023

@@ -16,7 +16,7 @@ proof:
 
 `lemma3_blob` is the source's statement: if `{a,b,c,d}` determines a blob on `Y`, and a cut edge of
 `N′` separates `a, b` from `c, d`, then `{a,b,c,α}` determines a blob of `M`. The proof follows the
-source's (`notes/sources/allman2023.txt`, lines 207-215), in its order, with paths and the cycle as
+source's (the PMC text, lines 207-215), in its order, with paths and the cycle as
 sets of arcs (`IsPathIn`, `IsDirectedPath`, `IsCycleThrough`). The source's "`N \ {e0}`" and "`Kbc`"
 are misprints for `N′ \ {e₀}` and `K_cd`.
 
@@ -158,21 +158,17 @@ section Induced
 
 variable {Z : Set X} {S : Finset X}
 
-/-- If no cut edge of the subgraph induced on `Z` has two elements of `S` on each side, `S`, with at
-least three taxa of `Z`, determines a blob of that subgraph. For three taxa this is the source's
-remark after its Definition 8, and for four the characterization of B-quartets after its Definition
-12. -/
-theorem exists_determines_of_no_split (hN : N.IsPhylogenetic) (hS : ∀ s ∈ S, s ∈ Z) (h3 : 3 ≤ S.card)
-    (hsplit : ∀ e T, OnlyCrosses N.graph (N.ancestralArcs Z) e T → TwoIn N.leaf S T →
-      TwoIn N.leaf S Tᶜ → False) :
-    ∃ v ∈ N.ancestralVertices Z, Determines N.graph (N.ancestralArcs Z) v N.leaf S := by
+/-- **The blob `S` determines in a connected subgraph.** If the subgraph `F`, connected on `U`, holds the arcs at the taxa of `S`, and no cut edge of it has two elements of `S` on each side, then
+`S`, with at least three taxa, determines a blob of it: by `exists_median` and `determines_of_median`, starting from the arc at a taxon. -/
+theorem exists_determines_of_connected (hN : N.IsPhylogenetic) {F : Set E} {U : Set V} (hU : ∀ x ∈ U, ∀ y ∈ U, N.graph.Walks F x y)
+    (hend : ∀ f ∈ F, N.graph.source f ∈ U ∧ N.graph.target f ∈ U) (hS : ∀ s ∈ S, N.leaf s ∈ U)
+    (harc : ∀ s ∈ S, ∀ g, N.graph.target g = N.leaf s → g ∈ F) (h3 : 3 ≤ S.card)
+    (hsplit : ∀ e T, OnlyCrosses N.graph F e T → TwoIn N.leaf S T → TwoIn N.leaf S Tᶜ → False) :
+    ∃ v ∈ U, Determines N.graph F v N.leaf S := by
   classical
   have : Finite V := hN.finite_vertices
-  have hleafU : ∀ s ∈ S, N.leaf s ∈ N.ancestralVertices Z :=
-    fun s hs => N.leaf_mem_ancestralVertices (hS s hs)
   -- the arc at a taxon starts the search
-  have hstart : ∃ e T, e ∈ N.ancestralArcs Z ∧ OnlyCrosses N.graph (N.ancestralArcs Z) e T ∧
-      N.graph.Crosses e T ∧ TwoIn N.leaf S T := by
+  have hstart : ∃ e T, e ∈ F ∧ OnlyCrosses N.graph F e T ∧ N.graph.Crosses e T ∧ TwoIn N.leaf S T := by
     obtain ⟨a, ha⟩ : S.Nonempty := Finset.card_pos.mp (by omega)
     obtain ⟨g, hgt, hloop, hg⟩ := exists_leaf_arc hN a
     have h2 : 1 < (S.erase a).card := by
@@ -181,10 +177,7 @@ theorem exists_determines_of_no_split (hN : N.IsPhylogenetic) (hS : ∀ s ∈ S,
     obtain ⟨t, ht, t', ht', hne⟩ := Finset.one_lt_card.mp h2
     obtain ⟨hta, htS⟩ := Finset.mem_erase.mp ht
     obtain ⟨hta', htS'⟩ := Finset.mem_erase.mp ht'
-    refine ⟨g, ({N.leaf a}ᶜ : Set V), ?_, ?_, ?_, t, htS, t', htS', hne, ?_, ?_⟩
-    · change N.graph.target g ∈ N.ancestralVertices Z
-      rw [hgt]
-      exact hleafU a ha
+    refine ⟨g, ({N.leaf a}ᶜ : Set V), harc a ha g hgt, ?_, ?_, t, htS, t', htS', hne, ?_, ?_⟩
     · refine fun f _ hc => hg f ?_
       rcases hc with ⟨-, h1⟩ | ⟨-, h1⟩
       · exact Or.inr (by simpa using h1)
@@ -193,34 +186,32 @@ theorem exists_determines_of_no_split (hN : N.IsPhylogenetic) (hS : ∀ s ∈ S,
       simpa [hgt] using fun h => hloop (h.trans hgt.symm)
     · simpa using fun h => hta (hN.leaf_injective h)
     · simpa using fun h => hta' (hN.leaf_injective h)
-  obtain ⟨v, hv, hmed⟩ := exists_median (F := N.ancestralArcs Z) (U := N.ancestralVertices Z) (ℓ := N.leaf)
-    (S := S) (fun x hx y hy => walks_ancestral hN hx hy)
-    (fun f hf => ⟨N.source_mem_ancestralVertices hf, hf⟩) hleafU hstart hsplit
-  refine ⟨v, hv, determines_of_median h3 (fun _ _ _ _ h => hN.leaf_injective h)
-    (fun s _ => isPendantIn_leaf hN s _) (fun s hs => walks_ancestral hN hv (hleafU s hs)) hmed⟩
+  obtain ⟨v, hv, hmed⟩ := exists_median (ℓ := N.leaf) (S := S) hU hend hS hstart hsplit
+  exact ⟨v, hv, determines_of_median h3 (fun _ _ _ _ h => hN.leaf_injective h) (fun s _ => isPendantIn_leaf hN s _)
+    (fun s hs => hU v hv _ (hS s hs)) hmed⟩
 
-/-- **Three taxa determine a blob** (the source, after its Definition 8). -/
+/-- If no cut edge of the subgraph induced on `Z` has two elements of `S` on each side, `S`, with at
+least three taxa of `Z`, determines a blob of that subgraph. For three taxa this is the source's
+remark after its Definition 8, and for four the characterization of B-quartets after its Definition
+12. -/
+theorem exists_determines_of_no_split (hN : N.IsPhylogenetic) (hS : ∀ s ∈ S, s ∈ Z) (h3 : 3 ≤ S.card)
+    (hsplit : ∀ e T, OnlyCrosses N.graph (N.ancestralArcs Z) e T → TwoIn N.leaf S T →
+      TwoIn N.leaf S Tᶜ → False) :
+    ∃ v ∈ N.ancestralVertices Z, Determines N.graph (N.ancestralArcs Z) v N.leaf S :=
+  exists_determines_of_connected hN (fun _ hx _ hy => walks_ancestral hN hx hy)
+    (fun _ hf => ⟨N.source_mem_ancestralVertices hf, hf⟩) (fun s hs => N.leaf_mem_ancestralVertices (hS s hs))
+    (fun s hs g hg => show N.graph.target g ∈ N.ancestralVertices Z from hg ▸ N.leaf_mem_ancestralVertices (hS s hs)) h3 hsplit
+
+/-- **Three taxa determine a blob** (`a:claim:three-taxa`; the source, after its Definition 8), on an induced subgraph. -/
 theorem exists_determines_three [DecidableEq X] (hN : N.IsPhylogenetic) {a b c : X} (ha : a ∈ Z) (hb : b ∈ Z)
     (hc : c ∈ Z) (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c) :
     ∃ v ∈ N.ancestralVertices Z, Determines N.graph (N.ancestralArcs Z) v N.leaf {a, b, c} := by
   have h3 : ({a, b, c} : Finset X).card = 3 := by
     rw [Finset.card_insert_of_notMem (by simp [hab, hac]), Finset.card_pair hbc]
-  refine exists_determines_of_no_split hN ?_ h3.ge ?_
-  · intro s hs
-    simp only [Finset.mem_insert, Finset.mem_singleton] at hs
-    rcases hs with rfl | rfl | rfl <;> assumption
-  · rintro e T - ⟨s, hs, t, ht, hst, hsT, htT⟩ ⟨s', hs', t', ht', hst', hsT', htT'⟩
-    have hne : ∀ {x y : X}, N.leaf x ∈ T → N.leaf y ∈ Tᶜ → x ≠ y := by
-      rintro x y hx hy rfl
-      exact hy hx
-    have h4 : ({s, t, s', t'} : Finset X).card = 4 :=
-      TreeMetric.card_four_of_ne hst (hne hsT hsT') (hne hsT htT') (hne htT hsT') (hne htT htT') hst'
-    have hsub : ({s, t, s', t'} : Finset X) ⊆ {a, b, c} := by
-      intro x hx
-      simp only [Finset.mem_insert, Finset.mem_singleton] at hx
-      rcases hx with rfl | rfl | rfl | rfl <;> assumption
-    have := Finset.card_le_card hsub
-    omega
+  refine exists_determines_of_no_split hN ?_ h3.ge fun _ _ _ h₁ h₂ => not_twoIn_compl_of_card_three h3 h₁ h₂
+  intro s hs
+  simp only [Finset.mem_insert, Finset.mem_singleton] at hs
+  rcases hs with rfl | rfl | rfl <;> assumption
 
 end Induced
 
@@ -237,23 +228,6 @@ theorem Determines.no_split [DecidableEq X] {F : Set E} {v : V} {a b c d : X} {e
   by_cases hv : v ∈ T
   · exact hcd (hdet.eq_of_mem_side hT.compl (not_not.mpr hv) hmc hmd (hw c hmc) (hw d hmd) hc hd)
   · exact hab (hdet.eq_of_mem_side hT hv hma hmb (hw a hma) (hw b hmb) ha hb)
-
-/-- On the whole network, the cut edges are the bridges of `TOBQMC`. -/
-theorem isCutIn_univ_iff {e : E} : IsCutIn N.graph Set.univ e ↔ N.graph.underlying.IsBridge e := by
-  rw [N.graph.isBridge_iff_not_walks_delete, Set.compl_eq_univ_sdiff]
-  exact ⟨fun h' => h'.2, fun h' => ⟨Set.mem_univ e, h'⟩⟩
-
-/-- On the whole network, `SameBlobIn` is the blob relation of the graph. -/
-theorem sameBlobIn_univ_iff {u v : V} : SameBlobIn N.graph Set.univ u v ↔ N.graph.blobSetoid u v := by
-  constructor
-  · intro h
-    refine Relation.ReflTransGen.mono ?_ _ _ h
-    rintro a b ⟨e, he, hl⟩
-    exact ⟨e, fun hb => he.2 (isCutIn_univ_iff.mpr hb), hl⟩
-  · intro h
-    refine Relation.ReflTransGen.mono ?_ _ _ h
-    rintro a b ⟨e, he, hl⟩
-    exact ⟨e, ⟨Set.mem_univ e, fun hc => he (isCutIn_univ_iff.mp hc)⟩, hl⟩
 
 /-! ### The subnetworks of Allman et al.'s proof -/
 
@@ -937,7 +911,7 @@ theorem determines_off (hN : N.IsPhylogenetic) (D : CutEdgeData N Y α a b c d e
     · exact ⟨D.cY, D.cα, D.cd⟩
   have h3 : ({a, b, c} : Finset X).card = 3 := by
     rw [Finset.card_insert_of_notMem (by simp [hab, hac]), Finset.card_pair hbc]
-  obtain ⟨hdetM, hlead⟩ := lemma2 (M := arcsOff N Y α ∩ arcsOff N Y d) (F := arcsOff N Y d)
+  obtain ⟨hdetM, hlead⟩ := determines_of_subnetwork (M := arcsOff N Y α ∩ arcsOff N Y d) (F := arcsOff N Y d)
     (v := v') (ℓ := N.leaf) (S := {a, b, c}) Set.inter_subset_right h3.ge
     (fun s _ => isPendantIn_leaf hN s _)
     (fun s hs => walks_inter hN hv'V.1 hv'V.2 (leaf_mem_vertsOff (hmemS s hs).1 (hmemS s hs).2.1)

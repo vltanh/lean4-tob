@@ -5,46 +5,46 @@ public import AllmanEtAl2023.Lemma2
 /-!
 # Lemma 2 of Allman, Baños, Mitchell, Rhodes 2023 needs a connected subnetwork
 
-Lemma 2 as printed says "a subnetwork `M` of `N`". If `M` may be disconnected, the lemma is false, on a caterpillar with five taxa: take `M`
-to be the pendant edges of four of them, `{a, b, c, d}`. In `M` these four are in distinct components, so deleting the cut edges incident to any
-blob leaves them there, and `{a, b, c, d}` determines every blob of `M`. In `N` a cut edge separates `a, b` from `c, d`, so `{a, b, c, d}` determines
-no blob. The paper's proof begins "there exist undirected paths in `M` from `ℬ₀` to each `s ∈ S`", and the paper applies the lemma to connected
-subnetworks, so `Printed.lemma2` reads `M` as connected.
+Lemma 2 needs `M` connected, or at least each `s` joined to `ℬ₀` in `M`. Its proof assumes this and all its uses satisfy it, but the word is missing. For disconnected `M`, Definition 8 can hold
+vacuously and the conclusion fails. No result of the paper is affected.
+
+Four taxa are enough: on the caterpillar `(((a, b), c), d)`, take `M` to be the pendant edges. In `M` the parent of `a, b` is a blob with `a, b` beyond its two cut edges, and `c, d` are in other
+components, so `{a, b, c, d}` determines that blob. In `N` a cut edge separates `a, b` from `c, d`, so `{a, b, c, d}` determines no blob. `lemma2` takes `M` connected.
 -/
 
 @[expose] public section
 
 open Phylogenetics Phylogenetics.DirectedMultigraph
 
-namespace AllmanEtAl2023.Printed.Lemma2Counterexample
+namespace AllmanEtAl2023.Lemma2Counterexample
 
-/-- The source of the edges of the caterpillar `((((a, e), b), c), d)`, with the taxa `a, b, c, d, e = 0, 1, 2, 3, 4` and the internal nodes
-`5, 6, 7, 8`, from the cherry to the root. -/
-def src : Fin 8 → Fin 9 := ![5, 5, 6, 6, 7, 7, 8, 8]
+/-- The source of the edges of the caterpillar `(((a, b), c), d)`, with the taxa `a, b, c, d = 0, 1, 2, 3` and the internal nodes
+`4, 5, 6`, from the cherry to the root. -/
+def src : Fin 6 → Fin 7 := ![4, 4, 5, 5, 6, 6]
 
 /-- The target of the edges of the caterpillar. -/
-def tgt : Fin 8 → Fin 9 := ![0, 4, 5, 1, 6, 2, 7, 3]
+def tgt : Fin 6 → Fin 7 := ![0, 1, 4, 2, 5, 3]
 
 /-- The caterpillar. -/
-def G : DirectedMultigraph (Fin 9) (Fin 8) := ⟨src, tgt⟩
+def G : DirectedMultigraph (Fin 7) (Fin 6) := ⟨src, tgt⟩
 
 /-- The taxa, labelling the leaves. -/
-def ℓ : Fin 5 → Fin 9 := Fin.castLE (by norm_num)
+def ℓ : Fin 4 → Fin 7 := Fin.castLE (by norm_num)
 
-/-- The pendant edges of `a, b, c, d`. -/
-def M : Set (Fin 8) := {0, 3, 5, 7}
+/-- The pendant edges. -/
+def M : Set (Fin 6) := {0, 1, 3, 5}
 
 /-- The four taxa. -/
-def S : Finset (Fin 5) := {0, 1, 2, 3}
+def S : Finset (Fin 4) := Finset.univ
 
-theorem indegree_eq (v : Fin 9) : G.indegree v = (Finset.univ.filter fun e => tgt e = v).card := by
+theorem indegree_eq (v : Fin 7) : G.indegree v = (Finset.univ.filter fun e => tgt e = v).card := by
   rw [indegree, Set.ncard_eq_toFinset_card']
   congr 1
   ext e
   simp only [G, Finset.mem_filter, Finset.mem_univ, true_and]
   exact Set.mem_toFinset
 
-theorem outdegree_eq (v : Fin 9) : G.outdegree v = (Finset.univ.filter fun e => src e = v).card := by
+theorem outdegree_eq (v : Fin 7) : G.outdegree v = (Finset.univ.filter fun e => src e = v).card := by
   rw [outdegree, Set.ncard_eq_toFinset_card']
   congr 1
   ext e
@@ -53,50 +53,74 @@ theorem outdegree_eq (v : Fin 9) : G.outdegree v = (Finset.univ.filter fun e => 
 
 theorem isLabelledNetwork : IsLabelledNetwork G ℓ where
   injective := Fin.castLE_injective _
-  degree_one_iff v := by
+  degree_one x := by
     rw [nodeDegree, indegree_eq, outdegree_eq]
-    revert v
+    revert x
     decide
 
-/-- The colour of a node in `M`: the taxon whose pendant edge it is on. -/
-def col : Fin 9 → Fin 5 := ![0, 1, 2, 3, 4, 0, 1, 2, 3]
-
-theorem col_eq_of_walks {u w : Fin 9} (h : G.Walks M u w) : col u = col w := by
-  have hM : ∀ e ∈ M, col (src e) = col (tgt e) := by
-    intro e he
-    simp only [M, Set.mem_insert_iff, Set.mem_singleton_iff] at he
-    rcases he with rfl | rfl | rfl | rfl <;> decide
+/-- A function constant along edges of `F` is constant along walks of `F`. -/
+theorem eq_of_walks {α : Type*} (f : Fin 7 → α) {F : Set (Fin 6)} (hF : ∀ e ∈ F, f (src e) = f (tgt e)) {u w : Fin 7}
+    (h : G.Walks F u w) : f u = f w := by
   induction h with
   | refl => rfl
   | tail _ hab ih =>
     obtain ⟨e, he, ⟨hs, ht⟩ | ⟨hs, ht⟩⟩ := hab
-    · exact ih.trans (hs ▸ ht ▸ hM e he)
-    · exact ih.trans (ht ▸ hs ▸ (hM e he).symm)
+    · exact ih.trans (hs ▸ ht ▸ hF e he)
+    · exact ih.trans (ht ▸ hs ▸ (hF e he).symm)
 
-theorem col_ℓ (s : Fin 5) : col (ℓ s) = s := by
+/-- The edge to `a` is a cut edge of `M`. -/
+theorem isCutIn_zero : IsCutIn G M 0 := by
+  refine ⟨by simp [M], fun hw => ?_⟩
+  have h := eq_of_walks (fun v => decide (v = 0)) (F := M \ {0}) (fun e he => ?_) hw
+  · exact absurd h (by decide)
+  · obtain ⟨hM, hne⟩ := he
+    simp only [M, Set.mem_insert_iff, Set.mem_singleton_iff] at hM
+    rcases hM with rfl | rfl | rfl | rfl
+    · exact absurd rfl hne
+    all_goals decide
+
+/-- The edge to `b` is a cut edge of `M`. -/
+theorem isCutIn_one : IsCutIn G M 1 := by
+  refine ⟨by simp [M], fun hw => ?_⟩
+  have h := eq_of_walks (fun v => decide (v = 1)) (F := M \ {1}) (fun e he => ?_) hw
+  · exact absurd h (by decide)
+  · obtain ⟨hM, hne⟩ := he
+    simp only [M, Set.mem_insert_iff, Set.mem_singleton_iff] at hM
+    rcases hM with rfl | rfl | rfl | rfl
+    · decide
+    · exact absurd rfl hne
+    all_goals decide
+
+/-- The component of a node in `M` without the two edges at the parent of `a, b`: a taxon of `S` for each. -/
+def col : Fin 7 → Fin 4 := ![0, 1, 2, 3, 0, 2, 3]
+
+theorem col_ℓ (s : Fin 4) : col (ℓ s) = s := by
   revert s
   decide
 
-theorem card_S : S.card = 4 := by decide
-
 /-- `{a, b, c, d}` determines a blob of the disconnected `M`. -/
-theorem isDeterminedBy_M :
-    IsDeterminedBy (restrict G M) ℓ (blobOf (restrict G M) 5) S := by
-  refine isDeterminedBy_blobOf_restrict_iff.mpr ⟨by rw [card_S]; omega, fun s _ t _ hne hw => hne ?_⟩
-  have h := col_eq_of_walks (walks_mono (Set.sdiff_subset) hw)
+theorem isDeterminedBy_M : IsDeterminedBy (restrict G M) ℓ (blobOf (restrict G M) 4) S := by
+  refine isDeterminedBy_blobOf_restrict_iff.mpr ⟨by decide, fun s _ t _ hne hw => hne ?_⟩
+  have hF : ∀ e ∈ M \ incidentCuts G M (4 : Fin 7), col (src e) = col (tgt e) := by
+    rintro e ⟨hM, hn⟩
+    simp only [M, Set.mem_insert_iff, Set.mem_singleton_iff] at hM
+    rcases hM with rfl | rfl | rfl | rfl
+    · exact absurd ⟨isCutIn_zero, Or.inl .refl⟩ hn
+    · exact absurd ⟨isCutIn_one, Or.inl .refl⟩ hn
+    · decide
+    · decide
+  have h := eq_of_walks col hF hw
   rwa [col_ℓ, col_ℓ] at h
 
-theorem walks_root (v : Fin 9) : G.Walks Set.univ v 8 := by
+theorem walks_root (v : Fin 7) : G.Walks Set.univ v 6 := by
   have step : ∀ e, G.Walks Set.univ (tgt e) (src e) := fun e =>
     Relation.ReflTransGen.single ⟨e, Set.mem_univ _, Or.inr ⟨rfl, rfl⟩⟩
-  have h7 : G.Walks Set.univ 7 8 := step 6
-  have h3 : G.Walks Set.univ 3 8 := step 7
-  have h6 : G.Walks Set.univ 6 8 := (step 4).trans h7
-  have h2 : G.Walks Set.univ 2 8 := (step 5).trans h7
-  have h5 : G.Walks Set.univ 5 8 := (step 2).trans h6
-  have h1 : G.Walks Set.univ 1 8 := (step 3).trans h6
-  have h0 : G.Walks Set.univ 0 8 := (step 0).trans h5
-  have h4 : G.Walks Set.univ 4 8 := (step 1).trans h5
+  have h5 : G.Walks Set.univ 5 6 := step 4
+  have h3 : G.Walks Set.univ 3 6 := step 5
+  have h4 : G.Walks Set.univ 4 6 := (step 2).trans h5
+  have h2 : G.Walks Set.univ 2 6 := (step 3).trans h5
+  have h0 : G.Walks Set.univ 0 6 := (step 0).trans h4
+  have h1 : G.Walks Set.univ 1 6 := (step 1).trans h4
   fin_cases v
   · exact h0
   · exact h1
@@ -104,17 +128,15 @@ theorem walks_root (v : Fin 9) : G.Walks Set.univ v 8 := by
   · exact h3
   · exact h4
   · exact h5
-  · exact h6
-  · exact h7
   · exact .refl
 
-/-- The side of the edge `7 → 6`, with the taxa `a, b`. -/
-def T : Set (Fin 9) := {v | v ∈ ({0, 1, 4, 5, 6} : Finset (Fin 9))}
+/-- The side of the edge `5 → 4`, with the taxa `a, b`. -/
+def T : Set (Fin 7) := {v | v ∈ ({0, 1, 4} : Finset (Fin 7))}
 
-theorem onlyCrosses_T : OnlyCrosses G Set.univ 4 T := by
+theorem onlyCrosses_T : OnlyCrosses G Set.univ 2 T := by
   intro f _ hc
-  have hd : ∀ f : Fin 8, (src f ∈ ({0, 1, 4, 5, 6} : Finset (Fin 9)) ∧ tgt f ∉ ({0, 1, 4, 5, 6} : Finset (Fin 9))) ∨
-      (tgt f ∈ ({0, 1, 4, 5, 6} : Finset (Fin 9)) ∧ src f ∉ ({0, 1, 4, 5, 6} : Finset (Fin 9))) → f = 4 := by
+  have hd : ∀ f : Fin 6, (src f ∈ ({0, 1, 4} : Finset (Fin 7)) ∧ tgt f ∉ ({0, 1, 4} : Finset (Fin 7))) ∨
+      (tgt f ∈ ({0, 1, 4} : Finset (Fin 7)) ∧ src f ∉ ({0, 1, 4} : Finset (Fin 7))) → f = 2 := by
     decide
   exact hd f hc
 
@@ -127,31 +149,30 @@ theorem not_exists_isDeterminedBy : ¬ ∃ b, IsDeterminedBy G ℓ b S := by
     have hw : ∀ x, G.Walks Set.univ v x := fun x => (walks_root v).trans (G.walks_symm (walks_root x))
     by_cases hv : v ∈ T
     · have hT' : v ∉ Tᶜ := not_not.mpr hv
-      have : (2 : Fin 5) = 3 := hd.2.eq_of_mem_side onlyCrosses_T.compl hT' (by decide) (by decide) (hw _) (hw _)
+      have : (2 : Fin 4) = 3 := hd.2.eq_of_mem_side onlyCrosses_T.compl hT' (by decide) (by decide) (hw _) (hw _)
         (by simp [T, ℓ]) (by simp [T, ℓ])
       exact absurd this (by decide)
-    · have : (0 : Fin 5) = 1 := hd.2.eq_of_mem_side onlyCrosses_T hv (by decide) (by decide) (hw _) (hw _)
+    · have : (0 : Fin 4) = 1 := hd.2.eq_of_mem_side onlyCrosses_T hv (by decide) (by decide) (hw _) (hw _)
         (by simp [T, ℓ]) (by simp [T, ℓ])
       exact absurd this (by decide)
 
 end Lemma2Counterexample
 
-/-- **Lemma 2 of the paper is false for a disconnected subnetwork** (`a:claim:lem2-connected`): all its hypotheses hold, with `S` on labelled nodes of `M`,
-and no blob of the network is determined by `S`. -/
-theorem lemma2_false_of_not_connected :
+/-- **Lemma 2 needs `M` connected, or at least each `s` joined to `ℬ₀` in `M`** (`a:claim:lem2-connected`). Its proof assumes this and all its uses satisfy it, but the word is missing. For disconnected `M`, Definition 8 can hold
+vacuously and the conclusion fails, as here: all the hypotheses hold, with `S` on labelled nodes of `M`, and no blob of the network is determined by `S`. No result of the paper is affected. -/
+theorem lemma2_needs_connected :
     ∃ (W F X : Type) (G : DirectedMultigraph W F) (ℓ : X → W) (M : Set F) (S : Finset X) (v : W),
       Finite F ∧ IsLabelledNetwork G ℓ ∧ (∀ s ∈ S, ℓ s ∈ nodesOf G M) ∧ v ∈ nodesOf G M ∧
         IsDeterminedBy (restrict G M) ℓ (blobOf (restrict G M) v) S ∧ ¬ ∃ b, IsDeterminedBy G ℓ b S := by
   open Lemma2Counterexample in
-  refine ⟨Fin 9, Fin 8, Fin 5, G, ℓ, M, S, 5, inferInstance, isLabelledNetwork, ?_, ?_, isDeterminedBy_M,
+  refine ⟨Fin 7, Fin 6, Fin 4, G, ℓ, M, S, 4, inferInstance, isLabelledNetwork, ?_, ?_, isDeterminedBy_M,
     not_exists_isDeterminedBy⟩
-  · intro s hs
-    simp only [S, Finset.mem_insert, Finset.mem_singleton] at hs
-    rcases hs with rfl | rfl | rfl | rfl
+  · intro s _
+    fin_cases s
     · exact ⟨0, by simp [M], Or.inr rfl⟩
+    · exact ⟨1, by simp [M], Or.inr rfl⟩
     · exact ⟨3, by simp [M], Or.inr rfl⟩
     · exact ⟨5, by simp [M], Or.inr rfl⟩
-    · exact ⟨7, by simp [M], Or.inr rfl⟩
   · exact ⟨0, by simp [M], Or.inl rfl⟩
 
-end AllmanEtAl2023.Printed
+end AllmanEtAl2023

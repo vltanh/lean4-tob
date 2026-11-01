@@ -1,6 +1,6 @@
 module
 
-public import AllmanEtAl2023.Theorem1
+public import AllmanEtAl2023.GenericCF
 public import Basic.Defs
 public import Phylogenetics.NMSC.Exchangeability
 public import Phylogenetics.NMSC.Witness
@@ -11,7 +11,7 @@ public import ECToBlob.Remark84
 /-!
 # ECToBlob §10: variants of the algorithm
 
-The paper's §10 ("Further developments and caveats", `notes/paper2026/paper.txt`, lines 1411-1465)
+The paper's §10 ("Further developments and caveats", the paper's text, lines 1411-1465)
 proposes three changes to the algorithm. Here is their consistency.
 
 * **Dropping the no-anomaly assumption** (lines 1455-1457): "it would be desirable to drop the 'no
@@ -469,7 +469,7 @@ theorem exists_face_ne (hN : N.IsPhylogenetic) {s r : QuartetTree X} (hs : Induc
     (hr : r ∈ s.alternatives) :
     ∃ θ₀, N.IsNormalized θ₀ ∧ (∀ e, N.IsHybridArc e → θ₀.length e = 0) ∧
       nmscCF N θ₀ 0 r ≠ nmscCF N θ₀ 0 s := by
-  obtain ⟨e, he⟩ := AllmanEtAl2023.exists_splitOffAt_of_inducedCutSplit hN hs
+  obtain ⟨e, he⟩ := (AllmanEtAl2023.inducedCutSplit_iff_exists_splitOffAt hN _).mp hs
   obtain ⟨g, hg⟩ : ∃ x, N.Dominates e x := by
     obtain ⟨P, hP, hsep⟩ := he
     obtain ⟨x, hx⟩ : P.Nonempty := Finset.card_pos.1 (by rw [s.card_of_mem hP]; omega)

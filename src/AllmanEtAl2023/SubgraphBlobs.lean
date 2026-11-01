@@ -16,7 +16,7 @@ rooted networks; `src/AllmanEtAl2023/CycleLemma.lean` applies it to induced subg
   `v`.
 * `LeadsTo`: the cut edge incident to a blob through which paths from the blob to a vertex pass;
   `exists_leadsTo`, `LeadsTo.unique`.
-* `lemma2`: Lemma 2 of the source.
+* `determines_of_subnetwork`: Lemma 2 of the source.
 * `determines_of_median`, `exists_median`: Definition 8 in terms of the sides of cut edges, and the
   existence of the blob determined by three taxa, which the source states after Definition 8.
 * `IsCycleThrough`: a cycle through an arc, obtained from a walk by the source's "removing edges to
@@ -467,7 +467,7 @@ theorem disjoint_pathArcs (hconn : ∀ f ∈ F, G.Walks F v (G.source f))
   · exact key he'.1 he.1 hee.symm hg' hg
   · exact hee (LeadsTo.unique ⟨he.1, hg.2.1⟩ ⟨he'.1, hg'.2.1⟩ (hconn g hg.1))
 
-/-- **Lemma 2 of the source.** Let `M` be a subnetwork of `F`, connected from the blob of `v` (`hc`,
+/-- **Lemma 2 of the source** (`a:lem:inducedB`). Let `M` be a subnetwork of `F`, connected from the blob of `v` (`hc`,
 `hconn`, which the source's proof assumes when it takes paths in `M`), with the labels `S` nodes of degree
 one of `F`. If `S`, with at least three elements, determines the blob of `v` in `M`, then `S`
 determines the blob of `v` in `F`, which contains it (`SameBlobIn.mono`), and the incident cut edges
@@ -476,7 +476,7 @@ of that blob leading to the elements of `S` are in `M`.
 As in the source: there are paths in `M` from the blob to each `s ∈ S` with no edges in common. Each
 must use the incident cut edge of `F` leading to `s`, since that arc separates `s` from the blob of
 `F`, so these cut edges are in `M` and distinct. -/
-theorem lemma2 (hMF : M ⊆ F) (h3 : 3 ≤ S.card) (hp : ∀ s ∈ S, IsPendantIn G F (ℓ s))
+theorem determines_of_subnetwork (hMF : M ⊆ F) (h3 : 3 ≤ S.card) (hp : ∀ s ∈ S, IsPendantIn G F (ℓ s))
     (hc : ∀ s ∈ S, G.Walks M v (ℓ s)) (hconn : ∀ f ∈ M, G.Walks M v (G.source f))
     (hdet : Determines G M v ℓ S) :
     Determines G F v ℓ S ∧ ∀ s ∈ S, ∃ e ∈ M, LeadsTo G F v e (ℓ s) := by
@@ -568,6 +568,18 @@ theorem determines_of_median (h3 : 3 ≤ S.card) (hinj : Set.InjOn ℓ S)
 /-- At least two elements of `S` lie in `T`. -/
 def TwoIn (ℓ : ι → V) (S : Finset ι) (T : Set V) : Prop :=
   ∃ s ∈ S, ∃ t ∈ S, s ≠ t ∧ ℓ s ∈ T ∧ ℓ t ∈ T
+
+/-- Three elements do not have two on each side of a set. -/
+theorem not_twoIn_compl_of_card_three (h3 : S.card = 3) {T : Set V} (h : TwoIn ℓ S T) : ¬ TwoIn ℓ S Tᶜ := by
+  classical
+  obtain ⟨s, hs, t, ht, hne, hsT, htT⟩ := h
+  rintro ⟨s', hs', t', ht', hne', hsT', htT'⟩
+  have h₁ : 1 < (S.filter fun x => ℓ x ∈ T).card := Finset.one_lt_card.mpr
+    ⟨s, Finset.mem_filter.mpr ⟨hs, hsT⟩, t, Finset.mem_filter.mpr ⟨ht, htT⟩, hne⟩
+  have h₂ : 1 < (S.filter fun x => ¬ ℓ x ∈ T).card := Finset.one_lt_card.mpr
+    ⟨s', Finset.mem_filter.mpr ⟨hs', hsT'⟩, t', Finset.mem_filter.mpr ⟨ht', htT'⟩, hne'⟩
+  have := Finset.card_filter_add_card_filter_not (s := S) fun x => ℓ x ∈ T
+  omega
 
 /-- **The blob determined by `S`**, as a median in the tree of blobs. If no cut edge has two
 elements of `S` on each side, and some cut edge has two on one side, then a vertex `v` has at most

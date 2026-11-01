@@ -7,10 +7,25 @@ Recorded 2026-10-27 (America/Chicago).
 - ECToBlob: Rhodes, Allman, Ané and Baños, *Statistical inference of the Tree of Blobs of a phylogenetic network from quartet concordance factors*, [bioRxiv v1](https://www.biorxiv.org/content/10.64898/2026.05.28.728501v1). The bioRxiv API lists v1 dated 2026-05-31. The author's publications page lists the work as to appear in SIAM Journal on Life Sciences; no replacement version has been selected.
 - TOB-QMC: Dai, Han and Molloy, *Quartet-based species tree methods enable fast and consistent tree of blobs reconstruction under the network multispecies coalescent*, [bioRxiv v5](https://www.biorxiv.org/content/10.1101/2025.11.05.686850v5), posted 2026-05-15. A later [Genome Research publication](https://doi.org/10.1101/gr.282203.126) exists. The user first selected the journal, then explicitly authorized bioRxiv fallback if the journal could not be retrieved. Publisher and Europe PMC access checks established that only the journal abstract was available, so the fallback applies. No equivalence of the journal and preprint proofs is claimed.
 - TINNiK: Allman, Baños, Mitchell and Rhodes, *TINNiK: inference of the tree of blobs of a species network under the coalescent model*, [Algorithms for Molecular Biology 19, 23 (2024)](https://doi.org/10.1186/s13015-024-00266-2).
+- Allman et al. 2023: Allman, Baños, Mitchell and Rhodes, *The tree of blobs of a species network: identifiability under the coalescent*, [J. Math. Biol. 86, 10 (2023)](https://doi.org/10.1007/s00285-022-01838-9), read in the PMC author manuscript NIHMS1884071 (PMC10062380) and the arXiv TeX.
+- Gusfield et al. 2007: Gusfield, Bansal, Bafna and Song, *A decomposition theory for phylogenetic networks and incompatible characters*, [J. Comput. Biol. 14, 1247-1272 (2007)](https://doi.org/10.1089/cmb.2006.0137), read in the PMC author manuscript (PMC2581772).
 
-Downloads and working inventories are kept under ignored `notes/`; they are not distributed with the library. The TINNiK publisher XML includes TeX equations, but is not the authors' original TeX source.
+Downloads and working inventories are not distributed with the library. The TINNiK publisher XML includes TeX equations, but is not the authors' original TeX source.
 
-No author TeX source exists for any of the three papers, so `docs/paper_routes.tsv` is written by hand from these sources.
+No author TeX source exists for ECToBlob, TOB-QMC, TINNiK or Gusfield et al. 2007, so their rows of `docs/paper_routes.tsv` are written by hand from these sources. Those of Allman et al. 2023 are checked against `route_check.py extract` on the arXiv TeX.
+
+### Line numbers in the docstrings
+
+The docstrings locate a passage by the lines of a text of the paper. The texts aren't distributed, so a line number is a locator only. Those of ECToBlob and of TOB-QMC's supplement can be reproduced with the command below, and those of TOB-QMC's main text are in its PDF.
+
+| Paper | "Line" means |
+| --- | --- |
+| ECToBlob | a line of `pdftotext -layout` run on the bioRxiv v1 PDF (hash in `docs/sources.json`): "the paper's text, lines 588-627" |
+| TOB-QMC | a line number printed in the margin of the bioRxiv v5 PDF: "embedded lines 384-385", "v5, line 421". In the supplement, a line of `pdftotext -layout`: "the supplement's text, lines 560-575" |
+| TINNiK | a line of the plain text of the publisher's XML (PMC11539473), one line per paragraph: "TINNiK's text, line 194" |
+| Allman et al. 2023 | a line of the plain text of the PMC page (PMC10062380), one line per paragraph: "the PMC text, line 149" |
+| Gusfield et al. 2007 | a line of the plain text of the PMC page (PMC2581772), one line per paragraph: "line 342" |
+| NANUQ | a line of the plain text of arXiv v1 |
 
 The user supplied `ectob_supp.pdf` (6 pages) and `tob-qmc_supp.pdf` (43 pages) from Downloads on 2026-10-27. Both have been read and hashed. The ECToBlob supplement contains simulation appendices A/B. The TOB-QMC supplement is internally dated February 26, 2026 and uses some result numbers that differ from main v5. Its precise version linkage is unconfirmed; the internal date alone does not establish that a later supplement exists. Its mathematical claims are inventoried separately with a provisional crosswalk to the main text.
 
@@ -23,11 +38,11 @@ The user supplied `ectob_supp.pdf` (6 pages) and `tob-qmc_supp.pdf` (43 pages) f
 - Mathlib and Verso rc1 share `plausible` and `Cli`; both revisions match.
 - The initial dependency cache was copied into this checkout from an existing local checkout at the same pinned release. No symlinks or shared mutable build directory are used.
 - Compilation is enabled. Sub-agents check files against private snapshots of the build outputs; only the main session runs `lake build`.
-- Libraries: `Basic` (the definitions specific to the three papers, and general results on their way to the library), `External`, and one library for each paper. They import the library `Phylogenetics` (see below). Each is a directory with no root module: the globs in `lakefile.toml` reach its modules, also those that nothing imports. Additional proof dependencies will be pinned only after checking their scope and statements.
+- Libraries: `Basic` (the definitions specific to the first three papers, and general results on their way to the library), `External`, and one library for each paper. They import the library `Phylogenetics` (see below). Each is a directory with no root module: the globs in `lakefile.toml` reach its modules, also those that nothing imports. Additional proof dependencies will be pinned only after checking their scope and statements.
 
 ## Scope and provenance
 
-The requested target is all mathematical results of the three papers, their cited proof dependencies, and source/statement/proof-route audits. Empirical performance claims must be distinguished from mathematical theorems. No result is counted as formalized merely because an abstract implication or a placeholder module builds.
+The requested target is all mathematical results of the five papers, their cited proof dependencies, and source/statement/proof-route audits. Empirical performance claims must be distinguished from mathematical theorems. No result is counted as formalized merely because an abstract implication or a placeholder module builds.
 
 Cited results that are out of reach may become explicit hypotheses named after their sources, as the invoked skill permits. Results proved in these papers may not be replaced with such hypotheses.
 
@@ -45,7 +60,7 @@ The library is required by commit, from GitHub (`lakefile.toml`). `lake build` b
 
 ## Palomar
 
-On 2026-10-31 the user decided that Palomar is not a target. `src/MainResults.lean` states and proves the main theorems, by hand, and imports the libraries of the three papers and what they use, not the statement libraries that still hold `sorry`; it replaces `Challenge.lean` and `Solution.lean`, and `scripts/gen_solution.py` and `scripts/sync_challenge_defs.py` are gone. This gives up Palomar's rule that the Challenge imports only Mathlib, deliberately: the user may not submit, and does not care about the limit on its length, and the copy of the definitions was about 800 lines that had to be kept equal to the library's.
+On 2026-10-31 the user decided that Palomar is not a target. `src/MainResults.lean` states and proves the main theorems, by hand, and imports the libraries of the five papers and what they use; it replaces `Challenge.lean` and `Solution.lean`, and `scripts/gen_solution.py` and `scripts/sync_challenge_defs.py` are gone. This gives up Palomar's rule that the Challenge imports only Mathlib, deliberately: the user may not submit, and does not care about the limit on its length, and the copy of the definitions was about 800 lines that had to be kept equal to the library's.
 
 [`palomar/`](../palomar) keeps `comparator.json` and `formalization.yaml`, and says what a submission would still need. Comparator runs on `MainResults` as both challenge and solution, so it checks the main theorems under Lean's kernel and NanoDa, and rejects `sorryAx`; it no longer compares a separate statement file with a proof. `scripts/check_kernels.sh` runs it and con-ron, Palomar's three kernels.
 
@@ -67,4 +82,4 @@ The tests are read as implemented in the sources: gene trees are binary in Theor
 
 ## Publishing
 
-The repository is public. The user first asked, on 2026-10-31, for everything to be pushed to a private repository, and has since made it public. The formalization is on branch `formalize/tree-of-blobs`; the working notes, `NEXT.md` and `notes/`, are ignored by git and are not in the repository. No Palomar preflight, submission or registration is authorized.
+The repository is public. The user first asked, on 2026-10-31, for everything to be pushed to a private repository, and has since made it public. The formalization is on branch `formalize/tree-of-blobs`; the working notes are not in the repository. No Palomar preflight, submission or registration is authorized.

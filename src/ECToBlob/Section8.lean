@@ -16,7 +16,7 @@ Theorem 8.2. Lemma 8.1 is in `src/ECToBlob/Lemma81.lean`, the end of the proof, 
 right, in `src/ECToBlob/Deterministic.lean`, and the repair of the choice of a quartet at a false edge
 in `src/ECToBlob/FalseEdge.lean`.
 
-The proof follows the paper (`notes/paper2026/paper.txt`, lines 1047-1158), test by test:
+The proof follows the paper (the paper's text, lines 1047-1158), test by test:
 
 * one combined test (lines 1064-1116): `eventually_lt_combineP` if the null holds on all of its
   quartets, `eventually_combineP_lt` if not, and `eventually_testCorrect` for both;
@@ -656,7 +656,7 @@ variant of the algorithm, and every distribution of binary gene trees whose quar
 factors satisfy both directions of Assumption 1 at the network's parameters, the output on `n`
 independent gene trees is the tree of blobs with probability tending to one.
 
-The proof is the paper's (`notes/paper2026/paper.txt`, lines 1047-1158), with the same sequences.
+The proof is the paper's (the paper's text, lines 1047-1158), with the same sequences.
 Fix `ε`. For each edge of `T₀`, Lemma 8.1 (`ecto:lem8_1`) on the edge's null quartets gives `δ` with
 all their p-values in `[δ, 1 - δ]`, and the alternatives have p-values below a threshold `η_n` since
 `b_n = -2 log η_n = o(n)`, so by Lemma 6.1 (`ecto:lem6_1`) the combined star p-value is right with

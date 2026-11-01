@@ -7,7 +7,7 @@ public import TOBQMC.WQC
 /-!
 # TOB-QMC Lemma 1: displayed quartet trees and 4-blobs
 
-TOB-QMC (`notes/paper2025/v5.txt`, embedded lines 384-385): "A semi-directed, binary network on four taxa displays
+TOB-QMC (v5, embedded lines 384-385): "A semi-directed, binary network on four taxa displays
 exactly one binary quartet tree if, and only if, it does not contain a 4-blob." It cites Lemma 1 of its reference [5],
 which is Ané, Fogg, Allman, Baños, Rhodes 2024 (J. Math. Biol. 88(3), 29): "A 4-taxon binary network N displays a
 single quartet tree (i.e., is of class 1) if, and only if, it does not have a 4-blob."
@@ -604,9 +604,8 @@ only non-trivial split in its displayed trees", and from a 4-blob, the reduction
 (`exists_reduction`) gives two subnetworks with incompatible splits, whose displayed trees are displayed by the
 network.
 
-Departure from the paper: the source gets the cut edge from "it has two 3-blobs", by Lemma 1 of Allman et al. 2023,
-which is not formalized (`src/AllmanEtAl2023/Reduction.lean`). A cut edge with a `2|2` split is what `IsTreelike`
-says, so this step is not needed. -/
+Departure from the paper: the source gets the cut edge from "it has two 3-blobs", by Lemma 1 of Allman et al. 2023
+(`AllmanEtAl2023.lemma1`). A cut edge with a `2|2` split is what `IsTreelike` says, so this step is not needed. -/
 theorem lemma1 (hN : N.IsPhylogenetic) (hBin : N.IsBinary) {q : Finset X} (hq : q.card = 4) :
     (∃! s, s ∈ treesOn q ∧ NetworkDisplays N s) ↔ IsTreelike N q := by
   constructor

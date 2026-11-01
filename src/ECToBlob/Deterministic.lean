@@ -14,7 +14,7 @@ public import ECToBlob.Section6
 
 The paper's proof of Theorem 8.2 shows that, with high probability, "all the various combination
 tests computed by the algorithm correctly indicate whether edges of `T₀` should be contracted or
-not" (`notes/paper2026/paper.txt`, line 1056). Here is what it does with that: if all these tests
+not" (the paper's text, line 1056). Here is what it does with that: if all these tests
 come out right on a table `c` of quartet counts (`Run`, with one test per edge, `TestCorrect`), then
 the algorithm outputs the tree of blobs. `src/ECToBlob/Section8.lean` proves that this holds with high
 probability, test by test.

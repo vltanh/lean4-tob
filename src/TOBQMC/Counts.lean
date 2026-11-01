@@ -8,7 +8,7 @@ public import TOBQMC.BipartitionSearch
 /-!
 # TOB-QMC: operation counts
 
-The counts behind the running times that TOB-QMC claims (`notes/paper2025/v5.txt`). No machine model is used: each
+The counts behind the running times that TOB-QMC claims (v5). No machine model is used: each
 theorem counts the objects that a step of the method enumerates, as the `Finset.card` of a set, and says what each one
 costs in the paper's terms; the bounds are explicit.
 

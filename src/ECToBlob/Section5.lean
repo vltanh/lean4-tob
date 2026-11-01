@@ -2,7 +2,7 @@ module
 
 public import AllmanEtAl2023.Basic
 public import AllmanEtAl2023.Reduction
-public import AllmanEtAl2023.Theorem1
+public import ECToBlob.FaceWitness
 public import Basic.Defs
 public import Basic.ForMathlib.Analysis.AnalyticZeroSet
 public import Phylogenetics.NMSC.Analytic
@@ -114,7 +114,7 @@ theorem isNullParams_nmscCF_eq {r r' : QuartetTree X} {θ₀ : MetricData E} (h�
   exact measure_mono_null (fun x hx => sub_eq_zero.2 hx.2) hnull
 
 /-- The source's parameters on the face where all hybrid lengths are `0`, under the degree condition: the reduction,
-with cut arcs that are tree arcs, and `AllmanEtAl2023.exists_isNonCut_of_reduction` with the hybrid arcs at
+with cut arcs that are tree arcs, and `exists_isNonCut_of_reduction` with the hybrid arcs at
 length `0`. So the argument is that of the source: generic parameters off the two deletions, on this face, make the two
 CFs differ from their alternatives, and then `γ` is picked. -/
 theorem exists_face_isNonCut (hN : N.IsPhylogenetic) (hdeg : BlobDegreeAtMostThree N) {q : Finset X}
@@ -123,7 +123,7 @@ theorem exists_face_isNonCut (hN : N.IsPhylogenetic) (hdeg : BlobDegreeAtMostThr
       AllmanEtAl2023.IsNonCut (nmscCF N θ 0) q := by
   obtain ⟨D, k₁, k₂, a, s₁, s₂, e₁, e₂, hD, hk, ht, hk₁, hk₂, hpar, -, -, hnot, hs₁, hs₂, hss, hsp₁,
     hsp₂, he₁, he₂⟩ := AllmanEtAl2023.exists_reduction_of_blobDegree hN hdeg hq hnt htr
-  obtain ⟨θ, hθ, hface, hnc⟩ := AllmanEtAl2023.exists_isNonCut_of_reduction
+  obtain ⟨θ, hθ, hface, hnc⟩ := exists_isNonCut_of_reduction
     (Z := {e | N.IsHybridArc e}) hN hD hk ht hk₁ hk₂ hpar hq hnot hs₁ hs₂ hss hsp₁ hsp₂
     (not_isHybridArc_of_isTreeArc he₁) (not_isHybridArc_of_isTreeArc he₂)
   exact ⟨θ, hθ.isNormalized, hface, hnc⟩
@@ -138,9 +138,9 @@ and `NMSC.trivial_uniform`.
 The measure has atoms at length `0` on hybrid arcs, so the witness must be on the face where all hybrid
 lengths are `0` (`exists_face_isNonCut`). The source's parameters can be taken there, since the two cut arcs of its
 reduction can be moved down to tree arcs when reticulations have degree three
-(`AllmanEtAl2023.exists_reduction_of_blobDegree`). So the proof is the source's as formalized in
-`src/AllmanEtAl2023/Theorem1.lean` and `src/AllmanEtAl2023/Reduction.lean`, with the departures from the source
-listed in their headers, and the paper's sentence holds as written, for this measure.
+(`AllmanEtAl2023.exists_reduction_of_blobDegree`). So the proof is the source's, read off a set of arcs of the network, as in
+`src/ECToBlob/FaceWitness.lean` and `exists_reduction_aux` of `src/AllmanEtAl2023/Reduction.lean`, with what differs
+listed there, and the paper's sentence holds as written, for this measure.
 
 Departure from the paper: its text goes quarnet by quarnet: "for a quarnet induced from `N⁺`", "for one with a non-trivial
 4-blob, checking the argument of [4, Theorem 1]". Here the argument runs on `N` directly, for each set `q` of four taxa,

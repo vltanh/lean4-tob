@@ -14,8 +14,8 @@ public import Mathlib.Order.UpperLower.CompleteLattice
 # Gusfield, Bansal, Bafna, Song 2007: definitions
 
 D. Gusfield, V. Bansal, V. Bafna, Y. S. Song, *A decomposition theory for phylogenetic networks and
-incompatible characters*, J. Comput. Biol. 14 (2007) 1247--1272. Line numbers refer to
-`notes/sources/gusfield2007/pmc.txt`.
+incompatible characters*, J. Comput. Biol. 14 (2007) 1247--1272. Line numbers are those of the plain text of the PMC page
+(PMC2581772), one line per paragraph: see `src/Gusfield2007/README.md`.
 
 This file imports Mathlib only. The block between the markers holds what the numbered results mention.
 
@@ -462,17 +462,6 @@ def OnBlob (v : V) : Prop := ∃ B, N.IsBlob B ∧ v ∈ N.blobVerts B
 /-- The splits of the tree edges of `N`, on the rows `M`, as sides. -/
 def treeSplits (M : Finset (ι → Bool)) : Set (Set (ι → Bool)) :=
   {A | ∃ e, N.IsTreeArc e ∧ (A = N.arcSide e ∨ A = (M : Set (ι → Bool)) \ N.arcSide e)}
-
-/-- The conditions under which the proof of Theorem 4 goes through (Section 3.7): (1) no recombination node is a leaf,
-so that each row has a pendant arc in `T′`; (2) the claim of the proof at line 342, that the rows not below an edge out of a
-blob don't contain the super-character of its source; (3) an arc that isn't pendant and has both ends off the
-blobs has a site, so that it carries a character. -/
-structure IsTreeNormal : Prop where
-  recomb_not_leaf : ∀ x, N.IsRecomb x → ¬ N.IsLeaf x
-  exit_split : ∀ B e v, N.IsBlob B → N.src e ∈ N.blobVerts B → N.tgt e ∉ N.blobVerts B → N.IsLeaf v →
-    ¬ N.Reach (N.tgt e) v → ∃ i, N.site i ∈ B ∧ N.label v i ≠ N.label (N.src e) i
-  arc_labelled : ∀ e, N.IsTreeArc e → ¬ N.OnBlob (N.src e) → ¬ N.OnBlob (N.tgt e) → ¬ N.IsLeaf (N.tgt e) →
-    ∃ i, N.site i = e
 
 /-- The treeness of `N` (line 366): the number of edges of `T′`. -/
 def treeness : ℕ := Nat.card {e // N.IsTreeArc e}

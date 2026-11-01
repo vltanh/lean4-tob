@@ -13,7 +13,7 @@ public import TINNiK.Counts
 # TINNiK with neighbor joining
 
 TINNiK's Theorem 4 for the distance-based method that the paper names in step 4 of the algorithm
-(`notes/tinnik/readable.txt`, line 194), neighbor joining, with any way of breaking ties: `theorem4_nj` and
+(TINNiK's text, line 194), neighbor joining, with any way of breaking ties: `theorem4_nj` and
 `theorem4_explicit_nj`, instances of `TINNiK.theorem4` and `TINNiK.theorem4_explicit` by
 `Phylogenetics.NJ.isExactBuilder_nj`. The paper's step 4 takes `O(N³)` (line 196):
 `Phylogenetics.NJ.ops_run`, `Phylogenetics.NJ.njOps_le`.
@@ -61,7 +61,7 @@ theorem theorem4_explicit_nj [Fintype V] [Fintype E] {N : RootedNetwork V E X}
   theorem4_explicit hN hX hθ hdet hβ hδ₂ (NJ.isExactBuilder_nj tb) hml
 
 /-- **TINNiK's combined time with NJ in step 4**, `O((m + N) N⁴)`: `tinnikOperations_le` with the count of
-neighbor joining (`notes/tinnik/readable.txt`, line 196). -/
+neighbor joining (TINNiK's text, line 196). -/
 theorem tinnikOperations_nj_le {N m : ℕ} (hN : 1 ≤ N) :
     tinnikOperations N m (NJ.njOps N) ≤ (68 + 8) * ((m + N) * N ^ 4) :=
   tinnikOperations_le hN (NJ.njOps_le N)

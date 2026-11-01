@@ -9,7 +9,7 @@ public import TINNiK.Basic
 /-!
 # TINNiK: operation counts
 
-The running times of TINNiK (`notes/tinnik/readable.txt`, lines 180 and 196). No machine model is used: each theorem
+The running times of TINNiK (its text, lines 180 and 196). No machine model is used: each theorem
 counts the objects that a step enumerates, and says what each one costs in the paper's terms; the bounds are explicit.
 
 ## The B-quartet Inference Algorithm
@@ -175,7 +175,7 @@ decreasing_by
   have htm : t ∈ (passStep τ L₁ ⟨B, [], count⟩).B := (hinv.mem_iff t).mpr (Or.inr ht)
   exact (mem_sdiff.mp (hsub (mem_sdiff.mpr ⟨mem_univ t, htB⟩))).2 htm
 
-/-- **The B-quartet Inference Algorithm**, Step 3 (TINNiK, `notes/tinnik/readable.txt`, line 176), from the sets `B₀`
+/-- **The B-quartet Inference Algorithm**, Step 3 (TINNiK's text, line 176), from the sets `B₀`
 judged B-quartets at Step 2 and the quartet trees `τ` of Step 2(c). It returns the vector `B` and the numbers of
 executions of the body of Step 3(a)(i), and of Step 3(a). -/
 def bQuartetInference (B₀ : Finset (Finset X)) (τ : Set (QuartetTree X)) : InferOut X :=
@@ -920,7 +920,7 @@ def tinnikOperations (N m nj : ℕ) : ℕ :=
     (4 * N - 4)
 
 /-- **TINNiK's time, as printed: "the computational times for steps 1–5 using NJ in step 4 are, respectively,
-`O(mN⁴)`, `O(N⁵)`, `O(N⁴)`, `O(N³)`, `O(N)`, for a combined `O((m + N) N⁴)`"** (`notes/tinnik/readable.txt`, line
+`O(mN⁴)`, `O(N⁵)`, `O(N⁴)`, `O(N³)`, `O(N)`, for a combined `O((m + N) N⁴)`"** (TINNiK's text, line
 196), with `nj ≤ c N³` for NJ. -/
 theorem tinnikOperations_le {N m nj c : ℕ} (hN : 1 ≤ N) (hnj : nj ≤ c * N ^ 3) :
     tinnikOperations N m nj ≤ (68 + c) * ((m + N) * N ^ 4) := by
