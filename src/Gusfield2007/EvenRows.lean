@@ -5,7 +5,7 @@ public import Gusfield2007.Components
 /-!
 # A smaller counterexample to the multiple-crossover conjecture: the numbers
 
-This isn't in the paper: an independent review of the statements found it. The rows are `evenRows`: `000000`, `000011`, `000101`, `000110`, `011000`, `101000`, `110000`, that is, on each
+This isn't in the paper; a search for this formalization found it, and it isn't claimed to be new: Huson et al. 2009, Figure 3, credited to Yun Song, has the same count in a form on clusters. The rows are `evenRows`: `000000`, `000011`, `000101`, `000110`, `011000`, `101000`, `110000`, that is, on each
 of the two sets of three sites, the even sequences. Seven rows and six sites, against the thirteen and ten of Figure 8. A triangle of incompatible sites needs two recombination nodes, and each component is one. By the search, `R(M(C_k)) = 2`, and `R(M) = 3`.
 -/
 

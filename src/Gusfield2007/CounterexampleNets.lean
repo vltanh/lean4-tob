@@ -538,7 +538,7 @@ theorem fiveStarNet_hr : ∀ e f, e ≠ f → fiveStarNet.tgt e = fiveStarNet.tg
 
 theorem fiveStarNet_hl : ∀ e, (∃ g, fiveStarNet.src g = fiveStarNet.tgt e) → ∃ i, fiveStarNet.site i = e := by decide +kernel
 
-/-- The site-free arc of `fiveNet`, off the blobs and not pendant. -/
+/-- The site-free arc of `fiveNet`, with both ends off the blobs, and not pendant. -/
 theorem fiveNet_siteFree : (∀ i, fiveNet.site i ≠ 0) ∧ ∃ g, fiveNet.src g = fiveNet.tgt 0 := by decide +kernel
 
 /-- The rows below the site-free arc of `fiveNet`: `00100, 00010, 00001`. -/

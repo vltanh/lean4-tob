@@ -225,7 +225,7 @@ theorem fig8Inc : ∀ p ∈ ({(0, 1), (1, 2), (2, 3), (5, 6), (6, 7), (7, 8)} : 
   unfold Incompatible
   decide +kernel
 
-/-- `R¹(M) = 6`, for the matrix of Figure 8. The review didn't run this number, and the paper doesn't state it. The Hudson-Kaplan bound is tight on it: the components are spatially disjoint. -/
+/-- `R¹(M) = 6`, for the matrix of Figure 8. The paper doesn't state this number. The Hudson-Kaplan bound is tight on it: the components are spatially disjoint. -/
 theorem fig8_R_single : R .single fig8 = 6 := by
   have h₁ := NetSpec.R_le fig8SingleNet_valid fig8SingleNet_derives (NetSpec.obeys_single_toNetwork _ fig8SingleNet_single)
   rw [fig8SingleNet_recombs] at h₁

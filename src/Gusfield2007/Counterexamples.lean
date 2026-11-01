@@ -190,7 +190,7 @@ theorem fig6_four_le_F : 4 ≤ F .single fig6 := by
   have h₂ := fig6_two_le_R
   omega
 
-/-- `F¹(M) = 4`: the review's number, by Theorem 3, with `S = 000000`. -/
+/-- `F¹(M) = 4`, by Theorem 3, with `S = 000000`. -/
 theorem fig6_F_single : F .single fig6 = 4 := by
   have h := F_le_add_RS .single fig6_nonempty fig6_noConstantColumn fig6_conflictGraph (A := fig6C₁) fig6_reachable (a := 1) (b := 0) (Or.inl rfl) fig6C₁_zero
   rw [fig6C₁_compl] at h
@@ -199,7 +199,7 @@ theorem fig6_F_single : F .single fig6 = 4 := by
   have h₃ := fig6_four_le_F
   omega
 
-/-- `F(M) = 2`: the review's number, by Theorem 3, with `S = 000000`. -/
+/-- `F(M) = 2`, by Theorem 3, with `S = 000000`. -/
 theorem fig6_F_multiple : F .multiple fig6 = 2 := by
   have h := F_le_add_RS .multiple fig6_nonempty fig6_noConstantColumn fig6_conflictGraph (A := fig6C₁) fig6_reachable (a := 1) (b := 0) (Or.inl rfl) fig6C₁_zero
   have h' := add_R_le_F .multiple fig6_nonempty fig6_noConstantColumn (A := fig6C₁) fig6_reachable (a := 1) (b := 0) (Or.inl rfl) fig6C₁_zero
@@ -537,7 +537,7 @@ theorem even_F : F .multiple evenRows = 4 := by
   rw [even_R₁, even_R₂] at h'
   omega
 
-/-- A smaller refutation of the unrooted multiple-crossover conjecture than Figure 8. **It isn't in the paper**: an independent review of the statements found it. `F(M) = 4` and `R(M) = 3`, with 7
+/-- A smaller refutation of the unrooted multiple-crossover conjecture than Figure 8. **It isn't in the paper**; a search for this formalization found it, and it isn't claimed to be new (see `evenRows`). `F(M) = 4` and `R(M) = 3`, with 7
 rows and 6 sites, against Figure 8's 13 and 10. -/
 theorem even_unrootedConjecture_false : F .multiple evenRows = 4 ∧ R .multiple evenRows = 3 ∧ ¬ UnrootedConjecture .multiple :=
   ⟨even_F, even_R, fun h => not_minDecomposable_of_lt (by rw [even_F, even_R]; omega) (h 6 evenRows even_nonempty even_noConstantColumn)⟩

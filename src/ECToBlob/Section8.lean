@@ -28,7 +28,7 @@ The proof follows the paper (the paper's text, lines 1047-1158), test by test:
 
 Theorem 8.2 is stated for a network at numerical parameters where both directions of Assumption 1
 hold (E10 of the report: as printed, for all parameters, it fails). The correction was agreed with
-the user. `theorem8_2_generic` gives the conclusion for almost all parameters, from `Assumption1`.
+the requester. `theorem8_2_generic` gives the conclusion for almost all parameters, from `Assumption1`.
 
 For the corrections `cauchy` and `cbc`, Theorem 8.2 also requires the alternatives of a quartet tree
 satisfying (5.2) to have positive probability: without this a p-value is exactly `1`, and the Cauchy
@@ -649,7 +649,7 @@ private theorem tendsto_ectoblob {V E X : Type u} [Fintype X] [DecidableEq X]
     linarith
   · exact Eventually.of_forall fun n => (iidProb_le_one hd n _).trans_lt ha
 
-/-- **Theorem 8.2** (`ecto:thm8_2`), with the correction agreed with the user (E10 of the report)
+/-- **Theorem 8.2** (`ecto:thm8_2`), with the correction agreed with the requester (E10 of the report)
 and the one required for the Cauchy combinations (E11, also agreed). There are sequences `α_n`,
 `β_n`, independent of the network, such that for every resolution `T₀` of the tree of blobs, every
 variant of the algorithm, and every distribution of binary gene trees whose quartet concordance

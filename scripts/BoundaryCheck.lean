@@ -5,7 +5,7 @@ public import Mathlib.Tactic.Linarith
 
 /-!
 Independent check of the open-simplex boundary issue in TINNiK Appendix C.1.
-The user authorized using the closed simplex for estimation, while retaining
+The requester authorized using the closed simplex for estimation, while retaining
 strictly positive generating probabilities. These checks verify the obstruction
 and the selected repair; they are not the full C.1 MLE theorem.
 -/

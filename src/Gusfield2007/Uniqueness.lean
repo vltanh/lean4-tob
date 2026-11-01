@@ -16,13 +16,13 @@ definitions (`Theorem4Printed`, `Theorem4Form`, `MostTreeLikePrinted`), with the
 
 1. **The definition.** Lines 326 to 328 call `v` external if "there is an edge from `v` to some node outside of `b`", which leaves out the node where the blob is entered. The proof uses more: at line 341, each super-character labels an external node, which fails for the super-character of the top of the blob, and at line 342, "in the other subnetwork, no leaf label contains
    `S_v(C)`", which fails if an exit is at the top and rows lie above the blob.
-2. **The repair.** `Network.IsEfficientAtEntry` compares labels on one blob at a time, and counts the entering arc among the arcs of its node. Then lines 341 and 342 are true (`Network.IsEfficientAtEntry.existsUnique_port`, `Network.IsEfficientAtEntry.line342Claim`), the case of a blob at the root needs no exemption, since it has no entering arc (`fourRootNet_isEfficientAtEntry`), and Theorem 4
+2. **The repair.** It is in print, and not ours: Gusfield, *ReCombinatorics* (MIT Press, 2014), Section 7.3.5, counts an external node "without regard to edge direction", defines canonical networks, and states the theorem for them as its Theorem 7.3.3 (read only in snippets: `docs/REPORT.md`, E42). `Network.IsEfficientAtEntry` is a weaker condition in the same spirit: it compares labels on one blob at a time, and counts the entering arc among the arcs of its node. Then lines 341 and 342 are true (`Network.IsEfficientAtEntry.existsUnique_port`, `Network.IsEfficientAtEntry.line342Claim`), the case of a blob at the root needs no exemption, since it has no entering arc (`fourRootNet_isEfficientAtEntry`), and Theorem 4
    holds, in both directions (`theorem4_entry`). `Network.isEfficientAtEntry_iff` relates it to the printed definition. Comparing labels over all the blobs, as the printed definition does, isn't needed by the proof, and it's implied by `T′ ≅ T̄` (`Network.isEfficient_of_iso`). Line 329 holds for this definition (`exists_isEfficientAtEntry`, in `Gusfield2007.Realizability`), for existence.
 3. **The counterexamples for the printed definition.** Take `topRows`, with the blob of the sites 3, 4 entered by an arc with the site 5, and the row `11001` hanging from the entry node of that blob. This network is efficient in the printed sense and fully decomposed, and has no recombination leaf. The split `{00000, 01000, 10000, 11001} | {11011, 11101, 11111}` of `T̄` isn't in `T′`:
    `theorem4_false_top`. It isn't efficient at the entry node: `topNet_not_isEfficientAtEntry`. The count of edges is a poor witness, since it depends on the reading: with rows at leaves, `T̄` has nine edges and `T′` eight, and under line 264's reading `T̄` has eight too. Moving that row up to a new node on the entering arc gives another efficient fully decomposed network, whose `T′` is `T̄`. So `T′` isn't invariant:
    `topRows_not_invariant`. A smaller instance is `{0000, 0001, 0010, 0110, 1010, 1110}`, with one blob and a root of degree 3: `theorem4_false_small`.
 4. **Line 341** is false for the printed definition on the paper's own networks. In Figure 2 made efficient, the super-character `00` of `{2, 5}` labels no external node: `line341_false_fig2`. There `T′` is `T̄`, so this is a gap in the proof, and not a further failure of the theorem. The proof never handles the edges entering a blob.
-5. **A third failure, site-free arcs.** A perfect phylogeny with a site-free arc that isn't pendant is efficient and fully decomposed, and `T′` has a split that `T̄` lacks: `theorem4_false_siteFree`, `fiveNet_split`. Line 97 allows such arcs, so this isn't one of the paper's conventions, and it's why `RegularArcs` has `arc_labelled`. The same example is against line 156: `perfectPhylogeny_not_invariant`, and
+5. **A third failure, site-free arcs.** A perfect phylogeny with a site-free arc that isn't pendant is efficient and fully decomposed, and `T′` has a split that `T̄` lacks: `theorem4_false_siteFree`, `fiveNet_split`. Line 97 allows such arcs, and the statement must exclude them, which is why `RegularArcs` has `arc_labelled`. The same example is against line 156: `perfectPhylogeny_not_invariant`, and
    `perfectPhylogeny_invariant` is what's true.
 6. **Two conventions, which aren't errors.** A root of degree two (`M = {0, 1}`, `theorem4Printed_false_rootDegreeTwo`): every network for two rows has it, and line 418 itself places a root on an edge, so read `T′` with the root suppressed. A recombination leaf (`fourGametes`, `theorem4Printed_false_recombLeaf`): Figure 1's caption speaks of the sequence "exiting" a recombination node, and line 341 needs it, so give a
    recombination node a pendant arc.
@@ -452,7 +452,7 @@ section Normal
 variable {V E : Type*} {N : Network ι V E} {M : Finset (ι → Bool)}
 
 /-- What all the conditions for `T′ ≅ T̄` have in common. No recombination node is a leaf: that's a convention of the paper (Figure 1's caption, line 341). And an arc that isn't pendant, with both ends off the blobs, has a site, so that it carries a character.
-That isn't a convention: line 97 allows site-free arcs, and `theorem4_false_siteFree` shows that the theorem fails on one. -/
+That is a case line 97 allows and the statement must exclude: `theorem4_false_siteFree` shows that the theorem fails on one. -/
 structure Network.RegularArcs (N : Network ι V E) : Prop where
   recomb_not_leaf : ∀ x, N.IsRecomb x → ¬ N.IsLeaf x
   arc_labelled : ∀ e, N.IsTreeArc e → ¬ N.OnBlob (N.src e) → ¬ N.OnBlob (N.tgt e) → ¬ N.IsLeaf (N.tgt e) → ∃ i, N.site i = e
@@ -868,7 +868,7 @@ theorem Network.mem_treeSplits_iff_of_line342 (hd : N.Derives M) (hf : N.IsFully
 
 /-- **No exit of a blob at a node carrying the blob's ancestral super-character**, the label of its top on its sites, if a row lies off the blob. It's what the claim of line 342 says, structurally (`Network.isTreeNormalStructural_iff_line342Claim`).
 
-The review has the exemption "unless the blob is at the root", which is `NoAncestralExitAtEntered`, a stronger condition. A blob at the root can have a row at its top (`fourGametes_rootExit`). And so can a blob with no row above it but a site-free arc, for which the conclusion of `theorem4_splits` still holds
+The exemption "unless the blob is at the root" is `NoAncestralExitAtEntered`, a stronger condition. A blob at the root can have a row at its top (`fourGametes_rootExit`). And so can a blob with no row above it but a site-free arc, for which the conclusion of `theorem4_splits` still holds
 (`theorem4_splits_siteFreeRoot`). -/
 def Network.NoAncestralExit (N : Network ι V E) : Prop :=
   ∀ B e w, N.IsBlob B → N.IsBlobTop B w → (∃ l, N.IsLeaf l ∧ ¬ N.Reach w l) → N.src e ∈ N.blobVerts B → N.tgt e ∉ N.blobVerts B →
@@ -1303,7 +1303,7 @@ the statement is false without them; by `theorem4_iff`, they're also necessary. 
 
 What each hypothesis does:
 - No recombination leaf, and the degree condition, are conventions of the paper rather than errors: read `T′` with a root of degree two suppressed (line 418), and give a recombination node a pendant arc (Figure 1's caption, line 341).
-- `arc_labelled` isn't a convention, and it's an error of the theorem. Line 97 explicitly allows site-free arcs, and the proof at lines 341 to 344 considers only the edges leaving a blob, so it never meets them. `theorem4_false_siteFree` is a perfect phylogeny, efficient and fully decomposed, for which it fails.
+- `arc_labelled` is a case line 97 allows and the statement must exclude, so that the theorem fails as printed on it. The proof at lines 341 to 344 considers only the edges leaving a blob, so it never meets such an arc. `theorem4_false_siteFree` is a perfect phylogeny, efficient and fully decomposed, for which it fails.
 - `noAncestralExit` is the error of line 342: it's the printed definition of "efficient" at lines 326 to 328 that omits the entry node of a blob. With the entry node, Theorem 4 holds: `theorem4_entry`. Then it needs only the other hypotheses.
 
 `Gusfield2007.Realizability` shows that the hypotheses aren't vacuous: there's such a network for every `M` with at least three rows. -/
@@ -1417,7 +1417,7 @@ theorem Network.center_eq (hT : IsTBar M T φ edge) (hd : N.Derives M) (f : N.bl
   rw [hE] at h hs₁
   exact hs₁.symm.trans (h.trans hus.symm)
 
-/-- **The converse of Theorem 4, from the review.** If `T′` is `T̄` then the structural conditions hold. -/
+/-- **The converse of Theorem 4.** If `T′` is `T̄` then the structural conditions hold. -/
 theorem Network.isTreeNormalStructural_of_iso (hT : IsTBar M T φ edge) (hd : N.Derives M) (hf : N.IsFullyDecomposedFor (incompatGraph M))
     (f : N.blobbedTree ≃g T) (hfr : ∀ v r (hr : r ∈ M), N.IsLeaf v → N.label v = r → f (N.toBlobNode v) = φ ⟨r, hr⟩) :
     N.IsTreeNormalStructural ∧ N.DegreeCond := by
@@ -1693,9 +1693,9 @@ theorem Network.isEfficient_of_iso (hT : IsTBar M T φ edge) (hd : N.Derives M) 
       · exact hnotbelow hB' hB hv' hw hes hv het hlab.symm h₂
     · exact hnotbelow hB hB' hv hw' hes' hv' het' hlab h₁
 
-/-- **Theorem 4 exactly** (`g:thm4_iff`), from the review: given that `N` is fully decomposed, `T′` is `T̄` if and only if `N` is efficient, and `IsTreeNormalStructural` and the degree condition hold. So these conditions lose nothing, and `NoAncestralExit` is the whole content of the error at line 342.
+/-- **Theorem 4 exactly** (`g:thm4_iff`): given that `N` is fully decomposed, `T′` is `T̄` if and only if `N` is efficient, and `IsTreeNormalStructural` and the degree condition hold. So these conditions lose nothing, and `NoAncestralExit` is the whole content of the error at line 342.
 
-The review's statement has "no exit at a node carrying the blob's ancestral super-character", without an exemption. A blob at the root has to be exempt, for "only if": see `fourGametes_rootExit`. For this "if and only if", the form of the exemption doesn't matter, by `Network.NoAncestralExit.atEntered`. -/
+"No exit at a node carrying the blob's ancestral super-character", with no exemption, is too strong: a blob at the root has to be exempt, for "only if": see `fourGametes_rootExit`. For this "if and only if", the form of the exemption doesn't matter, by `Network.NoAncestralExit.atEntered`. -/
 theorem theorem4_iff {V E : Type*} [Finite V] [Finite E] {N : Network ι V E} {M : Finset (ι → Bool)} (hd : N.Derives M)
     (hf : N.IsFullyDecomposedFor (incompatGraph M)) {W : Type*} [Finite W] {T : SimpleGraph W} {φ : M → W}
     {edge : SuperChar M → Sym2 W} (hT : IsTBar M T φ edge) :
@@ -1713,7 +1713,7 @@ theorem theorem4_iff {V E : Type*} [Finite V] [Finite E] {N : Network ι V E} {M
 def Network.CrossesAt (N : Network ι V E) (B : Set E) (e : E) (v : V) : Prop :=
   v ∈ N.blobVerts B ∧ ((N.src e = v ∧ N.tgt e ∉ N.blobVerts B) ∨ (N.tgt e = v ∧ N.src e ∉ N.blobVerts B))
 
-/-- **Efficient, counting the entry node of a blob** (`g:efficient_entry`). This is lines 326 to 328 with "external" read as "has an edge to or from a node outside of `b`", and with labels compared on one blob at a time: no two such nodes of a blob have one label, and each of them has exactly
+/-- **Efficient, counting the entry node of a blob** (`g:efficient_entry`). The idea isn't ours: Gusfield, *ReCombinatorics* (MIT Press, 2014), Section 7.3.5, counts an external node "without regard to edge direction". A canonical network of the book is efficient in this sense, and not conversely. This is lines 326 to 328 with "external" read as "has an edge to or from a node outside of `b`", and with labels compared on one blob at a time: no two such nodes of a blob have one label, and each of them has exactly
 one edge to or from a node off the blob. So the entering edge counts as one of the edges of its node. With this definition, Theorem 4 holds (`theorem4_entry`) up to its conventions and site-free arcs, and lines 341 and 342 are true (`Network.IsEfficientAtEntry.existsUnique_port`,
 `Network.IsEfficientAtEntry.line342Claim`). A blob at the root has no entering edge, so there's no exemption to make. The module docstring says what it means for the printed definition.
 
@@ -1839,7 +1839,7 @@ theorem Network.IsEfficientAtEntry.existsUnique_port (he : N.IsEfficientAtEntry)
   exact (congrFun hv₂' ⟨i, (hiff i).1 hi⟩).trans (congrFun hv₂ ⟨i, (hiff i).1 hi⟩).symm
 
 /-- **Theorem 4, with the entry node counted** (`g:thm4_entry`). For a fully decomposed network, `T′` is `T̄` if and only if `N` is efficient in the sense of `IsEfficientAtEntry`, and it has the conventions of the paper (no recombination leaf, and the degree condition), and no site-free arc
-off the blobs that isn't pendant (`RegularArcs`). So the printed theorem fails because line 327 omits the entry node from "external", and because of site-free arcs. -/
+with both ends off the blobs that isn't pendant (`RegularArcs`). So the printed theorem fails because line 327 omits the entry node from "external", and on site-free arcs. The repair of the definition is in print: Gusfield, *ReCombinatorics* (MIT Press, 2014), Section 7.3.5, states the theorem for canonical networks, a stricter class, as its Theorem 7.3.3, of which we read only snippets (`docs/REPORT.md`, E42). What this adds is the characterization in both directions, and the check in the kernel. -/
 theorem theorem4_entry {V E : Type*} [Finite V] [Finite E] {N : Network ι V E} {M : Finset (ι → Bool)} (hd : N.Derives M)
     (hf : N.IsFullyDecomposedFor (incompatGraph M)) {W : Type*} [Finite W] {T : SimpleGraph W} {φ : M → W}
     {edge : SuperChar M → Sym2 W} (hT : IsTBar M T φ edge) :
@@ -1868,7 +1868,7 @@ theorem GallCover.recomb_not_leaf {V E : Type*} {N : Network ι V E} (hr : ∀ e
   exact hleaf g hg
 
 omit [LinearOrder ι] in
-/-- An explicit network has a site on each arc off the blobs that isn't pendant, from its colours. -/
+/-- An explicit network has a site on each arc with both ends off the blobs that isn't pendant, from its colours. -/
 theorem GallCover.arc_labelled {V E κ : Type*} {N : Network ι V E} {ac : E → Option κ} {vc : V → Option κ} (h : GallCover N ac vc)
     (hl : ∀ e, ac e = none → vc (N.src e) = none → vc (N.tgt e) = none → (∃ g, N.src g = N.tgt e) → ∃ i, N.site i = e) :
     ∀ e, N.IsTreeArc e → ¬ N.OnBlob (N.src e) → ¬ N.OnBlob (N.tgt e) → ¬ N.IsLeaf (N.tgt e) → ∃ i, N.site i = e := by
@@ -1932,7 +1932,7 @@ theorem topNet_not_iso {n : ℕ} {T : SimpleGraph (Fin n)} {φ : topRows → Fin
   exact topNet_cover.not_noAncestralExitAtEntered h₁ h₂ h₃ h₄ (hs.noAncestralExit.atEntered topNet_derives hdeg topNet_cover.nodeDisjoint)
 
 /-- **Theorem 4 is false, by the error at line 342** (`g:thm4_false_top`). With no recombination leaf, with every node of `T′` of degree at
-most two a leaf, and with sites on all the arcs off the blobs that aren't pendant, Theorem 4 still fails, on `topRows`, in
+most two a leaf, and with sites on all the arcs with both ends off the blobs that aren't pendant, Theorem 4 still fails, on `topRows`, in
 any model. The network: a blob on `00000, 01000, 10000, 11000` with the sites 1, 2; an arc with the site 5 from `11000` to `11001`; a blob on
 `11001, 11011, 11101, 11111` with the sites 3, 4; and a pendant arc at each node of the two blobs other than `11000`. It's efficient and fully decomposed.
 
@@ -2000,7 +2000,7 @@ theorem fourRootNet_isEfficientAtEntry : fourRootNet.IsEfficientAtEntry := by
   obtain ⟨-, hd, hf, -, hiso, -⟩ := fourGametes_rootExit .multiple hT
   exact ((theorem4_entry hd hf hT).1 hiso).1
 
-/-- **The exemption of `theorem4_splits` is "no row off the top"** (`g:thm4_splits_rootfree`). This is the review's example: `fourRootNet` with a new root above its root, on an arc with no site. The blob has an entering arc and a row at its top, so that `NoAncestralExitAtEntered` fails, and yet no row is above the blob, and the
+/-- **The exemption of `theorem4_splits` is "no row off the top"** (`g:thm4_splits_rootfree`). The example is `fourRootNet` with a new root above its root, on an arc with no site. The blob has an entering arc and a row at its top, so that `NoAncestralExitAtEntered` fails, and yet no row is above the blob, and the
 non-trivial splits of `T′` and `T̄` agree. (`T′` isn't `T̄`, since its root has degree one and no row: this network fails the degree condition.) -/
 theorem theorem4_splits_siteFreeRoot :
     fourRootNet'.Derives fourGametes ∧ fourRootNet'.IsFullyDecomposedFor (incompatGraph fourGametes) ∧ fourRootNet'.IsEfficient ∧ ¬ fourRootNet'.NoAncestralExitAtEntered ∧ fourRootNet'.IsTreeNormalStructural ∧
@@ -2133,7 +2133,7 @@ def MostTreeLikePrinted (c : Crossover) (M : Finset (ι → Bool)) : Prop :=
 
 /-- **Counterexample to Section 4.2** (`g:treeness_false`). `starRows` has a network whose `T′` is `T̄`, the star with four edges, and a
 network with six tree arcs and the same leaves, by resolving the star with two arcs that have no site. So the network with `T′ = T̄`
-isn't the most tree-like. A natural reading, "unlabelled edges don't count", escapes this example, but not `treeness_example₁`, `treeness_example₂`. -/
+isn't the most tree-like. Not counting a site-free arc with both ends off the blobs escapes this example, but not `treeness_example₁`, `treeness_example₂`. -/
 theorem mostTreeLikePrinted_false (c : Crossover) : ¬ MostTreeLikePrinted c starRows := by
   intro h
   have hstr : starNet.IsTreeNormalStructural :=
@@ -2147,7 +2147,7 @@ theorem mostTreeLikePrinted_false (c : Crossover) : ¬ MostTreeLikePrinted c sta
   exact absurd hL (by decide +kernel)
 
 /-- **The first stronger example of Section 4.2** (`g:treeness_example1`). The rows `0000 0001 0010 0100 1000 1100`, with `0010` hanging from the top of the blob through an arc with the site 3. It's efficient and fully decomposed, with
-no node of in-degree and out-degree one, and no site-free arc off the blobs that isn't pendant. Its treeness is `7`, which is the number of edges of `T̄`, yet `T′` isn't `T̄`. -/
+no node of in-degree and out-degree one, and no site-free arc with both ends off the blobs that isn't pendant; the arc from the root to the top of the blob is site-free, with one end on the blob. Its treeness is `7`, which is the number of edges of `T̄`, yet `T′` isn't `T̄`. -/
 theorem treeness_example₁ (c : Crossover) :
     ∃ (a b : ℕ) (N : Network (Fin 4) (Fin a) (Fin b)), N.Obeys c ∧ N.Derives treenessRows₁ ∧ N.IsFullyDecomposedFor (incompatGraph treenessRows₁) ∧ N.IsEfficient ∧
       (∀ e f, N.tgt e = N.src f → (∀ g, N.tgt g = N.tgt e → g = e) → (∀ g, N.src g = N.src f → g = f) → False) ∧
@@ -2168,8 +2168,8 @@ theorem treeness_example₁ (c : Crossover) :
       exact treenessNet₁'_cover.not_noAncestralExitAtEntered h₁ h₂ h₃ h₄ (hs.noAncestralExit.atEntered treenessNet₁'_derives hdeg treenessNet₁'_cover.nodeDisjoint)
 
 /-- **The second stronger example of Section 4.2** (`g:treeness_example2`). The rows `00000 00001 00010 00100 01000 10000 11000`, with two rows below a site-free exit at the top of the blob. It's efficient and fully decomposed, with
-no node of in-degree and out-degree one, and no site-free arc off the blobs that isn't pendant. Its treeness is `9`, more than the `8` edges of `T̄`. So no reading of "treeness" that counts the edges of `T′`, even without unlabelled off-blob
-arcs, makes `T̄` the most tree-like. -/
+no node of in-degree and out-degree one, and no site-free arc with both ends off the blobs that isn't pendant; its other site-free arcs are at the blob, from the root to the top and from the top to the node of the two rows. Its treeness is `9`, more than the `8` edges of `T̄`. So counting the edges of `T′`, even without site-free arcs with both ends
+off the blobs, doesn't make `T̄` the most tree-like. Two narrower counts, by hand and not in Lean: counting the edges with a site ties, at `3 = 3`, with `T′` not `T̄`; counting the edges with a character of `B`, as line 264 labels `T̄`, gives `6 < 7`. -/
 theorem treeness_example₂ (c : Crossover) :
     ∃ (a b : ℕ) (N : Network (Fin 5) (Fin a) (Fin b)), N.Obeys c ∧ N.Derives treenessRows₂ ∧ N.IsFullyDecomposedFor (incompatGraph treenessRows₂) ∧ N.IsEfficient ∧
       (∀ e f, N.tgt e = N.src f → (∀ g, N.tgt g = N.tgt e → g = e) → (∀ g, N.src g = N.src f → g = f) → False) ∧
@@ -2318,7 +2318,7 @@ theorem Network.mem_charSplits_of_portsDistinct {N : Network ι V E} (hd : N.Der
 /-- **The positive form of Section 4.2** (`g:treeness_positive`). Line 373 says "the most tree-like if and only if `T̄`". This is what's true: among networks
 
 - whose blobs each have the sites of one component of `G(M)`, not nec. a non-trivial one (`hone`, with `hnd`, line 364),
-- with no recombination leaf, and no site-free arc off the blobs that isn't pendant (`RegularArcs`),
+- with no recombination leaf, and no site-free arc with both ends off the blobs that isn't pendant (`RegularArcs`),
 - where an arc crossing a blob that isn't pendant is the only arc crossing it at a node of its label (`NonPendantPortsDistinct`),
 - and where every node of `T′` of degree at most two has a leaf of `N` (`DegreeCond`),
 
@@ -2327,7 +2327,7 @@ the treeness is at most the number of edges of `T̄`, with equality if and only 
 So `N` needn't be fully decomposed, or efficient: `treeness_nonFD_example` attains equality with neither, and `treeness_strict_example` shows that the inequality can be strict for a fully decomposed network. Each counterexample fails exactly one condition: `treeness_example₁` and `treeness_example₂` have
 an exit at the top of an entered blob, against `NonPendantPortsDistinct`; `treeness_positive_needs_root` has a root of degree one, against `DegreeCond`; `mostTreeLikePrinted_false` has a site-free arc, against `RegularArcs`.
 
-What this doesn't say: a blob merging two components, or with no site, fails `hone`. Whether the inequality holds for those isn't proved here or refuted. The splits of the tree arcs aren't all characters of `B` then, so this argument doesn't apply. The review's "no site-free blob" is thus part of `hone`.
+What this doesn't say: a blob merging two components, or with no site, fails `hone`. Whether the inequality holds for those isn't proved here or refuted. The splits of the tree arcs aren't all characters of `B` then, so this argument doesn't apply. "No site-free blob" is part of `hone`.
 
 Departure from the paper: line 373 has no conditions, and it's false without them. Its reasoning (lines 364 to 373) counts the edges of `T′` and takes `T̄` to have the most, which is `treeness_le_of_charSplits` once the splits are known. -/
 theorem treeness_le_and_eq_iff (N : Network ι V E) (hd : N.Derives M) (hnd : N.BlobsNodeDisjoint)
@@ -2423,7 +2423,7 @@ theorem Network.ncard_neighborSet_of_tgt_injective {N : Network ι V E} (h : Fun
 
 omit [Finite V] [Finite E] in
 /-- **The positive form needs the root** (`g:treeness_positive_root`). The rows `00, 01, 10` have a network with no blob, and a new root above the star, on a site-free arc. It has no node of degree two in `T′`, and it has no non-trivial split at all, since it has three rows. But its treeness is `4`, and
-`T̄` has `3` edges. So a node of `T′` of degree one with no row has to be excluded, and the positive form as the review states it is false. This is why `treeness_le_and_eq_iff` has `DegreeCond`. -/
+`T̄` has `3` edges. So a node of `T′` of degree one with no row has to be excluded, and the positive form without that exclusion is false. This is why `treeness_le_and_eq_iff` has `DegreeCond`. -/
 theorem treeness_positive_needs_root (c : Crossover) (n : ℕ) (T : SimpleGraph (Fin n)) (φ : threeRows → Fin n) (edge : SuperChar threeRows → Sym2 (Fin n))
     (hT : IsTBar threeRows T φ edge) :
     threeNet'.Obeys c ∧ threeNet'.Derives threeRows ∧ (∀ B, ¬ threeNet'.IsBlob B) ∧ (∀ v, (threeNet'.blobbedTree.neighborSet v).ncard ≠ 2) ∧
@@ -2459,7 +2459,7 @@ theorem treeness_positive_needs_root (c : Crossover) (n : ℕ) (T : SimpleGraph 
     rw [ncard_edgeSet_iso f, ← Network.treeness_eq_ncard_edgeSet, threeNet_cover.treeness_eq]
     decide +kernel
 
-/-- **Line 156: the undirected tree of a perfect phylogeny is invariant** (`g:pp_invariant`), for networks with no recombination node, with no site-free arc that isn't pendant, and with the degree condition, which are what a perfect phylogeny is taken to be in the expositions the paper cites. Any two have the one `T′`, respecting the rows: it's `T̄`, by `theorem4_iff`.
+/-- **Line 156: the undirected tree of a perfect phylogeny is invariant** (`g:pp_invariant`), for networks with no recombination node, with no site-free arc that isn't pendant, and with the degree condition: a reading of "perfect phylogeny" under which line 156 is true, given `perfectPhylogeny_not_invariant`. Any two have the one `T′`, respecting the rows: it's `T̄`, by `theorem4_iff`.
 
 Departure from the paper: line 156 says "invariant over all perfect phylogenies", with "phylogenetic network without recombination cycles", and that's false for those: `perfectPhylogeny_not_invariant`. -/
 theorem perfectPhylogeny_invariant [Finite ι] {V' E' : Type*} [Finite V'] [Finite E'] {N : Network ι V E} {N' : Network ι V' E'} (hC : NoConstantColumn M)

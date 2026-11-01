@@ -4,10 +4,10 @@ How this formalization was made, from the run log and the session transcripts.
 
 ## Who
 
-- **Author and maintainer:** The-Anh Vu-Le, who asked for the formalization, chose the three papers and their versions, and agreed to the statement corrections listed in [`REPORT.md`](REPORT.md). Public authorship is theirs to confirm.
-- **Formalization:** Codex (GPT-6 family; exact revision and harness version not exposed), for the source audit and first foundations, in two rounds of one evening. Claude Code 2.1.314 (VS Code extension) with Claude Opus 5.5 (`claude-opus-5-5`), for the statements, proofs, audit, documents and packaging, in one session.
-- **Procedure:** the [formalize-math-paper](https://github.com/vltanh/formalize-math-paper) skill, version 3.0.0 in the first rounds, and checkout commit `e339f64` in the last.
-- **Review:** no person has reviewed the proofs. Independent agents, which didn't write what they checked, reviewed the statements, compared the proofs with the papers, and checked the audit's findings and its literature section. Comparator and the route check ran locally.
+- **Author and maintainer:** The-Anh Vu-Le, who asked for the formalization, chose the five papers and the versions of the first three, agreed to the statement corrections listed as agreed in [`REPORT.md`](REPORT.md), decided what the library holds, the layout and the kernels, and published the repository.
+- **Formalization:** Codex (GPT-6 family; exact revision and harness version not exposed), for the source audit and first foundations, in two rounds of one evening. Claude Code 2.1.314 (VS Code extension) with Claude Opus 5.5 (`claude-opus-5-5`), for the statements, proofs, audit and documents of all five papers, in one session.
+- **Procedure:** the [formalize-math-paper](https://github.com/vltanh/formalize-math-paper) skill, version 3.0.0 in the first rounds, and checkout commit `e339f64` from the formalization on. The run log of the last round names the skill and not a commit.
+- **Review:** no person has reviewed the proofs. Independent agents, which didn't write what they checked, reviewed the statements, compared the proofs with the papers, and checked the audit's findings and its literature section. The three kernels and the route check ran locally.
 
 ## Source audit and project setup (2026-10-27)
 
@@ -33,7 +33,7 @@ How it was made:
 
 - The main session designed the shared definitions (`Basic/Phylogenetics/Defs.lean`), wrote every statement with `sorry`, and an independent agent reviewed them against the papers, finding one false definition ([`IsExactBuilder`](https://github.com/vltanh/lean4-phylogenetics/blob/9948de9b3cba330596424efd2dca9617be2efb0c/Phylogenetics/Tree/Metric.lean#L51) excluded neighbor joining) and several readings.
 - Proof agents worked in parallel on private snapshots of the build, one set of files each: graphs and cut edges; trees and splits (ECToBlob §3, TOB-QMC §4.1–4.2); tails and combining p-values; limit laws from the central limit theorem; Proposition 6; the NMSC on arbitrary networks, resumed to prove exchangeability; the B-quartet rule, the quartet metrization and TINNiK's Theorem 4; level-1 blobs; and Theorem 8.2 with its false-edge repair.
-- The main session integrated the proofs, wrote the Challenge, Solution and audit scripts, and ran the route check, cleanup and Comparator.
+- The main session integrated the proofs, wrote the Challenge, Solution and audit scripts (the first two since replaced by [`src/MainResults.lean`](../src/MainResults.lean)), and ran the route check, cleanup and Comparator.
 - Two independent agents compared the proofs with the papers, one agent checked every finding of the audit against the sources by script, one researched the literature and another checked that section and the section on what comes next. Their corrections are applied. Those that changed Lean: Theorem 4 of TINNiK uses the paper's levels, Lemma 6.1 the printed bound.
 
 Figures, from 2026-10-31 07:25:55 America/Chicago to commit `b2be3ef` at 10:51:30, the commit completing [`REPORT.md`](REPORT.md):
@@ -84,4 +84,35 @@ Figures, from 2026-10-31 14:51 America/Chicago, the user's request, to about 18:
 - Model calls: claude-opus-5-5 (114 main, 1154 sub-agents).
 - Cost was not tracked.
 
-Totals for the Claude Code session, all rounds and the private follow-up work: 10.79 h elapsed; sub-agents 53 (53 launched by the main session; at most 11 running at once; 12 resumptions); sub-agent work 32.2 h, 3,552 tool calls; tokens: 11.64M output, 33.50M input, 815M cache reads; main session 432 tool calls; tokens: 1.13M output, 2.45M input, 188M cache reads.
+Totals for the Claude Code session to this point, these rounds and the private follow-up work: 10.79 h elapsed; sub-agents 53 (53 launched by the main session; at most 11 running at once; 12 resumptions); sub-agent work 32.2 h, 3,552 tool calls; tokens: 11.64M output, 33.50M input, 815M cache reads; main session 432 tool calls; tokens: 1.13M output, 2.45M input, 188M cache reads.
+
+## Two more papers, on the library (2026-10-31 to 2026-11-01)
+
+The user asked to formalize Gusfield, Bansal, Bafna, Song 2007 and Allman, Baños, Mitchell, Rhodes 2023 as primary papers, in this repository, and made these decisions as the round went:
+
+- the project imports the library [`lean4-phylogenetics`](https://github.com/vltanh/lean4-phylogenetics), by commit, in place of its own general layer;
+- that library keeps only what is standard to phylogenetics, each thing acknowledged to its source, and things move upstream only when several projects use them;
+- Palomar is not a target, so there is no Challenge or Solution: main theorems are in [`src/MainResults.lean`](../src/MainResults.lean), the files for a possible submission are in [`palomar/`](../palomar), and the main theorems are checked by several kernels;
+- the layout has [`src/`](../src) and `docs/`, and the working notes are private, in another repository;
+- this repository is public.
+
+How it was made:
+
+- Two agents wrote the statements of the two papers, with `sorry`, and found the first of the errors: Theorem 4, §4.2 and line 560 of Gusfield et al., and Lemma 2 of Allman et al. Two independent agents reviewed them against the papers, with search programs of their own. These reviews confirmed the errors, corrected how they should be reported, added others, and found that the Allman et al. text available is an author manuscript. Their corrections were applied in the proof phase.
+- One agent ported the older code onto the library, and another made the library's boundary as the user decided. The main session committed that as a baseline.
+- Proof agents worked in parallel on private snapshots of the build, one set of files each: for Gusfield et al., the foundations and cited results, the decomposition, uniqueness and the conjectures, the sufficient conditions, and the counterexamples and their counts; for Allman et al., Proposition 1, Theorem 1 and Corollary 1, and Lemma 2 through Theorem 4. Lower bounds on `R` are by a verified search in the kernel.
+- Two independent agents compared the proofs with the papers. Their findings sent the proof agents back: Theorem 4's account was corrected, and a realizability theorem added; several departures that weren't forced were replaced by the paper's argument, among them Proposition 1's converse, and the same-blob theorem was brought closer to the source's argument.
+- Two agents merged duplicates, one for each paper, and one integrated everything: the audit's lists, the routes, a clean build, the three kernels, and the private references. After that commit, one agent searched the literature for the report's Sections 10 and 11, with a second agent checking its quotes, and found Gusfield's 2014 book, which has the repair of E42, and an author's copy of the 2007 paper with its symbols. Another wrote the report's new sections and the other documents, checking each claim against the Lean and the sources. A further independent agent checked those documents against the sources, and the corrections it asked for are applied.
+
+Figures, from 2026-10-31 18:44 America/Chicago, the user's request, to commit `5693efe` at 2026-11-01 02:04:51 -06:00, the commit that completes the proofs, from the `session_stats.py` script of the formalize-math-paper skill:
+
+- Elapsed time: 8.34 h, with the user's own pauses included.
+- Sub-agents: 20 (19 launched by the main session; at most 8 running at once; 18 resumptions); total working time 24.9 h.
+- Tool calls: 2,541 for the sub-agents, 207 for the main session.
+- Tokens, sub-agents: 7.94M output, 27.94M input, 899M cache reads. Main session: 0.34M output, 0.73M input, 106M cache reads.
+- Model calls: 2,227 to `claude-opus-5-5` (223 main session, 2,004 sub-agents).
+- Cost was not tracked. These figures leave out the documents and the literature search made after that commit. They include the agent that worked on the library, and the separate rebuilds of each agent's snapshot aren't separated out.
+
+At that commit: 177 modules, 7,336 jobs in a clean `lake build` with no warnings, 19,669 declarations on the standard axioms, 304 results in the audit's table, and 39 main theorems accepted by Lean's kernel, NanoDa and con-ron.
+
+Totals for the Claude Code session, all rounds and the private follow-up work, to that commit: 19.65 h elapsed; sub-agents 72 (all launched by the main session; at most 11 running at once; 30 resumptions); sub-agent work 57.0 h, 6,093 tool calls; tokens: 19.58M output, 61.44M input, 1,715M cache reads; main session 647 tool calls; tokens: 1.48M output, 3.20M input, 300M cache reads.

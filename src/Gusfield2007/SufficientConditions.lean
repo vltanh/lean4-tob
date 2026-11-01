@@ -163,10 +163,8 @@ theorem unrootedParsimonyScore_eq_of_mem {M : Finset (ι → Bool)} {r : ι → 
 omit [Fintype V] [Finite E] in
 /-- **Line 411** (`g:mutation_min`). "When the recombination events only model recurrent and back mutations, then every `M` is min decomposable."
 
-Departure from the paper: it proves a specialization, Corollary 3, and says that the general statement "follows from results on the maximum parsimony problem using median networks, as established by Bandelt et al. (1995)". Lean derives it from Corollary 3 instead: the parsimony score doesn't change on
-re-rooting at a row of an optimal tree (`MutationTree.parsimonyScore_row_le`), so an optimal `S` can be taken in `M`, where `G_S(M) = G(M)`, and Corollary 3 applies at that `S`. Why: Bandelt et al. (1995, p. 745) show that all most parsimonious trees lie in the median network, but they say nothing about
-decomposition, so there is no proof there to follow. Their result rests on the retract property of median networks, which they cite (Bandelt 1984, van de Vel 1993) and don't prove. The step that neither paper writes is that a majority of three rows creates no new incompatible pair, so that labels in the median network respect `G(M)`, and Theorem 9 applies.
-Re-rooting needs none of this. -/
+Departure from the paper, not forced: it proves a specialization, Corollary 3, and says that the general statement "follows from results on the maximum parsimony problem using median networks, as established by Bandelt et al. (1995)". Those results are there: all most parsimonious trees can be realized in the median network (p. 745), and at a cut node of that network the characters split into two sets, and the most parsimonious trees "are exactly the trees composed by the MP trees" of the two parts (p. 747; "decomposition along cut nodes", p. 748). Neither paper writes the link from cut nodes to the components of `G(M)`, which the statement needs.
+Lean derives it from Corollary 3 instead: the parsimony score doesn't change on re-rooting at a row of an optimal tree (`MutationTree.parsimonyScore_row_le`), so an optimal `S` can be taken in `M`, where `G_S(M) = G(M)`, and Corollary 3 applies at that `S`. The route by cut nodes wasn't built, for its cost: it needs the median network, its retract property, which Bandelt et al. cite (Bandelt 1984, van de Vel 1993) and don't prove, and that link. -/
 theorem minDecomposable_pointwise (M : Finset (ι → Bool)) (hM : M.Nonempty) (hC : NoConstantColumn M) :
     MinDecomposable .pointwise M := by
   obtain ⟨r, hr⟩ := hM
@@ -559,8 +557,8 @@ S-min-1 decomposable, and if `H(M + S) = R(M + S)` then `M` is S-min decomposabl
 
 As printed it's unproved here, and not refuted. `R(M + S)` is a notation slip for the rooted count `R_S(M)`, as at line 525: the proof reasons on an optimal network for `M` with ancestral sequence `S`, using `R_S(M)` nodes, and treats that number
 as `R(M + S)`, the minimum over all ancestral sequences (lines 560 to 563). They can differ under the hypothesis: for `M + S = {0000, 0101, 1000, 1010, 1110, 1111}` and `S = 0101`, with multiple
-crossovers, `H(M + S) = R(M + S) = 1` and `R_S(M) = 2`. If `R_S(M) > R(M + S)`, the tight network has another root, and the proof doesn't apply. That example has one component, so the conclusion holds;
-a search for an example with two components, where the conclusion fails, found none. The form with `R_S(M)` is `theorem10`, which is what the proof of Theorem 6 needs. -/
+crossovers, `H(M + S) = R(M + S) = 1` and `R_S(M) = 2`. If `R_S(M) > R(M + S)`, the tight network has another root, and the proof doesn't apply. That example has one component, so the conclusion holds.
+A search for an example with two components where the conclusion fails found none, within these limits: rows of the form `(x, 0)` or `(0, y)`, `S` a row, no compatible sites, and small sizes, of which the larger were only sampled. Its programs aren't in this repository. The form with `R_S(M)` is `theorem10`, which is what the proof of Theorem 6 needs. -/
 def Theorem10Printed (c : Crossover) (M : Finset (ι → Bool)) (S : ι → Bool) : Prop :=
   haplotypeBound (addRow M S) = R c (addRow M S) → SMinDecomposable c S M
 

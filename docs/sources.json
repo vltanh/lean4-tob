@@ -1,5 +1,5 @@
 {
-  "checked_on": "2026-10-27",
+  "checked_on": "2026-11-01",
   "timezone": "America/Chicago",
   "sources": [
     {
@@ -46,8 +46,50 @@
       "pages": 43,
       "internal_date": "2026-02-26",
       "version_linkage": "Unconfirmed; internal numbering differs from main bioRxiv v5. Earlier internal date alone does not establish that this supplement was superseded."
+    },
+    {
+      "paper": "Allman et al. 2023",
+      "version": "PMC10062380, author manuscript NIHMS1884071",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10062380/",
+      "sha256": "2efb00ac8f55c1f7acbcc75ddcc926a4fab89643a1024eb715d6e3f484bdb5c9",
+      "bytes": 77385,
+      "content": "Plain text of the PMC page, one line per paragraph, as saved: the text of 'the PMC text, line N'. The journal's text, doi:10.1007/s00285-022-01838-9, wasn't reachable."
+    },
+    {
+      "paper": "Allman et al. 2023 XML",
+      "version": "PMC10062380, author manuscript NIHMS1884071",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10062380/",
+      "sha256": "1b04fcb420afd3ddcb39a9bf683a0cbdd72ac1bc538f427544127da9f3fdfff7",
+      "bytes": 170285,
+      "content": "The XML of the manuscript, as saved, which has the symbols that the plain text loses."
+    },
+    {
+      "paper": "Allman et al. 2023 TeX",
+      "version": "arXiv 2205.03466; the arXiv version of this file wasn't recorded",
+      "url": "https://arxiv.org/abs/2205.03466",
+      "sha256": "ccfda86079bd3e20b0da51982730fb2af61355767ecf5906f4595e0949772568",
+      "bytes": 79447,
+      "content": "The main TeX file. Section 6 of docs/REPORT.md says how it differs from the manuscript."
+    },
+    {
+      "paper": "Gusfield et al. 2007",
+      "version": "PMC2581772, author manuscript",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2581772/",
+      "sha256": "ae7f93997e5542d58d46fc9a03bf6b613fb88595c8f99344066b5d829d3b2065",
+      "bytes": 97383,
+      "content": "Plain text of the PMC page, one line per paragraph, as saved: the text of 'line N'. Symbols rendered as images are missing from it, and were read in the author's copy below. The figures were read from the page's images. The journal's typeset text, doi:10.1089/cmb.2006.0137, wasn't reachable."
+    },
+    {
+      "paper": "Gusfield et al. 2007, author's copy",
+      "version": "decomposition.pdf on Yun Song's page, made from a DVI file on 2008-01-19",
+      "url": "https://people.eecs.berkeley.edu/~yss/Pub/decomposition.pdf",
+      "sha256": "b77eaae6eb7042438d10510280aeea078a139ec06d62645b5ee66cb88b882bf0",
+      "bytes": 331189,
+      "content": "36 pages, with the symbols, and the same words as the PMC text apart from moved floats, footnotes and hyphenation. Not the journal's typeset text."
     }
   ],
-  "original_author_tex_available": false,
+  "original_author_tex_available": [
+    "Allman et al. 2023"
+  ],
   "unread_supplements": []
 }

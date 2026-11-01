@@ -77,7 +77,7 @@ def MdC₁ (d : ℕ) : Set (Fin (6 * d)) := {j | j.val % 6 = 1 ∨ j.val % 6 = 2
 /-- The component `C₂` of `G(M_d)`: the columns of type `u` or `v` (line 641). -/
 def MdC₂ (d : ℕ) : Set (Fin (6 * d)) := {j | j.val % 6 = 0 ∨ j.val % 6 = 3 ∨ j.val % 6 = 5}
 
-/-- A smaller counterexample to the multiple-crossover conjecture than Figure 8, with 7 rows and 6 sites against 13 and 10. It isn't in the paper: an independent review of the statements found it. -/
+/-- A smaller counterexample to the multiple-crossover conjecture than Figure 8, with 7 rows and 6 sites against 13 and 10. It isn't in the paper; a search for this formalization found it, and it isn't claimed to be new: Huson et al. 2009, Figure 3, credited to Yun Song, has the same count in a form on clusters. -/
 def evenRows : Finset (Fin 6 → Bool) :=
   {ofBits [0, 0, 0, 0, 0, 0], ofBits [0, 0, 0, 0, 1, 1], ofBits [0, 0, 0, 1, 0, 1], ofBits [0, 0, 0, 1, 1, 0], ofBits [0, 1, 1, 0, 0, 0],
    ofBits [1, 0, 1, 0, 0, 0], ofBits [1, 1, 0, 0, 0, 0]}

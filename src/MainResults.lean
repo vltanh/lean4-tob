@@ -287,7 +287,7 @@ open Gusfield2007
 
 /-- **Gusfield et al. 2007, Theorem 1**, the Decomposition Theorem. In any crossover model, a nonempty `M` with no constant column has a
 network in which every blob contains all and only the sites of one non-trivial connected component of the incompatibility graph, and
-every compatible site is on a tree edge. The two hypotheses are implicit in the paper. -/
+every compatible site is on a tree edge. The paper assumes no constant column at line 112, and that `M` is nonempty implicitly. -/
 theorem gusfield_theorem1 {ι : Type*} [LinearOrder ι] [Finite ι] (c : Crossover) (M : Finset (ι → Bool)) (hM : M.Nonempty)
     (hC : NoConstantColumn M) :
     ∃ (a b : ℕ) (N : Network ι (Fin a) (Fin b)), N.Obeys c ∧ N.Derives M ∧
@@ -303,7 +303,7 @@ theorem gusfield_theorem3 {ι : Type*} [LinearOrder ι] [Finite ι] (c : Crossov
         RS c (C.supp.domRestrict S) (restrictRows C.supp M) := Gusfield2007.theorem3 c M S hM hC
 
 /-- **Gusfield et al. 2007, Lemma 4.** For a component `C` of `G(M)`, the tree `T̄` has a node `v_C` on all the edges labelled by characters
-that originate from `C`, on the 0-side of each of their splits. A correction: a trivial `C` keeps both of its columns here, which label
+that originate from `C`, on the 0-side of each of their splits. A reading: a trivial `C` keeps both of its columns here, which label
 one edge with opposite 0-sides, so the second clause is for a non-trivial `C`, and the third is what a trivial `C` has. -/
 theorem gusfield_lemma4 {ι : Type*} {M : Finset (ι → Bool)} {W : Type*} [Finite W] {T : SimpleGraph W} {φ : M → W}
     {edge : SuperChar M → Sym2 W} (h : IsTBar M T φ edge) (c : (incompatGraph M).ConnectedComponent) :
@@ -314,7 +314,8 @@ theorem gusfield_lemma4 {ι : Type*} {M : Finset (ι → Bool)} {W : Type*} [Fin
   Gusfield2007.lemma4 h c
 
 /-- **Gusfield et al. 2007, Theorem 4, with the entry node counted**, a correction. For a fully decomposed network, the blobbed tree `T′` is
-`T̄` exactly when the network is efficient with the entry node of a blob counted, and it has `RegularArcs` and the degree condition. -/
+`T̄` exactly when the network is efficient with the entry node of a blob counted, and it has `RegularArcs` and the degree condition.
+The repair isn't ours: Gusfield, *ReCombinatorics* (MIT Press, 2014), Section 7.3.5, states the theorem for canonical networks, a stricter class, as its Theorem 7.3.3 (read only in snippets; `docs/REPORT.md`, E42). -/
 theorem gusfield_theorem4_entry {ι : Type*} [LinearOrder ι] {V E : Type*} [Finite V] [Finite E] {N : Network ι V E}
     {M : Finset (ι → Bool)} (hd : N.Derives M) (hf : N.IsFullyDecomposedFor (incompatGraph M)) {W : Type*} [Finite W]
     {T : SimpleGraph W} {φ : M → W} {edge : SuperChar M → Sym2 W} (hT : IsTBar M T φ edge) :

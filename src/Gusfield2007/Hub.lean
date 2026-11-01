@@ -630,7 +630,7 @@ theorem tgt_ne_root (N : Network ι V E) (e : E) : N.tgt e ≠ N.root := fun h =
 
 variable [Finite V]
 
-/-- The network with the arc out of the root turned round. The target of the arc is the new root, and the old root is a leaf with its label, on that arc: "Line 418 itself places a root on an edge" and this moves it to the end of the edge. -/
+/-- The network with the arc out of the root turned round. The target of the arc is the new root, and the old root is a leaf with its label, on that arc. Line 418 places a root on an edge, and this moves it to the end of the edge. -/
 noncomputable def rerootNet (N : Network ι V E) (a : E) (ha : N.RerootCond a) : Network ι V E where
   src e := if e = a then N.tgt a else N.src e
   tgt e := if e = a then N.root else N.tgt e

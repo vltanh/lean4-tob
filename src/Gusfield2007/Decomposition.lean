@@ -81,11 +81,11 @@ theorem R_le_RS (c : Crossover) (S : ι → Bool) {M : Finset (ι → Bool)} (hM
   obtain ⟨a, b, N, h₁, h₂, -, h₄⟩ := Nat.sInf_mem (rootedRecombSet_nonempty c S hM)
   exact Nat.sInf_le ⟨a, b, N, h₁, h₂, h₄⟩
 
-/-- **Theorem 1**, the proof (`g:thm1`): the network of lines 299 to 303, for any sequence `S` as root and `T̄` built from `M + S`. Line 316 reuses this proof for the rooted
+/-- **Theorem 1**, the proof (`g:thm1`): the network of lines 299 to 303, for any sequence `S` as root and `T̄` built from `M + S`. Line 312 reuses this proof for the rooted
 statements. The networks `P C` inflate the central nodes.
 
-Line 299 selects any node of `T̄` as the root, and writes `S(C)` for the ancestral sequence of `v_C`. Three remarks on it: "`M(G)`" is a misprint for `G(M)`; when the root is `v_C`, the label at the root doesn't define `S(C)`, as line 416
-concedes; and the sentence on connecting edges uses the fact that line 277 doesn't assert, which is `adj_center_labelled`. Here the root is the row `S` of `M + S`, so that the case of a central root doesn't arise. If `S` is in `M`, the row needs its
+Line 299 selects any node of `T̄` as the root, and writes `S(C)` for the ancestral sequence of `v_C`. Three remarks on it: "`M(G)`" is a misprint for `G(M)`; when the root is `v_C`, its label is `0` on every character of `B` from `C`, by Lemma 4, so by our reading it gives no sequence on the sites of `C`, though line 416 says of this proof that "the label on v can be used for the ancestral sequence of b_v";
+and the sentence on connecting edges uses the fact that line 277 doesn't assert, which is `adj_center_labelled`. Here the root is the row `S` of `M + S`, so that the case of a central root doesn't arise. If `S` is in `M`, the row needs its
 own leaf (the root isn't one): a new leaf below the root, with no site. -/
 theorem exists_network_of_pieces (c : Crossover) (M : Finset (ι → Bool)) (S : ι → Bool) (hM : M.Nonempty) (hC : NoConstantColumn M)
     {a b : Decomp.Cent (incompatGraph (addRow M S)) → ℕ}
@@ -281,13 +281,13 @@ theorem theorem1_correspondence (c : Crossover) (M : Finset (ι → Bool)) (hM :
   obtain ⟨a, b, N, h₁, h₂, h₃⟩ := theorem1 c M hM hC
   exact ⟨a, b, N, h₁, h₂, ((isFullyDecomposedFor_iff_correspondence N _ (converse N h₂)).1 h₃).1⟩
 
-/-- **Line 187** (`g:thm1_rooted`). "There is an analogous theorem to Theorem 1 in the case that the ancestral sequence `S` is
+/-- **Lines 187 to 190** (`g:thm1_rooted`). "There is an analogous theorem to Theorem 1 in the case that the ancestral sequence `S` is
 known in advance. In that case, there is a phylogenetic network that derives `M`, with ancestral sequence `S`, where the blobs
 are in one-one correspondence with the non-trivial connected components of `G_S(M)`, and any non-conflicting site is on a
 tree edge".
 
 The paper says this "follows from Theorem 1, and the fact that two sites conflict relative to `S` if and only if they are incompatible in `M + S`". The statement of Theorem 1 for `M + S` gives a network with `S` at a
-leaf, and not at the root, and a network can't be re-rooted through a blob. What gives the result is the proof of Theorem 1, as line 316 says for Theorem 3: `T̄` for `M + S`, rooted at the node labelled `S`. So the proof here is `exists_network_inflated`. -/
+leaf, and not at the root, and a network can't be re-rooted through a blob. What gives the result is the proof of Theorem 1, as line 312 says for Theorem 3: `T̄` for `M + S`, rooted at the node labelled `S`. So the proof here is `exists_network_inflated`. -/
 theorem theorem1_rooted (c : Crossover) (M : Finset (ι → Bool)) (S : ι → Bool) (hM : M.Nonempty)
     (hC : NoConstantColumn M) :
     ∃ (a b : ℕ) (N : Network ι (Fin a) (Fin b)), N.Obeys c ∧ N.Derives M ∧ N.ancestral = S ∧

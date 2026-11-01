@@ -1,7 +1,7 @@
 # Myers, Griffiths 2003: the haplotype bound
 
 Source: S. R. Myers, R. C. Griffiths, *Bounds on the minimum number of recombination events in a sample history*, Genetics
-163 (2003), 375--394. Read: the journal's PDF, p. 379, equation (4). Gusfield et al. 2007 state it at line 559 (the line numbers are explained in `src/Gusfield2007/README.md`): `H(M)` is "the
+163 (2003), 375--394. Read: the journal's PDF, p. 379, equation (4), and pp. 376-377, equations (1), (2), for the composite bound `Gusfield2007.Gen.split`. Gusfield et al. 2007 state it at line 559 (the line numbers are explained in `src/Gusfield2007/README.md`): `H(M)` is "the
 number of rows of M, minus the number of distinct columns of M, minus one".
 
 `Bound.lean` proves, by the argument of the source:

@@ -1,6 +1,6 @@
 # Gusfield, Bansal, Bafna, Song 2007: a decomposition theory for phylogenetic networks and incompatible characters
 
-Source: D. Gusfield, V. Bansal, V. Bafna, Y. S. Song, J. Comput. Biol. 14 (2007), 1247--1272. Read in the PMC author manuscript (PMC2581772). The journal's text wasn't reachable, so symbol-level readings rest on the manuscript alone.
+Source: D. Gusfield, V. Bansal, V. Bafna, Y. S. Song, J. Comput. Biol. 14 (2007), 1247--1272. Read in the PMC author manuscript (PMC2581772), and, for the symbols its plain text loses, in an author's copy with the same words, on Yun Song's page: <https://people.eecs.berkeley.edu/~yss/Pub/decomposition.pdf>. The journal's typeset text wasn't reachable, so nothing here was checked against it.
 
 "Line 342" in the docstrings means line 342 of the plain text of the PMC page, one line per paragraph. Symbols rendered as images are missing from that text.
 
@@ -10,9 +10,9 @@ The modules import Mathlib only, not the library `Phylogenetics`. The cited resu
 
 ## Theorem 4
 
-Theorem 4 is false with the printed definition of "efficient", because that definition omits the entry node of a blob (`theorem4_false_top`, `theorem4_false_small`). It is true with the entry node counted, up to two conventions and site-free arcs: `theorem4_entry` says that, for a fully decomposed network, `T′` is `T̄` exactly when the network has `Network.IsEfficientAtEntry`, `Network.RegularArcs` and `Network.DegreeCond`.
+Theorem 4 is false with the printed definition of "efficient", because that definition omits the entry node of a blob (`theorem4_false_top`, `theorem4_false_small`). It is true with the entry node counted, up to two conventions and site-free arcs. That repair is in print and isn't ours: Gusfield, *ReCombinatorics* (MIT Press, 2014), Section 7.3.5, counts an external node "without regard to edge direction", and states the theorem for its canonical networks, a stricter class, as Theorem 7.3.3; we read the book only in snippets (`docs/REPORT.md`, E42). What this adds is the characterization in both directions, the failure under the printed definition and the check in the kernel: `theorem4_entry` says that, for a fully decomposed network, `T′` is `T̄` exactly when the network has `Network.IsEfficientAtEntry`, `Network.RegularArcs` and `Network.DegreeCond`.
 
-- The two conventions are a root of degree two and a recombination leaf (`theorem4Printed_false_rootDegreeTwo`, `theorem4Printed_false_recombLeaf`). Site-free arcs are an error of their own, since line 97 allows them (`theorem4_false_siteFree`).
+- The two conventions are a root of degree two and a recombination leaf (`theorem4Printed_false_rootDegreeTwo`, `theorem4Printed_false_recombLeaf`). Site-free arcs are a case line 97 allows and the statement must exclude, so the theorem fails as printed on them (`theorem4_false_siteFree`).
 - With the printed definition, `theorem4`, `theorem4_splits` and `theorem4_iff` state exactly what is needed.
 - The hypotheses can be met, for every `M` with at least three rows (`exists_realization`).
 - Not proved: that the modification of line 329 for `IsEfficientAtEntry` keeps the number of recombinations (`exists_isEfficientAtEntry` is existence only), and a root at an arbitrary node of `T̄` in line 299 (only the neighbour of a row is covered).

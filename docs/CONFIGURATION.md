@@ -1,6 +1,6 @@
 # Formalization configuration
 
-Recorded 2026-10-27 (America/Chicago).
+Recorded 2026-10-27, and brought up to date on 2026-11-01 (America/Chicago).
 
 ## Sources of record
 
@@ -8,9 +8,9 @@ Recorded 2026-10-27 (America/Chicago).
 - TOB-QMC: Dai, Han and Molloy, *Quartet-based species tree methods enable fast and consistent tree of blobs reconstruction under the network multispecies coalescent*, [bioRxiv v5](https://www.biorxiv.org/content/10.1101/2025.11.05.686850v5), posted 2026-05-15. A later [Genome Research publication](https://doi.org/10.1101/gr.282203.126) exists. The user first selected the journal, then explicitly authorized bioRxiv fallback if the journal could not be retrieved. Publisher and Europe PMC access checks established that only the journal abstract was available, so the fallback applies. No equivalence of the journal and preprint proofs is claimed.
 - TINNiK: Allman, Baños, Mitchell and Rhodes, *TINNiK: inference of the tree of blobs of a species network under the coalescent model*, [Algorithms for Molecular Biology 19, 23 (2024)](https://doi.org/10.1186/s13015-024-00266-2).
 - Allman et al. 2023: Allman, Baños, Mitchell and Rhodes, *The tree of blobs of a species network: identifiability under the coalescent*, [J. Math. Biol. 86, 10 (2023)](https://doi.org/10.1007/s00285-022-01838-9), read in the PMC author manuscript NIHMS1884071 (PMC10062380) and the arXiv TeX.
-- Gusfield et al. 2007: Gusfield, Bansal, Bafna and Song, *A decomposition theory for phylogenetic networks and incompatible characters*, [J. Comput. Biol. 14, 1247-1272 (2007)](https://doi.org/10.1089/cmb.2006.0137), read in the PMC author manuscript (PMC2581772).
+- Gusfield et al. 2007: Gusfield, Bansal, Bafna and Song, *A decomposition theory for phylogenetic networks and incompatible characters*, [J. Comput. Biol. 14, 1247-1272 (2007)](https://doi.org/10.1089/cmb.2006.0137), read in the PMC author manuscript (PMC2581772), and, for the symbols that its plain text loses, in an [author's copy](https://people.eecs.berkeley.edu/~yss/Pub/decomposition.pdf) on Yun Song's page, made from a DVI file on 2008-01-19, with the same words apart from moved floats, footnotes and hyphenation. That copy isn't the journal's typeset text.
 
-Downloads and working inventories are not distributed with the library. The TINNiK publisher XML includes TeX equations, but is not the authors' original TeX source.
+Downloads, working inventories and notes are private, and aren't in this repository. [`sources.json`](sources.json) has the hashes of the texts that the line numbers refer to. The TINNiK publisher XML includes TeX equations, but is not the authors' original TeX source. The journal's text of Allman et al. 2023 and of Gusfield et al. 2007 wasn't reachable, so the findings on them are about the authors' versions: [`REPORT.md`](REPORT.md) marks those that may not apply to the journal's text.
 
 No author TeX source exists for ECToBlob, TOB-QMC, TINNiK or Gusfield et al. 2007, so their rows of `docs/paper_routes.tsv` are written by hand from these sources. Those of Allman et al. 2023 are checked against `route_check.py extract` on the arXiv TeX.
 
@@ -24,14 +24,15 @@ The docstrings locate a passage by the lines of a text of the paper. The texts a
 | TOB-QMC | a line number printed in the margin of the bioRxiv v5 PDF: "embedded lines 384-385", "v5, line 421". In the supplement, a line of `pdftotext -layout`: "the supplement's text, lines 560-575" |
 | TINNiK | a line of the plain text of the publisher's XML (PMC11539473), one line per paragraph: "TINNiK's text, line 194" |
 | Allman et al. 2023 | a line of the plain text of the PMC page (PMC10062380), one line per paragraph: "the PMC text, line 149" |
-| Gusfield et al. 2007 | a line of the plain text of the PMC page (PMC2581772), one line per paragraph: "line 342" |
+| Gusfield et al. 2007 | a line of the plain text of the PMC page (PMC2581772), one line per paragraph: "line 342". The misprints in symbols were read in the author's copy above |
 | NANUQ | a line of the plain text of arXiv v1 |
 
 The user supplied `ectob_supp.pdf` (6 pages) and `tob-qmc_supp.pdf` (43 pages) from Downloads on 2026-10-27. Both have been read and hashed. The ECToBlob supplement contains simulation appendices A/B. The TOB-QMC supplement is internally dated February 26, 2026 and uses some result numbers that differ from main v5. Its precise version linkage is unconfirmed; the internal date alone does not establish that a later supplement exists. Its mathematical claims are inventoried separately with a provisional crosswalk to the main text.
 
 ## Repository and toolchain
 
-- New local repository; branch `formalize/tree-of-blobs`. No draft existed. The first rounds of work were made with Codex; `CREDITS.md` has the rounds.
+- Public repository [`vltanh/lean4-tob`](https://github.com/vltanh/lean4-tob); branch `formalize/tree-of-blobs`. No draft existed. The first rounds of work were made with Codex; `CREDITS.md` has the rounds.
+- Layout: the Lean code is in `src/`, with `srcDir` in `lakefile.toml`, and the documents other than the `README` in `docs/`. The files for a possible Palomar submission are in `palomar/`, and the checks in `scripts/`.
 - Lean and Mathlib `v4.36.0-rc1`, Mathlib commit `625d8914199bc567cca9b91f90e8e5afafa5ae51`.
 - Lean `v4.36.0-rc2` was released on 2026-10-27, but the corresponding Mathlib release tag returned 404 during setup. Thus rc1 is the newest verified matched pair.
 - Palomar's current minimum is `v4.35.0-rc2`; the selected toolchain exceeds it.
@@ -44,19 +45,17 @@ The user supplied `ectob_supp.pdf` (6 pages) and `tob-qmc_supp.pdf` (43 pages) f
 
 The requested target is all mathematical results of the five papers, their cited proof dependencies, and source/statement/proof-route audits. Empirical performance claims must be distinguished from mathematical theorems. No result is counted as formalized merely because an abstract implication or a placeholder module builds.
 
-Cited results that are out of reach may become explicit hypotheses named after their sources, as the invoked skill permits. Results proved in these papers may not be replaced with such hypotheses.
+Cited results that are out of reach may become explicit hypotheses named after their sources, as the invoked skill permits. Results proved in these papers may not be replaced with such hypotheses. None has been needed: no result is assumed.
 
-The public `lean4-phylogenetics` and `lean4-camus` projects were surveyed for prior work and reusable foundations. A tree-only hierarchy kernel from the former was adapted with explicit provenance in [ADAPTED_SOURCES.md](ADAPTED_SOURCES.md). Selected network-independent finite Kingman modules were subsequently extracted; [COALESCENT_SOURCES.md](COALESCENT_SOURCES.md) records their scope and incomplete absorption/PMF work. The level-1 network syntax and NMSC modules were not imported; they cannot stand for arbitrary networks. CAMUS has not been incorporated.
+The public `lean4-phylogenetics` and `lean4-camus` projects were surveyed for prior work and reusable foundations. A tree-only hierarchy kernel from the former was adapted with explicit provenance in [ADAPTED_SOURCES.md](ADAPTED_SOURCES.md). Selected network-independent finite Kingman modules were subsequently extracted; [COALESCENT_SOURCES.md](COALESCENT_SOURCES.md) records their scope and incomplete absorption/PMF work. That survey's level-1 network syntax and NMSC modules weren't used, since they can't stand for arbitrary networks. The project now imports that library for what it holds (below), and the network coalescent on arbitrary networks, first written here, has moved there. CAMUS has not been incorporated.
 
-Default license: Apache-2.0. Local Git identity: The-Anh Vu-Le. Public authorship and maintainership remain to be confirmed before publication. AI systems are credited as tools, not human authors.
-
-No push, remote repository creation, publication, Palomar preflight, submission, or registration is authorized. Local work and milestone commits are authorized by the invoked skill.
+License: Apache-2.0. Git identity: The-Anh Vu-Le. AI systems are credited as tools, not human authors.
 
 ## The library `Phylogenetics`
 
 On 2026-10-31 the user asked this project to import the library [`lean4-phylogenetics`](https://github.com/vltanh/lean4-phylogenetics), which holds definitions and general results, in place of its own general layer. What the papers prove stays here: `src/Basic/Defs.lean` has the algorithms and the standing assumptions, `src/Basic/Testing/` and `src/Basic/ForMathlib/` have the hypothesis tests and the analysis behind them, the papers' libraries have their results, and `src/External/` has what they cite from other papers. `src/Basic/General.lean` has general results that can move to the library.
 
-The library is required by commit, from GitHub (`lakefile.toml`). `lake build` builds only the modules of the library that this project imports; the audit reads all of them, so it also needs `lake build Phylogenetics`.
+The library is required by commit, `9948de9`, from GitHub (`lakefile.toml`). `lake build` builds only the modules of the library that this project imports; the audit reads all of them, so it also needs `lake build Phylogenetics`.
 
 ## Palomar
 
@@ -78,8 +77,8 @@ The user agreed to the correction E11 of REPORT.md: the Cauchy transform is exte
 
 ## Readings
 
-The tests are read as implemented in the sources: gene trees are binary in Theorem 8.2, which covers the NMSC and the Displayed Tree model when all displayed trees are binary, and the small-count procedures of MSCquartets are not modelled.
+The readings of each paper are in Section 6 of [`REPORT.md`](REPORT.md). The tests are read as implemented in the sources: gene trees are binary in Theorem 8.2, which covers the NMSC and the Displayed Tree model when all displayed trees are binary, and the small-count procedures of MSCquartets are not modelled.
 
 ## Publishing
 
-The repository is public. The user first asked, on 2026-10-31, for everything to be pushed to a private repository, and has since made it public. The formalization is on branch `formalize/tree-of-blobs`; the working notes are not in the repository. No Palomar preflight, submission or registration is authorized.
+The repository is public. The user first asked, on 2026-10-31, for everything to be pushed to a private repository, and then made it public. The formalization is on branch `formalize/tree-of-blobs`; the working notes are not in the repository. A push needs the user's go-ahead. No Palomar preflight, submission or registration is authorized.
