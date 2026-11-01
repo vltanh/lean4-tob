@@ -1,0 +1,21 @@
+{
+  "challenge_module": "MainResults",
+  "solution_module": "MainResults",
+  "theorem_names": [
+    "TreeOfBlobs.theorem3_1",
+    "TreeOfBlobs.theorem4_1",
+    "TreeOfBlobs.theorem8_2",
+    "TreeOfBlobs.theorem1",
+    "TreeOfBlobs.theorem1_optimal",
+    "TreeOfBlobs.theorem2",
+    "TreeOfBlobs.consistency",
+    "TreeOfBlobs.theorem4"
+  ],
+  "definition_names": [],
+  "permitted_axioms": [
+    "propext",
+    "Quot.sound",
+    "Classical.choice"
+  ],
+  "enable_nanoda": true
+}

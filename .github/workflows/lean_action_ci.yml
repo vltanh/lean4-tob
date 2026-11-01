@@ -15,12 +15,13 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: leanprover/lean-action@v1
-      # The audit sees a module's proofs only through its own `import all` line.
+      # `lake build` builds only the modules of the library that this project imports; the audit reads all of them.
+      - name: Build the whole library
+        run: lake build Phylogenetics
+      # The audit sees a module's proofs only through its own `import all` line, for the modules of this
+      # project and of the library `Phylogenetics`.
       - name: Check that the audit imports every module of the libraries
-        run: >-
-          diff <(find ECToBlob TOBQMC TINNiK External Basic -name '*.lean' | sed 's/\.lean$//; s#/#.#g' | sort)
-          <(grep -E '^import all (ECToBlob|TOBQMC|TINNiK|External|Basic)\.' scripts/Audit.lean
-          | sed 's/^import all //' | sort)
+        run: python3 scripts/gen_audit.py --check
       - name: Audit axioms and dependencies
         run: lake env lean -DautoImplicit=false -DmaxSynthPendingDepth=3 scripts/Audit.lean
       # The routes of the papers' proofs (docs/paper_routes.tsv) and the reviewed differences
@@ -29,11 +30,7 @@ jobs:
         run: >-
           python3 scripts/route_check.py check docs/paper_routes.tsv
           --accept docs/route_differences.tsv
-      - name: Check that the Challenge's copy of the shared definitions is current
-        run: python3 scripts/sync_challenge_defs.py --check
-      - name: Check that the Solution is generated from the Challenge
-        run: python3 scripts/gen_solution.py --check
       - name: Check that the documentation's links to the code are current
         run: python3 scripts/linkify_docs.py --check
       - name: Check the Markdown tables
-        run: python3 scripts/check_md_tables.py README.md REPORT.md CREDITS.md
+        run: python3 scripts/check_md_tables.py README.md docs/REPORT.md docs/CREDITS.md

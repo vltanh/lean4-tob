@@ -23,11 +23,11 @@ The user supplied `ectob_supp.pdf` (6 pages) and `tob-qmc_supp.pdf` (43 pages) f
 - Mathlib and Verso rc1 share `plausible` and `Cli`; both revisions match.
 - The initial dependency cache was copied into this checkout from an existing local checkout at the same pinned release. No symlinks or shared mutable build directory are used.
 - Compilation is enabled. Sub-agents check files against private snapshots of the build outputs; only the main session runs `lake build`.
-- Libraries: `Basic`, `External`, and one library for each paper. Additional proof dependencies will be pinned only after checking their scope and statements.
+- Libraries: `Basic` (the definitions specific to the three papers, and general results on their way to the library), `External`, and one library for each paper. They import the library `Phylogenetics` (see below). Each is a directory with no root module: the globs in `lakefile.toml` reach its modules, also those that nothing imports. Additional proof dependencies will be pinned only after checking their scope and statements.
 
 ## Scope and provenance
 
-The requested target is all mathematical results of the three papers, their cited proof dependencies, source/statement/proof-route audits, and local Palomar packaging. Empirical performance claims must be distinguished from mathematical theorems. No result is counted as formalized merely because an abstract implication or a placeholder module builds.
+The requested target is all mathematical results of the three papers, their cited proof dependencies, and source/statement/proof-route audits. Empirical performance claims must be distinguished from mathematical theorems. No result is counted as formalized merely because an abstract implication or a placeholder module builds.
 
 Cited results that are out of reach may become explicit hypotheses named after their sources, as the invoked skill permits. Results proved in these papers may not be replaced with such hypotheses.
 
@@ -36,6 +36,18 @@ The public `lean4-phylogenetics` and `lean4-camus` projects were surveyed for pr
 Default license: Apache-2.0. Local Git identity: The-Anh Vu-Le. Public authorship and maintainership remain to be confirmed before publication. AI systems are credited as tools, not human authors.
 
 No push, remote repository creation, publication, Palomar preflight, submission, or registration is authorized. Local work and milestone commits are authorized by the invoked skill.
+
+## The library `Phylogenetics`
+
+On 2026-10-31 the user asked this project to import the library [`lean4-phylogenetics`](https://github.com/vltanh/lean4-phylogenetics), which holds definitions and general results, in place of its own general layer. What the papers prove stays here: `src/Basic/Defs.lean` has the algorithms and the standing assumptions, `src/Basic/Testing/` and `src/Basic/ForMathlib/` have the hypothesis tests and the analysis behind them, the papers' libraries have their results, and `src/External/` has what they cite from other papers. `src/Basic/General.lean` has general results that can move to the library.
+
+The library is required by commit, from GitHub (`lakefile.toml`). `lake build` builds only the modules of the library that this project imports; the audit reads all of them, so it also needs `lake build Phylogenetics`.
+
+## Palomar
+
+On 2026-10-31 the user decided that Palomar is not a target. `src/MainResults.lean` states and proves the main theorems, by hand, and imports the libraries of the three papers and what they use, not the statement libraries that still hold `sorry`; it replaces `Challenge.lean` and `Solution.lean`, and `scripts/gen_solution.py` and `scripts/sync_challenge_defs.py` are gone. This gives up Palomar's rule that the Challenge imports only Mathlib, deliberately: the user may not submit, and does not care about the limit on its length, and the copy of the definitions was about 800 lines that had to be kept equal to the library's.
+
+[`palomar/`](../palomar) keeps `comparator.json` and `formalization.yaml`, and says what a submission would still need. Comparator runs on `MainResults` as both challenge and solution, so it checks the main theorems under Lean's kernel and NanoDa, and rejects `sorryAx`; it no longer compares a separate statement file with a proof. `scripts/check_kernels.sh` runs it and con-ron, Palomar's three kernels.
 
 ## Authorized corrections
 
@@ -55,4 +67,4 @@ The tests are read as implemented in the sources: gene trees are binary in Theor
 
 ## Publishing
 
-On 2026-10-31 the user asked for everything to be pushed to a private repository and not made public. The formalization is on branch `formalize/tree-of-blobs`; the private notes, including `NEXT.md` and `notes/`, are on the separate branch `private/notes`, so that the formalization branch stays free of them. No Palomar preflight, submission or registration is authorized.
+The repository is public. The user first asked, on 2026-10-31, for everything to be pushed to a private repository, and has since made it public. The formalization is on branch `formalize/tree-of-blobs`; the working notes, `NEXT.md` and `notes/`, are ignored by git and are not in the repository. No Palomar preflight, submission or registration is authorized.

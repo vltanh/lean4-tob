@@ -3,8 +3,9 @@
 
 Every inline code span that names a declaration, a module, a file or a directory of this
 repository becomes a relative link; the link of a declaration points at the line of its
-name. A code span that names a module of the pinned Mathlib links to the module's page in
-Mathlib's documentation. Existing links are kept, except links to a line of a Lean file and
+name. A declaration or module of the library `Phylogenetics` links to its line on GitHub, at the
+commit that `lake-manifest.json` pins. A code span that names a module of the pinned Mathlib links
+to the module's page in Mathlib's documentation. Existing links are kept, except links to a line of a Lean file and
 links to the page of a Mathlib module, which are recomputed: running the script after editing
 the code brings them up to date. Fenced code blocks, headings and table headers are left
 alone, and the text of a link may run over several lines of a paragraph.
@@ -18,8 +19,7 @@ The declaration locations come from the `.ilean` files that `lake build` writes.
 
 Configure the block below for the project: the documents to process, the namespaces in which the
 documents name declarations without their prefix, the top-level module names of the project, and
-the module whose declarations win when a name is declared twice (the Challenge, whose theorems
-the Solution restates).
+the module whose declarations win when a name is declared twice (the main results).
 """
 
 import argparse
@@ -31,18 +31,23 @@ from pathlib import Path
 
 # ---- configuration -------------------------------------------------------------------------
 # The Markdown documents to process.
-DOCS = ['README.md', 'REPORT.md', 'CREDITS.md']
+DOCS = ['README.md', 'docs/REPORT.md', 'docs/CREDITS.md']
 # Namespaces in which the documents name declarations without their prefix, most specific last.
-NAMESPACES = ['ECToBlob', 'TOBQMC', 'TINNiK', 'External', 'Phylogenetics', 'Challenge', 'ProbabilityTheory', 'DirectedMultigraph']
+NAMESPACES = ['ECToBlob', 'TOBQMC', 'TINNiK', 'AllmanEtAl2023', 'External', 'Phylogenetics', 'TreeOfBlobs', 'ProbabilityTheory']
 # Top-level module names of the project: a code span naming such a module links to its file.
-MODULE_ROOTS = ('ECToBlob', 'TOBQMC', 'TINNiK', 'External', 'Basic', 'Challenge', 'Solution')
+MODULE_ROOTS = ('ECToBlob', 'TOBQMC', 'TINNiK', 'AllmanEtAl2023', 'Gusfield2007', 'External', 'Basic', 'MainResults')
 # The module whose declarations win when a name is declared in several modules.
-PREFERRED_MODULE = 'Challenge'
+PREFERRED_MODULE = 'MainResults'
 # Directories, besides the repository root, against which the paths in the documents of a
 # given directory are resolved.
-PATH_BASES = {'': ['.github/workflows']}
+PATH_BASES = {'': ['src', '.github/workflows'], 'docs': ['src', 'docs', '.github/workflows']}
 # Files named in the documents that are not in the repository, so that a local copy is not linked.
 UNLINKED = {'NEXT.md'}
+# The directory of the project's modules.
+SRC_DIR = 'src'
+# The library that this project requires, and where its source is published.
+LIBRARY = 'Phylogenetics'
+LIBRARY_URL = 'https://github.com/vltanh/lean4-phylogenetics/blob/'
 # ---------------------------------------------------------------------------------------------
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -71,7 +76,22 @@ def warn(message):
 
 
 def module_file(module):
-    return '/'.join(module.split('.')) + '.lean'
+    return SRC_DIR + '/' + '/'.join(module.split('.')) + '.lean'
+
+
+def library_source():
+    """The checkout of the library, and the commit to link to, from `lake-manifest.json`."""
+    manifest = json.loads((ROOT / 'lake-manifest.json').read_text(encoding='utf-8'))
+    for pkg in manifest['packages']:
+        if pkg['name'] == LIBRARY and pkg['type'] == 'git':
+            return ROOT / '.lake' / 'packages' / LIBRARY, pkg['rev']
+    sys.exit('lake-manifest.json has no git package %s' % LIBRARY)
+
+
+def library_url(module, rev, line=None):
+    """The address of a module of the library on GitHub, at the pinned commit."""
+    url = LIBRARY_URL + rev + '/' + '/'.join(module.split('.')) + '.lean'
+    return url if line is None else '%s#L%d' % (url, line)
 
 
 def mathlib_page(module):
@@ -82,6 +102,13 @@ def mathlib_page(module):
 def load_locations():
     """Each declaration's module and the line of its name, read from the `.ilean` files."""
     locations, preferred = {}, {}
+    # The library first: a declaration of this project wins over one of the library.
+    checkout, rev = library_source()
+    build = checkout / '.lake' / 'build' / 'lib' / 'lean'
+    for ilean in sorted(build.rglob('*.ilean')):
+        data = json.loads(ilean.read_text(encoding='utf-8'))
+        for name, ranges in data.get('decls', {}).items():
+            locations[name] = (data['module'], ranges[4] + 1, library_url(data['module'], rev, ranges[4] + 1))
     for ilean in sorted(BUILD.rglob('*.ilean')):
         data = json.loads(ilean.read_text(encoding='utf-8'))
         # A restored build cache keeps the outputs of deleted modules; skip them.
@@ -91,7 +118,7 @@ def load_locations():
         target = preferred if data['module'] == PREFERRED_MODULE else locations
         for name, ranges in data.get('decls', {}).items():
             # `ranges` holds the declaration's range, then its name's; lines count from 0.
-            target[name] = (data['module'], ranges[4] + 1)
+            target[name] = (data['module'], ranges[4] + 1, None)
     locations.update(preferred)
     if not locations:
         sys.exit('no .ilean files under %s; run `lake build` first' % BUILD)
@@ -113,8 +140,8 @@ class Linker:
         if hits[0] != name and len(hits) > 1:
             warn('`%s` is ambiguous: %s' % (name, ', '.join(hits)))
             return None
-        module, line = self.locations[hits[0]]
-        return '%s#L%d' % (module_file(module), line)
+        module, line, url = self.locations[hits[0]]
+        return url or '%s#L%d' % (module_file(module), line)
 
     def target(self, text, doc_dir):
         """The repository path or URL that `text` names, or None."""
@@ -131,9 +158,13 @@ class Linker:
         if text.split('.')[0] in MODULE_ROOTS:
             if (ROOT / module_file(text)).is_file():
                 return module_file(text)
+        if text.startswith(LIBRARY + '.'):
+            checkout, rev = library_source()
+            if (checkout / ('/'.join(text.split('.')) + '.lean')).is_file():
+                return library_url(text, rev)
         if text.startswith('Mathlib.'):
             # Only a module of the pinned Mathlib has a page; a proposed module has none.
-            if (MATHLIB / module_file(text)).is_file():
+            if (MATHLIB / ('/'.join(text.split('.')) + '.lean')).is_file():
                 return mathlib_page(text)
             return None
         if text in CORE:
@@ -155,7 +186,7 @@ class Linker:
         text, old, span = match.groups()
         if text is not None:
             dest = old[1:-1] if old.startswith('<') else old
-            recompute = LINE_LINK.match(dest) or dest == mathlib_page(text) or (
+            recompute = LINE_LINK.match(dest) or dest == mathlib_page(text) or dest.startswith(LIBRARY_URL) or (
                 not dest.startswith(('http:', 'https:', 'mailto:', '#'))
                 and not (ROOT / doc_dir / dest.partition('#')[0]).exists())
             if not recompute:

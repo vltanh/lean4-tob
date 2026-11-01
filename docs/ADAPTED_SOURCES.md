@@ -1,5 +1,7 @@
 # Adapted public sources
 
+The paths under `Basic/Phylogenetics/` below are this repository at commit `f838ea4`. These modules have since moved to the library `lean4-phylogenetics`, which this project imports; `Challenge.lean` is gone as well (see [CONFIGURATION.md](CONFIGURATION.md)).
+
 ## Finite hierarchy kernel
 
 Destination: `Basic/Phylogenetics/Hierarchy.lean`. Source repository: https://github.com/vltanh/lean4-phylogenetics, local clean commit `06f684e526e276ca2ccf668a1c3a808a2b8c181d`. Source license: Apache2.0; destination header preserves the source URL, commit and license reference. No source repository file was changed.

@@ -1,7 +1,8 @@
 name = "TreeOfBlobs"
 version = "0.1.0"
 keywords = ["math", "phylogenetics"]
-defaultTargets = ["Basic", "External", "TINNiK", "TOBQMC", "ECToBlob", "Challenge", "Solution"]
+srcDir = "src"
+defaultTargets = ["Basic", "External", "TINNiK", "TOBQMC", "ECToBlob", "Gusfield2007", "AllmanEtAl2023", "MainResults"]
 
 [leanOptions]
 pp.unicode.fun = true
@@ -13,28 +14,38 @@ name = "mathlib"
 scope = "leanprover-community"
 rev = "v4.36.0-rc1"
 
+[[require]]
+name = "Phylogenetics"
+git = "https://github.com/vltanh/lean4-phylogenetics"
+rev = "9948de9b3cba330596424efd2dca9617be2efb0c"
+
 [[lean_lib]]
 name = "Basic"
-globs = ["Basic", "Basic.+"]
+globs = ["Basic.+"]
 
 [[lean_lib]]
 name = "External"
-globs = ["External", "External.+"]
+globs = ["External.+"]
+
+[[lean_lib]]
+name = "AllmanEtAl2023"
+globs = ["AllmanEtAl2023.+"]
+
+[[lean_lib]]
+name = "Gusfield2007"
+globs = ["Gusfield2007.+"]
 
 [[lean_lib]]
 name = "TINNiK"
-globs = ["TINNiK", "TINNiK.+"]
+globs = ["TINNiK.+"]
 
 [[lean_lib]]
 name = "TOBQMC"
-globs = ["TOBQMC", "TOBQMC.+"]
+globs = ["TOBQMC.+"]
 
 [[lean_lib]]
 name = "ECToBlob"
-globs = ["ECToBlob", "ECToBlob.+"]
+globs = ["ECToBlob.+"]
 
 [[lean_lib]]
-name = "Challenge"
-
-[[lean_lib]]
-name = "Solution"
+name = "MainResults"

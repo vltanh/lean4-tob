@@ -1,6 +1,7 @@
 module
 
-public import Basic.Phylogenetics.AncestralRestriction
+public import Phylogenetics.Network.AncestralRestriction
+public import Mathlib.Tactic.FinCases
 public import Mathlib.Data.Fin.VecNotation
 public import Mathlib.Data.Fintype.Powerset
 

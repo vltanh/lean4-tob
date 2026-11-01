@@ -10,7 +10,7 @@ Minimal checked ingredients of a counterexample to the literal, nongeneric
 reading of ECToBlob Theorem 8.2. This file does not implement phylogenetic
 networks or probability measures. It checks the exact CF coincidences and
 unique-limit obstruction; the construction of the model is explained in
-the genericity counterexample in `REPORT.md`.
+the genericity counterexample in `docs/REPORT.md`.
 -/
 
 public section
