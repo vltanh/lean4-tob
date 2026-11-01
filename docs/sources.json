@@ -86,6 +86,222 @@
       "sha256": "b77eaae6eb7042438d10510280aeea078a139ec06d62645b5ee66cb88b882bf0",
       "bytes": 331189,
       "content": "36 pages, with the symbols, and the same words as the PMC text apart from moved floats, footnotes and hyphenation. Not the journal's typeset text."
+    },
+    {
+      "paper": "Gusfield, Eddhu, Langley 2004",
+      "version": "authors' copy, exfinalrec.pdf",
+      "url": "https://csiflabs.cs.ucdavis.edu/~gusfield/exfinalrec.pdf",
+      "sha256": "9fe3209c44ded3198885e47eb586982238aa75fe320a3549485213e51d51030b",
+      "bytes": 228570,
+      "content": "Not the journal's text."
+    },
+    {
+      "paper": "Myers, Griffiths 2003",
+      "version": "Genetics 163, the journal's PDF, 20 pages",
+      "url": "https://doi.org/10.1093/genetics/163.1.375",
+      "sha256": "d2605fd333ff65edb7c836a869ac885375925c45f83ec05956573babe017d6dc",
+      "bytes": 342057,
+      "content": "Obtained from the Internet Archive's copy of genetics.org."
+    },
+    {
+      "paper": "Hudson, Kaplan 1985",
+      "version": "Genetics 111, the journal's PDF, a scan with an OCR layer",
+      "url": "https://doi.org/10.1093/genetics/111.1.147",
+      "sha256": "55c24aa83676860c60210cb6b1c64f75c069250655ffba3e297c1499d8fe923f",
+      "bytes": 882825,
+      "content": "Obtained from the Internet Archive's copy of genetics.org."
+    },
+    {
+      "paper": "Song, Hein 2005",
+      "version": "authors' copy, SH-JCB05.pdf",
+      "url": "https://people.eecs.berkeley.edu/~yss/Pub/SH-JCB05.pdf",
+      "sha256": "3567ab865276d607a4cd0f11a0648775b19395765ecf199af2cb6693a0dfbe61",
+      "bytes": 340751,
+      "content": "28 pages. Not the journal's typesetting."
+    },
+    {
+      "paper": "Song, Hein 2003",
+      "version": "WABI 2003, SH-WABI03.pdf",
+      "url": "https://people.eecs.berkeley.edu/~yss/Pub/SH-WABI03.pdf",
+      "sha256": "6b8c68564532521b925dd3658f8425f7e017176776e06e9daed939254356e601",
+      "bytes": 280632,
+      "content": "Its text layer is unusable, so its pages were read as images."
+    },
+    {
+      "paper": "Song 2006",
+      "version": "Ann. Comb. 10, Ann.Combin-10-129.pdf",
+      "url": "https://people.eecs.berkeley.edu/~yss/Pub/Ann.Combin-10-129.pdf",
+      "sha256": "c18df5b9c14121cb9c744af61b2b66967319d2abcaacc5022b9a99b524c685d4",
+      "bytes": 206316,
+      "content": "Read for the definition of an SPR on ordered trees."
+    },
+    {
+      "paper": "Klöpper 2008",
+      "version": "dissertation, Tübingen",
+      "url": "https://publikationen.uni-tuebingen.de/xmlui/handle/10900/49159",
+      "sha256": "af9b59099a3a49536cfa2ed6cf306d5a01553477b5ded5a0582bcfd3c91a36c6",
+      "bytes": 3679090,
+      "content": "Read for its Conjecture 2.2, Definition 2.1, Figure 2.5, and p. 86."
+    },
+    {
+      "paper": "Bandelt et al. 1995",
+      "version": "Genetics 141, the journal's PDF",
+      "url": "https://doi.org/10.1093/genetics/141.2.743",
+      "sha256": "978c86cf10e6a854236bcf146171dd09da355b8ef2e67a2cc70cf3fe83232c40",
+      "bytes": 1208785,
+      "content": "Read: pp. 745-748."
+    },
+    {
+      "paper": "Baños 2019",
+      "version": "PMC author manuscript, XML",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6344282/",
+      "sha256": "4fb4cc8cf2ff5f6f3b6f1377f412ef2e5be37b9f0d39aa6035f8b011d063edaf",
+      "bytes": 407916,
+      "content": "Read for its Proposition 7."
+    },
+    {
+      "paper": "Mitchell, Allman, Rhodes 2019",
+      "version": "arXiv 1806.08458v1, PDF",
+      "url": "https://arxiv.org/abs/1806.08458",
+      "sha256": "51ef5a067e8bf5e4287888b6bbca597448eda498963418548631b1de3deeac37",
+      "bytes": 705928,
+      "content": "The numbering used here. The journal's text wasn't read."
+    },
+    {
+      "paper": "NANUQ (Allman, Baños, Rhodes 2019)",
+      "version": "arXiv v1, plain text",
+      "url": "https://arxiv.org/abs/1905.07050",
+      "sha256": "c035054ef0af52870f34fe843b336a4818b85070edc2c2cd8a763c35ba3ed66e",
+      "bytes": 106612,
+      "content": "The text that its line numbers refer to."
+    },
+    {
+      "paper": "Ané et al. 2024",
+      "version": "bioRxiv, plain text",
+      "url": "https://doi.org/10.1101/2023.08.18.553582",
+      "sha256": "f56c6f48cd2ff78e61972d3c45dc2d74bf7f5ea06a37249a3f59219a7b1b502d",
+      "bytes": 132548
+    },
+    {
+      "paper": "Huber et al. 2025",
+      "version": "PMC XML",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12394373/",
+      "sha256": "370f15547db3185c40d6fed857744859334899a42a638bbacf840d05689a0b66",
+      "bytes": 524533
+    },
+    {
+      "paper": "Legried et al. 2021",
+      "version": "conference version, bioRxiv text 10.1101/821439, the copy on NSF PAR",
+      "url": "https://doi.org/10.1101/821439",
+      "sha256": "93cc2a7fa5030e56c983531aa744f684b568f5c8ac5b857223745af56e0eed46",
+      "bytes": 704125,
+      "content": "The journal's text wasn't read."
+    },
+    {
+      "paper": "Dinh, Baños 2025",
+      "version": "PMC XML",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11934270/",
+      "sha256": "0d933ac68139a4b1394ea0a2a0662876cfba6f26e97e9f4b7fb980fe01007930",
+      "bytes": 147343
+    },
+    {
+      "paper": "Kane, Tao 2017",
+      "version": "arXiv 1702.00912v2, TeX source",
+      "url": "https://arxiv.org/abs/1702.00912",
+      "sha256": "a4dbdcf3bab03a0b08b2e96695f8c9e4bd56fd84f6ac42ee240bec511c89fd6b",
+      "bytes": 43621
+    },
+    {
+      "paper": "Zhang et al. 2018 (ASTRAL-III)",
+      "version": "Europe PMC XML, PMC5998893",
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC5998893/fullTextXML",
+      "sha256": "543a1d68352d9ae79d56ce1f50f6684aca6b8d088f308acd809b589d1d868369",
+      "bytes": 268660
+    },
+    {
+      "paper": "Zhang et al. 2018 (ASTRAL-III), Additional file 1",
+      "version": "PDF",
+      "url": "",
+      "sha256": "273a08892ecf910478fee1d8a6c29c6844945baf4d6d2db4352e03d22f5ea307",
+      "bytes": 487825
+    },
+    {
+      "paper": "Han, Molloy 2023 (TREE-QMC)",
+      "version": "PMC XML, doi 10.1101/gr.277629.122",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10538498/",
+      "sha256": "2ebfcc2a0d060070c5d3a48d4fb706b8078df5123458dfae67e8434e5a885832",
+      "bytes": 166682
+    },
+    {
+      "paper": "Sayyari, Mirarab 2016",
+      "version": "PMC XML",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4915361/",
+      "sha256": "8910d47670996867cfda37c943c03c556c9a80e39a6931e7fb5b1e7adc60b299",
+      "bytes": 202848,
+      "content": "Read for its Theorem 2."
+    },
+    {
+      "paper": "Rhodes et al. 2025",
+      "version": "arXiv 2402.11693v2",
+      "url": "https://arxiv.org/abs/2402.11693",
+      "sha256": "4957c216511505651e7a22fb543e6ebb6373f62673858ebe5b07b14775c7d3c9",
+      "bytes": 1280504,
+      "content": "Read for its Proposition 6.1."
+    },
+    {
+      "paper": "Markin, Eulenstein 2021",
+      "version": "arXiv 2004.04299v1",
+      "url": "https://arxiv.org/abs/2004.04299",
+      "sha256": "33679df68a6d67fc4dc1679b45dbd1419a218b790512d06586cab06d9e9ec807",
+      "bytes": 186148,
+      "content": "Statements only."
+    },
+    {
+      "paper": "Hill et al. 2022",
+      "version": "arXiv 2007.06697v1",
+      "url": "https://arxiv.org/abs/2007.06697",
+      "sha256": "1a5b919f3297d2f75ea31b36f275a3f1a67b99016d1ec3be3b8a6deb7bc05ac1",
+      "bytes": 428208,
+      "content": "Statements only."
+    },
+    {
+      "paper": "Allman et al. 2022, on Log-det distances",
+      "version": "arXiv 2108.01765v1",
+      "url": "https://arxiv.org/abs/2108.01765",
+      "sha256": "4b026ca725e929b9a8e02d9ddd89056713a2cb5c350b9b5e8bb3d81d9eb46f4e",
+      "bytes": 733101,
+      "content": "Read for the mixture model that ECToBlob's §10 cites."
+    },
+    {
+      "paper": "Xu, Ané 2023",
+      "version": "arXiv version",
+      "url": "https://arxiv.org/abs/2110.11814",
+      "sha256": "c1f2b070c45d453734fd60b3a954a32b93ff8bdbffefb2aac7b963edce1df495",
+      "bytes": 2456155
+    },
+    {
+      "paper": "Roch, lecture notes",
+      "version": "Wisconsin, 2010, lecture 3",
+      "url": "",
+      "sha256": "25e5cdd3403e011bb8aa96555418ef0fe9458d7bcf20feff0d0592c3e9310354",
+      "bytes": 106428,
+      "content": "Compared with Semple and Steel's theorem, which wasn't read."
+    },
+    {
+      "paper": "Huson, Klöpper 2007, errata",
+      "version": "the authors' errata, plain text",
+      "url": "",
+      "sha256": "88e9b123bf5e302cbc899190a2689a9fc8f499ecb9876fc8e5aa221e335803c7",
+      "bytes": 830,
+      "content": "The paper itself wasn't read."
+    },
+    {
+      "paper": "Studier, Keppler 1988",
+      "version": "Mol. Biol. Evol. 5, the journal's PDF, a scan of 3 pages",
+      "url": "https://doi.org/10.1093/oxfordjournals.molbev.a040527",
+      "sha256": "beb3efe20c95e209902df9ebebcb7666f64e87bcde6b688bb5bf16be0acca416",
+      "bytes": 250079,
+      "content": "Obtained from the Internet Archive's copy, since the publisher refused the download."
     }
   ],
   "original_author_tex_available": [

@@ -23,7 +23,7 @@ project:
     Full-Decomposition Optimality Conjectures (Gusfield et al. 2007).
 
 
-    The audit records 66 findings in the papers, including that Theorem 4 of Gusfield et al. 2007 is false as printed, a
+    The audit records 85 findings in the papers and the sources they cite, including that Theorem 4 of Gusfield et al. 2007 is false as printed, a
     counterexample to a boundary case of ECToBlob's Theorem 8.2, and a gap in its proof that needed a new argument.
   authors:
     - "The-Anh Vu-Le"
@@ -248,14 +248,13 @@ related_formalizations:
 status:
   scope: >-
     Unconditional: no result of the literature is assumed, and one main theorem, named below, has a computation as a visible hypothesis. Every numbered result of the five papers is proved as printed or in a corrected form, and the results they cite are proved, in src/External and src/AllmanEtAl2023. Theorem 4 of Gusfield et al. 2007 is false
-    as printed: its counterexamples and true forms are proved. Theorem 10 of that paper is proved with the rooted count, in each crossover model. As printed, with the unrooted count, it is false for single crossovers, and for multiple crossovers it is false given
+    as printed: its counterexamples and true forms are proved. Theorem 10 of that paper is proved with the rooted count R_S(M), in each crossover model, which the paper's own use of R(M + S) at lines 525 and 560 suggests is meant. If R(M + S) is read by the definition at line 385, it is false for single crossovers, and for multiple crossovers it is false given
     a finite computation that the kernel hasn't completed, the hypothesis of TreeOfBlobs.gusfield_theorem10Printed_multiple_false_of_search. Lemma 2 of Allman et al. 2023 is
     proved for a connected subnetwork, which all its uses have. Theorem 8.2 of ECToBlob is proved under two corrections, for parameters
     meeting both directions of Assumption 1, and, for two variants of the algorithm, positive alternatives on quartets strictly in the T1
-    null, under the continuous extension of the Cauchy transform; both were agreed with the requester. Not formalized: simulations and
-    empirical tables, running times on a machine (counts of operations are), heuristic optimizers, NANUQ beyond its distance, rule 1 of Ané et al. 2024 in general,
-    Theorem 5.1 of Gusfield et al. 2004 for networks that aren't galled trees. Open, and stated in Lean: Gusfield2007.MinDecomposableOfForallS, and the open question of ECToBlob's Remark 3.4, ECToBlob.Remark34.OpenQuestion. See
-    docs/REPORT.md, Section 9.
+    null, under the continuous extension of the Cauchy transform; both were agreed with the maintainer. Not formalized: simulations and
+    empirical tables, and results of cited sources that no proof here uses. Running times are counts of operations, with no machine model. Open: Gusfield2007.MinDecomposableOfForallS, line 425, and
+    Theorem 10 for multiple crossovers with that literal reading, as above. See docs/REPORT.md, Section 9.
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: []
@@ -274,40 +273,40 @@ automation:
     - method: "agent"
       models: ["claude-opus-5-5"]
       framework: "Claude Code (VS Code extension)"
-      tool_setup: "formalize-math-paper skill, repository vltanh/formalize-math-paper, commit e339f64 (the last round's log names no commit); Claude Code 2.1.314; 72 sub-agents, at most 11 at once, up to commit 5693efe."
+      tool_setup: "formalize-math-paper skill, repository vltanh/formalize-math-paper, commit e339f64 (the last round's log names no commit); Claude Code 2.1.314; 85 sub-agents, at most 11 at once, up to commit 282215c."
       cost:
-        wall_time: "19.65 h elapsed, from 2026-10-31 to commit 5693efe on 2026-11-01, including 1.67 h for the round that proved the assumed result, 3.36 h for the round that followed the sources and formalized what the papers say in passing, and 8.34 h for the round of the two further papers; sub-agent work 57.0 h. The documents and literature search after that commit are not counted."
+        wall_time: "29.14 h elapsed, from 2026-10-31 to commit 282215c on 2026-11-01, including 1.67 h for the round that proved the assumed result, 3.36 h for the round that followed the sources and formalized what the papers say in passing, 8.34 h for the round of the two further papers, and 4.61 h for the round that finished what the papers claim; sub-agent work 76.8 h. The documents after that commit are not counted."
         spend_usd: "not tracked"
         hardware: "local machine"
-      prompting_notes: "Slash command with the three paper links, continuing from the earlier handoff; later the user asked to match the sources closely, to formalize what the report listed as not formalized, and to add Gusfield et al. 2007 and Allman et al. 2023 as primary papers on the library lean4-phylogenetics."
+      prompting_notes: "Slash command with the three paper links, continuing from the earlier handoff; later the user asked to match the sources closely, to formalize what the report listed as not formalized, to add Gusfield et al. 2007 and Allman et al. 2023 as primary papers on the library lean4-phylogenetics, and to finish what remained, leaving only empirical claims and wrong statements."
   spend_usd: "not tracked"
   notes: >-
-    The user chose the papers and the versions of the first three, agreed to the statement corrections of ECToBlob and TOB-QMC, and decided the library's boundary, the layout, the kernels and publication. AI systems wrote the code, the statements, the audit and the documents. At commit 5693efe, src/ has 177 modules and 98,696 lines of Lean; the audit checks 19,669 declarations, of the project and the library, all on the standard axioms; three kernels accept the 39 main theorems. See docs/CREDITS.md.
+    The user chose the papers and the versions of the first three, agreed to the statement corrections of ECToBlob and TOB-QMC, and decided the library's boundary, the layout, the kernels and publication. AI systems wrote the code, the statements, the audit and the documents. At the end of the last round, src/ has 264 modules and 149,784 lines of Lean; the audit checks 26,534 declarations, of the project and the library, all on the standard axioms; three kernels accept the 90 main theorems, one of which has a computation as a visible hypothesis. See docs/CREDITS.md.
 
 fidelity:
   divergences: >-
     Statements corrected (docs/REPORT.md, Sections 3, 4 and 6). ECToBlob: Theorem 8.2 for parameters meeting Assumption 1, as agreed
-    with the user (E10); with positive alternatives for the Cauchy and CBC variants, under the continuous extension of the Cauchy
-    transform at p = 1, where the printed formula is undefined, as agreed with the user (E11); on binary gene trees (E37); equation (3.3)
+    with the maintainer (E10); with positive alternatives for the Cauchy and CBC variants, under the continuous extension of the Cauchy
+    transform at p = 1, where the printed formula is undefined, as agreed with the maintainer (E11); on binary gene trees, with the displayed tree model on any network proved for Bon and BBC and refuted for Cauchy and CBC (E37); equation (3.3)
     weighted by block sizes (E2). TOB-QMC: the margin of its supplement Lemma 4, vacuous as printed (E22); its Lemma 2, forward direction
-    only (E23); its Lemma 8 for nontrivial blobs (E26). TINNiK: the maximum likelihood estimate on the closed simplex (E31). Gusfield et al.
+    only, with N|Y the induced subnetwork (E23); its Lemma 8 for nontrivial blobs (E26). TINNiK: the maximum likelihood estimate on the closed simplex (E31). Gusfield et al.
     2007: Theorem 4, false as printed, proved with the entry node of a blob counted, with no site-free non-pendant arc that has both ends off the blobs, and two conventions
-    (E42, E43, E44), and with the printed definition of efficient as an exact characterization; Theorem 10 with the rooted count (E50, E51); lines 156, 180, 373, 403, 554 and 560, false as printed, with their true forms (E45-E50). The entry-node repair of Theorem 4 is in print, in Gusfield's 2014 book (E42).
+    (E42, E43, E44), and with the printed definition of efficient as an exact characterization; Theorem 10 with the rooted count R_S(M), in each crossover model and with no hypothesis on the columns, as the paper's own use of R(M + S) at lines 525 and 560 suggests; if that symbol is read by the definition at line 385, the statement is false for single crossovers, and for multiple crossovers given a finite computation that the kernel hasn't completed (E50, E51); lines 156, 180, 373, 403, 554 and 560, false as printed, with their true forms (E45-E50, E67). The entry-node repair of Theorem 4 is in print, in Gusfield's 2014 book (E42).
     Allman et al. 2023: Lemma 2 for a connected subnetwork (E55); the remark on edge lengths between trivial blobs for internal edges
     (E64). Library statements omit hypotheses that the proofs do not use (docs/REPORT.md, Section 5); src/MainResults.lean keeps them.
     Readings: docs/REPORT.md, Section 6. False claims found, not formalized as stated: ECToBlob Remark 8.4 on a non-binary network (E35),
-    ECToBlob Remark 3.3 under the cited non-strict definition (E36), NANUQ Theorem 36 as printed.
+    ECToBlob Remark 3.3 under the cited non-strict definition (E36), TOB-QMC's supplement Lemma 7 and Theorem 1 at level 2 (E25), Corollary 2.1 of Gusfield et al. 2004 in one direction (E76), NANUQ Theorem 36 as printed, and Studier and Keppler's Lemma at a polytomy, a failure of wording if the letter means binary trees.
 
 
     Departures from the papers' proofs, every one with what the paper does, what Lean does and why, in docs/REPORT.md, Section 7. Repairing
-    gaps or errors: ECToBlob Theorem 3.1 (E2), Remark 3.2 (E1), Corollary 3.6 (E3), Theorem 8.2 (E11-E17); TOB-QMC supplement Lemma 4 (E22, E24),
+    gaps or errors: Gusfield et al. 2004's general fact, by tracing states in place of deleting arcs, its Theorem 2.7, and its Section 8 on one fixed galled tree (E77); ECToBlob Theorem 3.1 (E2), Remark 3.2 (E1), Corollary 3.6 (E3), Theorem 8.2 (E11-E17); TOB-QMC supplement Lemma 4 (E22, E24),
     Lemma 4 (E19), Corollary 1 (E20) and consistency (E21); TINNiK Theorem 4 under the alternative (E33); Gusfield et al. Lemma 4's other cases
     (line 295), Theorem 4 (E42-E44), line 373 (E45), line 156 (E46), line 403 as an implication between conjectures and the rooted refutation at
     line 590 (E48), lines 187-190 (the proof of Theorem 1, not its statement), line 264 (contracting the tree of the Perfect Phylogeny Theorem), line 418,
-    computing F without Theorem 4, line 576 and Theorem 6 (E53), Theorem 10 (E50, E51); Allman et al. Theorem 1 (b), a stem
+    computing F without Theorem 4, line 576 and Theorem 6 (E53), Theorem 10, by pairs of labels on two sites in place of visible nodes (E50, E51), line 299 at a central root (E53); ECToBlob Theorem 8.2 on the displayed tree model, where line 1065 is false (E37); Allman et al. Theorem 1 (b), a stem
     removed as well as nodes suppressed (E58); neighbor joining (Studier and Keppler's Lemma fails at polytomies); NANUQ Theorem 36 (no centroid
     CF; levels). Because Lean lacks the mathematics: TINNiK Proposition 5, by a direct central limit argument in place of van der Vaart's Theorem
-    16.7. Not forced, and documented: ECToBlob Theorem 4.1 (3-blobs and chains on the unsuppressed graph) and Proposition 5.1 (on the network, not
+    16.7, and Mitchell et al. Propositions 4.1 and 5.1 by the same route. Not forced, and documented: Huber et al. Theorem 5.1's converse (domination, in place of excellent cycles); Kane and Tao's inequality (abc) (Gibbs' inequality, in place of compactness and a numerically located root); Legried et al. (one edge at a time, term by term; its one statement for any weight is forced, since their factorization isn't available for the weight 1/n); Myers and Griffiths' Algorithm 3 (a set of nodes of a network, in place of a history); Gusfield et al. 2004's algorithm (recombination points tried, one rule of cluster inclusion, a proof in place of the final check), its Corollary 5.1 (gluing in place of moving sites) and reduced galled trees (a threshold on a gall in place of its arrays); ECToBlob Theorem 4.1 (3-blobs and chains on the unsuppressed graph) and Proposition 5.1 (on the network, not
     on each quarnet); TOB-QMC Lemma 1, Lemma 4 (no suppression) and supplement Lemma 8 (a lowest reticulation, not disjoint paths); Allman et al.
     Theorem 1 (a) (the rooted forms select the edge, and one argument follows), Theorem 2 (the same facts on cut-edge splits), and Theorem 3 (two sentences
     unused); Gusfield et al. line 411 (re-rooting and Corollary 3: Bandelt et al. give the decomposition at cut nodes of the median network, neither paper writes
@@ -315,9 +314,8 @@ fidelity:
     line 135 (all shared tops of blobs at once); Ane et al. Proposition 12 (conditioning at the arc). No printed argument to follow, or a source not read: Allman et al. Lemma 1 and its remarks with no
     proof, Baños's claim on level-1 networks; Gusfield et al. lines 329-330, the inflation in Theorem 1 (the paper gives no construction), line 554;
     lower bounds on R for Figures 5 and 8 (the paper
-    runs programs, Lean has a verified search); Gusfield 1991, Semple and Steel 2003 (not read: standard arguments); Gusfield et al.
-    2004 (no surgery; two cases on the states in place of contracting edges for one cycle; one galled tree kept fixed through Section 8; a threshold on a gall in place of its arrays); NANUQ Proposition 9, Buneman's theorem, ASTRAL's
-    dynamic program and the T3 theorems. Narrower than the source: Allman et al.'s remark on the distance between blobs, on one network with M varied (E65). Going beyond the source: Allman et al.'s theorem4_iso, by the splits-equivalence theorem. The forms of Allman et al. that the later papers use (exists_reduction_aux, cfDetectable_generic) aren't the
+    runs programs, Lean has a verified search); Gusfield 1991, Semple and Steel 2003 (not read: standard arguments);  NANUQ Proposition 9, Buneman's theorem, ASTRAL's
+    dynamic program and the T3 theorems. Narrower than the source: Allman et al.'s remark on the distance between blobs, on one network for every k >= 1, with M varied (E65); Dinh and Baños, rooted on a hybrid edge, with pendant and hybrid lengths 1 and rho = 0. Going beyond the source: Allman et al.'s theorem4_iso, by the splits-equivalence theorem. The forms of Allman et al. that the later papers use (exists_reduction_aux, cfDetectable_generic) aren't the
     paper's proofs of its numbered results, which are theorem1, theorem1_b, corollary1. docs/route_differences.tsv records every difference of route.
 
 review:
@@ -526,21 +524,16 @@ alignment:
       module: "MainResults"
       status: "proved"
       note: "Not in the paper."
-    - source: "Gusfield et al. 2007, Theorem 10 as printed, single crossovers"
+    - source: "Gusfield et al. 2007, Theorem 10 with R(M + S) read by the definition at line 385, single crossovers"
       lean: "TreeOfBlobs.gusfield_theorem10Printed_single_false"
       module: "MainResults"
-      status: "proved, refutes the source"
-      note: "Fourteen rows on eight sites."
-    - source: "Gusfield et al. 2007, Theorem 10 as printed, multiple crossovers"
+      status: "proved, refutes that literal reading"
+      note: "Fourteen rows on eight sites. The paper's own use of the symbol at lines 525 and 560 suggests a slip for R_S(M), under which the theorem is proved."
+    - source: "Gusfield et al. 2007, Theorem 10 with R(M + S) read by the definition at line 385, multiple crossovers"
       lean: "TreeOfBlobs.gusfield_theorem10Printed_multiple_false_of_search"
       module: "MainResults"
       status: "proved under a stated hypothesis"
       note: "Conditional: its hypothesis printedMSearch, a finite computation, isn't proved, since the kernel hasn't completed it. Seventy-four rows on thirty-four sites."
-    - source: "Gusfield et al. 2007, line 425, by roots"
-      lean: "TreeOfBlobs.gusfield_minDecomposable_iff_exists_root"
-      module: "MainResults"
-      status: "proved"
-      note: "Line 425 itself is open; this is its reduction to optimal roots."
     - source: "Gusfield et al. 2007, line 329, with the entry node counted"
       lean: "TreeOfBlobs.gusfield_exists_isEfficientAtEntry"
       module: "MainResults"
@@ -726,5 +719,65 @@ alignment:
       module: "MainResults"
       status: "proved"
       note: "On quartets, with an arbitrary law on each edge."
+    - source: "ECToBlob, equation (3.3) as printed"
+      lean: "TreeOfBlobs.ectoblob_not_equation33Printed"
+      module: "MainResults"
+      status: "proved, refutes the source"
+      note: "E2."
+    - source: "ECToBlob, Theorem 8.2 on the literal general model"
+      lean: "TreeOfBlobs.ectoblob_not_theorem8_2_literal"
+      module: "MainResults"
+      status: "proved, refutes the literal reading"
+      note: "E10. About ECToBlob's levels, on an abstract model; not a counterexample under the NMSC."
+    - source: "TOB-QMC supplement, the margin of Lemma 4 as printed"
+      lean: "TreeOfBlobs.tobqmc_not_printedPiMin_pos"
+      module: "MainResults"
+      status: "proved, refutes the source"
+      note: "E22."
+    - source: "TOB-QMC supplement, Lemma 4 as printed"
+      lean: "TreeOfBlobs.tobqmc_not_exists_printedError_lt"
+      module: "MainResults"
+      status: "proved, refutes the source"
+      note: "E22: no instance on a network whose tree of blobs is not a star."
+    - source: "TOB-QMC supplement, the converse of Lemma 2"
+      lean: "TreeOfBlobs.tobqmc_not_lemma2Converse"
+      module: "MainResults"
+      status: "proved, refutes the source's definition"
+      note: "E23: with N|Y the induced subnetwork, as the supplement defines it. Under the gloss in its proof, a blob of N, the converse doesn't fail."
+    - source: "TOB-QMC supplement, Lemma 7 at level 2"
+      lean: "TreeOfBlobs.tobqmc_not_supplementLemma7"
+      module: "MainResults"
+      status: "proved, refutes the source"
+      note: "E25."
+    - source: "TOB-QMC supplement, Theorem 1 at level 2"
+      lean: "TreeOfBlobs.tobqmc_not_supplementTheorem1"
+      module: "MainResults"
+      status: "proved, refutes the source"
+      note: "E25: at rho = 1, with relaxed nonanomalous read as condition 1 of Definition 1 and T-quartet nonanomaly."
+    - source: "TOB-QMC, Theorem 2 without level 1"
+      lean: "TreeOfBlobs.tobqmc_not_theorem2_without_level_one"
+      module: "MainResults"
+      status: "proved, refutes a stronger form"
+      note: "E25: v5 has the hypothesis."
+    - source: "TOB-QMC supplement, level 2, the T3 option at rho = 1"
+      lean: "TreeOfBlobs.tobqmc_tendsto_tobqmcT3_rho_one"
+      module: "MainResults"
+      status: "proved, refutes the source"
+      note: "E25."
+    - source: "TOB-QMC supplement, level 2, generic parameters at rho = 0"
+      lean: "TreeOfBlobs.tobqmc_forGenericParams_tendsto"
+      module: "MainResults"
+      status: "proved, refutes the source"
+      note: "E25: other values of rho aren't proved."
+    - source: "TINNiK, Appendix C.1 on the open cut model"
+      lean: "TreeOfBlobs.tinnik_not_exists_generatingCutModel_maximizer"
+      module: "MainResults"
+      status: "proved, refutes the source"
+      note: "E31: at counts in one coordinate; not every count with a zero fails."
+    - source: "Studier, Keppler 1988, the Lemma at a polytomy"
+      lean: "TreeOfBlobs.studierKeppler_not_lemmaAsPrinted"
+      module: "MainResults"
+      status: "proved, refutes a reading"
+      note: "If the letter means binary trees, a failure of wording."
 
-acknowledgements: "Lean, Mathlib; the Phylogenetics library of the requester (lean4-phylogenetics), for adapted Kingman coalescent modules; the authors of the papers and sources."
+acknowledgements: "Lean, Mathlib; the Phylogenetics library of the maintainer (lean4-phylogenetics), for adapted Kingman coalescent modules; the authors of the papers and sources."

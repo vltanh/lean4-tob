@@ -11,9 +11,9 @@ public import Gusfield2007.Parsimony
 
 * **Theorem 10 without an ancestral sequence.** `theorem10` holds in each crossover model with no hypothesis on the columns, through the labels of a tight network on two sites with different columns (`exists_row_of_eq_haplotypeBound`). The same step gives the
   unrooted form, `minDecomposable_of_haplotypeBound_eq`.
-* **Theorem 10 as printed**, with the unrooted count `R(M + S)`, is false for single crossovers: `theorem10Printed_single_false`, on fourteen rows and eight sites. Its lower bounds are by `lt_RS_single_of_closed`. It holds when the tight root differs from `S` in at most one
+* **Theorem 10 with `R(M + S)` read by line 385's definition**, the minimum over all ancestral sequences, is false for single crossovers: `theorem10Printed_single_false`, on fourteen rows and eight sites. The paper uses the symbol at lines 525 and 560 for a network with ancestral sequence `S`, which suggests a slip for `R_S(M)`, and with that the statement is `theorem10`. Its lower bounds are by `lt_RS_single_of_closed`. It holds when the tight root differs from `S` in at most one
   component, in both models: `sMinDecomposable_of_tight_root`, by `RS_restrict_gap_le`. For multiple crossovers, `Gusfield2007.Theorem10PrintedMultiple` has a counterexample, given one computation that the kernel hasn't completed.
-* **Line 425**, `MinDecomposableOfForallS`, is open. What's proved is its reduction to roots, `minDecomposable_iff_exists_root`, and the case `H(M) = R(M)`, `minDecomposableOfForallS_of_haplotypeBound_eq`.
+* **Line 425**, `MinDecomposableOfForallS`, is open. What's proved is the case `H(M) = R(M)`, `minDecomposableOfForallS_of_haplotypeBound_eq`.
 -/
 
 @[expose] public section
@@ -74,17 +74,6 @@ theorem minDecomposable_of_haplotypeBound_eq {c : Crossover} {M : Finset (ι →
   rw [finsum_connectedComponent_congr hreach (fun s => RS c (s.domRestrict N.ancestral) (restrictRows s M))] at h₅
   have hle : R c M ≤ N'.recombCount := Nat.sInf_le ⟨a', b', N', h₁, h₂, rfl⟩
   exact ⟨a', b', N', h₁, h₂, h₄.of_reachable_iff hreach, le_antisymm (by omega) hle⟩
-
-/-- **Line 425, by roots** (`g:line425_roots`). When `M` is S-min decomposable for all `S`, it's min decomposable exactly when some optimal root doesn't merge components of `G(M)`. So `MinDecomposableOfForallS` says that, under its hypothesis, some optimal root doesn't merge. -/
-theorem minDecomposable_iff_exists_root {c : Crossover} {M : Finset (ι → Bool)} (hM : M.Nonempty) (hall : ∀ S, SMinDecomposable c S M) :
-    MinDecomposable c M ↔ ∃ S, RS c S M = R c M ∧ ∀ i j, (conflictGraph S M).Reachable i j ↔ (incompatGraph M).Reachable i j := by
-  constructor
-  · rintro ⟨a, b, N, h₁, h₂, h₃, h₄⟩
-    refine ⟨N.ancestral, le_antisymm ?_ (R_le_RS c _ hM), reachable_conflictGraph_iff h₂ h₃⟩
-    rw [← h₄]
-    exact RS_le_recombCount N h₁ h₂ rfl
-  · rintro ⟨S, hS, hG⟩
-    exact minDecomposable_of_sMinDecomposable (hall S) hS hG
 
 /-- **Line 425 when the haplotype bound is tight** (`g:line425_tight`). `MinDecomposableOfForallS` holds when `H(M) = R(M)`, without its hypothesis being used. -/
 theorem minDecomposableOfForallS_of_haplotypeBound_eq {c : Crossover} {M : Finset (ι → Bool)} (hM : M.Nonempty) (hC : NoConstantColumn M)
@@ -186,7 +175,7 @@ theorem lt_RS_single_of_closed {S : Fin m → Bool} {M K : Finset (Fin m → Boo
 
 end ClosedSet
 
-/-! ### Theorem 10 as printed, when the tight root differs from `S` in one component -/
+/-! ### Theorem 10 with `R(M + S)` read literally, when the tight root differs from `S` in one component -/
 
 section OneComponent
 
@@ -426,7 +415,7 @@ theorem RS_restrict_gap_le (hc : c = .single ∨ c = .multiple) {M : Finset (ι 
   have hle := Finset.card_le_card hT
   omega
 
-/-- **Theorem 10 as printed, when the tight root differs from `S` in at most one component** (`g:thm10_printed_one_component`). Let the columns of `M + S` be distinct, in the single-crossover or multiple-crossover model, and let `S'` have `H(M + S) = R_{S'}(M + S)`: when
+/-- **Theorem 10 with `R(M + S)` read literally, when the tight root differs from `S` in at most one component** (`g:thm10_printed_one_component`). Let the columns of `M + S` be distinct, in the single-crossover or multiple-crossover model, and let `S'` have `H(M + S) = R_{S'}(M + S)`: when
 `H(M + S) = R(M + S)`, that's any root of an optimal network for `M + S`. If `S'` and `S` agree outside one component of `G_S(M)`, then `M` is S-min decomposable.
 
 The other components are tight at `S`, because they are tight at `S'`, and the excess of the one left over the haplotype bound is at most that of `M + S` (`RS_restrict_gap_le`). `theorem10Printed_single_false` shows that for single crossovers this can't be extended to two components. -/
@@ -522,11 +511,11 @@ theorem sMinDecomposable_of_tight_root (hc : c = .single ∨ c = .multiple) {M :
 
 end OneComponent
 
-/-! ### Theorem 10 as printed is false for single crossovers -/
+/-! ### Theorem 10 with `R(M + S)` read literally is false for single crossovers -/
 
 section Printed
 
-/-- Fourteen rows on eight sites: a counterexample to Theorem 10 as printed, for single crossovers. The sites `0, 1, 4, 5` are one component and `2, 3, 6, 7` the other. -/
+/-- Fourteen rows on eight sites: a counterexample to Theorem 10 with `R(M + S)` read by line 385's definition, for single crossovers. The sites `0, 1, 4, 5` are one component and `2, 3, 6, 7` the other. -/
 def printedRows : Finset (Fin 8 → Bool) :=
   {ofBits [0, 0, 0, 0, 0, 0, 0, 0], ofBits [0, 0, 1, 0, 0, 0, 0, 0], ofBits [0, 0, 0, 1, 0, 0, 0, 0], ofBits [0, 0, 1, 0, 0, 0, 1, 0],
    ofBits [0, 0, 1, 1, 0, 0, 1, 0], ofBits [1, 0, 1, 1, 0, 0, 1, 0], ofBits [0, 1, 1, 1, 0, 0, 1, 0], ofBits [1, 0, 1, 1, 1, 0, 1, 0],
@@ -686,8 +675,8 @@ theorem minDecomposable_printedRows : MinDecomposable .single printedRows :=
     rw [haplotypeBound_printedRows, R_printedRows]
     rfl)
 
-/-- **Theorem 10 as printed is false for single crossovers** (`g:thm10_printed_false`). "If `H(M + S) = R¹(M + S)` then `M` is S-min-1 decomposable" (line 568) fails on `printedRows`, with `S = printedRoot`, a row, and with the columns of `M + S` distinct: `H(M + S) = R¹(M + S) = 5`,
-the root `00000000` being tight, while `R¹_S(M) = 6` and the two components of `G_S(M)` need at least `4` and `3` recombination nodes for their sequences at `S`. This is a counterexample to the printed statement only: with the rooted count, the statement is `theorem10`, which is what the proof
+/-- **Theorem 10 is false for single crossovers if `R¹(M + S)` is read by line 385's definition** (`g:thm10_printed_false`). "If `H(M + S) = R¹(M + S)` then `M` is S-min-1 decomposable" (line 568), with that reading, fails on `printedRows`, with `S = printedRoot`, a row, and with the columns of `M + S` distinct: `H(M + S) = R¹(M + S) = 5`,
+the root `00000000` being tight, while `R¹_S(M) = 6` and the two components of `G_S(M)` need at least `4` and `3` recombination nodes for their sequences at `S`. This is a counterexample to that literal reading only. The paper uses the symbol at lines 525 and 560 for a network with ancestral sequence `S`, which suggests a slip for `R¹_S(M)`, and with the rooted count the statement is `theorem10`, which is what the proof
 of the paper is about. -/
 theorem theorem10Printed_single_false : printedRows.Nonempty ∧ NoConstantColumn printedRows ∧
     haplotypeBound (addRow printedRows printedRoot) = R .single (addRow printedRows printedRoot) ∧

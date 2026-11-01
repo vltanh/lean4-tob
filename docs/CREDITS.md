@@ -116,3 +116,33 @@ Figures, from 2026-10-31 18:44 America/Chicago, the user's request, to commit `5
 At that commit: 177 modules, 7,336 jobs in a clean `lake build` with no warnings, 19,669 declarations on the standard axioms, 304 results in the audit's table, and 39 main theorems accepted by Lean's kernel, NanoDa and con-ron.
 
 Totals for the Claude Code session, all rounds and the private follow-up work, to that commit: 19.65 h elapsed; sub-agents 72 (all launched by the main session; at most 11 running at once; 30 resumptions); sub-agent work 57.0 h, 6,093 tool calls; tokens: 19.58M output, 61.44M input, 1,715M cache reads; main session 647 tool calls; tokens: 1.48M output, 3.20M input, 300M cache reads.
+
+## Finishing what the papers claim (2026-11-01)
+
+The user asked, of Section 9 of the report: "why don't we finish the formalizations in 9? leave only empirical and wrong stuff". Later, of what was still left: "if they are cited but unused then we can just leave them out", and "anything private should just go to the private notes, right?"
+
+The main session chose how to carry that out: a wrong statement is listed with its counterexample in Lean; Section 9 has a short list of what stays open; the results left out aren't listed; and that a search outside Lean supports the hypothesis of the one conditional theorem is stated, with its limits.
+
+How it was made:
+
+- Nine agents worked in parallel on private snapshots of the build, one set of files each, and most were sent back for what their first report left: the limit laws and densities of the T3 and T1 tests; the integer program, Algorithms 1 and 3, the conjecture of line 590 through Klöpper's thesis, and Song and Hein, read at last; galled trees, optimality, and the algorithm with its count; line 329 at the entry node, line 299 at any node, `R¹(M_d) = 3d`, and merged blobs; Allman et al.'s outline and remaining remarks; TOB-QMC's implementation, missing taxa, running times, Kane and Tao, bridge-finding, Huber et al.'s converse, and Dinh and Baños; NANUQ's source definitions; ECToBlob's displayed tree model, Remark 3.4 and §10; and the open statements on Gusfield et al., where Theorem 10 turned out false if `R(M + S)` is read by line 385's definition.
+- One agent integrated everything: the audit's lists, the routes, a clean build and the three kernels.
+- Another brought the documents up to date, checking each claim against the Lean and the sources, and an independent agent checked those documents. Its findings on fairness to the authors are applied: Theorem 10 is graded by what the paper's own use of its symbol suggests, and Section 9's list holds only what is false.
+- After the commit below, one more agent stated the remaining counterexamples as theorems in [`src/`](../src), so that five scripts, `SourceChecks`, `IndistinguishabilityCheck`, `TOBQMCGapCheck`, `SunletCheck` and `BoundaryCheck`, could go.
+
+Figures, from the `session_stats.py` script of the formalize-math-paper skill, from the user's request at 2026-11-01 06:58 America/Chicago to commit `282215c` at 11:34:39 -06:00, the commit that completes the proofs:
+
+- Elapsed time: 4.61 h.
+- Sub-agents: 10 (all launched by the main session; at most 9 running at once; 8 resumptions); total working time 15.6 h.
+- Tool calls: 1,498 for the sub-agents, 42 for the main session.
+- Tokens, sub-agents: 5.48M output, 16.13M input, 612M cache reads. Main session: 0.05M output, 0.12M input, 29M cache reads.
+- Model calls: 1,280 to `claude-opus-5-5` (53 main session, 1,227 sub-agents).
+- Cost was not tracked. These figures leave out the documents made after that commit.
+
+From the last figures, at commit `5693efe`, to commit `282215c`, which adds the documents and the literature search of the last round: 9.50 h elapsed; sub-agents 14 (12 launched by the main session; at most 9 running at once; 10 resumptions); sub-agent work 19.7 h, 1,951 tool calls; tokens: 6.41M output, 20.70M input, 742M cache reads; main session 59 tool calls; tokens: 0.08M output, 1.06M input, 38M cache reads.
+
+At that commit: 256 modules in [`src/`](../src), 147,954 lines of Lean, 8,646 jobs in a clean `lake build` with no warnings, 26,218 declarations on the standard axioms, 587 results in the audit's table, and 79 main theorems accepted by Lean's kernel, NanoDa and con-ron, one of them conditional on a computation that none of those kernels has checked.
+
+Totals for the Claude Code session, all rounds and the private follow-up work, to that commit: 29.14 h elapsed; sub-agents 85 (84 launched by the main session; at most 11 running at once; 40 resumptions); sub-agent work 76.8 h, 8,044 tool calls; tokens: 25.97M output, 82.14M input, 2,456M cache reads; main session 706 tool calls; tokens: 1.55M output, 4.25M input, 338M cache reads.
+
+At the end of this round, after those later edits: 264 modules in [`src/`](../src), 149,784 lines of Lean, 8,662 jobs in `lake build` with no warnings, 26,534 declarations on the standard axioms, 598 results in the audit's table, and 90 main theorems accepted by Lean's kernel, NanoDa and con-ron, in 6:55, with con-ron at 72,580 declarations, one of them conditional on a computation that none of those kernels has checked.

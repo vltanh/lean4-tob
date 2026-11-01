@@ -34,7 +34,7 @@ graph is a parameter of `IsReducedGalledTree`: `conflictGraph` of the ancestral 
 - `lemma2_3` concludes that the sites are in one connected component. The source's exchange, "`i` conflicts with `j'` or `i'` conflicts with `j`", is `Straddles.cross`, for the sites ordered by kind.
 - The unrooted form isn't in the source, which points to its reference [19], not read. The same proof covers it, since `G_S(M) = G(M + S)`.
 
-**Corollary 2.1 of the source** is false as stated, in one direction: `corollary2_1_printed_false`, a node of a gall with no edge off it has a label that isn't a row. Its proof shows the other direction, and that is what's used here (`exists_mem_label_eq`).
+**Corollary 2.1 of the source** is false as stated, in one direction: `corollary2_1_printed_false`, a node of a gall with no edge off it has a label that isn't a row. Its proof shows the other direction, and that is what's used here (`exists_mem_label_eq`). The false direction holds when every non-coalescent node branches, by Lemma 2.1 (`label_tgt_of_notMem`), and the source uses it in its Section 3 with no such hypothesis.
 
 **The wording of line 180.** 2007 says a galled tree is reduced "if every recombination cycle contains some incompatible sites". The source also asks for "no unconflicted sites". With the printed wording the claim fails: `line180_printed_false`, with the rows `000`, `101`, `010`, `110`.
 

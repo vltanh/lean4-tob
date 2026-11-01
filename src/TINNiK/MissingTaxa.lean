@@ -49,7 +49,7 @@ theorem starPValue_of_forall_eq_zero {c : QuartetTree X → ℝ} {q : Finset X} 
   have h₂ : ∑ r ∈ treesOn q, c r = 0 := sum_eq_zero h
   simp [starPValue, chiSqTwoTail, starStat, h₁, h₂]
 
-/-- **Why the proviso is needed.** A set of four taxa that occurs on no gene tree has a zero vector as its qcCF, and is judged a B-quartet at any level
+/-- **Why the proviso of line 198 is needed to run the algorithm.** A set of four taxa that occurs on no gene tree has a zero vector as its qcCF, and is judged a B-quartet at any level
 `β ≤ 1`, whatever the network says. -/
 theorem mem_testedB_of_coverCount_eq_zero {Γ : Type*} [Fintype Γ] {n : ℕ} {sides : Γ → Finset (Finset X)}
     {on : Fin n → Finset X} {ω : Fin n → Γ} (ml : (QuartetTree X → ℝ) → Finset X → QuartetTree X) (α : ℝ) {β : ℝ}
@@ -62,7 +62,7 @@ theorem mem_testedB_of_coverCount_eq_zero {Γ : Type*} [Fintype Γ] {n : ℕ} {s
     exact eq_empty_of_forall_notMem fun j => (hempty ▸ j).elim0
   exact ⟨hq, Or.inl (by rwa [starPValue_of_forall_eq_zero hz])⟩
 
-/-- **The proviso does not give consistency.** A set of four taxa that occurs on one gene tree, which resolves it, has a qcCF `(1, 0, 0)`, and the star
+/-- **What the generalization of line 202 needs, beyond the proviso of line 198.** A set of four taxa that occurs on one gene tree, which resolves it, has a qcCF `(1, 0, 0)`, and the star
 test has p-value `1/3`, so at levels `β ≤ 1/3` it is judged a B-quartet, whatever the network says. So the tests are not right on it however
 many gene trees there are, if only one of them contains it. -/
 theorem mem_testedB_of_coverCount_eq_one {Γ : Type*} [Fintype Γ] {n : ℕ} {sides : Γ → Finset (Finset X)}

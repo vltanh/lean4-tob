@@ -296,7 +296,7 @@ theorem tendsto_star {Γ : Type*} [Fintype Γ] {dist : Γ → ℝ} {sides : Γ �
   exact hω
 
 /-- At a strictly cut CF the maximum likelihood topology is the cut split, and the cut test does not reject. -/
-private theorem tendsto_good_cut {V E : Type*} [Fintype V] [Fintype E] [Nonempty X]
+theorem tendsto_good_cut {V E : Type*} [Fintype V] [Fintype E] [Nonempty X]
     {N : RootedNetwork V E X} (hN : N.IsPhylogenetic) {θ : MetricData E} (hθ : N.IsMetric θ)
     {ρ : ℝ} (hρ : 0 ≤ ρ ∧ ρ ≤ 1) {α : ℕ → ℝ} (hα₀ : Tendsto α atTop (𝓝 0))
     {ml : (QuartetTree X → ℝ) → Finset X → QuartetTree X}

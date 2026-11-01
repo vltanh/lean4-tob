@@ -10,7 +10,7 @@ No submission to [Palomar](https://github.com/mathlib-initiative) is planned. Th
   scripts/check_kernels.sh palomar/comparator.json
   ```
 
-  This checks the closure of each of the 39 theorems under Lean's kernel, NanoDa and con-ron, and rejects `sorryAx`. It does not
+  This checks the closure of each of the 90 theorems under Lean's kernel, NanoDa and con-ron, and rejects `sorryAx`. One of them has a computation as a visible hypothesis, which this doesn't check. It does not
   compare a separate statement file with a proof, which is what Palomar's Challenge and Solution are for. `lake comparator`,
   `leanexport` and `con-ron` come from the toolchain under `lake env`.
 - `formalization.yaml` is the project's metadata, with the statements aligned to the `TreeOfBlobs.*` theorems of `src/MainResults.lean`, and its fidelity section lists every divergence from the five papers. `docs/REPORT.md` has the details.

@@ -43,7 +43,6 @@
     "TreeOfBlobs.gusfield_theorem10_unrooted",
     "TreeOfBlobs.gusfield_theorem10Printed_single_false",
     "TreeOfBlobs.gusfield_theorem10Printed_multiple_false_of_search",
-    "TreeOfBlobs.gusfield_minDecomposable_iff_exists_root",
     "TreeOfBlobs.gusfield_exists_isEfficientAtEntry",
     "TreeOfBlobs.gusfield_treeness_merged_false",
     "TreeOfBlobs.gusfield_Md_R_eq",
@@ -80,7 +79,19 @@
     "TreeOfBlobs.huber_theorem5_1",
     "TreeOfBlobs.dinhBanos_theorem1",
     "TreeOfBlobs.kaneTao_theorem1",
-    "TreeOfBlobs.legried_theorem1"
+    "TreeOfBlobs.legried_theorem1",
+    "TreeOfBlobs.ectoblob_not_equation33Printed",
+    "TreeOfBlobs.ectoblob_not_theorem8_2_literal",
+    "TreeOfBlobs.tobqmc_not_printedPiMin_pos",
+    "TreeOfBlobs.tobqmc_not_exists_printedError_lt",
+    "TreeOfBlobs.tobqmc_not_lemma2Converse",
+    "TreeOfBlobs.tobqmc_not_supplementLemma7",
+    "TreeOfBlobs.tobqmc_not_supplementTheorem1",
+    "TreeOfBlobs.tobqmc_not_theorem2_without_level_one",
+    "TreeOfBlobs.tobqmc_tendsto_tobqmcT3_rho_one",
+    "TreeOfBlobs.tobqmc_forGenericParams_tendsto",
+    "TreeOfBlobs.tinnik_not_exists_generatingCutModel_maximizer",
+    "TreeOfBlobs.studierKeppler_not_lemmaAsPrinted"
   ],
   "definition_names": [],
   "permitted_axioms": [

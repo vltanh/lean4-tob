@@ -10,7 +10,7 @@ Recorded 2026-10-27, and brought up to date on 2026-11-01 (America/Chicago).
 - Allman et al. 2023: Allman, Baños, Mitchell and Rhodes, *The tree of blobs of a species network: identifiability under the coalescent*, [J. Math. Biol. 86, 10 (2023)](https://doi.org/10.1007/s00285-022-01838-9), read in the PMC author manuscript NIHMS1884071 (PMC10062380) and the arXiv TeX.
 - Gusfield et al. 2007: Gusfield, Bansal, Bafna and Song, *A decomposition theory for phylogenetic networks and incompatible characters*, [J. Comput. Biol. 14, 1247-1272 (2007)](https://doi.org/10.1089/cmb.2006.0137), read in the PMC author manuscript (PMC2581772), and, for the symbols that its plain text loses, in an [author's copy](https://people.eecs.berkeley.edu/~yss/Pub/decomposition.pdf) on Yun Song's page, made from a DVI file on 2008-01-19, with the same words apart from moved floats, footnotes and hyphenation. That copy isn't the journal's typeset text.
 
-Downloads, working inventories and notes are private, and aren't in this repository. [`sources.json`](sources.json) has the hashes of the texts that the line numbers refer to. The TINNiK publisher XML includes TeX equations, but is not the authors' original TeX source. The journal's text of Allman et al. 2023 and of Gusfield et al. 2007 wasn't reachable, so the findings on them are about the authors' versions: [`REPORT.md`](REPORT.md) marks those that may not apply to the journal's text.
+Downloads, working inventories and notes are private, and aren't in this repository. [`sources.json`](sources.json) has the hashes of the texts that the line numbers refer to, and of the later sources that were read. The TINNiK publisher XML includes TeX equations, but is not the authors' original TeX source. The journal's text of Allman et al. 2023 and of Gusfield et al. 2007 wasn't reachable, so the findings on them are about the authors' versions: [`REPORT.md`](REPORT.md) marks those that may not apply to the journal's text.
 
 No author TeX source exists for ECToBlob, TOB-QMC, TINNiK or Gusfield et al. 2007, so their rows of `docs/paper_routes.tsv` are written by hand from these sources. Those of Allman et al. 2023 are checked against `route_check.py extract` on the arXiv TeX.
 
@@ -26,6 +26,9 @@ The docstrings locate a passage by the lines of a text of the paper. The texts a
 | Allman et al. 2023 | a line of the plain text of the PMC page (PMC10062380), one line per paragraph: "the PMC text, line 149" |
 | Gusfield et al. 2007 | a line of the plain text of the PMC page (PMC2581772), one line per paragraph: "line 342". The misprints in symbols were read in the author's copy above |
 | NANUQ | a line of the plain text of arXiv v1 |
+| Legried et al. 2021 | a line of `pdftotext -layout` run on the copy on NSF PAR (hash in `docs/sources.json`) |
+
+The other sources are located by page, section or equation.
 
 The user supplied `ectob_supp.pdf` (6 pages) and `tob-qmc_supp.pdf` (43 pages) from Downloads on 2026-10-27. Both have been read and hashed. The ECToBlob supplement contains simulation appendices A/B. The TOB-QMC supplement is internally dated February 26, 2026 and uses some result numbers that differ from main v5. Its precise version linkage is unconfirmed; the internal date alone does not establish that a later supplement exists. Its mathematical claims are inventoried separately with a provisional crosswalk to the main text.
 
@@ -65,7 +68,7 @@ On 2026-10-31 the user decided that Palomar is not a target. `src/MainResults.le
 
 ## Authorized corrections
 
-The user explicitly approved using the closed probability simplex for TINNiK maximum-likelihood estimation while keeping the generating distribution strictly positive. The open-domain counterexample and correction are checked in `scripts/BoundaryCheck.lean`. On 2026-10-27 the user also explicitly approved restricting ECToBlob Theorem 8.2 to generic numerical parameters, outside the exceptional sets in both converse clauses of Assumption 1 for every induced quartet. This is a correction to the printed theorem, justified by E10 in REPORT.md, not an inferred standing hypothesis. The model-level generic claim and the pointwise parameter restriction are kept separate in Lean (`ECToBlob.theorem8_2_generic` and `ECToBlob.theorem8_2`).
+The user explicitly approved using the closed probability simplex for TINNiK maximum-likelihood estimation while keeping the generating distribution strictly positive. The open-domain counterexample is `TINNiK.not_exists_generatingCutModel_maximizer`, in `src/TINNiK/Statistics/OpenCutModel.lean`. On 2026-10-27 the user also explicitly approved restricting ECToBlob Theorem 8.2 to generic numerical parameters, outside the exceptional sets in both converse clauses of Assumption 1 for every induced quartet. This is a correction to the printed theorem, justified by E10 in REPORT.md, not an inferred standing hypothesis. The model-level generic claim and the pointwise parameter restriction are kept separate in Lean (`ECToBlob.theorem8_2_generic` and `ECToBlob.theorem8_2`).
 
 The user also approved retaining only the valid forward implication of supplied TOB-QMC supplement Lemma 2: a resolved quartet on the full tree of blobs implies that its induced subnetwork is treelike. The false converse is documented with a five-taxon sunlet counterexample (E23). The main v5 already distinguishes these two kinds of quartet.
 
@@ -74,6 +77,12 @@ The user approved requiring a nontrivial blob in supplied TOB-QMC supplement Lem
 ## Correction agreed on 2026-10-31
 
 The user agreed to the correction E11 of REPORT.md: the Cauchy transform is extended continuously at `p = 1`, where the printed formula is undefined, and the Cauchy and CBC variants of ECToBlob's Theorem 8.2 carry the hypothesis of positive alternatives on T1-strict quartets, on the strength of a counterexample that an independent reader checked. A finite value of the transform at `p = 1`, as in the authors' R code, was the alternative, and was not chosen.
+
+## Decisions of 2026-11-01
+
+Of Section 9 of [`REPORT.md`](REPORT.md), the user said: "leave only empirical and wrong stuff"; of cited results, "if they are cited but unused then we can just leave them out"; and "anything private should just go to the private notes".
+
+The main session of the formalization chose the rest: each false statement is listed with its counterexample in Lean, with a list of what stays open, and the results left out aren't listed. One theorem, [`TreeOfBlobs.gusfield_theorem10Printed_multiple_false_of_search`](../src/MainResults.lean), has a finite computation as a visible hypothesis, which Lean's kernel hasn't completed. Two separate programs by the same author, not in the repository, and `#eval` support it, and it's labelled conditional wherever it's stated. No other theorem depends on it.
 
 ## Readings
 

@@ -552,12 +552,12 @@ theorem visibleOfTightPrinted_false : ¬ VisibleOfTightPrinted .single twoEqualC
   · have := congrFun hr' 1
     simp [chainNet, ofBits] at this
 
-/-- **Theorem 10, the first part as printed** (`g:thm10_printed`). "For a set of sequences `M` and a specified ancestral sequence `S`, if `H(M + S) = R¹(M + S)` then `M` is
+/-- **Theorem 10, the first part, with `R(M + S)` read literally** (`g:thm10_printed`). "For a set of sequences `M` and a specified ancestral sequence `S`, if `H(M + S) = R¹(M + S)` then `M` is
 S-min-1 decomposable, and if `H(M + S) = R(M + S)` then `M` is S-min decomposable" (line 568).
 
-As printed it's false for single crossovers: `theorem10Printed_single_false`, on fourteen rows and eight sites, in `Gusfield2007.OpenStatements`. For multiple crossovers, `theorem10Printed_multiple_false_of_search` has a counterexample given one computation that the kernel hasn't completed. The proof reasons on an optimal network for `M` with ancestral sequence `S`, using `R_S(M)` nodes, and treats that number
+With `R` as line 385 defines it, the minimum over all networks, this is false for single crossovers: `theorem10Printed_single_false`, on fourteen rows and eight sites, in `Gusfield2007.OpenStatements`. For multiple crossovers, `theorem10Printed_multiple_false_of_search` has a counterexample given one computation that the kernel hasn't completed. The paper uses the symbol at lines 525 and 560 for a network with ancestral sequence `S`, which suggests a slip for `R_S(M)`, and with that the statement is true. The proof reasons on an optimal network for `M` with ancestral sequence `S`, using `R_S(M)` nodes, and treats that number
 as `R(M + S)`, the minimum over all ancestral sequences (lines 560 to 563). They can differ under the hypothesis: for `M + S = {0000, 0101, 1000, 1010, 1110, 1111}` and `S = 0101`, with multiple
-crossovers, `H(M + S) = R(M + S) = 1` and `R_S(M) = 2`. If `R_S(M) > R(M + S)`, the tight network has another root, and the proof doesn't apply. The form with `R_S(M)`, as at line 525, is `theorem10`, which is what the proof of Theorem 6 needs. The printed form holds when the tight root differs from `S` in at most one component (`sMinDecomposable_of_tight_root`). -/
+crossovers, `H(M + S) = R(M + S) = 1` and `R_S(M) = 2`. If `R_S(M) > R(M + S)`, the tight network has another root, and the proof doesn't apply. The form with `R_S(M)` is `theorem10`, which is what the proof of Theorem 6 needs. This literal form holds when the tight root differs from `S` in at most one component (`sMinDecomposable_of_tight_root`). -/
 def Theorem10Printed (c : Crossover) (M : Finset (ι → Bool)) (S : ι → Bool) : Prop :=
   haplotypeBound (addRow M S) = R c (addRow M S) → SMinDecomposable c S M
 
@@ -676,7 +676,7 @@ theorem breaksAt_unique_of_eq_haplotypeBound (N : Network ι V E) {T : Finset (�
 
 /-- **Theorem 10, with the ancestral sequence** (`g:thm10`). The proof at lines 560 to 564 is for this form: if `H(M + S) = R¹_S(M)` then `M` is S-min-1 decomposable, and if `H(M + S) = R_S(M)` then `M` is S-min decomposable; here for each crossover model, with no hypothesis on the columns.
 
-Departures from the paper. `R¹_S(M)`, `R_S(M)` in place of `R¹(M + S)`, `R(M + S)`, because the proof's network has ancestral sequence `S`: the form with `R(M + S)` is `Theorem10Printed`, which is false for single crossovers (`theorem10Printed_single_false`). And the paper's proof has every node visible, at line 560, which is false when `M + S` has identical columns (`visibleOfTightPrinted_false`). Lean has the pair of labels on two sites with different columns (`exists_row_of_eq_haplotypeBound`), which is what the proof of Corollary 2 uses from visibility, and then Theorem 7 applies as in that proof. When the columns are distinct the paper's proof goes through: `sMinDecomposable_of_haplotype_tight`. -/
+Departures from the paper. `R¹_S(M)`, `R_S(M)` in place of `R¹(M + S)`, `R(M + S)`, because the proof's network has ancestral sequence `S`, which is how lines 525 and 560 use the symbol. With `R` as line 385 defines it, the statement is `Theorem10Printed`, which is false for single crossovers (`theorem10Printed_single_false`). And the paper's proof has every node visible, at line 560, which is false when `M + S` has identical columns (`visibleOfTightPrinted_false`). Lean has the pair of labels on two sites with different columns (`exists_row_of_eq_haplotypeBound`), which is what the proof of Corollary 2 uses from visibility, and then Theorem 7 applies as in that proof. When the columns are distinct the paper's proof goes through: `sMinDecomposable_of_haplotype_tight`. -/
 theorem theorem10 {c : Crossover} {M : Finset (ι → Bool)} {S : ι → Bool} (hM : M.Nonempty) (hC : NoConstantColumn M)
     (h : haplotypeBound (addRow M S) = RS c S M) : SMinDecomposable c S M := by
   obtain ⟨a, b, N, hc, hd, hS, hcount⟩ := Nat.sInf_mem (rootedRecombSet_nonempty c S hM)

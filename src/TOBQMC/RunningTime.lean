@@ -719,7 +719,7 @@ theorem taxa_ne_of_mem_multipartitionQuartets {T : Finset (Finset X)} (hT : IsUn
 
 /-! ### The remark on sampling -/
 
-/-- **The example in the supplement's remark** (lines 642-649): with `|A| = |C| = 1` and `|B| = |D| = m`, so `n = 2 m + 2`, the subsets around the bipartition `A ∪ B | C ∪ D` number `C(m + 1, 2)²`, and those with one taxon from each block number `m²`. Their ratio is `4 / (m + 1)² = 16 / n²`. The printed
+/-- **The example in the supplement's remark** (lines 642-647): with `|A| = |C| = 1` and `|B| = |D| = m`, so `n = 2 m + 2`, the subsets around the bipartition `A ∪ B | C ∪ D` number `C(m + 1, 2)²`, and those with one taxon from each block number `m²`. Their ratio is `4 / (m + 1)² = 16 / n²`. The printed
 value, `4 (n - 2)² / (n - 1)⁴`, is not this ratio: it uses probabilities `2 / (n - 1)` and `(n - 2) / (n - 1)` of picking a taxon, which do not sum over the `n` taxa as those of a sampling would. It is of the same order `1 / n²`, which is what the remark uses. -/
 theorem card_around_of_blocks {m : ℕ} (hm : 1 ≤ m) :
     ((m : ℝ) * m) / (((m + 1).choose 2 : ℝ) * ((m + 1).choose 2 : ℝ)) = 16 / (2 * (m : ℝ) + 2) ^ 2 := by

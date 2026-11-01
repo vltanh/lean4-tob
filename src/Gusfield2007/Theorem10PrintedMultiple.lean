@@ -4,10 +4,10 @@ public import Gusfield2007.Components
 public import Gusfield2007.OpenSearch
 
 /-!
-# Gusfield et al. 2007: Theorem 10 as printed, for multiple crossovers
+# Gusfield et al. 2007: Theorem 10 with `R(M + S)` read by line 385's definition, for multiple crossovers
 
 The matrix `printedMRows` has 74 rows and 34 sites, and two components, the sites `0` to `4` and the sites `5` to `33`. With `S = printedMRoot`, one of its rows, `H(M + S) = R(M + S) = 39`, the root `printedMTightRoot` being tight, while `R_S(M) ≤ 42`, and the
-sum over the components for `S` is at least `4 + 39 = 43`. The history at `S` has three labels off the rows, and one of them, on the first component and on the second, is a mix of two others: that's the one recombination that counts twice.
+sum over the components for `S` is at least `4 + 39 = 43`.
 
 The lower bound on the second component is the verified search `LabelSearch.lt_RS_of_check2`. Its computation, `printedMSearch`, is too large for the kernel as written, and it's a hypothesis of the theorem here: everything else is proved.
 -/
@@ -47,7 +47,7 @@ section Printed
 /-- The codes of the rows: bit `i` is the state of the site `i`. -/
 def printedMCodes : List ℕ := [0, 1, 2, 5, 10, 12, 20, 24, 28, 160, 192, 256, 384, 1184, 1600, 4288, 6176, 16384, 24672, 66720, 67232, 98368, 99488, 266432, 268480, 393248, 397504, 1064960, 1572960, 5259264, 5267456, 5783552, 6291552, 7356416, 8390144, 8390208, 16783392, 25173504, 33579104, 58752512, 67207232, 125959680, 134610976, 260570624, 270008416, 530578944, 543162464, 1073741312, 2147483136, 4294966784, 8589934080, 16106127360, 16642998272, 16911433728, 17045651456, 17112760320, 17146314752, 17163091968, 17171480576, 17175674880, 17177772032, 17178820608, 17179344896, 17179607040, 17179738112, 17179803648, 17179836416, 17179852800, 17179860992, 17179865088, 17179867136, 17179868160, 17179868672, 17179868704]
 
-/-- Seventy-four rows on thirty-four sites: a counterexample to Theorem 10 as printed, for multiple crossovers. -/
+/-- Seventy-four rows on thirty-four sites: a counterexample to Theorem 10 with `R(M + S)` read by line 385's definition, for multiple crossovers. -/
 def printedMRows : Finset (Fin 34 → Bool) := (printedMCodes.map dec).toFinset
 
 /-- The ancestral sequence of the counterexample: one of the rows. -/
@@ -289,8 +289,8 @@ theorem le_sum_printedM (hs : printedMSearch) : 43 ≤ ∑ᶠ C : (conflictGraph
   have h₂ := le_RS_printedM₂ hs
   omega
 
-/-- **Theorem 10 as printed, for multiple crossovers: false, given one computation** (`g:thm10_printed_multiple_search`). "If `H(M + S) = R(M + S)` then `M` is S-min decomposable" (line 568) fails on `printedMRows`, with `S = printedMRoot`, a row, and with the columns of `M + S` distinct: `H(M + S) = R(M + S) = 39`,
-while `R_S(M) ≤ 42` and the two components of `G_S(M)` need at least `4` and `39` recombination nodes for their sequences at `S`. This is a counterexample to the printed statement only: with the rooted count the statement is `theorem10`, which is what the proof of the paper is about. The hypothesis `printedMSearch` is the one fact here that isn't proved: the kernel hasn't completed this computation. -/
+/-- **Theorem 10 with `R(M + S)` read by line 385's definition, for multiple crossovers: false, given one computation** (`g:thm10_printed_multiple_search`). "If `H(M + S) = R(M + S)` then `M` is S-min decomposable" (line 568), with that reading, fails on `printedMRows`, with `S = printedMRoot`, a row, and with the columns of `M + S` distinct: `H(M + S) = R(M + S) = 39`,
+while `R_S(M) ≤ 42` and the two components of `G_S(M)` need at least `4` and `39` recombination nodes for their sequences at `S`. This is a counterexample to that literal reading only. The paper uses the symbol at lines 525 and 560 for a network with ancestral sequence `S`, which suggests a slip for `R_S(M)`, and with the rooted count the statement is `theorem10`, which is what the proof of the paper is about. The hypothesis `printedMSearch` is the one fact here that isn't proved: the kernel hasn't completed this computation. -/
 theorem theorem10Printed_multiple_false_of_search (hs : printedMSearch) : printedMRows.Nonempty ∧ NoConstantColumn printedMRows ∧
     haplotypeBound (addRow printedMRows printedMRoot) = R .multiple (addRow printedMRows printedMRoot) ∧
     ¬ SMinDecomposable .multiple printedMRoot printedMRows ∧ ¬ Theorem10Printed .multiple printedMRows printedMRoot := by

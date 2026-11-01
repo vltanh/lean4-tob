@@ -411,7 +411,7 @@ meta def paperResultsMain3 : List (String × Name) :=
    ("Gusfield et al. 2007, Corollary 2", ``Gusfield2007.corollary2),
    ("Gusfield et al. 2007, the network of the counterexample to lines 560 to 563", ``Gusfield2007.chainNet),
    ("Gusfield et al. 2007, the sentence of lines 560 to 563 is false", ``Gusfield2007.visibleOfTightPrinted_false),
-   ("Gusfield et al. 2007, Theorem 10, as printed (a definition)", ``Gusfield2007.Theorem10Printed),
+   ("Gusfield et al. 2007, Theorem 10 with R(M + S) read literally (a definition)", ``Gusfield2007.Theorem10Printed),
    ("Gusfield et al. 2007, line 559, the haplotype bound with an ancestral sequence", ``MyersGriffiths2003.haplotypeBound_addRow_le_RS),
    ("Gusfield et al. 2007, Theorem 10, with the ancestral sequence", ``Gusfield2007.theorem10),
    ("Gusfield et al. 2007, Theorem 6", ``Gusfield2007.theorem6),
@@ -470,16 +470,15 @@ meta def paperResultsGusfield : List (String × Name) :=
    ("Gusfield et al. 2007, With a merged blob, equality doesn't give T′ = T̄", ``Gusfield2007.treeness_merged_tie),
    ("Gusfield et al. 2007, The treeness inequality fails for a blob that merges two components", ``Gusfield2007.treeness_merged_false),
    ("Gusfield et al. 2007, The treeness inequality, for blobs with a site of a non-trivial component", ``Gusfield2007.treeness_le_of_merged),
-   ("Gusfield et al. 2007, Theorem 10 as printed is false for single crossovers", ``Gusfield2007.theorem10Printed_single_false),
+   ("Gusfield et al. 2007, Theorem 10 with R(M + S) read literally is false for single crossovers", ``Gusfield2007.theorem10Printed_single_false),
    ("Gusfield et al. 2007, Theorem 10 without an ancestral sequence", ``Gusfield2007.minDecomposable_of_haplotypeBound_eq),
    ("Gusfield et al. 2007, The gap to the haplotype bound doesn't grow on restricting the sites", ``Gusfield2007.RS_restrict_gap_le),
-   ("Gusfield et al. 2007, Theorem 10 as printed, when the tight root differs from S in at most one component", ``Gusfield2007.sMinDecomposable_of_tight_root),
-   ("Gusfield et al. 2007, Line 425, by roots", ``Gusfield2007.minDecomposable_iff_exists_root),
+   ("Gusfield et al. 2007, Theorem 10 with R(M + S) read literally, when the tight root differs from S in at most one component", ``Gusfield2007.sMinDecomposable_of_tight_root),
    ("Gusfield et al. 2007, Line 425 when the haplotype bound is tight", ``Gusfield2007.minDecomposableOfForallS_of_haplotypeBound_eq),
    ("Gusfield et al. 2007, Line 299, with the root at any node of T̄", ``Gusfield2007.exists_network_rooted_at),
    ("Gusfield et al. 2007, Line 299, with the root at a row", ``Gusfield2007.exists_network_rooted_at_row),
    ("Gusfield et al. 2007, A network deriving all the rows can't have its root at a row", ``Gusfield2007.root_not_mem_range),
-   ("Gusfield et al. 2007, Theorem 10 as printed, for multiple crossovers: false, given one computation", ``Gusfield2007.theorem10Printed_multiple_false_of_search),
+   ("Gusfield et al. 2007, Theorem 10 with R(M + S) read literally, for multiple crossovers: false, given one computation", ``Gusfield2007.theorem10Printed_multiple_false_of_search),
    ("Gusfield, Eddhu, Langley 2004, the proof of Theorem 2.2 (exists_isCycle_of_incompatible)", ``GusfieldEtAl2004.exists_isCycle_of_incompatible),
    ("Gusfield, Eddhu, Langley 2004, the proof of Theorem 2.2 (exists_isCycle_of_conflict)", ``GusfieldEtAl2004.exists_isCycle_of_conflict),
    ("Gusfield, Eddhu, Langley 2004, Lemma 8.2", ``GusfieldEtAl2004.incompatGraph_image_maskCol),
@@ -731,7 +730,19 @@ meta def paperResultsInPassing : List (String × Name) :=
    ("TINNiK, Theorem 4 with missing taxa at given parameters", ``TINNiK.theorem4_missing_of_rejects),
    ("TINNiK, Theorem 4 with missing taxa at parameters with CF-detectability", ``TINNiK.theorem4_missing_of_cfDetectable),
    ("TINNiK, Theorem 4 with missing taxa", ``TINNiK.theorem4_missing),
-   ("TINNiK, The T3 option with missing taxa", ``TINNiK.theorem4T3_missing)]
+   ("TINNiK, The T3 option with missing taxa", ``TINNiK.theorem4T3_missing),
+   ("ECToBlob, equation (3.3) as printed is false", ``ECToBlob.Equation33Counterexample.not_equation33Printed),
+   ("ECToBlob, Theorem 8.2 on the literal general model is false", ``ECToBlob.Theorem82Literal.not_theorem8_2_literal),
+   ("TOB-QMC supplement, the margin of Lemma 4 as printed vanishes", ``TOBQMC.not_printedPiMin_pos),
+   ("TOB-QMC supplement, Lemma 4 as printed has no instance", ``TOBQMC.not_exists_printedError_lt),
+   ("TOB-QMC supplement, the converse of Lemma 2 is false, with the induced subnetwork", ``TOBQMC.SupplementLemma2.not_lemma2Converse),
+   ("TOB-QMC supplement, Lemma 7 is false at level 2", ``TOBQMC.LevelTwo.not_supplementLemma7),
+   ("TOB-QMC supplement, Theorem 1 is false at level 2", ``TOBQMC.LevelTwo.not_supplementTheorem1),
+   ("TOB-QMC, Theorem 2 needs level 1", ``TOBQMC.LevelTwo.not_theorem2_without_level_one),
+   ("TOB-QMC supplement, level 2, the T3 option at rho = 1", ``TOBQMC.LevelTwo.tendsto_tobqmcT3_eq_treeOfBlobs_rho_one),
+   ("TOB-QMC supplement, level 2, generic parameters at rho = 0", ``TOBQMC.LevelTwo.forGenericParams_tendsto_tobqmc_eq_treeOfBlobs),
+   ("TINNiK, no maximum on the open cut model", ``TINNiK.not_exists_generatingCutModel_maximizer),
+   ("Studier, Keppler 1988, the Lemma fails at a polytomy", ``External.StudierKeppler1988.not_lemmaAsPrinted)]
 
 /-- All the labelled results. The list is split because one literal of this length exceeds the limit on elaboration. -/
 meta def paperResults : List (String × Name) :=
@@ -765,7 +776,6 @@ meta def solutionResults : List Name :=
    ``TreeOfBlobs.gusfield_rootedConjecture_multiple_false, ``TreeOfBlobs.gusfield_theorem10_unrooted,
    ``TreeOfBlobs.gusfield_theorem10Printed_single_false,
    ``TreeOfBlobs.gusfield_theorem10Printed_multiple_false_of_search,
-   ``TreeOfBlobs.gusfield_minDecomposable_iff_exists_root,
    ``TreeOfBlobs.gusfield_exists_isEfficientAtEntry, ``TreeOfBlobs.gusfield_treeness_merged_false,
    ``TreeOfBlobs.gusfield_Md_R_eq, ``TreeOfBlobs.gusfield_conjecture22_false,
    ``TreeOfBlobs.galled_exists_isCycle_of_conflict, ``TreeOfBlobs.galled_theorem2_2,
@@ -783,7 +793,19 @@ meta def solutionResults : List Name :=
    ``TreeOfBlobs.nanuq_theorem36_missing, ``TreeOfBlobs.mitchell_proposition4_1,
    ``TreeOfBlobs.mitchell_proposition4_2, ``TreeOfBlobs.mitchell_proposition5_1,
    ``TreeOfBlobs.mitchell_proposition5_2, ``TreeOfBlobs.ane_proposition12, ``TreeOfBlobs.huber_theorem5_1,
-   ``TreeOfBlobs.dinhBanos_theorem1, ``TreeOfBlobs.kaneTao_theorem1, ``TreeOfBlobs.legried_theorem1]
+   ``TreeOfBlobs.dinhBanos_theorem1, ``TreeOfBlobs.kaneTao_theorem1, ``TreeOfBlobs.legried_theorem1,
+   ``TreeOfBlobs.ectoblob_not_equation33Printed,
+   ``TreeOfBlobs.ectoblob_not_theorem8_2_literal,
+   ``TreeOfBlobs.tobqmc_not_printedPiMin_pos,
+   ``TreeOfBlobs.tobqmc_not_exists_printedError_lt,
+   ``TreeOfBlobs.tobqmc_not_lemma2Converse,
+   ``TreeOfBlobs.tobqmc_not_supplementLemma7,
+   ``TreeOfBlobs.tobqmc_not_supplementTheorem1,
+   ``TreeOfBlobs.tobqmc_not_theorem2_without_level_one,
+   ``TreeOfBlobs.tobqmc_tendsto_tobqmcT3_rho_one,
+   ``TreeOfBlobs.tobqmc_forGenericParams_tendsto,
+   ``TreeOfBlobs.tinnik_not_exists_generatingCutModel_maximizer,
+   ``TreeOfBlobs.studierKeppler_not_lemmaAsPrinted]
 
 /-- Lean's standard axioms. -/
 meta def standardAxioms : List Name := [``propext, ``Classical.choice, ``Quot.sound]

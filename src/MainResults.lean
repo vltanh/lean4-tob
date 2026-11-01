@@ -11,11 +11,13 @@ public import Basic.Defs
 public import Basic.Testing.IID
 public import ECToBlob.BinaryLawExample
 public import ECToBlob.DisplayedTreeExample
+public import ECToBlob.Equation33Counterexample
 public import ECToBlob.Remark34
 public import ECToBlob.Section3
 public import ECToBlob.Section4
 public import ECToBlob.Section8
 public import ECToBlob.SumOfPairs
+public import ECToBlob.Theorem82Literal
 public import External.AllmanBanosRhodes2019.MissingTaxa
 public import External.AllmanBanosRhodes2019.QuartetClass
 public import External.AneEtAl2024.Proposition12
@@ -30,6 +32,7 @@ public import External.LegriedEtAl2021.Theorem1
 public import External.MitchellAllmanRhodes2019.T1Limit
 public import External.MyersGriffiths2003.Composite
 public import External.SongHein2005.BinaryPaths
+public import External.StudierKeppler1988.Lemma
 public import Gusfield2007.Counterexamples
 public import Gusfield2007.EntryNet
 public import Gusfield2007.HusonKloepper
@@ -40,10 +43,14 @@ public import Gusfield2007.Realizability
 public import Gusfield2007.Theorem10PrintedMultiple
 public import TINNiK.Basic
 public import TINNiK.MissingTaxa
+public import TINNiK.Statistics.OpenCutModel
 public import TOBQMC.Consistency
 public import TOBQMC.DisplayedRefinement
 public import TOBQMC.Implementation
 public import TOBQMC.Level1
+public import TOBQMC.SupplementLemma2
+public import TOBQMC.SupplementLemma4Margin
+public import TOBQMC.SupplementLevelTwo
 public import TOBQMC.WQC
 
 /-!
@@ -56,7 +63,7 @@ consistency claim of §4.3; **TINNiK** (Allman, Baños, Mitchell, Rhodes, Algori
 **Gusfield et al. 2007** (Gusfield, Bansal, Bafna, Song, J. Comput. Biol. 14, 2007), Lemma 4, Theorems 1 and 3 to 11, Corollaries 2,
 3, and the refutation of its conjectures. After them come what these papers say in passing, and the main results of the sources they
 cite, each with a prefix: `galled_` for Gusfield, Eddhu, Langley 2004, `myersGriffiths_`, `hudsonKaplan_`, `songHein_`, `nanuq_`,
-`mitchell_`, `ane_`, `huber_`, `dinhBanos_`, `kaneTao_`, `legried_`. `docs/REPORT.md` lists every correction and departure.
+`mitchell_`, `ane_`, `huber_`, `dinhBanos_`, `kaneTao_`, `legried_`, `studierKeppler_`. `docs/REPORT.md` lists every correction and departure.
 
 All are proved, with no assumed result. This includes the CF-detectability of 4-blobs for generic parameters (Allman et
 al. 2023, Theorem 1 and Corollary 1; TINNiK's Theorem 1), which `theorem4` uses. One theorem is conditional, and says so in its
@@ -426,8 +433,7 @@ theorem gusfield_theorem9 {ι : Type*} [LinearOrder ι] [Finite ι] {V E : Type*
       N'.IsFullyDecomposedFor (conflictGraph S M) ∧ N'.recombCount ≤ N.recombCount :=
   Gusfield2007.theorem9 hC N hc hd hS h
 
-/-- **Gusfield et al. 2007, Theorem 10**, corrected. If `H(M + S) = R_S(M)`, or `R¹_S(M)`, then `M` is S-min, or S-min-1, decomposable. The correction: `R_S` in
-place of the printed `R(M + S)`, since the proof's network has ancestral sequence `S`. The printed form is false for single crossovers (`gusfield_theorem10Printed_single_false`). -/
+/-- **Gusfield et al. 2007, Theorem 10**, with the rooted count. If `H(M + S) = R_S(M)`, or `R¹_S(M)`, then `M` is S-min, or S-min-1, decomposable. The paper prints `R(M + S)`, and uses that symbol at lines 525 and 560 for a network with ancestral sequence `S`, which suggests a slip for `R_S(M)`. Read by the definition of line 385, the statement is false for single crossovers (`gusfield_theorem10Printed_single_false`). -/
 theorem gusfield_theorem10 {ι : Type*} [LinearOrder ι] [Finite ι] {c : Crossover} {M : Finset (ι → Bool)} {S : ι → Bool}
     (hM : M.Nonempty) (hC : NoConstantColumn M)
     (h : haplotypeBound (addRow M S) = RS c S M) : SMinDecomposable c S M := Gusfield2007.theorem10 hM hC h
@@ -475,27 +481,20 @@ theorem gusfield_theorem10_unrooted {ι : Type*} [LinearOrder ι] [Finite ι] {c
     (hC : NoConstantColumn M) (h : haplotypeBound M = R c M) : MinDecomposable c M :=
   Gusfield2007.minDecomposable_of_haplotypeBound_eq hM hC h
 
-/-- **Gusfield et al. 2007, Theorem 10 as printed is false for single crossovers.** With the unrooted count `R¹(M + S)`, it fails on `printedRows`, fourteen rows on eight sites, with
+/-- **Gusfield et al. 2007, Theorem 10 is false for single crossovers if `R¹(M + S)` is read by the definition of line 385**, the minimum over all ancestral sequences. The paper's own use of the symbol, at lines 525 and 560, suggests a slip for `R¹_S(M)`, and with that the statement is `gusfield_theorem10`. With the literal reading, it fails on `printedRows`, fourteen rows on eight sites, with
 `S = printedRoot`, one of the rows: `H(M + S) = R¹(M + S)` and `R¹_S(M) = 6`, and `M` is not S-min-1 decomposable. -/
 theorem gusfield_theorem10Printed_single_false : printedRows.Nonempty ∧ NoConstantColumn printedRows ∧
     haplotypeBound (addRow printedRows printedRoot) = R .single (addRow printedRows printedRoot) ∧
     RS .single printedRoot printedRows = 6 ∧ ¬ SMinDecomposable .single printedRoot printedRows ∧
     ¬ Theorem10Printed .single printedRows printedRoot := Gusfield2007.theorem10Printed_single_false
 
-/-- **Gusfield et al. 2007, Theorem 10 as printed, for multiple crossovers: false, given one computation.** This theorem is conditional. Its hypothesis `printedMSearch` is a
+/-- **Gusfield et al. 2007, Theorem 10, if `R(M + S)` is read by the definition of line 385, for multiple crossovers: false, given one computation.** The paper's own use of the symbol, at lines 525 and 560, suggests a slip for `R_S(M)`, and with that the statement is `gusfield_theorem10`. This theorem is conditional. Its hypothesis `printedMSearch` is a
 finite computation, a search showing that two extra labels never suffice on the second component of `printedMRows`, and it is not proved here: Lean's kernel hasn't completed it. Everything else
-is proved: given it, the statement with the unrooted count `R(M + S)` fails on `printedMRows`, seventy-four rows on thirty-four sites, with `S = printedMRoot`, one of the rows. -/
+is proved: given it, the statement with that reading fails on `printedMRows`, seventy-four rows on thirty-four sites, with `S = printedMRoot`, one of the rows. -/
 theorem gusfield_theorem10Printed_multiple_false_of_search (hs : printedMSearch) : printedMRows.Nonempty ∧ NoConstantColumn printedMRows ∧
     haplotypeBound (addRow printedMRows printedMRoot) = R .multiple (addRow printedMRows printedMRoot) ∧
     ¬ SMinDecomposable .multiple printedMRoot printedMRows ∧ ¬ Theorem10Printed .multiple printedMRows printedMRoot :=
   Gusfield2007.theorem10Printed_multiple_false_of_search hs
-
-/-- **Gusfield et al. 2007, line 425, reduced to roots.** The sentence at line 425 is open. When `M` is S-min decomposable for all `S`, it is min decomposable exactly when some
-optimal root doesn't merge components of `G(M)`. -/
-theorem gusfield_minDecomposable_iff_exists_root {ι : Type*} [LinearOrder ι] [Finite ι] {c : Crossover} {M : Finset (ι → Bool)} (hM : M.Nonempty)
-    (hall : ∀ S, SMinDecomposable c S M) :
-    MinDecomposable c M ↔ ∃ S, RS c S M = R c M ∧ ∀ i j, (conflictGraph S M).Reachable i j ↔ (incompatGraph M).Reachable i j :=
-  Gusfield2007.minDecomposable_iff_exists_root hM hall
 
 /-- **Gusfield et al. 2007, line 329, with the entry node counted.** A fully decomposed network can be made efficient, in the printed sense and with the entry node of a blob counted,
 without increasing the number of recombination nodes, with the same ancestral sequence, staying fully decomposed. -/
@@ -776,6 +775,73 @@ theorem ectoblob_consistency_sumOfPairs {V E X : Type*} [Fintype X] [DecidableEq
         treeOfBlobs N) atTop (𝓝 1) :=
   SumOfPairs.consistency_sumOfPairs hN hd hB hb hF hC hT₀ hm hα₀ hβ₀ hα hβ
 
+/-- **ECToBlob, equation (3.3) as printed is false** (E2 of the report). At the multifurcation of a species tree, under the network multispecies coalescent at all valid parameters, the left side is `3` and the right side `10/3`. The repair is the weights of `ECToBlob.equation3_3`. -/
+theorem ectoblob_not_equation33Printed : ¬ Equation33Counterexample.Equation33Printed := Equation33Counterexample.not_equation33Printed
+
+/-- **ECToBlob, Theorem 8.2 on the literal general model is false** (E10 of the report). For each variant of the algorithm, no levels `α_n`, `β_n` serve all valid parameters of all models meeting Assumption 1: a one-parameter model on a rooted 4-cycle has, at one parameter, the law of a resolved tree, with the same `T₀`. This is not a counterexample under the network multispecies coalescent, and `ECToBlob.theorem8_2` takes the parameters that it needs. -/
+theorem ectoblob_not_theorem8_2_literal (o : ECToBlobOptions) :
+    ¬ ∃ α β : ℕ → ℝ, ∀ {V E X : Type} [Fintype V] [Fintype E] [Fintype X] [DecidableEq X] (N : RootedNetwork V E X)
+      (_ : N.IsPhylogenetic) (dist : MetricData E → BinaryGeneTree X → ℝ) (_ : ∀ θ, N.IsMetric θ → IsDist (dist θ))
+      (_ : Assumption1 N fun θ => displayCF (dist θ) Subtype.val) (θ : MetricData E) (_ : N.IsMetric θ)
+      (T₀ : Finset (Finset X)) (_ : IsResolutionOf T₀ (treeOfBlobs N))
+      (_ : (o.testCo = .cauchy ∨ o.testCo = .cbc) →
+        ∀ s, IsT1Strict (displayCF (dist θ) Subtype.val) s →
+          ∀ r ∈ s.alternatives, 0 < displayCF (dist θ) Subtype.val r),
+      Tendsto (fun n => iidProb (dist θ) n fun ω =>
+        ectoblob o (α n) (β n) (quartetCount Subtype.val ω) T₀ = treeOfBlobs N) atTop (𝓝 1) :=
+  Theorem82Literal.not_theorem8_2_literal o
+
+/-- **TOB-QMC's supplement, the margin of Lemma 4 as printed vanishes** (E22 of the report). On a network whose tree of blobs is not a star, `π_min`, the least difference between any two expected concordance factors over T-quartets, isn't positive. -/
+theorem tobqmc_not_printedPiMin_pos {V E X : Type*} [Fintype X] [DecidableEq X] {N : RootedNetwork V E X} [Fintype V] [Fintype E] (hN : N.IsPhylogenetic) {θ : MetricData E}
+    (hθ : N.IsMetric θ) {ρ : ℝ} (hρ : 0 ≤ ρ ∧ ρ ≤ 1) (hne : ∃ s, Displays (treeOfBlobs N) s) {π : ℝ}
+    (hπ : IsPrintedPiMin N (nmscCF N θ ρ) π) : ¬ 0 < π :=
+  not_printedPiMin_pos hN hθ hρ hne hπ
+
+/-- **TOB-QMC's supplement, Lemma 4 as printed has no instance** (E22 of the report). On a network whose tree of blobs is not a star, no weights have errors below `π_min / (2 |f₄(S)|)`. -/
+theorem tobqmc_not_exists_printedError_lt {V E X : Type*} [Fintype X] [DecidableEq X] {N : RootedNetwork V E X} [Fintype V] [Fintype E] (hN : N.IsPhylogenetic) {θ : MetricData E}
+    (hθ : N.IsMetric θ) {ρ : ℝ} (hρ : 0 ≤ ρ ∧ ρ ≤ 1) (hne : ∃ s, Displays (treeOfBlobs N) s) {π : ℝ}
+    (hπ : IsPrintedPiMin N (nmscCF N θ ρ) π) (w : QuartetTree X → ℝ) :
+    ¬ ∀ s, |w s - nmscCF N θ ρ s| < π / (2 * ((Fintype.card X).choose 4 : ℝ)) :=
+  not_exists_printedError_lt hN hθ hρ hne hπ w
+
+/-- **TOB-QMC's supplement, the converse of Lemma 2 is false, with `N|Y` the induced subnetwork** (E23 of the report), which is how the supplement defines it. A binary level-1 network has a star as its tree of blobs, while the network induced on four taxa is treelike. The printed proof reads "4-blob" as a blob of `N`, and under that reading the converse doesn't fail. -/
+theorem tobqmc_not_lemma2Converse : ¬ SupplementLemma2.Lemma2Converse := SupplementLemma2.not_lemma2Converse
+
+/-- **TOB-QMC's supplement, Lemma 7 is false at level 2** (E25 of the report). On a binary level-2 network, a set of four taxa around a false edge meets both conditions of the lemma, and it is treelike. -/
+theorem tobqmc_not_supplementLemma7 : ¬ TOBQMC.SupplementLemma7 := LevelTwo.not_supplementLemma7
+
+/-- **TOB-QMC's supplement, Theorem 1 is false at level 2** (E25 of the report), for a binary network of arbitrary level. The counterexample is at `ρ = 1`, with "relaxed nonanomalous" read as condition 1 of the supplement's Definition 1 and T-quartet nonanomaly. -/
+theorem tobqmc_not_supplementTheorem1 : ¬ TOBQMC.SupplementTheorem1 := LevelTwo.not_supplementTheorem1
+
+/-- **TOB-QMC, Theorem 2 needs level 1** (E25 of the report). With the hypothesis on the level left out, the oracle on the four-taxon subsets of a disjoint cover keeps a false edge. -/
+theorem tobqmc_not_theorem2_without_level_one : ¬ TOBQMC.Theorem2WithoutLevelOne := LevelTwo.not_theorem2_without_level_one
+
+/-- **TOB-QMC's method at level 2, with the T3 option, at `ρ = 1`** (E25 of the report). On the network of `tobqmc_not_supplementLemma7`, with the cover at the false edge, the output is the tree of blobs with probability tending to zero, at all levels. -/
+theorem tobqmc_tendsto_tobqmcT3_rho_one {θ : MetricData (Fin 18)} (hθ : LevelTwo.net.IsMetric θ) {α : ℕ → ℝ}
+    (hα₀ : Tendsto α atTop (𝓝 0)) {β : ℝ} (hβ : 0 < β)
+    {ml : (QuartetTree (Fin 7) → ℝ) → Finset (Fin 7) → QuartetTree (Fin 7)} (hml : TINNiK.IsT3MLSelection ml)
+    {Q : Finset (Fin 7) → Finset (Finset (Fin 7))} (hQ : Q LevelTwo.A₀ = LevelTwo.cover) (hQ' : Q LevelTwo.A₀ᶜ = LevelTwo.cover) :
+    Tendsto (fun k => iidProb (geneTreeDist LevelTwo.net θ 1) k fun ω =>
+      tobqmcT3 ml (α k) β (quartetCount unroot ω) LevelTwo.B Q = treeOfBlobs LevelTwo.net) atTop (𝓝 0) :=
+  LevelTwo.tendsto_tobqmcT3_eq_treeOfBlobs_rho_one hθ hα₀ hβ hml hQ hQ'
+
+/-- **TOB-QMC's method at level 2, at `ρ = 0`, for generic parameters** (E25 of the report). There the 4-blobs have non-cut concordance factors, so all the assumptions of `consistency` but the level hold, and the output is the tree of blobs with probability tending to zero, at all levels. Other values of `ρ` aren't covered. -/
+theorem tobqmc_forGenericParams_tendsto :
+    ForGenericParams LevelTwo.net fun θ =>
+      (∀ q : Finset (Fin 7), q.card = 4 → ¬ IsTreelike LevelTwo.net q → IsNonCut (nmscCF LevelTwo.net θ 0) q) ∧
+      ∀ {α : ℕ → ℝ}, Tendsto α atTop (𝓝 0) → ∀ {β : ℝ}, 0 < β →
+        ∀ {ml : (QuartetTree (Fin 7) → ℝ) → Finset (Fin 7) → QuartetTree (Fin 7)}, IsMLSelection ml →
+        ∀ {Q : Finset (Fin 7) → Finset (Finset (Fin 7))}, Q LevelTwo.A₀ = LevelTwo.cover → Q LevelTwo.A₀ᶜ = LevelTwo.cover →
+          Tendsto (fun k => iidProb (geneTreeDist LevelTwo.net θ 0) k fun ω =>
+            tobqmc ml (α k) β (quartetCount unroot ω) LevelTwo.B Q = treeOfBlobs LevelTwo.net) atTop (𝓝 0) :=
+  LevelTwo.forGenericParams_tendsto_tobqmc_eq_treeOfBlobs
+
+/-- **TINNiK, Appendix C.1: no maximum on the open cut model** (E31 of the report). At the counts `n > 0` in one coordinate, for example `(1, 0, 0)`, no point of the cut model of Definition 7 maximizes the trinomial likelihood. Not every count with a zero fails. -/
+theorem tinnik_not_exists_generatingCutModel_maximizer (i : Fin 3) {n : ℕ} (hn : 0 < n) :
+    ¬ ∃ p, TINNiK.GeneratingCutModel p ∧ ∀ q, TINNiK.GeneratingCutModel q →
+      TINNiK.likelihood (TINNiK.concentratedCounts i n) q ≤ TINNiK.likelihood (TINNiK.concentratedCounts i n) p :=
+  TINNiK.not_exists_generatingCutModel_maximizer i hn
+
 end TreeOfBlobs
 
 /-! ## The other sources: NANUQ; Mitchell, Allman, Rhodes 2019; Ané et al. 2024; Huber et al. 2025; Dinh, Baños 2025; Kane, Tao 2017; Legried et al. 2021 -/
@@ -897,5 +963,8 @@ theorem legried_theorem1 {X : Type} {T T' : SpeciesTree X} (hT : T.Nodup) (hT' :
     (hAlt₂ : expect (geneLaw T) (Alt₂ pickWeight A B C D) = expect (geneLaw T') (Alt₂ pickWeight A B C D))
     (hpos : 0 < expect (geneLaw T) fun L => ind (Present A B C D L)) (hq : T.IsQuartet A B C D) : T'.IsQuartet A B C D :=
   External.LegriedEtAl2021.theorem1 hT hT' hAB hAC hAD hBC hBD hCD hA hB hC hD hA' hB' hC' hD' hSc hAlt hAlt₂ hpos hq
+
+/-- **Studier, Keppler 1988, the Lemma fails at a polytomy.** "If `i` and `j` are neighbors, then `S_ij` is the strictly least element in its row and column" fails on the star with four leaves and unit weights, where all the `S_ij` are equal. The letter asks for positive branches and doesn't define "neighbors", read here as a cherry of a resolution. If it means binary trees, this is a failure of wording. Its Theorem holds on such trees. -/
+theorem studierKeppler_not_lemmaAsPrinted : ¬ External.StudierKeppler1988.LemmaAsPrinted := External.StudierKeppler1988.not_lemmaAsPrinted
 
 end TreeOfBlobs

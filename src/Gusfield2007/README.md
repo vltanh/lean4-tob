@@ -6,7 +6,7 @@ Source: D. Gusfield, V. Bansal, V. Bafna, Y. S. Song, J. Comput. Biol. 14 (2007)
 
 The routes of the proofs are in `docs/paper_routes.tsv`, and their differences from the paper's in `docs/route_differences.tsv`.
 
-The modules import Mathlib only, not the library `Phylogenetics`. The cited results are in `External/{SempleSteel2003, Gusfield1991, GusfieldEtAl2004, MyersGriffiths2003, HudsonKaplan1985, SongHein2005}`, and each of those READMEs says whether its source was read.
+The modules reach only Mathlib and their own sources in `External`, not the library `Phylogenetics`. The cited results are in `External/{SempleSteel2003, Gusfield1991, GusfieldEtAl2004, MyersGriffiths2003, HudsonKaplan1985, SongHein2005}`, and each of those READMEs says whether its source was read.
 
 ## Theorem 4
 
@@ -21,11 +21,11 @@ Section 4.2's characterization is false too (`mostTreeLikePrinted_false`); `tree
 
 ## Theorem 10
 
-`theorem10` is the statement with the rooted count `R_S(M)`, which is what the paper's proof is about, in each crossover model and with no hypothesis on the columns. The sentence at line 560 is false with identical columns (`visibleOfTightPrinted_false`), so the proof uses the pair of labels on two sites with different columns; `sMinDecomposable_of_haplotype_tight` is the paper's proof, when the columns are distinct. Theorem 10 as printed, with the unrooted count `R(M + S)`, is `Theorem10Printed`. It is false for single crossovers (`theorem10Printed_single_false`). For multiple crossovers `theorem10Printed_multiple_false_of_search` has a counterexample, given one computation, `printedMSearch`, which is a visible hypothesis of that theorem: the kernel hasn't completed it.
+`theorem10` is the statement with the rooted count `R_S(M)`, which is what the paper's proof is about, in each crossover model and with no hypothesis on the columns. The sentence at line 560 is false with identical columns (`visibleOfTightPrinted_false`), so the proof uses the pair of labels on two sites with different columns; `sMinDecomposable_of_haplotype_tight` is the paper's proof, when the columns are distinct. Theorem 10 with `R(M + S)` read by line 385's definition is `Theorem10Printed`. It is false for single crossovers (`theorem10Printed_single_false`). The paper uses the symbol at lines 525 and 560 for a network with ancestral sequence `S`, which suggests a slip for `R_S(M)`, and that form is `theorem10`. For multiple crossovers `theorem10Printed_multiple_false_of_search` has a counterexample, given one computation, `printedMSearch`, which is a visible hypothesis of that theorem: the kernel hasn't completed it.
 
 ## What stays open
 
-Line 425, `MinDecomposableOfForallS`. `minDecomposable_iff_exists_root` reduces it to the roots, and `minDecomposableOfForallS_of_haplotypeBound_eq` is the case `H(M) = R(M)`.
+Line 425, `MinDecomposableOfForallS`. `minDecomposableOfForallS_of_haplotypeBound_eq` is the case `H(M) = R(M)`.
 
 ## Modules
 
@@ -51,7 +51,7 @@ Line 425, `MinDecomposableOfForallS`. `minDecomposable_iff_exists_root` reduces 
 | `Conjectures` | Section 5.1: the conjectures, the computation of `F` and `F_S` |
 | `Histories`, `Parsimony` | the labels of a network generated one at a time (`Gen`); mutation trees as networks, re-rooting (Section 4.1) |
 | `SufficientConditions` | Section 5.2: Theorems 5 to 10, Corollaries 2, 3 |
-| `OpenStatements`, `OpenSearch`, `Theorem10PrintedMultiple` | Theorem 10 as printed and without an ancestral sequence; line 425 |
+| `OpenStatements`, `OpenSearch`, `Theorem10PrintedMultiple` | Theorem 10 with `R(M + S)` read literally, and without an ancestral sequence; line 425 |
 | `GalledNetworks` | line 554: non-degenerate galled networks |
 | `HusonKloepper` | line 590: Conjecture 1 of Huson and Klöpper, read from Conjecture 2.2 of Klöpper's thesis; reticulate networks and the bridge to `R`; the refutation by Figure 8 |
 | `Examples`, `Components`, `LabelSearch` | the matrices of the figures, bookkeeping, a verified search for lower bounds on `R` |

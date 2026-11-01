@@ -63,7 +63,7 @@ def IsStrictlyCutAt (i : Fin 3) (p : Coordinates) : Prop :=
 def GeneratingCutModel (p : Coordinates) : Prop := OpenSimplex p ∧ IsCut p
 
 /-- Departure from the paper: estimation uses the closed simplex, as authorized
-by the requester after the boundary-data counterexample in Appendix C.1. -/
+by the person who asked for this formalization, after the boundary-data counterexample in Appendix C.1. -/
 def EstimationCutModel (p : Coordinates) : Prop := ClosedSimplex p ∧ IsCut p
 
 /-- Representation bridge between the equality-pair and three-line descriptions. -/

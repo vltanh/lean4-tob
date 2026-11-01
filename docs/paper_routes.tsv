@@ -304,7 +304,6 @@ g:thm10	theorem	1	g:haplotype_rooted,ext:haplotype_equality,g:cor2
 g:thm10_distinct	claim	0	ext:haplotype_equality,g:cor2
 g:thm10_pair	claim	0	ext:haplotype_equality
 g:thm10_unrooted	claim	0	g:thm10_pair,g:thm3
-g:line425_roots	claim	0
 g:line425_tight	claim	0	g:thm10_unrooted
 g:gap_restrict	claim	0
 g:thm10_printed_one_component	claim	0	g:thm10,g:gap_restrict,g:thm3
@@ -570,3 +569,24 @@ a:claim:k-blobs	claim	0
 a:claim:cycle-splits	claim	0
 a:claim:tree-range	claim	0
 a:claim:banos-range	claim	0
+#
+# The statements of the papers shown false, as theorems. They are refutations, so the papers don't prove them and they cite nothing.
+ecto:eq3_3_printed	claim	0
+ecto:eq3_3_false	claim	0
+ecto:thm8_2_literal_model	claim	0
+ecto:thm8_2_literal	claim	0
+tob2025:lemma2_converse_false	claim	0
+tob2025:supplement_eq1_zero	claim	0
+tob2025:supplement_pi_min_zero	claim	0
+tob2025:supplement_pi_min_pos_false	claim	0
+tob2025:supplement_lemma4_vacuous	claim	0
+tob2025:supplement_lemma7_false	claim	0
+tob2025:theorem2_needs_level_one	claim	0
+tob2025:supplement_theorem1_rho_one	claim	0
+tob2025:supplement_theorem1_t3	claim	0
+tob2025:supplement_theorem1_generic	claim	0
+tob2025:supplement_theorem1_false	claim	0
+tinnik:cut_line_mle_open	claim	0
+tinnik:cut_model_sup	claim	0
+tinnik:no_open_cut_mle	claim	0
+ext:studier_keppler_lemma	claim	0
