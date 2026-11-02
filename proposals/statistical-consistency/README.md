@@ -27,6 +27,8 @@ kernel-checked end-to-end strong-consistency theorem. The explicit
 schedule is mathematically safe under the conditions stated, not
 recommended as a finite-sample-power optimum.
 
+[Section 10 of the original-test proof](OriginalPValuesStrong.md#10-stronger-schedules-every-fixed-polynomial-exponent-without-a-new-gaussian-cone-estimate) uses dyadic maximal Hoeffding/Doob to obtain a.s. `O(log log m)` null statistics. It supports **any** polynomial schedule `(m+1)^(-a)`, `a>0`, and the general window `log log m=o(-log alpha_m)` with `-log alpha_m=o(m)`. This extension is a handproof pending a maximal-inequality formalization.
+
 ## Results proposed
 
 | ID | Strengthening | Status of this addition |

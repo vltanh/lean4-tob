@@ -46,14 +46,11 @@ Borel--Cantelli. It is intentionally limited to
 `starTest=.lrt` and `testCo=.bon`, not the
 Pearson/Cauchy/CBC/BBC alternatives.
 
-## 3. Optional general schedule window
+## 3. Every polynomial level: Bonferroni/LRT-star/T1 theorem
 
-The original stronger schedule-window derivation below is
-still valuable but relies on deeper pathwise analytic bounds.
-It is not a prerequisite for the conservative explicit
-original-test strong-consistency proposal.
+[OriginalPValuesStrong.md §10](OriginalPValuesStrong.md#10-stronger-schedules-every-fixed-polynomial-exponent-without-a-new-gaussian-cone-estimate) establishes the broader handproof window by dyadic maximal concentration and the **existing** T1 tail sandwich. It covers every fixed positive polynomial exponent and the original paper's chi-square-tail schedule; the extra work is formalizing the maximal inequality and likelihood/KL bridge, not inventing a new Gaussian-cone lower bound.
 
-## 2. E-strong: Bonferroni and general Assumption-1 laws
+### Pathwise Bonferroni argument for arbitrary Assumption-1 laws
 
 Fix a phylogenetic network N, a finite labelled taxon set, and an iid law on complete binary gene trees. Assume both directions of ECToBlob Assumption 1 at this law. For this new analytic argument additionally assume all quartet CF coordinates are positive; finiteness gives a uniform eta>0 lower bound. This positivity restriction is stated explicitly rather than silently assuming the whole generality of the existing weak theorem.
 
@@ -99,7 +96,7 @@ There are finitely many guide topologies, coarsenings, edge-quartet sets and tre
 
 This is a handproof of the finite-universe argument and the analytic bounds. Its translation into the exact Lean definitions, measurable events and statistic expansions remains an explicit formalization task.
 
-## 3. E-fixed-beta: binary networks do not need a vanishing star level
+## 4. E-fixed-beta: binary networks do not need a vanishing star level
 
 Assume in addition that N is binary. The repository proves
 
@@ -113,12 +110,12 @@ The remaining T1 phase still has the correct arbitrary-guide coarsening target. 
 
 The positivity assumption in Section 2 is automatic for standard finite-parameter NMSC laws with the repository's positive-probability gene-tree property, but not for every abstract CF law permitted by its original theorem.
 
-## 4. End-to-end guide composition
+## 5. End-to-end guide composition
 
 Intersect the uniform reconstruction event with an eventually-refining-guide event. This can be supplied by the exact ASTRAL/WQC theorem, or by the vanishing-regret criterion in `GuideRegret.md`, under their own assumptions. The proof uses the same loci for both stages; independence between stages is not assumed.
 
 For a generic strictly quartet-nonanomalous **binary** network under independent inheritance (rho=0), the existing Proposition 5.1 and binary no-trivial-four-blob result supply the needed identification law. Together with exact ASTRAL refinement this gives the proposed strong end-to-end ECToBlob-Bon result, with an explicit alpha and **fixed beta**. This is a new composition, not an existing audited theorem.
 
-## 5. Deliberate exclusions
+## 6. Deliberate exclusions
 
 The strong theorem here is not asserted for Cauchy/CBC/BBC, because extreme p-values and endpoint cancellations need a separate almost-sure analysis. The original weak theorems for those combinations retain their existing scope. No claim is made for fixed alpha at all sample sizes, arbitrary anomalous quartets, arbitrary persistent estimation bias, dependent observations without an appropriate pathwise frequency bound, or floating-point execution of the R package.

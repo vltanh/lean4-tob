@@ -102,3 +102,25 @@ mathematically transparent.
 
 No sorry or axiom is used to simulate a finished proof.
 -/
+
+
+/-
+ADDITIONAL FULL-SCHEDULE-WINDOW GATES (UNCOMPILED)
+O7: Prove dyadic maximal Hoeffding for bounded iid quartet indicators.
+    P(max_{k<=N}|S_k|>=t) <= 2 exp(-2 t^2/N).
+    With dyadic thresholds t_j=2 sqrt(2^j log(j+1)), obtain an
+    eventually a.s. O(sqrt(log log m/m)) empirical frequency rate.
+O8: Restrict KL(hat p||p) to the population's positive support;
+    its zero-probability categories never occur under iid sampling.
+    The KL local quadratic bound plus T<=2m KL imply
+    T_null=O(log log m) a.s.
+O9: Apply the ALREADY-PROVED uniform T3 and T1 lower tails:
+    -log pvalue=O(log log m) at nulls, and the SLLN/chi2 upper
+    tail gives -log pvalue=m*positive_KL+o(m) off model.
+    Hence any polynomial alpha_m=(m+1)^(-a), a>0, satisfies
+    strong separation; and more generally
+      log log m=o(-log alpha_m), -log alpha_m=o(m).
+    Same for beta_m at genuine ECToBlob star-null quartets.
+No new Gaussian-cone lower bound is needed for the T3 option.
+All O7--O9 gates are handproof-level; none is Lean-verified.
+-/

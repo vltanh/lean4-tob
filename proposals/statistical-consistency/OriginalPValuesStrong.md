@@ -191,3 +191,66 @@ Add the guide's error probability to obtain a finite-m end-to-end bound. For **t
 **New and NOT YET kernel-checked:** O1--O6, the finite-sample type-count and LRT/KL bridges, Borel--Cantelli/infinite-sample coupling, simultaneous same-data guide composition, and removal of the ML-orientation hypothesis from the T3 contraction pipeline. This source-only PR deliberately does not add \`src/\` declarations or modify the kernel-audited theorem inventory.
 
 **Limits:** these are strong **fixed-taxon** results, not uniform in taxon number or vanishing alternatives. The original p-values at a fixed 0.05 significance level are not automatically consistent. Strong theorem status is handproof until the explicit gates in \`FORMALIZATION.md\` are closed.
+
+
+## 10. Stronger schedules: every fixed polynomial exponent, without a new Gaussian-cone estimate
+
+The exponent-100 theorem above has a simple finite-sample bound. To reach an **arbitrary fixed polynomial exponent**, use a dyadic maximal Hoeffding argument, **not** a new Gaussian-cone calculation. This is a further handproof-level result; the probability and count-statistic bridges have not yet been formalized.
+
+### Dyadic maximal concentration
+
+Let \(Y_i\in[0,1]\) be iid with mean \(p\), and \(S_k=\sum_{i=1}^k(Y_i-p)\). Hoeffding's exponential moment bound and Doob's maximal inequality applied to the nonnegative submartingale \(\exp(\lambda S_k)\) yield
+\[
+\Pr\left(\max_{k\le N}|S_k|\ge t\right)\le2\exp(-2t^2/N).
+\]
+For each sign, use \(\mathbb E e^{\lambda S_N}\le e^{N\lambda^2/8}\) and minimize at \(\lambda=4t/N\).
+
+Take \(N=2^{j+1}\) and \(t_j=2\sqrt{2^j\log(j+1)}\). Then the maximum-error event has probability at most \(2(j+1)^{-4}\), which is summable. Borel--Cantelli implies that eventually, on each dyadic block \(2^j\le m<2^{j+1}\),
+\[
+\left|\frac{S_m}{m}\right|
+\le2\sqrt{\frac{\log(j+1)}{2^j}}
+=O\!\left(\sqrt{\frac{\log\log m}{m}}\right)
+\quad\text{almost surely}.
+\]
+Apply this to the finitely many quartet/resolution indicator variables. Only independence **across loci** is used.
+
+### Null-statistic and original-p-value bounds
+
+For a true null \(p\in K\), the original statistic satisfies
+\[
+T_K(m)\le2m\,\mathrm{KL}(\hat p_m\|p).
+\]
+On the positive support of \(p\), KL is locally quadratic. Coordinates with \(p_i=0\) are identically zero almost surely, so they can be omitted. The dyadic rate gives
+\[
+T_K(m)=O(\log\log m)\quad\text{almost surely}.
+\]
+
+The existing T3/T1 chi-square-tail **lower bounds**, and the exact star-LRT formula, therefore imply
+\[
+-\log p_{\mathrm{original}}(m)=O(\log\log m)
+\quad\text{at every true null, almost surely}.
+\]
+This is uniform over the finite oriented quartet universe and does not require selecting the fitted T3 topology independently.
+
+For every off-model \(p\notin K\), the strong law and continuity of the constrained KL projection give \(T_K(m)/m\to2I_K(p)>0\), and the original **upper** tail bounds give
+\[
+-\log p_{\mathrm{original}}(m)\ge m I_K(p)+o(m).
+\]
+Thus every predetermined positive level with
+\[
+\boxed{
+\log\log m=o(-\log\alpha_m),\qquad
+-\log\alpha_m=o(m)
+}
+\]
+separates all true and false quartet nulls **eventually almost surely**. The analogous condition on \(\beta_m\) applies to true star-null quartets in nonbinary ECToBlob. In particular,
+\[
+\alpha_m=(m+1)^{-a},\quad \beta_m=(m+1)^{-b},\qquad a,b>0
+\]
+are sufficient; TOB-QMC-T3 and binary ECToBlob can instead keep any fixed \(\beta\in(0,1)\). The pre-existing ECToBlob schedules \(\alpha_m=\Pr(\chi_1^2>\log m)\) and \(\beta_m=m^{-1/2}\) also meet this window.
+
+**Upgrade to O4/O5:** the same strong-consistency theorem targets hold for this entire schedule window, conditional on formalizing the dyadic maximal lemma and the LRT/KL bridge. The window is sufficient, not necessary. It does not imply good finite-sample accuracy for every exponent.
+
+### Verification status
+
+The older alleged T3 Gaussian-cone lower-tail gap is **already closed in the underlying repository** by \`half_chiSqOneTail_le_t3PValue\`. The missing kernel work is the maximal concentration lemma, local quadratic KL bound, typed likelihood-ratio identity, Borel--Cantelli coupling and reconstruction. None is marked complete in this PR.

@@ -55,13 +55,11 @@ operational setting. This does NOT prove the corresponding
 cut-test strong result; its reference tail needs separate
 analysis.
 
-## 3. Optional sharper-schedule pathwise theorem
+## 3. Every polynomial level: pathwise T3 theorem
 
-The following original route remains useful for smaller
-polynomial exponents but is **not required** for the explicit
-exponent-100 T3 result.
+[OriginalPValuesStrong.md §10](OriginalPValuesStrong.md#10-stronger-schedules-every-fixed-polynomial-exponent-without-a-new-gaussian-cone-estimate) derives the stronger schedule window from a dyadic Hoeffding--Doob maximal inequality and the **existing** T3 tail sandwich. In particular, every fixed `alpha_m=(m+1)^(-a)`, `a>0`, is sufficient for the proposed almost-sure TOB-QMC-T3 theorem. No new Gaussian-cone lower bound is needed; the remaining gate is the dyadic maximal lemma and its likelihood/statistic bridge.
 
-## 2. T-strong: a pathwise strengthening, not a corollary of weak convergence alone
+### Pathwise strong consistency (not a corollary of weak convergence alone)
 
 Assume fixed n, iid complete binary gene trees, the T3 level-1 hypotheses above, and positive quartet coordinates. In particular a truly tree-like quartet has a unique matching resolution and is off the centroid. Let alpha_m eventually lie in (0,1), and put h_m=-log(alpha_m). A sufficient stronger schedule condition is
 
@@ -81,7 +79,7 @@ The p-values in this repository are parameter-dependent Gaussian-cone tails, not
     null:       -log p_m = O(log log m) a.s.;
     alternative: p_m <= exp(-c m) eventually a.s., for some c>0.
 
-Under a strict positive-coordinate tree-null point, the fitted nuisance mean mu_m is a positive constant times sqrt(m), while the observed null statistic is O(log log m). In the Gaussian-tail representation, a rectangle with the normal coordinate transverse to the fitted line of size sqrt(t)+O(1), and the other coordinate within distance 1 of mu_m, has probability at least exp(-C(t+1)). The other rays/lines are a distance of order sqrt(m) away and cannot become the minimizing branch there. This gives the required null lower-tail bound. Off model, the existing chi-square-two upper domination and positive statistic-growth gap give exponential decay. The star statistic is also positive-linear off the centroid, so its p-value is eventually below the fixed beta.
+**Update:** The earlier proposed Gaussian-rectangle argument is unnecessary for T3, because `half_chiSqOneTail_le_t3PValue` is already formalized and uniform over nuisance parameters. The dyadic maximal rate makes its null statistic O(log log m); the existing bound then gives `-log p_T3=O(log log m)`. Off model, the chi-square-two upper bound and positive statistic-growth gap give exponential decay. Fixed beta works because all quartet CFs are off the star centroid under the stated detectability hypotheses. The cut-test reference tail still requires separate work.
 
 This geometric argument is the **new analytic proof gate**; the manuscript does not replace it by an assertion of asymptotic uniformity. It must be made precise for the exact cut/T3 tail definitions and the selected ML topology before a kernel-level theorem is claimed. An unqualified CDF convergence theorem at fixed thresholds is not enough for shrinking alpha_m.
 
@@ -89,7 +87,7 @@ This geometric argument is the **new analytic proof gate**; the manuscript does 
 
 Intersect these pathwise events over the finite oriented quartet universe before selecting a same-data guide or search path. For large m, every true-edge quartet is accepted by the appropriate tree test and every necessary false-edge witness is rejected, simultaneously; star classification is correct as well. The deterministic disjoint-cover theorem then contracts exactly the false refinement edges. Intersect with the guide's almost-sure refinement event. No independent guide sample is required.
 
-## 3. Limits and boundary cases
+## 4. Limits and boundary cases
 
 - A fixed positive alpha does not in general give vanishing false-rejection risk at regular true cuts. Strong consistency is **not claimed for the shipped constant-alpha preset**.
 - The T3 null is a union of the three oriented T1 half-segments. Pairwise-distinct CFs are sufficient but unnecessarily strong for its alternatives; keep the existing off-T3 hypothesis.
@@ -97,7 +95,7 @@ Intersect these pathwise events over the finite oriented quartet universe before
 - No universally good finite-sample choice follows from the schedule theorem. Every fixed exponent a>0 is asymptotically sufficient but can behave differently at 100–500 loci.
 - The algorithm may use a near-optimal guide under the score-margin result in `GuideRegret.md`; this requires **vanishing normalized regret**, not merely an optimizer's name or a fixed approximation ratio.
 
-## 4. Existing APIs used
+## 5. Existing APIs used
 
 - `src/TOBQMC/Consistency.lean`: `consistency`, `tendsto_optimaRefine`.
 - `src/TOBQMC/ConsistencyT3.lean`: `t3Detectable_of_level1`, `tobqmcT3`, `consistencyT3_of_offModel`.

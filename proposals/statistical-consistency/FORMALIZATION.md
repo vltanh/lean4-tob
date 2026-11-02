@@ -16,6 +16,8 @@ No Lean executable, Lake command, kernel audit or CI run is authorized or perfor
 | O3 | Use the pre-existing `log_chiSqOneTail_ge` and T1/T3 tail sandwich to certify the **actual** p-value schedule `alpha_m=(m+1)^(-100)` | Explicit handproof of null error `(m+1)^(-2)`; no Gaussian-cone geometry needed |
 | O4 | Alternative Hoeffding/Pinsker bound and Bonferroni uniformity over all data-dependent states | Full handproof, not Lean checked |
 | O5 | Borel--Cantelli and reconstruction: strong TOB-QMC-T3 and ECToBlob-Bon results, fixed beta for binary networks | New finite-universe and reconstruction composition required |
+| O6 | Formalize dyadic Hoeffding--Doob maximal concentration and a.s. empirical `O(sqrt(log log m/m))` for each quartet coordinate | Elementary handproof in `OriginalPValuesStrong.md` §10; uncompiled |
+| O7 | KL local-quadratic bound on the positive population support, then original-test `-log p=O(log log m)` and full polynomial schedule window | Composition with checked tail bounds; uncompiled |
 | S2 | T1 tail sandwich and star/T1 pathwise null/alternative statistics | Handproof; exact Lean limit/tail interfaces to be supplied |
 | S3 | Uniform good-test event over every guide/coarsening, then deterministic reconstruction | Finite-universe handproof; no independence between stages |
 | E0 | ECToBlob Bon strong convergence to `limitTree` on arbitrary guides | Composition of S2/S3 and the existing deterministic framework; **not kernel verified** |
