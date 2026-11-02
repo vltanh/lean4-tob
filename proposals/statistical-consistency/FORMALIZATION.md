@@ -10,7 +10,12 @@ No Lean executable, Lake command, kernel audit or CI run is authorized or perfor
 | G1 | WQC population bad-tree gap, candidate-space availability and normalized regret | Handproof from finite tree class and existing population/refinement results |
 | G2 | Hoeffding coordinate bound and finite-sample guide bound | Elementary handproof; no Lean probability proof yet |
 | S0 | Multinomial LIL or a sufficient pathwise empirical-rate lemma | New analytic formalization required |
-| S1 | Actual cut/T3 Gaussian-cone tail lower bound on regular null paths | Rectangle-event handproof outline; **highest-priority analytic review gate** |
+| S1 | Actual cut/T3 Gaussian-cone tail lower bound for arbitrary small polynomial exponents | Optional sharper-schedule project; the **T3 lower bound is already formalized** as `half_chiSqOneTail_le_t3PValue` |
+| O1 | Identify the original star/T1/T3 LRT statistics with 2m times the KL projection onto their exact closed nulls | New typed bridge needed |
+| O2 | Multinomial method-of-types uniform bound `(m+1)^2 exp(-t/2)` for those statistics, including support boundaries | Full elementary handproof; not kernel-checked |
+| O3 | Use the pre-existing `log_chiSqOneTail_ge` and T1/T3 tail sandwich to certify the **actual** p-value schedule `alpha_m=(m+1)^(-100)` | Explicit handproof of null error `(m+1)^(-2)`; no Gaussian-cone geometry needed |
+| O4 | Alternative Hoeffding/Pinsker bound and Bonferroni uniformity over all data-dependent states | Full handproof, not Lean checked |
+| O5 | Borel--Cantelli and reconstruction: strong TOB-QMC-T3 and ECToBlob-Bon results, fixed beta for binary networks | New finite-universe and reconstruction composition required |
 | S2 | T1 tail sandwich and star/T1 pathwise null/alternative statistics | Handproof; exact Lean limit/tail interfaces to be supplied |
 | S3 | Uniform good-test event over every guide/coarsening, then deterministic reconstruction | Finite-universe handproof; no independence between stages |
 | E0 | ECToBlob Bon strong convergence to `limitTree` on arbitrary guides | Composition of S2/S3 and the existing deterministic framework; **not kernel verified** |
@@ -20,7 +25,7 @@ No Lean executable, Lake command, kernel audit or CI run is authorized or perfor
 
 ## Priority
 
-Review T0/T1 and G0 first: these are low-risk source-level compositions. Then S0/S2 and E0/E1 provide the clearest path to a stronger ECToBlob theorem. S1 must be established before claiming the same pathwise result for TOB-QMC's actual T3/cut p-values. F0/F1 offer an independent conservative route, but change calibration and must not be mixed up with the original algorithms.
+**Updated priority:** first close the low-risk T0/T1/G0 compositions. Then close **O1--O5** for the actual T1/T3/LRT-star p-values; pre-existing bounds remove the former T3 Gaussian-cone blocker for the conservative polynomial schedule. Only afterwards pursue the sharper, optional S0/S1 schedule window. The separate F0/F1 calibration changes the tests and must not be confused with the new original-test result.
 
 ## Uncompiled means uncompiled
 

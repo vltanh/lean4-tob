@@ -22,6 +22,45 @@ The harmless value at m=0 can be defined by the existing Lean function. Another 
 
 The raw quartet search may be data-dependent, provided it retains the required disjoint cover and only adds valid 2+2 quartets around each candidate split. A finite randomized budget that does not guarantee such a cover is not automatically covered. The search variants in `BipartitionSearch.lean`, `BipartitionSearchT3.lean` and `Implementation.lean` should get analogous schedule wrappers after the basic wrapper is reviewed.
 
+## 2. Strong consistency with the original T3 p-value: a simpler proof
+
+The stronger, **preferred** argument is now
+[OriginalPValuesStrong.md](OriginalPValuesStrong.md). The existing
+`half_chiSqOneTail_le_t3PValue` gives a **uniform** lower
+bound for every selected quartet orientation, and
+`t3PValue_le_chiSqTwoTail` gives the alternative upper bound.
+Use `alpha_m=(m+1)^(-100)` and any fixed
+`beta in (0,1)`. A multinomial method-of-types bound yields
+the **finite-sample null-error bound**
+`P(false reject of one true T3 null) <= (m+1)^(-2)`,
+hence only finitely many null errors almost surely. The
+off-T3 alternative has an exponentially summable missed-rejection
+bound whenever the positive KL separation exceeds the explicit
+threshold. Combine this with the already proved a.s. WQC/ASTRAL
+guide refinement and deterministic level-1 reconstruction.
+
+**New stronger possibility:** since the T3 p-value sandwich is
+uniform over every selected orientation, TOB-QMC's
+**blob/non-blob contraction classification** does not
+asymptotically need a maximum-likelihood orientation selector,
+merely a valid quartet orientation. This is *not* a claim for
+TINNiK's separate inferred quartet-tree output, which does
+need a correct orientation.
+
+This is a handproof until the LRT/KL bridge, method-of-types
+bound, Borel--Cantelli coupling and reconstruction
+composition are kernel-checked. The exponent 100 is a
+conservative mathematical witness, not a recommended finite-m
+operational setting. This does NOT prove the corresponding
+cut-test strong result; its reference tail needs separate
+analysis.
+
+## 3. Optional sharper-schedule pathwise theorem
+
+The following original route remains useful for smaller
+polynomial exponents but is **not required** for the explicit
+exponent-100 T3 result.
+
 ## 2. T-strong: a pathwise strengthening, not a corollary of weak convergence alone
 
 Assume fixed n, iid complete binary gene trees, the T3 level-1 hypotheses above, and positive quartet coordinates. In particular a truly tree-like quartet has a unique matching resolution and is off the centroid. Let alpha_m eventually lie in (0,1), and put h_m=-log(alpha_m). A sufficient stronger schedule condition is

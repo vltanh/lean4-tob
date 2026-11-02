@@ -2,6 +2,31 @@
 
 **Status: source-only proposal, 2026-11-02. No Lean, Lake, CI, kernel audit or compilation has been run for these additions.** Nothing in `src/`, the paper statements, Palomar records, dependency versions or workflow configuration is changed. Existing formalized results are distinguished from the new, uncompiled compositions below. This proposal is based on repository commit `a1102a1e6150db9bd2f119f12757ea0abb0354d6`.
 
+## Newly discovered shorter proof route for actual tests
+
+**The recommended primary theorem now uses the original T1/T3/star-LRT
+p-values and an explicit conservative sequence**
+`alpha_m=(m+1)^(-100)`. For general ECToBlob-Bon also take
+`beta_m=(m+1)^(-100)`; for binary Assumption-1 networks a fixed
+`beta in (0,1)` can suffice. See
+[OriginalPValuesStrong.md](OriginalPValuesStrong.md) for the complete
+finite-sample multinomial-types argument and
+[the uncompiled proof-gate roadmap](drafts/OriginalPValuesStrong.lean.txt).
+
+Crucially, `half_chiSqOneTail_le_t3PValue` in the **existing**
+`External/MitchellAllmanRhodes2019/T3Test.lean` already gives a
+uniform T3 lower tail. Combined with
+`log_chiSqOneTail_ge`, it replaces the difficult new
+Gaussian-cone lower-tail derivation previously marked as the central
+analytic gate. The method-of-types argument makes the false-null
+error at most `(m+1)^(-2)` for each scalar test with this
+very conservative schedule. Errors across sample sizes are summable.
+
+This is a *new handproof-level composition*, **not** an already
+kernel-checked end-to-end strong-consistency theorem. The explicit
+schedule is mathematically safe under the conditions stated, not
+recommended as a finite-sample-power optimum.
+
 ## Results proposed
 
 | ID | Strengthening | Status of this addition |
@@ -47,7 +72,7 @@ TOB-QMC results are kept in the TOB-QMC proposal, ECToBlob results in the ECToBl
 
 1. Check the explicit-level proof bodies against the existing API; they contain no `sorry`, but **have not been elaborated**.
 2. Formalize the elementary deterministic guide-gap lemma, then its probability and asymptotic consequences.
-3. Establish uniform pathwise scalar-test tail bounds; this is the real missing analytic gate for T-strong/E-strong.
+3. **Primary route:** formalize original-statistic method-of-types bounds, the existing T1/T3 tail inequalities, and Borel--Cantelli. The hard Gaussian-cone estimate is NOT needed for the explicit exponent-100 schedule.
 4. Feed simultaneous correct-test events into the existing deterministic reconstruction theorems.
 5. Prove the exact method-of-types error bound before implementing a certified-calibration variant.
 

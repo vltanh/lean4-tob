@@ -2,6 +2,19 @@
 
 **Status: complete elementary handproof at the mathematical level, not Lean checked.** This section proposes a DIFFERENT conservative test calibration. It does not claim that existing nominal chi-square p-values or QWC integrated-null Bayes factors already satisfy these finite-sample bounds. No runtime default is changed.
 
+## Relation to the new ORIGINAL-p-value result
+
+[OriginalPValuesStrong.md](OriginalPValuesStrong.md) uses
+this same method-of-types *statistic bound* to establish
+an explicit, very conservative shrinking-level guarantee
+for the **already implemented T1/T3/LRT-star p-values**,
+via **already formalized** upper/lower chi-square-tail
+sandwich inequalities. That result keeps the original
+p-value definitions; the `p_type` proposed here is
+a *different, optional* finite-sample calibrated p-value.
+Do not conflate the two or imply that the original
+p-values are exactly super-uniform at every finite sample.
+
 ## 1. Uniform bound for a composite quartet null
 
 Let Y_1,...,Y_m be iid observations with values in three quartet resolutions, m>=1. Let p be their distribution, hat p the empirical frequencies, and K a nonempty closed subset of the probability simplex. Examples include the centroid, an oriented matching-cut segment, or the union of the three matching-cut segments. Use extended KL with the usual zero-coordinate conventions. Define

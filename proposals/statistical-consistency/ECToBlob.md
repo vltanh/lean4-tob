@@ -14,6 +14,45 @@ The proposed strengthening has three components:
 
 Items 1 and 3 are not claims about the package's fixed alpha=0.05 finite-sample preset.
 
+## 2. A simpler strong theorem for the ACTUAL Bonferroni/LRT tests
+
+See [OriginalPValuesStrong.md](OriginalPValuesStrong.md)
+for the complete direct argument. The existing
+`chiSqOneTail_le_t1Tail` and `t1Tail_le_chiSqTwoTail`
+bound the original T1 p-value; `starPValue .lrt`
+is exactly an exponential chi-square-two tail. A method-of-types
+argument then gives the finite-sample false-null bound
+`(m+1)^(-2)` for each constituent with the explicit,
+network-independent sequence
+
+```text
+alpha_m = (m+1)^(-100)
+beta_m  = (m+1)^(-100)
+```
+
+In contrast to the earlier regular-point argument, **this
+approach also permits zero population quartet coordinates**
+for the LRT-star/T1 tests, provided the corresponding KL
+projection and finite-support boundary cases are formalized.
+The same Bonferroni, finite-universe and deterministic
+`limitTree` arguments cover arbitrary data-dependent
+binary guide sequences and all fixed-taxon network levels.
+For binary networks satisfying Assumption 1, fixed beta
+is also available, as in Section 3.
+
+The actual-p-value composition is **not Lean checked**;
+it needs typed LRT/KL bridges, type-count probabilities and
+Borel--Cantelli. It is intentionally limited to
+`starTest=.lrt` and `testCo=.bon`, not the
+Pearson/Cauchy/CBC/BBC alternatives.
+
+## 3. Optional general schedule window
+
+The original stronger schedule-window derivation below is
+still valuable but relies on deeper pathwise analytic bounds.
+It is not a prerequisite for the conservative explicit
+original-test strong-consistency proposal.
+
 ## 2. E-strong: Bonferroni and general Assumption-1 laws
 
 Fix a phylogenetic network N, a finite labelled taxon set, and an iid law on complete binary gene trees. Assume both directions of ECToBlob Assumption 1 at this law. For this new analytic argument additionally assume all quartet CF coordinates are positive; finiteness gives a uniform eta>0 lower bound. This positivity restriction is stated explicitly rather than silently assuming the whole generality of the existing weak theorem.
