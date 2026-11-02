@@ -1,0 +1,41 @@
+/-
+UNCOMPILED DRAFT. Do not run Lean/Lake/CI for this proposal.
+The population-gap and score-error premises must be established separately.
+-/
+import Mathlib
+
+namespace StatisticalConsistencyProposal
+
+/-- A candidate with small empirical regret cannot belong to a population
+bad class separated by a fixed gap, when all score errors are small. -/
+theorem good_of_score_gap
+    {Tree : Type*} (Good : Tree → Prop)
+    (score empirical : Tree → ℝ) (best selected : Tree)
+    (gap error regret : ℝ)
+    (hgap : ∀ t, ¬ Good t → score t + gap ≤ score best)
+    (herr : ∀ t, |empirical t - score t| ≤ error)
+    (hregret : empirical best ≤ empirical selected + regret)
+    (hmargin : 2 * error + regret < gap) : Good selected := by
+  by_contra hbad
+  have hg := hgap selected hbad
+  have hb := (abs_le.mp (herr best)).1
+  have hs := (abs_le.mp (herr selected)).2
+  linarith
+
+/-- Deterministic eventual transfer. A probabilistic result must prove
+this margin event on a probability-one set, not assume guide correctness. -/
+theorem good_of_eventual_margin
+    {Tree : Type*} (Good : Tree → Prop)
+    (score : Tree → ℝ) (empirical : ℕ → Tree → ℝ)
+    (best : Tree) (selected : ℕ → Tree) (gap : ℝ)
+    (error regret : ℕ → ℝ)
+    (hgap : ∀ t, ¬ Good t → score t + gap ≤ score best)
+    (herr : ∀ m t, |empirical m t - score t| ≤ error m)
+    (hregret : ∀ m, empirical m best ≤ empirical m (selected m) + regret m)
+    (hmargin : ∀ᶠ m in Filter.atTop, 2 * error m + regret m < gap) :
+    ∀ᶠ m in Filter.atTop, Good (selected m) := by
+  filter_upwards [hmargin] with m hm
+  exact good_of_score_gap Good score (empirical m) best (selected m)
+    gap (error m) (regret m) hgap (herr m) (hregret m) hm
+
+end StatisticalConsistencyProposal

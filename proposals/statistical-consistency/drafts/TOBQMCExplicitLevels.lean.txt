@@ -1,0 +1,147 @@
+/-
+UNCOMPILED PROPOSED LEAN SOURCE -- DO NOT RUN LEAN OR LAKE.
+No claim that these proof terms elaborate. No source/build/audit imports
+are changed by this proposal. Based on a1102a1e6150db9bd2f119f12757ea0abb0354d6.
+
+These are direct compositions of existing lemmas. They target convergence
+in probability for prescribed schedules, NOT the new pathwise theorem.
+-/
+module
+public import TOBQMC.ConsistencyT3
+
+@[expose] public noncomputable section
+open Phylogenetics Phylogenetics.RootedNetwork Finset Filter Topology
+open scoped Classical
+
+namespace TOBQMC
+variable {V E X : Type*} [Fintype X] [DecidableEq X]
+
+/-- Proposed prescribed-level version of the cut-test theorem. -/
+theorem consistency_levels_proposed [Fintype V] [Fintype E]
+    {N : RootedNetwork V E X} {θ : MetricData E} {ρ : ℝ}
+    (hStd : StandardAssumptions N θ ρ) (hLevel : IsLevelOne N)
+    (hNon : IsTQuartetNonanomalous N (nmscCF N θ ρ))
+    (hBlob : ∀ q : Finset X, q.card = 4 → ¬ IsTreelike N q →
+      AllmanEtAl2023.IsNonCut (nmscCF N θ ρ) q)
+    (hX : 4 ≤ Fintype.card X)
+    {α : ℕ → ℝ} (hαpos : ∀ m, 0 < α m)
+    (hα₀ : Tendsto α atTop (𝓝 0))
+    (hαlog : Tendsto (fun m : ℕ => Real.log (α m) / m) atTop (𝓝 0))
+    {β : ℝ} (hβ : 0 < β)
+    (ml : (QuartetTree X → ℝ) → Finset X → QuartetTree X)
+    (hml : IsMLSelection ml)
+    (solve : (QuartetTree X → ℝ) → Finset (Finset X))
+    (hsolve : ∀ c, IsWQCOptimal c (solve c))
+    (cover : Finset (Finset X) → Finset X → Finset (Finset X))
+    (hcover : ∀ B, IsBinaryTree B → ∀ A ∈ internalSides B,
+      IsDisjointCover B A (cover B A)) :
+    Tendsto (fun k => iidProb (geneTreeDist N θ ρ) k fun ω =>
+      tobqmc ml (α k) β (quartetCount unroot ω)
+        (solve (quartetCount unroot ω))
+        (cover (solve (quartetCount unroot ω))) = treeOfBlobs N)
+      atTop (𝓝 1) := by
+  have hN := hStd.phylogenetic
+  have hne : Nonempty X := Fintype.card_pos_iff.mp (by omega)
+  have hd : IsDist (geneTreeDist N θ ρ) :=
+    ⟨geneTreeDist_nonneg hN hStd.metric hStd.rho,
+      sum_geneTreeDist hN hStd.metric hStd.rho⟩
+  have hdet := Level1.cfDetectable hStd hLevel hNon hBlob
+  have hrej := TINNiK.rejects_of_log hN hStd.metric hStd.rho hdet hαpos hαlog
+  have htests := TINNiK.tests_correct hN hX hStd.metric hStd.rho
+    hdet hα₀ hrej hβ hml
+  refine tendsto_iidProb_of_imp hd (Eventually.of_forall fun k ω hω => ?_)
+    (TINNiK.tendsto_iidProb_and hd htests
+      (tendsto_optimaRefine hStd hNon hX hd))
+  obtain ⟨⟨hB, _⟩, hopt⟩ := hω
+  obtain ⟨hbin, hmax⟩ := hsolve (quartetCount unroot ω)
+  have hTB := hopt _ hbin hmax
+  have hcov := hcover _ hbin
+  rw [← theorem2 hN hStd.binary hLevel
+    (IsBinaryTree.isUnrootedTree hbin) hTB _ hcov, tobqmc]
+  congr 1
+  refine Finset.filter_congr fun A hA => exists_congr fun Y =>
+    and_congr_right fun hYQ => ?_
+  obtain ⟨s, _, rfl⟩ := (hcov A hA).around Y hYQ
+  rw [hB]
+  exact ⟨fun h => h.2, fun h => ⟨QuartetTree.card_taxa s, h⟩⟩
+
+/-- Proposed prescribed-level T3 theorem, retaining the existing weakest
+    off-model alternative hypothesis rather than pairwise distinctness. -/
+theorem consistencyT3_levels_proposed [Fintype V] [Fintype E]
+    {N : RootedNetwork V E X} {θ : MetricData E} {ρ : ℝ}
+    (hStd : StandardAssumptions N θ ρ) (hLevel : IsLevelOne N)
+    (hNon : IsTQuartetNonanomalous N (nmscCF N θ ρ))
+    (hOff : ∀ q : Finset X, q.card = 4 → ¬ IsTreelike N q →
+      ¬ IsT3Null (nmscCF N θ ρ) q)
+    (hX : 4 ≤ Fintype.card X)
+    {α : ℕ → ℝ} (hαpos : ∀ m, 0 < α m)
+    (hα₀ : Tendsto α atTop (𝓝 0))
+    (hαlog : Tendsto (fun m : ℕ => Real.log (α m) / m) atTop (𝓝 0))
+    {β : ℝ} (hβ : 0 < β)
+    (ml : (QuartetTree X → ℝ) → Finset X → QuartetTree X)
+    (hml : TINNiK.IsT3MLSelection ml)
+    (solve : (QuartetTree X → ℝ) → Finset (Finset X))
+    (hsolve : ∀ c, IsWQCOptimal c (solve c))
+    (cover : Finset (Finset X) → Finset X → Finset (Finset X))
+    (hcover : ∀ B, IsBinaryTree B → ∀ A ∈ internalSides B,
+      IsDisjointCover B A (cover B A)) :
+    Tendsto (fun k => iidProb (geneTreeDist N θ ρ) k fun ω =>
+      tobqmcT3 ml (α k) β (quartetCount unroot ω)
+        (solve (quartetCount unroot ω))
+        (cover (solve (quartetCount unroot ω))) = treeOfBlobs N)
+      atTop (𝓝 1) := by
+  have hN := hStd.phylogenetic
+  have hne : Nonempty X := Fintype.card_pos_iff.mp (by omega)
+  have hd : IsDist (geneTreeDist N θ ρ) :=
+    ⟨geneTreeDist_nonneg hN hStd.metric hStd.rho,
+      sum_geneTreeDist hN hStd.metric hStd.rho⟩
+  have hdet := t3Detectable_of_level1 hStd hLevel hNon hOff
+  have hrej := TINNiK.t3Rejects_of_log hN hStd.metric hStd.rho
+    hdet hαpos hαlog
+  have htests := TINNiK.tests_correct_t3_of_t3Detectable hN hX
+    hStd.metric hStd.rho hdet hα₀ hrej hβ hml
+  refine tendsto_iidProb_of_imp hd (Eventually.of_forall fun k ω hω => ?_)
+    (TINNiK.tendsto_iidProb_and hd htests
+      (tendsto_optimaRefine hStd hNon hX hd))
+  obtain ⟨⟨hB, _⟩, hopt⟩ := hω
+  obtain ⟨hbin, hmax⟩ := hsolve (quartetCount unroot ω)
+  have hTB := hopt _ hbin hmax
+  have hcov := hcover _ hbin
+  rw [← theorem2 hN hStd.binary hLevel
+    (IsBinaryTree.isUnrootedTree hbin) hTB _ hcov, tobqmcT3]
+  congr 1
+  refine Finset.filter_congr fun A hA => exists_congr fun Y =>
+    and_congr_right fun hYQ => ?_
+  obtain ⟨s, _, rfl⟩ := (hcov A hA).around Y hYQ
+  rw [hB]
+  exact ⟨fun h => h.2, fun h => ⟨QuartetTree.card_taxa s, h⟩⟩
+
+/-- Explicit network-independent schedule using existing tail lemmas.
+    This remains uncompiled source, even though no proof hole is inserted. -/
+theorem consistencyT3_explicit_proposed [Fintype V] [Fintype E]
+    {N : RootedNetwork V E X} {θ : MetricData E} {ρ : ℝ}
+    (hStd : StandardAssumptions N θ ρ) (hLevel : IsLevelOne N)
+    (hNon : IsTQuartetNonanomalous N (nmscCF N θ ρ))
+    (hOff : ∀ q : Finset X, q.card = 4 → ¬ IsTreelike N q →
+      ¬ IsT3Null (nmscCF N θ ρ) q)
+    (hX : 4 ≤ Fintype.card X)
+    {β : ℝ} (hβ : 0 < β)
+    (ml : (QuartetTree X → ℝ) → Finset X → QuartetTree X)
+    (hml : TINNiK.IsT3MLSelection ml)
+    (solve : (QuartetTree X → ℝ) → Finset (Finset X))
+    (hsolve : ∀ c, IsWQCOptimal c (solve c))
+    (cover : Finset (Finset X) → Finset X → Finset (Finset X))
+    (hcover : ∀ B, IsBinaryTree B → ∀ A ∈ internalSides B,
+      IsDisjointCover B A (cover B A)) :
+    Tendsto (fun k => iidProb (geneTreeDist N θ ρ) k fun ω =>
+      tobqmcT3 ml (chiSqOneTail (Real.log k)) β
+        (quartetCount unroot ω) (solve (quartetCount unroot ω))
+        (cover (solve (quartetCount unroot ω))) = treeOfBlobs N)
+      atTop (𝓝 1) := by
+  exact consistencyT3_levels_proposed hStd hLevel hNon hOff hX
+    (fun _ => QuartetTests.chiSqOneTail_pos _)
+    QuartetTests.tendsto_chiSqOneTail_log
+    QuartetTests.tendsto_log_chiSqOneTail_log
+    hβ ml hml solve hsolve cover hcover
+
+end TOBQMC
