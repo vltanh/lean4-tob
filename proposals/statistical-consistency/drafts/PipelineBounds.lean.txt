@@ -1,0 +1,61 @@
+/-
+UNCOMPILED PIPELINE BOUNDS: formalization checklist for original tests.
+No compilation, CI, kernel check, axioms or correctness-oracle assumptions.
+
+Fix n taxa, Q=choose(n,4), J<=7Q original scalar model tests:
+  T1: 3 orientations per quartet;
+  T3: 3 orientations per quartet;
+  LRT star: 1 per quartet.
+All are computed from the same m independent complete gene trees.
+
+A. Typed LRT equals twice the categorical KL projection for the
+   closed T1, T3, and centroid nulls, including empirical zero cells.
+
+B. TYPE COUNT:
+   for p in K, P(2m KL(hat p||K)>t) <= (m+1)^2 exp(-t/2).
+
+C. EXISTING UNIFORM P-VALUE TAILS:
+   - half_chiSqOneTail_le_t3PValue (factor 10*T3);
+   - chiSqOneTail_le_t1Tail and t1Tail_le_chiSqTwoTail;
+   - LRT star exact exp(-Tstar/2);
+   - log_chiSqOneTail_ge.
+   For level alpha_m=(m+1)^(-100),
+   {p_m<alpha_m} subset {T>8log(m+1)};
+   so null error at most (m+1)^(-2).
+   Total J-comparison null error <= J/(m+1)^2.
+
+D. ALT:
+   delta=minimum L1 distance of required off-null p from K.
+   d_m=max over 3Q empirical-coordinate deviations.
+   If d_m<delta/6, then each off-null T>=m delta^2/4
+   and p_m<=exp(-m delta^2/8).
+   Bon nested stage amplification is product of k;
+   BBC nested stage amplification is product of (2*k);
+   H_n is a uniform bound over all allowed paths.
+   m delta^2/8 > 100log(m+1)+log H_n suffices.
+
+E. GUIDE:
+   normalized population bad-tree gap Delta>0.
+   Candidate space contains one population maximizer except prob a_m.
+   Selected guide regret <=r<Delta except prob b_m.
+   2*d_m+r < Delta ==> guide refines ToB.
+   Put x=min(delta/6,(Delta-r)/4)>0.
+   Hoeffding over coordinates, not within-locus independence:
+      P(d_m>=x)<=6Q*exp(-2m*x*x).
+
+F. COMPOSE:
+   Use exact deterministic reconstruction for TOB-QMC T3 or
+   ECToBlob Bon/BBC, with their own assumptions. For m satisfying
+   alternative separation:
+     P(pipeline != ToB) <=
+       a_m+b_m+J/(m+1)^2+6Q*exp(-2m*x*x).
+   Sum over m>=M to get tail-of-time and a.s. exact recovery if
+   sum_m(a_m+b_m)<infinity.
+   For supplied genuine guide set a=b=0, x=delta/6.
+   For arbitrary guide, the ECToBlob target is limitTree(N,T_m).
+
+DO NOT claim: full kernel verification; a theorem about cut-test pvalue
+not included in the T3/T1 family; Pearson star; Cauchy/CBC strong
+convergence; finite-sample accuracy optimality; heuristic regret;
+arbitrary network identifiability; independent within-locus quartets.
+-/

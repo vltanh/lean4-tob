@@ -2,6 +2,21 @@
 
 **Status: source-only proposal, 2026-11-02. No Lean, Lake, CI, kernel audit or compilation has been run for these additions.** Nothing in `src/`, the paper statements, Palomar records, dependency versions or workflow configuration is changed. Existing formalized results are distinguished from the new, uncompiled compositions below. This proposal is based on repository commit `a1102a1e6150db9bd2f119f12757ea0abb0354d6`.
 
+## New full-pipeline finite-sample and eventual-a.s. bounds
+
+The [**combined pipeline theorem**](PipelineBounds.md) derives an explicit
+error bound for **original TOB-QMC-T3 and ECToBlob Bon/BBC LRT p-values**,
+including an approximate WQC/ASTRAL guide chosen from the **same loci**.
+The guide and scalar-test errors use one common quartet-frequency
+concentration event; nested correction factors are accounted for by their
+total amplification. Under summable guide failures, it also gives an
+**any-future-time** error bound and eventual almost-sure topology recovery.
+This is a **new handproof**, not a kernel-verified theorem or a statement
+about constant-alpha defaults.
+
+[**Handoff ledger**](HANDOFF.md) lists the exact unclosed kernel gates and
+links the companion [QWC theory PR #6](https://github.com/vltanh/QWC/pull/6).
+
 ## Newly discovered shorter proof route for actual tests
 
 **The recommended primary theorem now uses the original T1/T3/star-LRT
