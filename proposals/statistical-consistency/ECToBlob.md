@@ -116,6 +116,24 @@ Intersect the uniform reconstruction event with an eventually-refining-guide eve
 
 For a generic strictly quartet-nonanomalous **binary** network under independent inheritance (rho=0), the existing Proposition 5.1 and binary no-trivial-four-blob result supply the needed identification law. Together with exact ASTRAL refinement this gives the proposed strong end-to-end ECToBlob-Bon result, with an explicit alpha and **fixed beta**. This is a new composition, not an existing audited theorem.
 
+## BBC correction and recurrent exact-one caveat
+
+For any nonempty family of k p-values in [0,1] with minimum u,
+`u <= BBC(P) <= min(1,2*k*u)`. This is enough to extend both
+the explicit exponent-100 and the all-polynomial strong-consistency
+handproofs from Bonferroni to **BBC**. See [the deterministic proof and
+counterexample](CombinationStrong.md).
+
+**Do not extend the same assertion to pure Cauchy or CBC.** A strictly
+positive T1-null quartet can have exact original p-value 1 on
+infinitely many nested sample sizes because its fair discordant-count
+difference is a recurrent lazy random walk. A fixed mixed family
+containing that p-value and an off-null p-value approaching zero can
+therefore return Cauchy/CBC p-value 1 infinitely often. This is an
+obstruction to a universal eventual-correctness statement about
+the combined scalar test; it is not yet a full biological-network
+counterexample.
+
 ## 6. Deliberate exclusions
 
-The strong theorem here is not asserted for Cauchy/CBC/BBC, because extreme p-values and endpoint cancellations need a separate almost-sure analysis. The original weak theorems for those combinations retain their existing scope. No claim is made for fixed alpha at all sample sizes, arbitrary anomalous quartets, arbitrary persistent estimation bias, dependent observations without an appropriate pathwise frequency bound, or floating-point execution of the R package.
+The strong theorem here is now proposed for **Bon and BBC**. Pure Cauchy/CBC remain excluded because exact endpoint p-values can mask strong alternatives repeatedly. The original weak theorems for those combinations retain their existing scope. No claim is made for fixed alpha at all sample sizes, arbitrary anomalous quartets, arbitrary persistent estimation bias, dependent observations without an appropriate pathwise frequency bound, or floating-point execution of the R package.

@@ -254,3 +254,8 @@ are sufficient; TOB-QMC-T3 and binary ECToBlob can instead keep any fixed \(\bet
 ### Verification status
 
 The older alleged T3 Gaussian-cone lower-tail gap is **already closed in the underlying repository** by \`half_chiSqOneTail_le_t3PValue\`. The missing kernel work is the maximal concentration lemma, local quadratic KL bound, typed likelihood-ratio identity, Borel--Cantelli coupling and reconstruction. None is marked complete in this PR.
+
+
+## 11. BBC correction and the Cauchy/CBC endpoint obstruction
+
+For any nonempty family of k p-values in [0,1] with minimum u, `u <= BBC(P) <= min(1,2*k*u)`. Thus all the strong-consistency statements for ECToBlob-Bon also apply to **ECToBlob-BBC**, with the Bonferroni combination-size factor replaced by twice that factor on alternatives. [Proof and recurrent-null counterexample](CombinationStrong.md). Pure Cauchy/CBC are excluded: their special exact-p=1 rule can prevent eventual rejection of a mixed null/off-null family infinitely often.

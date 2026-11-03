@@ -57,3 +57,8 @@ All paths refer to the original commit `a1102a1e6150db9bd2f119f12757ea0abb0354d6
 - `src/ECToBlob/Section5.lean`: generic independent-inheritance NMSC Assumption-1 specialization.
 
 The proofs should remain paper-owned, with genuinely shared statistical/finite-score lemmas factored into Basic only after their interfaces are reviewed.
+
+
+## BBC and Cauchy endpoint gate update
+
+**O8:** Prove the deterministic BBC sandwich `min(P) <= BBC(P) <= min(1,2|P|min(P))` under nonempty values in [0,1]. Then Bon's strong theorem extends to BBC with an alternative factor 2. **O9:** formalize the strict-null discordant-tie lazy-random-walk recurrence and `t1PValue=1`; this obstructs blanket scalar strong rejection for pure Cauchy/CBC. Neither new gate is checked in Lean. See [CombinationStrong.md](CombinationStrong.md).

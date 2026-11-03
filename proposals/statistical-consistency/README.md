@@ -79,3 +79,8 @@ TOB-QMC results are kept in the TOB-QMC proposal, ECToBlob results in the ECToBl
 5. Prove the exact method-of-types error bound before implementing a certified-calibration variant.
 
 Compilation and CI remain deliberately deferred. These files must not be added to a build/audit target as though already verified.
+
+
+### BBC correction and endpoint scope
+
+The [deterministic BBC sandwich proof](CombinationStrong.md) extends the proposed ECToBlob-Bon strong-consistency theorem to **BBC**, with an alternative factor at most twice Bonferroni's. **Pure Cauchy and CBC are excluded:** exact p=1 events at a regular T1 null can recur infinitely often and mask off-null evidence in their endpoint rule. The obstruction is proved for scalar mixed-family tests, not for a full ECToBlob network output.

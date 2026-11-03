@@ -124,3 +124,23 @@ O9: Apply the ALREADY-PROVED uniform T3 and T1 lower tails:
 No new Gaussian-cone lower bound is needed for the T3 option.
 All O7--O9 gates are handproof-level; none is Lean-verified.
 -/
+
+
+/-
+BBC AND CAUCHY/CBC (UNCOMPILED):
+For nonempty P with all p-values in [0,1], show
+  minP P <= cauchyP P
+  minP P <= bbcP P <= min 1 (2 * card(P) * minP P).
+Use monotonicity of tan and inverse on interior, plus exact
+endpoint cases. BBC strong consistency follows from Bon's
+constituent-test separation with Kmax replaced by 2*Kmax.
+
+At T1 strict null p=(theta,q,q), discordant difference D_m is
+a recurrent symmetric lazy random walk; D_m=0 infinitely often
+a.s., and for all large such m, t1Stat=0, t1PValue=1.
+For a mixed family with an off-null strictly positive p-value,
+cauchyP and cbcP equal 1 infinitely often under existing endpoint
+definitions. This refutes universal eventual scalar rejection for
+those combined tests; it does NOT prove that a full ECToBlob
+network output is inconsistent. No Lean or kernel checks were run.
+-/
