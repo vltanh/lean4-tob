@@ -1,0 +1,76 @@
+/-
+UNCOMPILED, COMMENT-ONLY FORMALIZATION TARGETS.
+No new theorem is hidden behind an axiom, opaque implementation, or assumed
+correctness proposition. No Lean/Lake/CI execution was performed.
+
+SCALAR ANALYTIC TARGETS
+
+1. For a fixed positive-coordinate trinomial p, establish the multinomial
+   LIL rate max_i |hat p_m(i)-p(i)| = O(sqrt(log log m/m)) a.s.
+   This can be replaced by a more general rate hypothesis in a separate
+   deterministic stability theorem.
+
+2. For a null model K equal to a T1 segment, T3 union or centroid,
+   bound the saturated/null LR statistic by 2m*KL(hat p_m || p).
+   At a positive p in K this is O(log log m); off K, its ratio to m
+   converges to a positive KL gap (or use Pinsker + fixed separation).
+
+3. T1: derive chiSqOneTail(t) <= t1Tail(mu,t) <= chiSqTwoTail(t)
+   for mu>=0. Make the normal-product coupling precise. Check the fitted
+   mu in t1PValue is nonnegative.
+
+4. T3/cut: prove the regular-null Gaussian rectangle lower bound for
+   the ACTUAL parameter-dependent tail functions. The nuisance mean
+   grows like sqrt(m), whereas the observed statistic is O(log log m).
+   Keep this distinct from an asymptotic fixed-threshold CDF result.
+   Positive strict matching gaps guarantee eventual correct ML orientation.
+
+5. For all applicable scalar tests prove pathwise:
+      null: -log p_m = O(log log m)
+      alternative: p_m <= exp(-c*m) eventually, c>0.
+   The true-centroid star-null case belongs in ECToBlob, not automatically
+   in the level-1 TOB-QMC detectability regime.
+
+SCHEDULE AND UNIFORMITY TARGETS
+
+6. Prove a deterministic threshold lemma with h_m=-log(alpha_m):
+      log log m = o(h_m), h_m=o(m)
+   separates the two pathwise regimes. For ECToBlob use both levels unless
+   the binary no-centroid hypothesis justifies fixed beta.
+
+7. Intersect the probability-one event over the finite oriented quartet
+   universe. Then make it simultaneous over every binary guide, permitted
+   cover, quartet set, coarsening and contraction trajectory at fixed n.
+   Dependence on the same observed loci is allowed AFTER that intersection.
+
+TOPOLOGY TARGETS
+
+8. TOB-QMC: feed the common event to theorem2 / the covered-search
+   reconstruction theorem, then intersect with exact or vanishing-regret
+   guide refinement. Preserve level-1 and off-T3/detectability hypotheses.
+
+9. ECToBlob-Bon: on every candidate state, null combinations stay above
+   their shrinking level and non-null combinations fall below it. Feed
+   these inequalities to the existing RunBy/IsLimit deterministic API.
+   Target limitTree N T_m for general networks, and T_m intersect ToB(N)
+   for binary networks under the additional structural theorem.
+
+10. Binary ECToBlob: Assumption1Converse.star and
+    not_hasTrivialFourBlob_of_isBinary exclude all true centroids.
+    Hence every star p-value is exponentially small and any fixed
+    0<beta<1 works. Alpha still shrinks. This is not a result for
+    arbitrary nonbinary networks or constant-alpha presets.
+
+FINITE-SAMPLE CALIBRATION TARGETS (SEPARATE VARIANT)
+
+11. For 3-category types, P(Lambda_m>=t) <= (m+1)^2 exp(-t/2)
+    under any true composite null. This follows from the finite number
+    of types and each type's exp(-m KL) probability bound.
+12. With J candidate comparisons, use threshold
+      2 log(J*(m+1)^4),
+    obtain joint null error <=(m+1)^(-2), and a late-error bound <=1/M.
+    Add alternative separation, guide and ML-selection error terms.
+13. Do NOT label the current Gaussian-reference p-values or integrated
+    null Bayes factors as obeying this finite bound. They are different
+    calibrations. No default implementation change is proposed here.
+-/

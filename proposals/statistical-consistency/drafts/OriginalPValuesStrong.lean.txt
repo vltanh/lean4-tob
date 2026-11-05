@@ -1,0 +1,146 @@
+/-
+ORIGINAL T1/T3/LRT-STAR STRONG-CONSISTENCY PROPOSAL.
+SOURCE-ONLY AND UNCOMPILED. NOT A LEAN-VERIFIED THEOREM.
+No Lean/Lake/CI, no native proofs or external certificates used.
+
+READ: proposals/statistical-consistency/OriginalPValuesStrong.md
+
+Existing proof-bearing dependencies (already in the repo):
+  Phylogenetics.QuartetTests.half_chiSqOneTail_le_t3PValue
+  Phylogenetics.QuartetTests.t3PValue_le_chiSqTwoTail
+  Phylogenetics.QuartetTests.chiSqOneTail_le_t1Tail
+  Phylogenetics.QuartetTests.t1Tail_le_chiSqTwoTail
+  Phylogenetics.QuartetTests.log_chiSqOneTail_ge
+  Phylogenetics.QuartetTests.t1Phi_nonneg
+  Phylogenetics.QuartetTests.t1Phi_le_one
+  TOBQMC.theorem2
+  TOBQMC.theorem1_optimal
+  TOBQMC.astral_refines_treeOfBlobs
+  ECToBlob.Coarsening.IsLimit.outputBy_eq
+  ECToBlob.Coarsening.tendsto_ectoblob_limitTree
+
+EXACT NEW FINITE-SAMPLE TARGETS: for m>=1, define
+  alpha m = (m+1)^(-100)
+  threshold m = 8 * log (m+1).
+
+(O1) Method-of-types bound, with arbitrary null K ⊆ simplex:
+  If p∈K and T=2*m*inf_{z∈K} KL(pHat||z), then
+    Pr_p(T > t) ≤ (m+1)^2 * exp(-t/2).
+  Proof: number of types ≤(m+1)^2; each type h has probability
+  ≤exp(-m KL(h||p)). This is a combinatorial type-counting lemma,
+  not a chi-square approximation, and includes zero coordinates.
+
+(O2) For the ACTUAL test p-values and their exact statistics:
+  - T1: chiSqOneTail(T1) ≤ t1PValue.
+  - T3: 1/2 chiSqOneTail(10*T3) ≤ t3PValue for EVERY orientation.
+  - star LRT: starPValue = exp(-Tstar/2).
+  Existing log_chiSqOneTail_ge gives
+    log chiSqOneTail(t) ≥ -[1+log sqrt(2*pi)]-t.
+  Therefore pvalue < alpha(m) implies T > threshold(m)
+  (for every m>=1, using a simple universal numeric inequality).
+  Under a true null, (O1) then gives probability ≤ (m+1)^(-2).
+
+(O3) Alternative power: if delta = distL1(p,K)>0, then
+  ||pHat-p||1 < delta/2 implies T ≥ m*delta^2/4 by Pinsker.
+  Hoeffding over three categorical counts gives
+    Pr(||pHat-p||1 ≥ delta/2) ≤ 6*exp(-m*delta^2/18).
+  Every original p-value ≤chiSqTwoTail(T)=exp(-T/2).
+  Therefore if m*delta^2/8 > 100 log(m+1)+log Kmax,
+    Pr(pvalue ≥ alpha(m)/Kmax)
+       ≤ 6 exp(-m delta^2/18).
+
+(O4) Borel-Cantelli: sum_m J/(m+1)^2 < infinity for finite J.
+  All true nulls are eventually accepted a.s., all nonnulls
+  eventually rejected a.s.; intersect over the ENTIRE finite
+  quartet/resolution universe BEFORE choosing the guide/cover.
+  No independence across quartet comparisons is assumed.
+
+(O5) TOB-QMC T3 reconstruction:
+  Level1 + hStd + T-quartet nonanomaly + off-T3 on non-treelike
+  quartets + sufficient disjoint covers. The star test is
+  non-centroid on every quartet, hence for fixed beta in (0,1)
+  it eventually rejects, letting T3 run. The uniform (O2)
+  T3 comparison is orientation-independent; only require that
+  a selector return a genuine quartet resolution on the taxa,
+  not necessarily an ML choice, for this TOB-QMC use of testedB.
+  Combine (O4) with TOBQMC.theorem2 and exact WQC/ASTRAL
+  almost-sure refinement to obtain:
+    P(exists M forall m>=M TOBQMC_T3_m = ToB(N)) = 1.
+  This does not extend T3 orientation-free classification to
+  arbitrary WRONG binary guides: every quartet on a species
+  tree is treelike even if the guide is wrong.
+
+(O6) ECToBlob Bon and starTest=.lrt:
+  Under the two directions of Assumption1 for an iid complete
+  binary gene-tree law, alpha=beta=(m+1)^(-100),
+  every original star and oriented T1 comparison is uniformly
+  correct for all possible coarsenings and data-dependent binary
+  guides eventually a.s. Bonferroni combines a FINITE number
+  of constituent p-values, with no within-gene independence.
+  Feed the common event to the existing deterministic IsLimit:
+      ECToBlob_Bon(T_m,G[:m]) = limitTree(N,T_m)
+  for all sufficiently large m almost surely.
+  For binary networks satisfying Assumption1, no trivial
+  four-blob means no centroid, so beta in (0,1) FIXED works.
+  No claim for Pearson star or Cauchy/CBC/BBC strong guarantees
+  is established in this draft.
+
+THE REAL REMAINING KERNEL GATES
+  A. Formalize LRT=2m*KLprojection for star/T1/T3,
+     and type probabilities <= exp(-m KL), including boundaries.
+  B. Formalize the simple scalar inequality between
+     alpha=(m+1)^(-100), t=8log(m+1) and the existing tail bound.
+  C. Coupled countable iid sequence and Borel-Cantelli.
+  D. Formalize simultaneous quantification over every possible
+     guide, state, quartet and topology orientation.
+  E. Compose with the existing reconstruction theorems; do not
+     assume guide correctness for a practical heuristic.
+  F. If removing ML orientation from TOB-QMC-T3, use only
+     the blob/nonblob predicate testedB, NOT TINNiK's testedT.
+None of A--F is marked kernel-closed merely because it is
+mathematically transparent.
+
+No sorry or axiom is used to simulate a finished proof.
+-/
+
+
+/-
+ADDITIONAL FULL-SCHEDULE-WINDOW GATES (UNCOMPILED)
+O7: Prove dyadic maximal Hoeffding for bounded iid quartet indicators.
+    P(max_{k<=N}|S_k|>=t) <= 2 exp(-2 t^2/N).
+    With dyadic thresholds t_j=2 sqrt(2^j log(j+1)), obtain an
+    eventually a.s. O(sqrt(log log m/m)) empirical frequency rate.
+O8: Restrict KL(hat p||p) to the population's positive support;
+    its zero-probability categories never occur under iid sampling.
+    The KL local quadratic bound plus T<=2m KL imply
+    T_null=O(log log m) a.s.
+O9: Apply the ALREADY-PROVED uniform T3 and T1 lower tails:
+    -log pvalue=O(log log m) at nulls, and the SLLN/chi2 upper
+    tail gives -log pvalue=m*positive_KL+o(m) off model.
+    Hence any polynomial alpha_m=(m+1)^(-a), a>0, satisfies
+    strong separation; and more generally
+      log log m=o(-log alpha_m), -log alpha_m=o(m).
+    Same for beta_m at genuine ECToBlob star-null quartets.
+No new Gaussian-cone lower bound is needed for the T3 option.
+All O7--O9 gates are handproof-level; none is Lean-verified.
+-/
+
+
+/-
+BBC AND CAUCHY/CBC (UNCOMPILED):
+For nonempty P with all p-values in [0,1], show
+  minP P <= cauchyP P
+  minP P <= bbcP P <= min 1 (2 * card(P) * minP P).
+Use monotonicity of tan and inverse on interior, plus exact
+endpoint cases. BBC strong consistency follows from Bon's
+constituent-test separation with Kmax replaced by 2*Kmax.
+
+At T1 strict null p=(theta,q,q), discordant difference D_m is
+a recurrent symmetric lazy random walk; D_m=0 infinitely often
+a.s., and for all large such m, t1Stat=0, t1PValue=1.
+For a mixed family with an off-null strictly positive p-value,
+cauchyP and cbcP equal 1 infinitely often under existing endpoint
+definitions. This refutes universal eventual scalar rejection for
+those combined tests; it does NOT prove that a full ECToBlob
+network output is inconsistent. No Lean or kernel checks were run.
+-/
