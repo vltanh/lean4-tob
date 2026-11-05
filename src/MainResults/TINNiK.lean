@@ -27,7 +27,7 @@ public import TINNiK.Statistics.OpenCutModel
 
 Allman, Baños, Mitchell, Rhodes, Algorithms Mol. Biol. 19, 2024: Theorem 4, what the paper says in passing, and the main results of Mitchell, Allman, Rhodes 2019 (`mitchell_`), whose tests it uses, and of Studier, Keppler 1988 (`studierKeppler_`), on its neighbor joining.
 
-Each theorem is stated in plain terms and proved from the libraries. `docs/reports/TINNiK.md` lists every correction and departure, and `palomar/TINNiK/` has the paper's entry for Palomar. `MainResults` imports this module with those of the other papers.
+Each theorem is stated in plain terms and proved from the libraries. `papers/TINNiK/README.md` and `papers/TINNiK/REPORT.md` describe the formalization and list every correction and departure, and `papers/TINNiK/palomar/` has the paper's entry for Palomar. `MainResults` imports this module with those of the other papers.
 -/
 
 @[expose] public noncomputable section

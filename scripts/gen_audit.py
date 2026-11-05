@@ -11,7 +11,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE = (ROOT / 'scripts' / 'Audit.lean.in').read_text()
-PROJECT_LIBRARIES = ['Basic', 'External', 'AllmanEtAl2023', 'Gusfield2007', 'ECToBlob', 'TOBQMC', 'TINNiK']
+PROJECT_LIBRARIES = ['Basic', 'External', 'AllmanEtAl2023', 'ECToBlob', 'TOBQMC', 'TINNiK']
 
 
 def library_dir():

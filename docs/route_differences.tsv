@@ -1,5 +1,5 @@
 # Differences between the routes of the formal proofs and the paper's proofs, each with its reason.
-# Format: label<TAB>±other<TAB>reason. See Section 7 of the reports in docs/reports/. The routes of the papers are in docs/paper_routes.tsv.
+# Format: label<TAB>±other<TAB>reason. See Section 7 of each paper's report, papers/<Paper>/REPORT.md. The routes of the papers are in docs/paper_routes.tsv.
 # A row with the label `*` records a result used without citation throughout. Each paper has a section below.
 #
 # ==== ECToBlob, TOB-QMC, TINNiK ====
@@ -40,61 +40,3 @@ a:claim:part-a	+a:cor:largeCFdetect	The label is on two theorems. `theorem3_core
 # Section 5.
 a:thm:ToBident	+a:claim:splits-tree	`theorem4_iso` goes beyond the paper's comparison through the displayed quartets, to an isomorphism of labelled trees, by the splits-equivalence theorem, which the paper doesn't cite.
 #
-# ==== Gusfield, Bansal, Bafna, Song 2007 ====
-# Basic facts about the objects, used without citation throughout.
-*	+g:blob_welldefined	That two blobs with an arc in common are equal (line 139) is what makes "the blob of a site" meaningful. The paper uses it without citing it wherever it speaks of a blob; here `IsFullyDecomposedFor.breaksAt_unique`, `exists_optimal_piece` and `Decomp.exists_inflate_net` use it.
-*	+g:gs_eq	`G_S(M) = G(M + S)` (lines 152, 160) is the definition of the rooted graph as far as the paper is concerned, and it passes between the two without citation.
-#
-# Section 2.
-g:blobtree	-g:blob_welldefined	The paper contracts blobs, so it needs them well defined. `Network.blobbedTree` is the quotient by the arcs on cycles, with no mention of blobs, so `blobbedTree_isTree` doesn't use the fact.
-#
-# Section 3.1.
-g:dom_unique	-g:compatible_dominant	`IsDominantFor` is the dominance for all pairs of sites, so uniqueness needs only that one pair has one dominant pair of states (`IsDominantPair.eq`). The existence of a dominant pair (line 200) isn't needed; `exists_isDominantFor` uses it.
-g:dom_unique	-g:lem1	`IsDominantFor` is the dominance for all pairs of sites, which is what Lemma 1 gives in `exists_isDominantFor`. Uniqueness is then a statement about one pair, and doesn't use Lemma 1.
-#
-# Section 3.3.
-g:lem4	-g:char_unique	The paper's "every row has value 1 in exactly one column of `B(C)`" is used only for "at most one": `charValue_disjoint` proves that from the definition, without the existence half that `existsUnique_charValue_eq_true` adds.
-g:lem4	-g:tbar	The Lean statement takes `IsTBar` as a hypothesis, where the paper takes the tree it has just built. `exists_isTBar` is what gives the tree, and `exists_network_of_pieces` applies both.
-g:thm1	+g:vC_only	Line 299 uses without stating it that each edge at `v_C` carries a character of `C` ("the edge incident with `v_C` that is labeled by character `c`"), which line 277 declines to assert. It is true, and `IsTBar.exists_side_true`, behind the frame of the network, needs it (`adj_center_labelled`).
-#
-# Section 3.7. Theorem 4 is false as printed: `Theorem4Printed` is a definition, with its counterexample.
-g:thm4_printed	-ext:splits_equivalence	`Theorem4Printed` is the statement as a definition, with no proof, because it is false (`theorem4_false_top`). The paper's route is followed by `theorem4`, which uses `SempleSteel2003.xTree_unique`.
-g:thm4_printed	-g:tbar	`Theorem4Printed` is the statement as a definition, with no proof, because it is false (`theorem4_false_top`).
-g:thm4_printed	-g:thm1	`Theorem4Printed` is the statement as a definition, with no proof, because it is false (`theorem4_false_top`). The paper cites Theorem 1 only for the definition of `T̄`, which is `IsTBar` here.
-g:thm4_splits	+g:blobtree	The paper's proof treats `T′` as a tree and removes an edge from it, on the strength of line 141, without citing it. `Network.IsTreeArc.tgt_notMem_blobVerts`, in the proof, uses `blobbedTree_isTree`.
-g:thm4_splits	+g:converse	The paper's proof starts from "a blob `b_C` associated with the component `C`". For a fully decomposed network, that all of `C` is on one blob is the converse of Theorem 1 (`Network.charSide_mem_treeSplits`).
-g:thm4	+g:blobtree	The paper's proof treats `T′` as a tree, on the strength of line 141, without citing it. `Network.exists_iso_of_isTreeNormalStructural` needs it to apply the Splits Equivalence Theorem.
-g:thm4	+g:converse	The paper's proof starts from "a blob `b_C` associated with the component `C`". For a fully decomposed network, that all of `C` is on one blob is the converse of Theorem 1 (`Network.charSide_mem_treeSplits`, in `Network.splitSides_eq`).
-#
-# Section 4.2. The characterization is false as printed: `MostTreeLikePrinted` is a definition, with its counterexample.
-g:treeness	-g:converse	`MostTreeLikePrinted` is the statement as a definition, with no proof, because it is false (`mostTreeLikePrinted_false`). What is true is `treeness_le_and_eq_iff`.
-g:treeness	-g:thm1	`MostTreeLikePrinted` is the statement as a definition, with no proof, because it is false (`mostTreeLikePrinted_false`). What is true is `treeness_le_and_eq_iff`.
-#
-# Section 5.1.
-g:rooted_implies_unrooted_conj	-g:rooted_implies_unrooted	Departure, recorded in the docstring of `rootedConjecture_imp_unrootedConjecture`. The paper's argument is false as a step on one `M` (`fig6_hG_necessary`), and the implication between the conjectures holds because the rooted conjectures are false.
-g:rooted_implies_unrooted_conj	+g:rooted_single_false	The refutation that the departure in `rootedConjecture_imp_unrootedConjecture` rests on, for single crossovers.
-g:rooted_implies_unrooted_conj	+g:rooted_multiple_false	The refutation that the departure in `rootedConjecture_imp_unrootedConjecture` rests on, for multiple crossovers.
-g:rooted_multiple_false	-g:rooted_implies_unrooted_conj	Line 590 derives the failure of the rooted conjecture from that of the unrooted one, through line 403, whose argument is false as a step on one `M` (`fig6_hG_necessary`). `rootedConjecture_multiple_false` reads Figures 8 and 9 directly, with `S` a row of Figure 8, and it's `rootedConjecture_imp_unrootedConjecture` that rests on it.
-g:rooted_multiple_false	-g:multiple_false	Line 590 derives the failure of the rooted conjecture from that of the unrooted one. `rootedConjecture_multiple_false` has the same two numbers as `unrootedConjecture_multiple_false`, from Figures 8 and 9, and doesn't use that theorem.
-g:compute_F	-g:thm4	Departure, recorded in the docstring of `F_eq_sInf_interior`. Line 418 cites Theorem 4, which is false as printed, and whose corrected form `theorem4_iff` covers only networks with `IsTreeNormalStructural` and the degree condition. Lean gets the place of the root from the ancestral sequence of an optimal network, by `F_eq_sInf_roots`.
-g:compute_F	+g:thm1_rooted	The paper's procedure takes it that a trivial component costs nothing. `RS_eq_zero_of_not_nontrivial` proves it from Theorem 1 for a component, in `rootCost_eq_zero`.
-g:compute_F	+g:vC_only	Replacing the route through Theorem 4, `IsTBar.eq_center` uses that each edge at the centre of a component carries a character of it, which line 277 declines to assert (`adj_center_labelled`).
-#
-# Section 5.2.
-g:thm10_printed	-ext:haplotype_equality	`Theorem10Printed` is the statement as a definition, with no proof, because with `R` read by line 385's definition it is false for single crossovers (`theorem10Printed_single_false`): `R(M + S)` can be less than the rooted count, and then the printed proof doesn't apply. `theorem10` is the form the proof is about.
-g:thm10_printed	-g:cor2	`Theorem10Printed` is the statement as a definition, with no proof, because with `R` read by line 385's definition it is false for single crossovers (`theorem10Printed_single_false`): `R(M + S)` can be less than the rooted count, and then the printed proof doesn't apply. `theorem10` is the form the proof is about.
-g:thm10	-ext:haplotype_equality	Departure, recorded in the docstring of `theorem10`: line 560's equality is false for identical columns (`g:visible_false`). `exists_row_of_eq_haplotypeBound` (`g:thm10_pair`) has the same count on one site per distinct column, and gives the pair of labels on two sites. `sMinDecomposable_of_haplotype_tight` (`g:thm10_distinct`) is the paper's proof, for distinct columns.
-g:thm10	-g:cor2	The same departure: Corollary 2 asks for every node visible. `theorem10` has what the proof of Corollary 2 uses from that, that no recombination node breaks two components (`breaksAt_unique_of_eq_haplotypeBound`), and applies Theorem 7 as that proof does (`sMinDecomposable_of_isOptimalRooted`).
-g:thm10	-g:haplotype_rooted	Line 559 only shows that a network with `H(M + S)` nodes is optimal. The hypothesis `H(M + S) = R_S(M)` gives an optimal network with that many nodes directly, so the inequality isn't needed.
-g:thm10	+g:thm10_pair	The step that replaces visibility: see `-ext:haplotype_equality`.
-g:thm6	+g:trim	`Derives` has the rows exactly at the leaves, and the proof applies Theorem 10 to a network in which a row can be at an internal node: `exists_derives_of_displays` trims it. The paper's "phylogenetic network for `M`" allows this directly.
-#
-# ==== The sources' other results ====
-# Myers, Griffiths 2003.
-ext:mg_prop6	-ext:mg_lemma7	Proposition 6 is Lemma 7 at the last index, and the Lean proofs of both are the same two helpers, `rStarVec_feasible` and `sum_rStarVec_le`, so `proposition6` doesn't call `lemma7`.
-ext:mg_cor8	-ext:mg_lemma7	`corollary8` is stated for the sum of `rStarVec`, the minimum of Lemma 7, and takes its feasibility from `rStarVec_feasible`, the helper behind `lemma7`, not from the statement of `lemma7`.
-ext:mg_prop2	+g:trim	`Derives` has the rows exactly at the leaves, so the network with the site put back is trimmed (`exists_derives_of_displays`). The source's sample histories have no such condition.
-ext:mg_algorithm3_le	-ext:mg_prop2	Departure, recorded in the head of `SampleHistory.lean`: the source passes to the reduced data by Proposition 2, and Lean argues on a history, a set of nodes of a network closed under parents. Only the inequality `R_{S'} ≤ R_S` is used, in the form that a network with the rows on some sites has them on fewer.
-ext:mg_rh_le_rs	+ext:mg_algorithm1_correct	`Rh_le_Rs` compares the two bounds by the monotonicity of Algorithm 1 in the local bounds, `algorithm1_mono`, which comes from its optimality. The source says only "for any given data set `R_s ≥ R_h ≥ R_m`".
-# Hudson, Kaplan 1985.
-ext:hk_optimal	+ext:hk_optimal_region	`hudsonKaplan_isOptimalValue` is `isOptimalValue_countUpTo` at the last site, which has the same statement for the region up to any site, and the step that the source leaves out (`exists_pierce`).

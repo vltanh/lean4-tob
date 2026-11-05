@@ -69,87 +69,7 @@
       "url": "https://arxiv.org/abs/2205.03466",
       "sha256": "ccfda86079bd3e20b0da51982730fb2af61355767ecf5906f4595e0949772568",
       "bytes": 79447,
-      "content": "The main TeX file. Section 6 of docs/reports/AllmanEtAl2023.md says how it differs from the manuscript."
-    },
-    {
-      "paper": "Gusfield et al. 2007",
-      "version": "PMC2581772, author manuscript",
-      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2581772/",
-      "sha256": "ae7f93997e5542d58d46fc9a03bf6b613fb88595c8f99344066b5d829d3b2065",
-      "bytes": 97383,
-      "content": "Plain text of the PMC page, one line per paragraph, as saved: the text of 'line N'. Symbols rendered as images are missing from it, and were read in the author's copy below. The figures were read from the page's images. The journal's typeset text, doi:10.1089/cmb.2006.0137, wasn't reachable."
-    },
-    {
-      "paper": "Gusfield et al. 2007, author's copy",
-      "version": "decomposition.pdf on Yun Song's page, made from a DVI file on 2008-01-19",
-      "url": "https://people.eecs.berkeley.edu/~yss/Pub/decomposition.pdf",
-      "sha256": "b77eaae6eb7042438d10510280aeea078a139ec06d62645b5ee66cb88b882bf0",
-      "bytes": 331189,
-      "content": "36 pages, with the symbols, and the same words as the PMC text apart from moved floats, footnotes and hyphenation. Not the journal's typeset text."
-    },
-    {
-      "paper": "Gusfield, Eddhu, Langley 2004",
-      "version": "authors' copy, exfinalrec.pdf",
-      "url": "https://csiflabs.cs.ucdavis.edu/~gusfield/exfinalrec.pdf",
-      "sha256": "9fe3209c44ded3198885e47eb586982238aa75fe320a3549485213e51d51030b",
-      "bytes": 228570,
-      "content": "Not the journal's text."
-    },
-    {
-      "paper": "Myers, Griffiths 2003",
-      "version": "Genetics 163, the journal's PDF, 20 pages",
-      "url": "https://doi.org/10.1093/genetics/163.1.375",
-      "sha256": "d2605fd333ff65edb7c836a869ac885375925c45f83ec05956573babe017d6dc",
-      "bytes": 342057,
-      "content": "Obtained from the Internet Archive's copy of genetics.org."
-    },
-    {
-      "paper": "Hudson, Kaplan 1985",
-      "version": "Genetics 111, the journal's PDF, a scan with an OCR layer",
-      "url": "https://doi.org/10.1093/genetics/111.1.147",
-      "sha256": "55c24aa83676860c60210cb6b1c64f75c069250655ffba3e297c1499d8fe923f",
-      "bytes": 882825,
-      "content": "Obtained from the Internet Archive's copy of genetics.org."
-    },
-    {
-      "paper": "Song, Hein 2005",
-      "version": "authors' copy, SH-JCB05.pdf",
-      "url": "https://people.eecs.berkeley.edu/~yss/Pub/SH-JCB05.pdf",
-      "sha256": "3567ab865276d607a4cd0f11a0648775b19395765ecf199af2cb6693a0dfbe61",
-      "bytes": 340751,
-      "content": "28 pages. Not the journal's typesetting."
-    },
-    {
-      "paper": "Song, Hein 2003",
-      "version": "WABI 2003, SH-WABI03.pdf",
-      "url": "https://people.eecs.berkeley.edu/~yss/Pub/SH-WABI03.pdf",
-      "sha256": "6b8c68564532521b925dd3658f8425f7e017176776e06e9daed939254356e601",
-      "bytes": 280632,
-      "content": "Its text layer is unusable, so its pages were read as images."
-    },
-    {
-      "paper": "Song 2006",
-      "version": "Ann. Comb. 10, Ann.Combin-10-129.pdf",
-      "url": "https://people.eecs.berkeley.edu/~yss/Pub/Ann.Combin-10-129.pdf",
-      "sha256": "c18df5b9c14121cb9c744af61b2b66967319d2abcaacc5022b9a99b524c685d4",
-      "bytes": 206316,
-      "content": "Read for the definition of an SPR on ordered trees."
-    },
-    {
-      "paper": "Klöpper 2008",
-      "version": "dissertation, Tübingen",
-      "url": "https://publikationen.uni-tuebingen.de/xmlui/handle/10900/49159",
-      "sha256": "af9b59099a3a49536cfa2ed6cf306d5a01553477b5ded5a0582bcfd3c91a36c6",
-      "bytes": 3679090,
-      "content": "Read for its Conjecture 2.2, Definition 2.1, Figure 2.5, and p. 86."
-    },
-    {
-      "paper": "Bandelt et al. 1995",
-      "version": "Genetics 141, the journal's PDF",
-      "url": "https://doi.org/10.1093/genetics/141.2.743",
-      "sha256": "978c86cf10e6a854236bcf146171dd09da355b8ef2e67a2cc70cf3fe83232c40",
-      "bytes": 1208785,
-      "content": "Read: pp. 745-748."
+      "content": "The main TeX file. Section 6 of papers/AllmanEtAl2023/REPORT.md says how it differs from the manuscript."
     },
     {
       "paper": "Baños 2019",
@@ -278,22 +198,6 @@
       "url": "https://arxiv.org/abs/2110.11814",
       "sha256": "c1f2b070c45d453734fd60b3a954a32b93ff8bdbffefb2aac7b963edce1df495",
       "bytes": 2456155
-    },
-    {
-      "paper": "Roch, lecture notes",
-      "version": "Wisconsin, 2010, lecture 3",
-      "url": "",
-      "sha256": "25e5cdd3403e011bb8aa96555418ef0fe9458d7bcf20feff0d0592c3e9310354",
-      "bytes": 106428,
-      "content": "Compared with Semple and Steel's theorem, which wasn't read."
-    },
-    {
-      "paper": "Huson, Klöpper 2007, errata",
-      "version": "the authors' errata, plain text",
-      "url": "",
-      "sha256": "88e9b123bf5e302cbc899190a2689a9fc8f499ecb9876fc8e5aa221e335803c7",
-      "bytes": 830,
-      "content": "The paper itself wasn't read."
     },
     {
       "paper": "Studier, Keppler 1988",

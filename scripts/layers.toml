@@ -18,9 +18,6 @@ imports = []
 paths = ["External/Rhodes2020"]
 imports = []
 
-[units.SempleSteel2003]
-paths = ["External/SempleSteel2003"]
-imports = []
 
 [units.HuberEtAl2025]
 paths = ["External/HuberEtAl2025"]
@@ -54,7 +51,7 @@ imports = ["Basic"]
 
 [units.AllmanEtAl2023]
 paths = ["AllmanEtAl2023", "MainResults/AllmanEtAl2023.lean"]
-imports = ["Basic", "Rhodes2020", "SempleSteel2003"]
+imports = ["Basic", "Rhodes2020"]
 
 [units.TINNiK]
 paths = ["TINNiK", "MainResults/TINNiK.lean"]
@@ -76,14 +73,8 @@ paths = ["ECToBlob", "MainResults/ECToBlob.lean"]
 imports = ["Basic", "AllmanEtAl2023", "TINNiK", "AllmanBanosRhodes2019", "LegriedEtAl2021",
   "MitchellAllmanRhodes2019"]
 
-# Gusfield et al. 2007, with the sources only it uses. These are formalized in its language of networks, and
-# its proofs use their results, so the unit is one. It imports neither the library nor `Basic`.
-[units.Gusfield2007]
-paths = ["Gusfield2007", "MainResults/Gusfield2007.lean", "External/Gusfield1991", "External/GusfieldEtAl2004", "External/HudsonKaplan1985",
-  "External/MyersGriffiths2003", "External/SongHein2005"]
-imports = ["SempleSteel2003"]
 
-# The main results: one module per paper, in that paper's unit, and `MainResults.lean`, which imports the five.
+# The main results: one module per paper, in that paper's unit, and `MainResults.lean`, which imports the four.
 [units.MainResults]
 paths = ["MainResults.lean"]
-imports = ["AllmanEtAl2023", "TINNiK", "TOBQMC", "ECToBlob", "Gusfield2007"]
+imports = ["AllmanEtAl2023", "TINNiK", "TOBQMC", "ECToBlob"]

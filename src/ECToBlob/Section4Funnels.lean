@@ -42,7 +42,7 @@ are connected, and that a funnel has a first node in the subgraph it attaches to
 * `Induces.attach_funnels`, `Induces.attaches` (lines 626-627): "reasoning similarly", which
   `theorem4_1` carries out.
 
-What the paper leaves implicit (E4 of `docs/reports/ECToBlob.md`) is proved here. The cut edges of `G̃₃` between `ã₂`
+What the paper leaves implicit (E4 of `papers/ECToBlob/REPORT.md`) is proved here. The cut edges of `G̃₃` between `ã₂`
 and `b̃₁` form a chain (`chain_between`), of which the cut edges remaining after a funnel is
 attached form an up-set, which is what makes the minimality of `|E|` usable. And funnels attaching on
 opposite sides of an edge of `E` have no node in common (`exists_common_node`), which is what lets all

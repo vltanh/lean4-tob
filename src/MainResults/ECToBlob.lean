@@ -47,7 +47,7 @@ public import TINNiK.MissingTaxa
 
 Rhodes, Allman, Ané, Baños, bioRxiv v1, 2026: Theorems 3.1, 4.1 and 8.2, what the paper says in passing, and the main results of two sources it cites, NANUQ (`nanuq_`) and Legried et al. 2021 (`legried_`).
 
-Each theorem is stated in plain terms and proved from the libraries. `docs/reports/ECToBlob.md` lists every correction and departure, and `palomar/ECToBlob/` has the paper's entry for Palomar. `MainResults` imports this module with those of the other papers.
+Each theorem is stated in plain terms and proved from the libraries. `papers/ECToBlob/README.md` and `papers/ECToBlob/REPORT.md` describe the formalization and list every correction and departure, and `papers/ECToBlob/palomar/` has the paper's entry for Palomar. `MainResults` imports this module with those of the other papers.
 -/
 
 @[expose] public noncomputable section

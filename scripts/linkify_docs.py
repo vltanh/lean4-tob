@@ -32,20 +32,19 @@ from pathlib import Path
 
 # ---- configuration -------------------------------------------------------------------------
 # The Markdown documents to process.
-DOCS = ['README.md', 'docs/REPORT.md', 'docs/CREDITS.md'] + [f'docs/reports/{p}.md' for p in
-    ('ECToBlob', 'TOBQMC', 'TINNiK', 'AllmanEtAl2023', 'Gusfield2007')]
+PAPER_DIRS = [f'papers/{p}' for p in ('ECToBlob', 'TOBQMC', 'TINNiK', 'AllmanEtAl2023')]
+DOCS = ['README.md', 'docs/REPORT.md', 'docs/CREDITS.md'] + [f'{d}/{f}' for d in PAPER_DIRS for f in ('README.md', 'REPORT.md')]
 # Namespaces in which the documents name declarations without their prefix, most specific last.
-NAMESPACES = ['ECToBlob', 'TOBQMC', 'TINNiK', 'AllmanEtAl2023', 'Gusfield2007', 'External', 'SempleSteel2003', 'Gusfield1991',
-              'GusfieldEtAl2004', 'MyersGriffiths2003', 'HudsonKaplan1985', 'SongHein2005', 'Phylogenetics', 'TreeOfBlobs',
+NAMESPACES = ['ECToBlob', 'TOBQMC', 'TINNiK', 'AllmanEtAl2023', 'External', 'Phylogenetics', 'Phylogenetics.SplitsEquivalence', 'TreeOfBlobs',
               'ProbabilityTheory']
 # Top-level module names of the project: a code span naming such a module links to its file.
-MODULE_ROOTS = ('ECToBlob', 'TOBQMC', 'TINNiK', 'AllmanEtAl2023', 'Gusfield2007', 'External', 'Basic', 'MainResults')
+MODULE_ROOTS = ('ECToBlob', 'TOBQMC', 'TINNiK', 'AllmanEtAl2023', 'External', 'Basic', 'MainResults')
 # The module whose declarations win when a name is declared in several modules.
 PREFERRED_MODULE = 'MainResults'
 # Directories, besides the repository root, against which the paths in the documents of a
 # given directory are resolved.
 PATH_BASES = {'': ['src', '.github/workflows'], 'docs': ['src', 'docs', '.github/workflows'],
-              'docs/reports': ['src', 'docs', '.github/workflows']}
+              **{d: ['src', 'docs', '.github/workflows'] for d in PAPER_DIRS}}
 # The directory of the project's modules.
 SRC_DIR = 'src'
 # The library that this project requires, and where its source is published.

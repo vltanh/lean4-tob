@@ -36,7 +36,7 @@ public import TOBQMC.WQC
 
 Dai, Han, Molloy, bioRxiv v5, 2026: Theorems 1 and 2 and the consistency claim of §4.3, the claims of its supplement, and the main results of sources it cites: Ané et al. 2024 (`ane_`), Huber et al. 2025 (`huber_`), Dinh, Baños 2025 (`dinhBanos_`) and Kane, Tao 2017 (`kaneTao_`).
 
-Each theorem is stated in plain terms and proved from the libraries. `docs/reports/TOBQMC.md` lists every correction and departure, and `palomar/TOBQMC/` has the paper's entry for Palomar. `MainResults` imports this module with those of the other papers.
+Each theorem is stated in plain terms and proved from the libraries. `papers/TOBQMC/README.md` and `papers/TOBQMC/REPORT.md` describe the formalization and list every correction and departure, and `papers/TOBQMC/palomar/` has the paper's entry for Palomar. `MainResults` imports this module with those of the other papers.
 -/
 
 @[expose] public noncomputable section

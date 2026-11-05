@@ -3,13 +3,13 @@
 # Lean's kernel and NanoDa, and con-ron checks an export of the same theorems. All three reject any axiom
 # outside the three standard ones.
 # The module and the theorems come from Comparator configurations: by default those of the entries in
-# palomar/*/comparator.json, one per paper, or the files given as arguments.
+# papers/*/palomar/comparator.json, one per paper, or the files given as arguments.
 set -u
 
 if [ "$#" -gt 0 ]; then
   configs=("$@")
 else
-  configs=(palomar/*/comparator.json)
+  configs=(papers/*/palomar/comparator.json)
 fi
 out=$(mktemp -d)
 trap 'rm -rf "$out"' EXIT

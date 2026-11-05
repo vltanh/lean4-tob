@@ -1,6 +1,6 @@
 # Credits
 
-How this formalization was made, from the run log and the session transcripts.
+How this formalization was made, from the run log and the session transcripts. On 2026-11-04 Gusfield et al. 2007, which the rounds below formalized here, moved to a repository of its own, [lean4-gusfield2007](https://github.com/vltanh/lean4-gusfield2007), whose [credits](https://github.com/vltanh/lean4-gusfield2007/blob/main/docs/CREDITS.md) summarize its part.
 
 ## Who
 
@@ -31,7 +31,7 @@ The user invoked the skill again with the three links, to continue from the hand
 
 How it was made:
 
-- The main session designed the shared definitions (`Basic/Phylogenetics/Defs.lean`), wrote every statement with `sorry`, and an independent agent reviewed them against the papers, finding one false definition ([`IsExactBuilder`](https://github.com/vltanh/lean4-phylogenetics/blob/9948de9b3cba330596424efd2dca9617be2efb0c/Phylogenetics/Tree/Metric.lean#L51) excluded neighbor joining) and several readings.
+- The main session designed the shared definitions (`Basic/Phylogenetics/Defs.lean`), wrote every statement with `sorry`, and an independent agent reviewed them against the papers, finding one false definition ([`IsExactBuilder`](https://github.com/vltanh/lean4-phylogenetics/blob/f1a3592dee6e3f7d5e7a68a0695ac457de23d2de/Phylogenetics/Tree/Metric.lean#L51) excluded neighbor joining) and several readings.
 - Proof agents worked in parallel on private snapshots of the build, one set of files each: graphs and cut edges; trees and splits (ECToBlob §3, TOB-QMC §4.1–4.2); tails and combining p-values; limit laws from the central limit theorem; Proposition 6; the NMSC on arbitrary networks, resumed to prove exchangeability; the B-quartet rule, the quartet metrization and TINNiK's Theorem 4; level-1 blobs; and Theorem 8.2 with its false-edge repair.
 - The main session integrated the proofs, wrote the Challenge, Solution and audit scripts (the first two since replaced by [`src/MainResults.lean`](../src/MainResults.lean)), and ran the route check, cleanup and Comparator.
 - Two independent agents compared the proofs with the papers, one agent checked every finding of the audit against the sources by script, one researched the literature and another checked that section and the section on what comes next. Their corrections are applied. Those that changed Lean: Theorem 4 of TINNiK uses the paper's levels, Lemma 6.1 the printed bound.
@@ -92,7 +92,7 @@ The user asked to formalize Gusfield, Bansal, Bafna, Song 2007 and Allman, Baño
 
 - the project imports the library [`lean4-phylogenetics`](https://github.com/vltanh/lean4-phylogenetics), by commit, in place of its own general layer;
 - that library keeps only what is standard to phylogenetics, each thing acknowledged to its source, and things move upstream only when several projects use them;
-- Palomar is not a target, so there is no Challenge or Solution: main theorems are in [`src/MainResults.lean`](../src/MainResults.lean), since split into one module per paper in [`src/MainResults/`](../src/MainResults), the files for a possible submission are in [`palomar/`](../palomar), one entry per paper since, and the main theorems are checked by several kernels;
+- Palomar is not a target, so there is no Challenge or Solution: main theorems are in [`src/MainResults.lean`](../src/MainResults.lean), since split into one module per paper in [`src/MainResults/`](../src/MainResults), the files for a possible submission are in `palomar/`, since then one entry per paper, in `papers/<Paper>/palomar/`, and the main theorems are checked by several kernels;
 - the layout has [`src/`](../src) and `docs/`, and the working notes are private, in another repository;
 - this repository is public.
 

@@ -33,7 +33,7 @@ public import Phylogenetics.Tree.Splits
 
 Allman, Baños, Mitchell, Rhodes, J. Math. Biol. 86, 2023: Lemma 1, Theorems 1 to 4, Corollary 1, Proposition 1 and its converse, and what the paper says in passing. The theorems are on the paper's own objects, in `AllmanEtAl2023`: `IsBinaryNetwork`, its Definition 1; `Trd`, the reduced unrooted tree of blobs; `cfTriple`, the concordance factor `CF_abcd`; `ForGenericParams N P`, "for generic numerical parameters", `P` outside a null set.
 
-Each theorem is stated in plain terms and proved from the libraries. `docs/reports/AllmanEtAl2023.md` lists every correction and departure, and `palomar/AllmanEtAl2023/` has the paper's entry for Palomar. `MainResults` imports this module with those of the other papers.
+Each theorem is stated in plain terms and proved from the libraries. `papers/AllmanEtAl2023/README.md` and `papers/AllmanEtAl2023/REPORT.md` describe the formalization and list every correction and departure, and `papers/AllmanEtAl2023/palomar/` has the paper's entry for Palomar. `MainResults` imports this module with those of the other papers.
 -/
 
 @[expose] public noncomputable section

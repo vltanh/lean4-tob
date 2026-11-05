@@ -2,7 +2,7 @@ name = "TreeOfBlobs"
 version = "0.1.0"
 keywords = ["math", "phylogenetics"]
 srcDir = "src"
-defaultTargets = ["Basic", "External", "TINNiK", "TOBQMC", "ECToBlob", "Gusfield2007", "AllmanEtAl2023", "MainResults"]
+defaultTargets = ["Basic", "External", "TINNiK", "TOBQMC", "ECToBlob", "AllmanEtAl2023", "MainResults"]
 
 [leanOptions]
 pp.unicode.fun = true
@@ -17,7 +17,7 @@ rev = "v4.36.0-rc1"
 [[require]]
 name = "Phylogenetics"
 git = "https://github.com/vltanh/lean4-phylogenetics"
-rev = "9948de9b3cba330596424efd2dca9617be2efb0c"
+rev = "f1a3592dee6e3f7d5e7a68a0695ac457de23d2de"
 
 [[lean_lib]]
 name = "Basic"
@@ -30,10 +30,6 @@ globs = ["External.+"]
 [[lean_lib]]
 name = "AllmanEtAl2023"
 globs = ["AllmanEtAl2023.+"]
-
-[[lean_lib]]
-name = "Gusfield2007"
-globs = ["Gusfield2007.+"]
 
 [[lean_lib]]
 name = "TINNiK"

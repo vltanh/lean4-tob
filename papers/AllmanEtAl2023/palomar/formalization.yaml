@@ -1,0 +1,195 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/mathlib-initiative/formalization.yaml/main/schema/formalization.schema.json
+version: "v0.4"
+
+project:
+  name: "The tree of blobs of a species network: identifiability under the coalescent"
+  description: >-
+    A Lean formalization of Allman, Baños, Mitchell, Rhodes 2023, which prove that the tree of blobs of a species
+    network is identifiable from the concordance factors of quartets under the network multispecies coalescent. No
+    result of the literature is assumed. No person has reviewed the proofs.
+
+
+    Proved: the CF-detectability of 4-blobs for generic parameters, the B-quartet Inference Rule and the identifiability
+    of the reduced tree of blobs; every numbered result, on the paper's own objects; the remarks of the paper, the
+    outline of an algorithm in its Section 5, and the examples of its Figures 1, 2, 3 and 9. The forms that TINNiK,
+    TOB-QMC and ECToBlob use are stated on subgraphs of a fixed network.
+
+
+    The audit records E55-E66, including that Lemma 2 needs a word that it lacks, which all its uses satisfy, and E81 on
+    Baños 2019, which it cites.
+  authors:
+    - "The-Anh Vu-Le"
+  license: "Apache-2.0"
+  responsible_maintainers:
+    - "The-Anh Vu-Le"
+
+classification:
+  arxiv: ["q-bio.PE", "math.ST"]
+  msc2020: ["92D15", "92B10", "05C90", "60J28", "68V20"]
+
+sources:
+  - title: "The tree of blobs of a species network: identifiability under the coalescent"
+    authors:
+      - "Elizabeth S. Allman"
+      - "Hector Baños"
+      - "Jonathan D. Mitchell"
+      - "John A. Rhodes"
+    id: "doi:10.1007/s00285-022-01838-9"
+    type: "article"
+    location: "https://doi.org/10.1007/s00285-022-01838-9"
+    relationship: "formalizes"
+    note: "Read in the PMC author manuscript and the arXiv TeX; the journal's text wasn't reachable."
+    author_endorsement: "not-contacted"
+  - title: "Topological metrizations of trees, and new quartet methods of tree inference"
+    authors:
+      - "John A. Rhodes"
+    id: "doi:10.1109/TCBB.2019.2917204"
+    type: "article"
+    location: "https://doi.org/10.1109/TCBB.2019.2917204"
+    relationship: "background"
+    note: "Theorem 2 is proved in src/External/Rhodes2020."
+  - title: "Phylogenetics"
+    authors:
+      - "Charles Semple"
+      - "Mike Steel"
+    id: "isbn:9780198509424"
+    type: "book"
+    location: "https://www.worldcat.org/isbn/9780198509424"
+    relationship: "background"
+    note: "The Splits Equivalence Theorem, Theorem 3.1.4, is proved in the library lean4-phylogenetics (Phylogenetics.SplitsEquivalence, in Phylogenetics/Tree/SplitsEquivalence.lean); its uniqueness half is used. The book wasn't read."
+
+related_formalizations:
+  - id: "https://github.com/vltanh/lean4-phylogenetics"
+    relationship: "adapts"
+    note: "The project imports this library, pinned at commit f1a3592, for its definitions and general results, so src/MainResults/AllmanEtAl2023.lean imports it too. Finite Kingman coalescent and hierarchy modules were adapted from commit 06f684e5 under Apache-2.0 before that (docs/ADAPTED_SOURCES.md, docs/COALESCENT_SOURCES.md). The network coalescent on arbitrary networks was first written for this project and has moved to the library; the library's term-based level-1 network coalescent is not used."
+  - id: "https://github.com/vltanh/lean4-camus"
+    relationship: "independent"
+    note: "Surveyed; no code used."
+
+status:
+  scope: >-
+    Unconditional: no result of the literature is assumed. Every numbered result of Allman et al. 2023 is proved (Lemmas
+    1, 2, 3; Theorems 1, 2, 3, 4; Corollaries 1, 2; Proposition 1 and its converse). Lemma 2 is proved for a connected
+    subnetwork, which all its uses have (E55). Also proved: the remarks listed in src/AllmanEtAl2023/README.md,
+    including the outline of an algorithm in its Section 5 and the examples of its Figures 1, 2, 3 and 9. See Section 9
+    of papers/AllmanEtAl2023/REPORT.md.
+  sorry_count: 0
+  sorry_in_definitions: 0
+  axioms: []
+
+automation:
+  methods:
+    - method: "agent"
+      models: ["GPT-6 family (exact revision not exposed)"]
+      framework: "Codex"
+      tool_setup: "formalize-math-paper skill; three sub-agents; shared local workspace. Source audit and foundations, no numbered paper result."
+      cost:
+        wall_time: "about 1 h 54 min, 2026-10-27"
+        spend_usd: "not tracked"
+        hardware: "local machine"
+      prompting_notes: "Slash command with the three paper links; statement corrections asked of the user and approved."
+    - method: "agent"
+      models: ["claude-opus-5-5"]
+      framework: "Claude Code (VS Code extension)"
+      tool_setup: "formalize-math-paper skill, repository vltanh/formalize-math-paper, commit e339f64 (the last round's log names no commit); Claude Code 2.1.314; 85 sub-agents, at most 11 at once, up to commit 282215c."
+      cost:
+        wall_time: "29.14 h elapsed, from 2026-10-31 to commit 282215c on 2026-11-01, including 1.67 h for the round that proved the assumed result, 3.36 h for the round that followed the sources and formalized what the papers say in passing, 8.34 h for the round of the two further papers, and 4.61 h for the round that finished what the papers claim; sub-agent work 76.8 h. The documents after that commit are not counted."
+        spend_usd: "not tracked"
+        hardware: "local machine"
+      prompting_notes: "Slash command with the three paper links, continuing from the earlier handoff; later the user asked to match the sources closely, to formalize what the report listed as not formalized, to add Gusfield et al. 2007 and Allman et al. 2023 as primary papers on the library lean4-phylogenetics, and to finish what remained, leaving only empirical claims and wrong statements."
+  spend_usd: "not tracked"
+  notes: >-
+    The user chose the papers and the versions of the first three, agreed to the statement corrections of ECToBlob and TOB-QMC, and decided the library's boundary, the layout, the kernels and publication. AI systems wrote the code, the statements, the audit and the documents. The automation above is for the whole project, which until 2026-11-04 also had Gusfield et al. 2007, since moved to its own repository, lean4-gusfield2007; each of the four papers here has an entry of its own in papers/<Paper>/palomar/. Now src/ has 196 modules; the audit checks every declaration of the project and the library, all on the standard axioms; three kernels accept the 12 main theorems of this entry (scripts/check_kernels.sh papers/AllmanEtAl2023/palomar/comparator.json). See docs/CREDITS.md.
+
+fidelity:
+  divergences: >-
+    Statements corrected (Sections 3, 4 and 6 of papers/AllmanEtAl2023/REPORT.md): Lemma 2 for a connected subnetwork
+    (E55); the remark on edge lengths between trivial blobs for internal edges (E64). Library statements omit hypotheses
+    that the proofs do not use (Section 5 of the report); src/MainResults/AllmanEtAl2023.lean keeps them. Readings:
+    Section 6 of the report. False claims found, not formalized as stated: Lemma 2 read literally, for a disconnected M
+    (E55), and line 166 for all epsilon > 0 (E57).
+
+
+    Departures from the paper's proofs, every one with what the paper does, what Lean does and why, in Section 7 of the
+    report. Repairing gaps or errors: Theorem 1 (b), a stem removed as well as nodes suppressed (E58). Not forced, and
+    documented: Theorem 1 (a) (the rooted forms select the edge, and one argument follows), Theorem 2 (the same facts on
+    cut-edge splits), and Theorem 3 (two sentences unused). No printed argument to follow: Lemma 1 and its remarks with
+    no proof, Baños's claim on level-1 networks. Narrower than the source: the remark on the distance between blobs, on
+    one network for every k >= 1, with M varied (E65). Going beyond the source: theorem4_iso, by the splits-equivalence
+    theorem of Semple, Steel 2003. The forms that the later papers use (exists_reduction_aux, cfDetectable_generic)
+    aren't the paper's proofs of its numbered results, which are theorem1, theorem1_b, corollary1.
+    docs/route_differences.tsv records every difference of route.
+
+review:
+  status: "agent-reviewed"
+  reviewers:
+    - "none (no human review)"
+  notes: >-
+    Independent AI agents reviewed the statements against the sources and compared the formal proofs with the papers'; a
+    separate agent checked the findings. The route check and the three kernels (scripts/check_kernels.sh: Lean's kernel, NanoDa, con-ron) ran locally; Comparator runs on src/MainResults/AllmanEtAl2023.lean as both challenge and solution, so it compares no separate statement file with a proof.
+
+alignment:
+  namespace: "TreeOfBlobs"
+  statements:
+    - source: "Allman et al. 2023, Lemma 1"
+      lean: "TreeOfBlobs.allman_lemma1"
+      module: "MainResults.AllmanEtAl2023"
+      status: "proved"
+      note: "The paper omits the proof; this one is by the count of the degrees of the tree of blobs."
+    - source: "Allman et al. 2023, Theorem 1"
+      lean: "TreeOfBlobs.allman_theorem1"
+      module: "MainResults.AllmanEtAl2023"
+      status: "proved"
+      note: "As printed, in the PMC author manuscript."
+    - source: "Allman et al. 2023, Corollary 1"
+      lean: "TreeOfBlobs.allman_corollary1"
+      module: "MainResults.AllmanEtAl2023"
+      status: "proved"
+      note: "Identifiable reads: readTopology, a function of the CF alone, gives the topology."
+    - source: "Allman et al. 2023, Proposition 1"
+      lean: "TreeOfBlobs.allman_proposition1"
+      module: "MainResults.AllmanEtAl2023"
+      status: "proved"
+      note: "For all parameters, as printed."
+    - source: "Allman et al. 2023, Proposition 1, the converse"
+      lean: "TreeOfBlobs.allman_proposition1_converse"
+      module: "MainResults.AllmanEtAl2023"
+      status: "proved"
+      note: "On the networks of the paper's proof."
+    - source: "Allman et al. 2023, Lemma 2, a counterexample"
+      lean: "TreeOfBlobs.allman_lemma2_needs_connected"
+      module: "MainResults.AllmanEtAl2023"
+      status: "proved, corrects the source"
+      note: "Lemma 2 needs a connected subnetwork, which its proof and uses assume."
+    - source: "Allman et al. 2023, Theorem 2"
+      lean: "TreeOfBlobs.allman_theorem2"
+      module: "MainResults.AllmanEtAl2023"
+      status: "proved"
+      note: "The B-quartet Inference Rule, as printed."
+    - source: "Allman et al. 2023, Theorem 3"
+      lean: "TreeOfBlobs.allman_theorem3"
+      module: "MainResults.AllmanEtAl2023"
+      status: "proved"
+      note: "CFInferred is what CF-detectability and the rule give from the CFs alone."
+    - source: "Allman et al. 2023, Theorem 4"
+      lean: "TreeOfBlobs.allman_theorem4"
+      module: "MainResults.AllmanEtAl2023"
+      status: "proved"
+      note: "F is chosen before the network."
+    - source: "Allman et al. 2023, Section 5, the distance between blobs"
+      lean: "TreeOfBlobs.allman_blobDistance_not_identifiable"
+      module: "MainResults.AllmanEtAl2023"
+      status: "proved"
+      note: "The paper gives no proof."
+    - source: "Allman et al. 2023, before Proposition 1, Baños's range"
+      lean: "TreeOfBlobs.allman_banos_range"
+      module: "MainResults.AllmanEtAl2023"
+      status: "proved"
+      note: "On the network of the paper's Proposition 1; Baños's bound on all level-1 networks isn't proved."
+    - source: "Allman et al. 2023, Section 5, the outline of an algorithm"
+      lean: "TreeOfBlobs.allman_outline_consistent"
+      module: "MainResults.AllmanEtAl2023"
+      status: "proved"
+      note: "For any test right on each set of four taxa with probability tending to one."
+
+acknowledgements: "Lean, Mathlib; the Phylogenetics library of the maintainer (lean4-phylogenetics), for adapted Kingman coalescent modules; the authors of the papers and sources."
