@@ -1,5 +1,5 @@
 # Differences between the routes of the formal proofs and the paper's proofs, each with its reason.
-# Format: label<TAB>±other<TAB>reason. See docs/REPORT.md, Section 7. The routes of the papers are in docs/paper_routes.tsv.
+# Format: label<TAB>±other<TAB>reason. See Section 7 of the reports in docs/reports/. The routes of the papers are in docs/paper_routes.tsv.
 # A row with the label `*` records a result used without citation throughout. Each paper has a section below.
 #
 # ==== ECToBlob, TOB-QMC, TINNiK ====

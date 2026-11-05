@@ -2,7 +2,7 @@ module
 
 public import Phylogenetics.NMSC.DisplayedTreeModel
 public import Basic.NMSCChain
-public import TOBQMC.Wedge
+public import Basic.Wedge
 
 /-!
 # Singleton lineages at given vertices: comparing the masses of the quartet trees

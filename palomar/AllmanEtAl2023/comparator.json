@@ -1,0 +1,25 @@
+{
+  "challenge_module": "MainResults.AllmanEtAl2023",
+  "solution_module": "MainResults.AllmanEtAl2023",
+  "theorem_names": [
+    "TreeOfBlobs.allman_lemma1",
+    "TreeOfBlobs.allman_theorem1",
+    "TreeOfBlobs.allman_corollary1",
+    "TreeOfBlobs.allman_proposition1",
+    "TreeOfBlobs.allman_proposition1_converse",
+    "TreeOfBlobs.allman_lemma2_needs_connected",
+    "TreeOfBlobs.allman_theorem2",
+    "TreeOfBlobs.allman_theorem3",
+    "TreeOfBlobs.allman_theorem4",
+    "TreeOfBlobs.allman_blobDistance_not_identifiable",
+    "TreeOfBlobs.allman_banos_range",
+    "TreeOfBlobs.allman_outline_consistent"
+  ],
+  "definition_names": [],
+  "permitted_axioms": [
+    "propext",
+    "Quot.sound",
+    "Classical.choice"
+  ],
+  "enable_nanoda": true
+}

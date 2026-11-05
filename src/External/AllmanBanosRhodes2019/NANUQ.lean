@@ -2,7 +2,7 @@ module
 
 public import External.Rhodes2020.Theorem2
 public import TINNiK.T3
-public import TOBQMC.Level1CF
+public import Basic.Level1CF
 
 /-!
 # NANUQ (Allman, Baños, Rhodes 2019)

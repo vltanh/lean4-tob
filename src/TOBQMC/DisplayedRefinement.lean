@@ -1,6 +1,7 @@
 module
 
-public import ECToBlob.DisplayedTreeExample
+public import Basic.FinNetwork
+public import Phylogenetics.Tree.Detach
 
 /-!
 # TOB-QMC: a refinement of the tree of blobs need not be a display tree

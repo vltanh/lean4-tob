@@ -2,7 +2,7 @@ module
 
 public import Basic.Defs
 public import Phylogenetics.NMSC.DisplayedTreeModel
-public import TOBQMC.Level1Blobs
+public import Basic.Level1Blobs
 public import ECToBlob.Remark33
 public import ECToBlob.Remark52
 

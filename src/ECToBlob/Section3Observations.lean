@@ -1,11 +1,12 @@
 module
 
+public import Basic.FinNetwork
 public import Basic.General
 public import Phylogenetics.NMSC.DisplayedTreeModel
 public import Phylogenetics.Tree.Detach
 public import ECToBlob.Remark33Counterexample
 public import ECToBlob.Section5
-public import TOBQMC.Level1CF
+public import Basic.Level1CF
 
 /-!
 # ECToBlob §3: the observations on what MQS infers
@@ -233,28 +234,6 @@ theorem nmscCF_lt_choiceMetric (hN : N.IsPhylogenetic) {c : N.ParentChoice} (hρ
     (fun x hxq hxP hr' => hxP ((hu x hxq).2 (hclu ▸ mem_displayedCluster.2 hr'))) hr
   have : Real.exp (-θ.length e) < 1 := Real.exp_lt_one_iff.2 (by linarith)
   linarith
-
-omit [Fintype E] in
-/-- A vertex whose cluster traces a side of a quartet tree makes the tree of the choice display it. -/
-theorem displays_of_cluster {c : N.ParentChoice} {s : QuartetTree X}
-    {P : Finset X} (hP : P ∈ s.val) {u : V} (hb : ∀ x ∈ P, x ∈ N.displayedCluster c u)
-    (hn : ∀ x ∈ s.taxa, x ∉ P → x ∉ N.displayedCluster c u) : Displays (N.displayedSides c) s := by
-  have hAq : N.displayedCluster c u ∩ s.taxa = P := by
-    ext x
-    rw [mem_inter]
-    constructor
-    · rintro ⟨hxA, hxq⟩
-      by_contra hxP
-      exact hn x hxq hxP hxA
-    · exact fun hx => ⟨hb x hx, s.subset_taxa hP hx⟩
-  obtain ⟨a, ha⟩ : P.Nonempty := card_pos.1 (by rw [s.card_of_mem hP]; omega)
-  obtain ⟨y, hy⟩ : (s.taxa \ P).Nonempty :=
-    card_pos.1 (by rw [s.card_of_mem (s.sdiff_mem hP)]; omega)
-  obtain ⟨hyq, hyP⟩ := mem_sdiff.1 hy
-  refine ⟨_, mem_unroot.2 (Or.inl ⟨mem_displayedClusters.2 ⟨nonempty_iff_ne_empty.1 ⟨a, hb a ha⟩, u, rfl⟩,
-    fun h => hn y hyq hyP (h ▸ mem_univ y)⟩), ?_⟩
-  rw [hAq]
-  exact hP
 
 /-- **Observation (1) of lines 363-369: at a parent choice, the optimal trees are exactly the binary resolutions of the
 displayed tree**, when its internal edges have positive length. This is the score as a sum of strict comparisons on each

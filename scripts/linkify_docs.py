@@ -32,7 +32,8 @@ from pathlib import Path
 
 # ---- configuration -------------------------------------------------------------------------
 # The Markdown documents to process.
-DOCS = ['README.md', 'docs/REPORT.md', 'docs/CREDITS.md']
+DOCS = ['README.md', 'docs/REPORT.md', 'docs/CREDITS.md'] + [f'docs/reports/{p}.md' for p in
+    ('ECToBlob', 'TOBQMC', 'TINNiK', 'AllmanEtAl2023', 'Gusfield2007')]
 # Namespaces in which the documents name declarations without their prefix, most specific last.
 NAMESPACES = ['ECToBlob', 'TOBQMC', 'TINNiK', 'AllmanEtAl2023', 'Gusfield2007', 'External', 'SempleSteel2003', 'Gusfield1991',
               'GusfieldEtAl2004', 'MyersGriffiths2003', 'HudsonKaplan1985', 'SongHein2005', 'Phylogenetics', 'TreeOfBlobs',
@@ -43,7 +44,8 @@ MODULE_ROOTS = ('ECToBlob', 'TOBQMC', 'TINNiK', 'AllmanEtAl2023', 'Gusfield2007'
 PREFERRED_MODULE = 'MainResults'
 # Directories, besides the repository root, against which the paths in the documents of a
 # given directory are resolved.
-PATH_BASES = {'': ['src', '.github/workflows'], 'docs': ['src', 'docs', '.github/workflows']}
+PATH_BASES = {'': ['src', '.github/workflows'], 'docs': ['src', 'docs', '.github/workflows'],
+              'docs/reports': ['src', 'docs', '.github/workflows']}
 # The directory of the project's modules.
 SRC_DIR = 'src'
 # The library that this project requires, and where its source is published.
@@ -121,7 +123,7 @@ def load_locations():
         if not (ROOT / module_file(data['module'])).is_file():
             continue
         # The preferred module's declarations win over restatements elsewhere.
-        target = preferred if data['module'] == PREFERRED_MODULE else locations
+        target = preferred if data['module'].split('.')[0] == PREFERRED_MODULE else locations
         for name, ranges in data.get('decls', {}).items():
             # `ranges` holds the declaration's range, then its name's; lines count from 0.
             target[name] = (data['module'], ranges[4] + 1, None)

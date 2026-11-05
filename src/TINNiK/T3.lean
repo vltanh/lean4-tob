@@ -39,6 +39,22 @@ model (`T3Detectable`).
 open Phylogenetics Phylogenetics.RootedNetwork Finset Filter Topology
 open scoped Classical
 
+namespace Phylogenetics.QuartetTests
+
+variable {X : Type*} [Fintype X] [DecidableEq X]
+
+/-- A non-cut concordance factor (Definition 15 of Allman et al. 2023) is off model T3. -/
+theorem not_isT3Null_of_isNonCut {p : QuartetTree X → ℝ} {q : Finset X}
+    (h : AllmanEtAl2023.IsNonCut p q) : ¬ IsT3Null p q := by
+  rintro ⟨s, hs, -, heq⟩
+  obtain ⟨r₁, r₂, hne, ha⟩ := QuartetTree.exists_alternatives s
+  obtain ⟨-, -, -, ht₁, ht₂⟩ := alternatives_taxa hne ha
+  have hsq := mem_treesOn.1 hs
+  exact h r₁ (mem_treesOn.2 (ht₁.trans hsq)) r₂ (mem_treesOn.2 (ht₂.trans hsq)) hne
+    (heq r₁ (by rw [ha]; simp) r₂ (by rw [ha]; simp))
+
+end Phylogenetics.QuartetTests
+
 namespace TINNiK
 
 variable {V E X : Type*} [Fintype X] [DecidableEq X]

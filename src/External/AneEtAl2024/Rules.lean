@@ -1,7 +1,8 @@
 module
 
 public import External.AneEtAl2024.Proposition12
-public import External.AllmanBanosRhodes2019.NANUQ
+public import Basic.Level1Blobs
+public import Phylogenetics.Network.Cuts
 
 /-!
 # Ané et al. 2024: the count of subnetworks with one hybrid node, and the rules for `3₂`-cycles
@@ -49,7 +50,7 @@ section Rules
 
 variable {V E X : Type*} [Fintype X] [DecidableEq X]
 
-open Phylogenetics Phylogenetics.RootedNetwork External.AllmanBanosRhodes2019 TOBQMC.Level1
+open Phylogenetics Phylogenetics.RootedNetwork TOBQMC.Level1
 
 /-- The taxa of `q` below the blob of `h`: below some vertex of it. -/
 def belowBlob (N : RootedNetwork V E X) (h : V) (q : Finset X) : Finset X :=

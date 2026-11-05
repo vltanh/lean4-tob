@@ -1,7 +1,8 @@
 module
 
-public import AllmanEtAl2023.Basic
+public import Basic.Defs
 public import Basic.Testing.Limits
+public import Basic.Testing.MissingTaxa
 public import Mathlib.Basic.Real.Sign
 
 /-!
@@ -758,16 +759,6 @@ theorem IsT1Null.of_isT1Strict {p : QuartetTree X → ℝ} {s : QuartetTree X}
     (h : IsT1Strict p s) : IsT1Null p s :=
   ⟨fun r hr => (h.1 r hr).le, h.2⟩
 
-/-- A non-cut concordance factor is off model T3. -/
-theorem not_isT3Null_of_isNonCut {p : QuartetTree X → ℝ} {q : Finset X}
-    (h : AllmanEtAl2023.IsNonCut p q) : ¬ IsT3Null p q := by
-  rintro ⟨s, hs, -, heq⟩
-  obtain ⟨r₁, r₂, hne, ha⟩ := QuartetTree.exists_alternatives s
-  obtain ⟨-, -, -, ht₁, ht₂⟩ := alternatives_taxa hne ha
-  have hsq := mem_treesOn.1 hs
-  exact h r₁ (mem_treesOn.2 (ht₁.trans hsq)) r₂ (mem_treesOn.2 (ht₂.trans hsq)) hne
-    (heq r₁ (by rw [ha]; simp) r₂ (by rw [ha]; simp))
-
 /-- An **anomalous** concordance factor (TINNiK, "The T3 model and testing": `ab|cd` cut of the form `(p, q, q)`
 with `q > 1/3`, off the centroid) is off model T3. -/
 theorem not_isT3Null_of_anomalous {p : QuartetTree X → ℝ} {s : QuartetTree X}
@@ -1329,5 +1320,26 @@ end Sample
 
 
 end QuartetTests
+
+/-! ### The T3 statistic looks only at the taxa -/
+
+section Congr
+
+open Finset
+
+variable {c c' : QuartetTree X → ℝ} {q : Finset X}
+
+theorem t3Stat_congr (h : ∀ r ∈ treesOn q, c r = c' r) : t3Stat c q = t3Stat c' q := by
+  unfold t3Stat
+  exact iInf_congr fun s => t1Stat_congr s.property h
+
+theorem t3PValue_congr {s : QuartetTree X} (hs : s ∈ treesOn q) (h : ∀ r ∈ treesOn q, c r = c' r) :
+    t3PValue c s = t3PValue c' s := by
+  have halt : ∀ r ∈ s.alternatives, c r = c' r := fun r hr =>
+    h r (mem_treesOn.2 ((QuartetTree.mem_alternatives.1 hr).1.trans (mem_treesOn.1 hs)))
+  unfold t3PValue t1Phi
+  rw [sum_congr rfl halt, h s hs, mem_treesOn.1 hs, t3Stat_congr h]
+
+end Congr
 
 end Phylogenetics

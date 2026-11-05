@@ -6,7 +6,7 @@ public import Phylogenetics.NMSC.DisplayedTreeModel
 public import Phylogenetics.NMSC.Induced
 public import Phylogenetics.NMSC.InducedParams
 public import Basic.Testing.Trinomial.Tests
-public import TOBQMC.Level1Blobs
+public import Basic.Level1Blobs
 public import ECToBlob.Section3
 
 /-!

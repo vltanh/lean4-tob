@@ -1,7 +1,7 @@
 module
 
-public import ECToBlob.DisplayedTreeExample
-public import TOBQMC.Level1Blobs
+public import Basic.FinNetwork
+public import Basic.Level1Blobs
 public import Mathlib.Tactic.FinCases
 
 /-!

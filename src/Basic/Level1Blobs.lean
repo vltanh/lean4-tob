@@ -7,8 +7,9 @@ public import Mathlib.Algebra.Order.BigOperators.Group.Finset
 /-!
 # Blobs of binary level-1 networks
 
-The graph facts behind TOB-QMC Lemma 4 (`src/TOBQMC/Level1.lean`), in the domination language of
-`Phylogenetics/Network/Cuts.lean`.
+The graph facts behind TOB-QMC's Lemma 4 (`src/TOBQMC/Level1.lean`), NANUQ's Proposition 9
+(`src/External/AllmanBanosRhodes2019/Proposition9.lean`) and ECToBlob's Remarks 3.3 and 5.2, in the domination language
+of `Phylogenetics/Network/Cuts.lean`.
 
 * An arc is a bridge exactly when nothing outside enters the descendants of its target
   (`isBridge_iff_reaches`).

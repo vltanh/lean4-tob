@@ -9,7 +9,7 @@ public import Phylogenetics.NMSC.Analytic
 public import Phylogenetics.NMSC.Exchangeability
 public import Phylogenetics.Network.DeletedArcs
 public import Basic.Testing.Defs
-public import TOBQMC.Level1Blobs
+public import Basic.Level1Blobs
 public import Mathlib.MeasureTheory.Constructions.Pi
 public import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 public import Mathlib.MeasureTheory.Measure.Dirac.Basic

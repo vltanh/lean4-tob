@@ -15,7 +15,7 @@ Run with `lake env lean scripts/Audit.lean` after `lake build` and `lake build P
 For every numbered result of the papers, this prints the axioms it depends on and the results from
 prior work (`src/External/`, and the papers that another paper cites) that it uses, whether proved there or,
 in a conditional formalization, assumed as hypotheses of its statement. It then checks every declaration
-of the library and the main theorems of `src/MainResults.lean`. The run fails if any of them
+of the library and the main theorems of `src/MainResults/`, one module per paper. The run fails if any of them
 depends on an axiom other than Lean's standard `propext`, `Classical.choice` and `Quot.sound` (a
 `sorry` shows up as the axiom `sorryAx`). Its table of results is the source of the report's
 dependency table.
@@ -755,7 +755,7 @@ meta def paperResults : List (String × Name) :=
     paperResultsSources2 ++
     paperResultsInPassing
 
-/-- The main theorems of `src/MainResults.lean`. -/
+/-- The main theorems of `src/MainResults/`. -/
 meta def solutionResults : List Name :=
   [``TreeOfBlobs.theorem3_1, ``TreeOfBlobs.theorem4_1, ``TreeOfBlobs.theorem8_2, ``TreeOfBlobs.theorem1,
    ``TreeOfBlobs.theorem1_optimal, ``TreeOfBlobs.theorem2, ``TreeOfBlobs.consistency,
@@ -811,11 +811,11 @@ meta def solutionResults : List Name :=
 meta def standardAxioms : List Name := [``propext, ``Classical.choice, ``Quot.sound]
 
 /-- Whether `m` is a module of the libraries: the papers', `External`, `Basic`, the library
-`Phylogenetics`, or `MainResults`. -/
+`Phylogenetics`, or `MainResults` and its modules, one per paper. -/
 meta def isLibraryModule (m : Name) : Bool :=
   (`ECToBlob).isPrefixOf m || (`TOBQMC).isPrefixOf m || (`TINNiK).isPrefixOf m ||
     (`AllmanEtAl2023).isPrefixOf m || (`Gusfield2007).isPrefixOf m || (`External).isPrefixOf m ||
-    (`Basic).isPrefixOf m || (`Phylogenetics).isPrefixOf m || m == `MainResults
+    (`Basic).isPrefixOf m || (`Phylogenetics).isPrefixOf m || (`MainResults).isPrefixOf m
 
 /-- The constants declared in the library. -/
 meta def libraryConstants (env : Environment) : NameSet := Id.run do

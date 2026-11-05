@@ -1,7 +1,7 @@
 module
 
 public import ECToBlob.LevelCutoffs
-public import ECToBlob.UnitMetric
+public import Basic.UnitMetric
 
 /-!
 # ECToBlob Theorem 8.2 on the literal general model: the genericity is needed

@@ -1,0 +1,89 @@
+# The units of the project and what each may import. `scripts/check_layers.py` checks every import of
+# `src/` against this file, and that the units form no cycle, so that each unit could be its own Lake
+# package. Imports of Mathlib and of the library `Phylogenetics` are not listed: every unit may use them.
+#
+# A unit is a paper, with its main results in `src/MainResults/` and the sources that only it uses, or a source that
+# several papers use, or `Basic`.
+# A unit may import only the units in its `imports`. To add an import between units, add it here, and
+# check that it creates no cycle.
+
+# What the papers share beyond the library: definitions, tests, network facts. It imports no paper.
+[units.Basic]
+paths = ["Basic"]
+imports = []
+
+# Sources that several papers use, or none (those stated for their own sake).
+
+[units.Rhodes2020]
+paths = ["External/Rhodes2020"]
+imports = []
+
+[units.SempleSteel2003]
+paths = ["External/SempleSteel2003"]
+imports = []
+
+[units.HuberEtAl2025]
+paths = ["External/HuberEtAl2025"]
+imports = []
+
+[units.KaneTao2017]
+paths = ["External/KaneTao2017"]
+imports = []
+
+[units.LegriedEtAl2021]
+paths = ["External/LegriedEtAl2021"]
+imports = []
+
+[units.StudierKeppler1988]
+paths = ["External/StudierKeppler1988"]
+imports = []
+
+[units.DinhBanos2025]
+paths = ["External/DinhBanos2025"]
+imports = []
+
+[units.MitchellAllmanRhodes2019]
+paths = ["External/MitchellAllmanRhodes2019"]
+imports = ["Basic"]
+
+[units.AneEtAl2024]
+paths = ["External/AneEtAl2024"]
+imports = ["Basic"]
+
+# The tree of blobs from quartets.
+
+[units.AllmanEtAl2023]
+paths = ["AllmanEtAl2023", "MainResults/AllmanEtAl2023.lean"]
+imports = ["Basic", "Rhodes2020", "SempleSteel2003"]
+
+[units.TINNiK]
+paths = ["TINNiK", "MainResults/TINNiK.lean"]
+imports = ["Basic", "AllmanEtAl2023", "MitchellAllmanRhodes2019", "Rhodes2020", "StudierKeppler1988"]
+
+# NANUQ is formalized on the language of Allman et al. 2023 and TINNiK's T3 test, which came later.
+[units.AllmanBanosRhodes2019]
+paths = ["External/AllmanBanosRhodes2019"]
+imports = ["Basic", "AllmanEtAl2023", "TINNiK", "HuberEtAl2025", "Rhodes2020"]
+
+# TOB-QMC and ECToBlob are concurrent and independent: neither imports the other.
+[units.TOBQMC]
+paths = ["TOBQMC", "MainResults/TOBQMC.lean"]
+imports = ["Basic", "AllmanEtAl2023", "TINNiK", "AneEtAl2024", "HuberEtAl2025", "KaneTao2017",
+  "MitchellAllmanRhodes2019", "DinhBanos2025"]
+
+[units.ECToBlob]
+paths = ["ECToBlob", "MainResults/ECToBlob.lean"]
+imports = ["Basic", "AllmanEtAl2023", "TINNiK", "AllmanBanosRhodes2019", "LegriedEtAl2021",
+  "MitchellAllmanRhodes2019"]
+
+# Gusfield et al. 2007, with the sources only it uses. These are formalized in its language of networks, and
+# its proofs use their results, so the unit is one. It imports neither the library nor `Basic`.
+[units.Gusfield2007]
+paths = ["Gusfield2007", "MainResults/Gusfield2007.lean", "External/Gusfield1991", "External/GusfieldEtAl2004", "External/HudsonKaplan1985",
+  "External/MyersGriffiths2003", "External/SongHein2005"]
+imports = ["SempleSteel2003"]
+
+# The main results: one module per paper, in that paper's unit, and `MainResults.lean`, which imports the five.
+[units.MainResults]
+paths = ["MainResults.lean"]
+imports = ["AllmanEtAl2023", "TINNiK", "TOBQMC", "ECToBlob", "Gusfield2007"]

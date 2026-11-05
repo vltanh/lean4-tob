@@ -1,6 +1,7 @@
 module
 
 public import AllmanEtAl2023.Reduction
+public import Basic.InducedSplits
 public import Phylogenetics.NMSC.DisplayedTreeModel
 public import TOBQMC.WQC
 
@@ -112,62 +113,6 @@ theorem splitOffAt_of_subset [Fintype X] [DecidableEq X] {D' : Set E} (hDD : D �
   refine ⟨P, hP, fun x hx hr => hdom x hx (hr.mono (Set.insert_subset_insert hDD)), ?_⟩
   rintro x hx ⟨he, hr⟩
   exact hbel x hx ⟨fun h => he (hDD h), hr.mono hDD⟩
-
-section Uniqueness
-
-variable [Fintype X] [DecidableEq X]
-
-omit [Fintype X] in
-/-- An arc of a split below the arc of another: its cherry is inside the other's cherry. -/
-theorem subset_of_separatesOff_of_reachesOff (hN : N.IsPhylogenetic) (hD : N.IsDeletion D) {s s' : QuartetTree X}
-    (hss : s.taxa = s'.taxa) {e e' : E} {P P' : Finset X} (hP : P ∈ s.val) (hP' : P' ∈ s'.val)
-    (hsep : N.SeparatesOff D e (P : Set X) ((s.taxa \ P : Finset X) : Set X))
-    (hsep' : N.SeparatesOff D e' (P' : Set X) ((s'.taxa \ P' : Finset X) : Set X))
-    (hr : N.ReachesOff D (N.graph.target e) (N.graph.target e')) : P' ⊆ P := by
-  intro y hy
-  by_contra hyP
-  have hyb := (hsep'.1 y hy).isBelowOff hN hD
-  have hyq : y ∈ s.taxa \ P := mem_sdiff.mpr ⟨hss ▸ s'.subset_taxa hP' hy, hyP⟩
-  obtain ⟨x, hx⟩ := card_pos.mp (show 0 < P.card by rw [s.card_of_mem hP]; norm_num)
-  exact hsep.2 y hyq ⟨((hsep.1 x hx).isBelowOff hN hD).1, hr.trans hyb.2⟩
-
-omit [Fintype X] in
-/-- **The split of a cut edge is the only non-trivial split**: off a deletion, the arcs of two splits on four taxa are
-nested or disjoint, so the splits are one quartet tree. -/
-theorem eq_of_splitOffAt (hN : N.IsPhylogenetic) (hD : N.IsDeletion D) {s s' : QuartetTree X}
-    (hss : s.taxa = s'.taxa) {e e' : E} (hs : N.SplitOffAt D e s) (hs' : N.SplitOffAt D e' s') :
-    s = s' := by
-  obtain ⟨P, hP, hsep⟩ := hs
-  obtain ⟨P', hP', hsep'⟩ := hs'
-  have hc := s.card_of_mem hP
-  have hc' := s'.card_of_mem hP'
-  by_cases hdis : Disjoint P P'
-  · -- disjoint: `P'` is the other cherry of `s`
-    have hsub : P' ⊆ s.taxa \ P := fun y hy =>
-      mem_sdiff.mpr ⟨hss ▸ s'.subset_taxa hP' hy, disjoint_right.mp hdis hy⟩
-    have heq : P' = s.taxa \ P := eq_of_subset_of_card_le hsub (by
-      rw [card_sdiff_of_subset (s.subset_taxa hP), s.card_taxa]
-      omega)
-    exact QuartetTree.eq_of_taxa_eq_of_mem hss (heq ▸ s.sdiff_mem hP) hP'
-  · -- they share a taxon: two arcs dominating it are ordered
-    obtain ⟨x, hxP, hxP'⟩ := not_disjoint_iff.mp hdis
-    have hPP' : P = P' := by
-      by_cases hee : e = e'
-      · subst hee
-        exact (eq_of_subset_of_card_le (subset_of_separatesOff_of_reachesOff hN hD hss hP hP' hsep hsep' .refl)
-          (by omega)).symm
-      · have hle : ∀ {a b : E}, N.ReachesOff D (N.graph.target a) (N.graph.source b) → b ∉ D →
-            N.ReachesOff D (N.graph.target a) (N.graph.target b) := fun h hb => h.tail_arc hb
-        have hb := ((hsep.1 x hxP).isBelowOff hN hD).1
-        have hb' := ((hsep'.1 x hxP').isBelowOff hN hD).1
-        rcases DominatesOff.reaches_or_reaches hN hD (hsep.1 x hxP) (hsep'.1 x hxP') hee with h | h
-        · exact (eq_of_subset_of_card_le
-            (subset_of_separatesOff_of_reachesOff hN hD hss hP hP' hsep hsep' (hle h hb')) (by omega)).symm
-        · exact eq_of_subset_of_card_le
-            (subset_of_separatesOff_of_reachesOff hN hD hss.symm hP' hP hsep' hsep (hle h hb)) (by omega)
-    exact QuartetTree.eq_of_taxa_eq_of_mem hss hP (hPP' ▸ hP')
-
-end Uniqueness
 
 section Displayed
 

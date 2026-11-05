@@ -2,8 +2,8 @@ module
 
 public import AllmanEtAl2023.CFDetectable
 public import Basic.RhoOne
-public import ECToBlob.DisplayedTreeExample
-public import ECToBlob.UnitMetric
+public import Basic.FinNetwork
+public import Basic.UnitMetric
 public import External.AneEtAl2024.Proposition12
 public import TINNiK.Basic
 public import TOBQMC.ConsistencyT3

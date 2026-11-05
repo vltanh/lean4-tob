@@ -1,6 +1,6 @@
 module
 
-public import ECToBlob.Deterministic
+public import Basic.InducedSplits
 public import TOBQMC.WQC
 
 /-!

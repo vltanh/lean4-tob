@@ -23,7 +23,9 @@ ECToBlob's Remark 8.3 says that the argument of its Theorem 8.2 strengthens the 
 ## What is formalized (`Placement.lean`, `Proposition9.lean`)
 
 * Proposition 9, parts 1 and 3, on binary level-1 networks, at any `0 ≤ ρ ≤ 1`: `proposition9`. The source takes it from
-  its references and prints no proof, so the proof is new. It places lineages at vertices (`Placement.placeInj`) and
+  its references and prints no proof, so the proof is new. It uses the facts on blobs of level-1 networks in
+  [`src/Basic/`](../../Basic) (`Level1Blobs`, `Wedge`, `Level1Blocks`), two cases of TOB-QMC's Lemma 4 among them, and
+  Theorem 5.1 of Huber et al. 2025. It places lineages at vertices (`Placement.placeInj`) and
   moves them up by the Markov property; it has no formula in the branch lengths. `Proposition9.lean` has the argument.
 * Proposition 9, part 2: `proposition9_part2`, in `Proposition9Part2.lean`, with the bound `CF_AB|CD ≥ 1/6`. Two lineages at
   a reticulation take one parent with probability at least `1/2`, and from there the masses are tree-like. "May or may not

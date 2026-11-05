@@ -2,7 +2,7 @@ module
 
 public import Phylogenetics.Network.Cuts
 public import Phylogenetics.Tree.Splits
-public import TOBQMC.Level1Blobs
+public import Basic.Level1Blobs
 public import ECToBlob.Section5
 public import Basic.NMSCChain
 

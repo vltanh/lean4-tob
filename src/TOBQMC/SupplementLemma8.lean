@@ -1,6 +1,6 @@
 module
 
-public import TOBQMC.Level1Blobs
+public import Basic.Level1Blobs
 
 /-!
 # TOB-QMC supplement, Lemma 8: a reticulation at the boundary of a blob

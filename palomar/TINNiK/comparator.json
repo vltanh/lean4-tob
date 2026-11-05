@@ -1,0 +1,21 @@
+{
+  "challenge_module": "MainResults.TINNiK",
+  "solution_module": "MainResults.TINNiK",
+  "theorem_names": [
+    "TreeOfBlobs.theorem4",
+    "TreeOfBlobs.tinnik_theorem4_missing",
+    "TreeOfBlobs.mitchell_proposition4_1",
+    "TreeOfBlobs.mitchell_proposition4_2",
+    "TreeOfBlobs.mitchell_proposition5_1",
+    "TreeOfBlobs.mitchell_proposition5_2",
+    "TreeOfBlobs.tinnik_not_exists_generatingCutModel_maximizer",
+    "TreeOfBlobs.studierKeppler_not_lemmaAsPrinted"
+  ],
+  "definition_names": [],
+  "permitted_axioms": [
+    "propext",
+    "Quot.sound",
+    "Classical.choice"
+  ],
+  "enable_nanoda": true
+}

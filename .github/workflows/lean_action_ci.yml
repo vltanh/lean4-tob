@@ -36,7 +36,10 @@ jobs:
         run: >-
           python3 scripts/route_check.py check docs/paper_routes.tsv
           --accept docs/route_differences.tsv
+      # Every import between units of `src/` is one that scripts/layers.toml allows, and the units form no cycle.
+      - name: Check the imports between units
+        run: python3 scripts/check_layers.py
       - name: Check that the documentation's links to the code are current
         run: python3 scripts/linkify_docs.py --check
       - name: Check the Markdown tables
-        run: python3 scripts/check_md_tables.py README.md docs/REPORT.md docs/CREDITS.md
+        run: python3 scripts/check_md_tables.py README.md docs/REPORT.md docs/CREDITS.md docs/reports/*.md

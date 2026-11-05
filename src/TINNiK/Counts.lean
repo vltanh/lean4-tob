@@ -3,6 +3,7 @@ module
 public import AllmanEtAl2023.Basic
 public import Basic.Defs
 public import Basic.Testing.Defs
+public import Basic.TreeCounts
 public import Phylogenetics.Tree.Splits
 public import TINNiK.Basic
 
@@ -743,84 +744,6 @@ theorem setOf_bInferred_eq_bQuartetInference :
   rfl
 
 end Correct
-
-/-! ### Trees: how many splits -/
-
-section Trees
-
-variable {H : Finset (Finset X)}
-
-/-- The clusters other than the root are the children of the clusters, each of one. -/
-theorem sum_card_childClusters (hH : IsHierarchy H) : ∑ A ∈ H, (childClusters H A).card + 1 = H.card := by
-  have hunion : H.biUnion (childClusters H) = H.erase univ := by
-    ext C
-    simp only [mem_biUnion, mem_erase]
-    constructor
-    · rintro ⟨A, -, hC⟩
-      obtain ⟨hCH, hCA, -⟩ := mem_childClusters.mp hC
-      exact ⟨fun h => (h ▸ hCA).2 (subset_univ A), hCH⟩
-    · rintro ⟨hCu, hCH⟩
-      exact ⟨_, hH.parentCluster_mem hCH hCu, hH.mem_childClusters_parentCluster hCH hCu⟩
-  have hdis : ∀ A ∈ H, ∀ A' ∈ H, A ≠ A' → Disjoint (childClusters H A) (childClusters H A') := by
-    intro A hA A' hA' hne
-    rw [disjoint_left]
-    intro C hC hC'
-    exact hne ((hH.parentCluster_eq_of_mem_childClusters hA hC).symm.trans
-      (hH.parentCluster_eq_of_mem_childClusters hA' hC'))
-  have hcard := card_biUnion hdis
-  rw [hunion, card_erase_of_mem hH.1] at hcard
-  have := card_pos.mpr ⟨_, hH.1⟩
-  omega
-
-omit [DecidableEq X] in
-/-- The clusters of one taxon are `N` many. -/
-theorem card_filter_not_two_le (hH : IsHierarchy H) : (H.filter fun A => ¬ 2 ≤ A.card).card = Fintype.card X := by
-  have heq : (H.filter fun A => ¬ 2 ≤ A.card) = univ.image fun x : X => ({x} : Finset X) := by
-    ext A
-    simp only [mem_filter, mem_image, mem_univ, true_and]
-    constructor
-    · rintro ⟨hA, h2⟩
-      have hpos := card_pos.mpr (hH.2.2.1 A hA)
-      obtain ⟨x, rfl⟩ := card_eq_one.mp (by omega : A.card = 1)
-      exact ⟨x, rfl⟩
-    · rintro ⟨x, rfl⟩
-      exact ⟨hH.2.1 x, by simp⟩
-  rw [heq, card_image_of_injective _ singleton_injective, card_univ]
-
-/-- A hierarchy has at most `N - 1` clusters of at least two taxa. -/
-theorem card_filter_two_le_add_one_le (hH : IsHierarchy H) :
-    (H.filter fun A => 2 ≤ A.card).card + 1 ≤ Fintype.card X := by
-  have hsum := sum_card_childClusters hH
-  have htot := card_filter_add_card_filter_not (s := H) (fun A : Finset X => 2 ≤ A.card)
-  rw [card_filter_not_two_le hH] at htot
-  have hle : 2 * (H.filter fun A => 2 ≤ A.card).card ≤ ∑ A ∈ H, (childClusters H A).card := by
-    calc 2 * (H.filter fun A => 2 ≤ A.card).card = ∑ _A ∈ H.filter (fun A => 2 ≤ A.card), 2 := by
-          rw [sum_const, smul_eq_mul, mul_comm]
-      _ ≤ ∑ A ∈ H.filter (fun A => 2 ≤ A.card), (childClusters H A).card :=
-          sum_le_sum fun A hA => hH.two_le_card_childClusters (mem_filter.mp hA).2
-      _ ≤ ∑ A ∈ H, (childClusters H A).card := sum_le_sum_of_subset (filter_subset _ _)
-  omega
-
-/-- A hierarchy has at most `2 N - 1` clusters. -/
-theorem card_add_one_le_of_isHierarchy (hH : IsHierarchy H) : H.card + 1 ≤ 2 * Fintype.card X := by
-  have htot := card_filter_add_card_filter_not (s := H) (fun A : Finset X => 2 ≤ A.card)
-  rw [card_filter_not_two_le hH] at htot
-  have := card_filter_two_le_add_one_le hH
-  omega
-
-/-- **A tree on `N` taxa has at most `4 N - 4` sides of splits**, so at most `2 N - 2` edges. -/
-theorem card_le_of_isUnrootedTree {T : Finset (Finset X)} (hT : IsUnrootedTree T) :
-    T.card ≤ 4 * Fintype.card X - 4 := by
-  obtain ⟨H, hH, rfl⟩ := hT
-  have h₁ := card_add_one_le_of_isHierarchy hH
-  have h₂ : (unroot H).card ≤ 2 * (H.erase univ).card := by
-    refine (card_union_le _ _).trans ?_
-    have := card_image_le (s := H.erase univ) (f := compl)
-    omega
-  rw [card_erase_of_mem hH.1] at h₂
-  omega
-
-end Trees
 
 /-! ### The steps of TINNiK -/
 

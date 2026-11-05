@@ -47,7 +47,7 @@ coming down from the root to the LSA, which the induced subnetwork removes. So t
 number of its incident cut edges with one of the four taxa beyond them. This is not forced: the literal statements would need
 the same arguments on the induced subnetwork, for claims that nothing later uses.
 
-What the paper leaves implicit (E4 in `docs/REPORT.md`) is proved along its lines: the cut edges of `G̃₃`
+What the paper leaves implicit (E4 in `docs/reports/ECToBlob.md`) is proved along its lines: the cut edges of `G̃₃`
 between `ã₂` and `b̃₁` form a chain, and those of `G̃₄` an up-set of it, so two choices of `ã₁` are comparable
 (`quartetCuts_subset_or_subset`); and the funnels of two taxa on opposite sides have no node in common, since
 they would have a common node of attachment (`exists_common_node`, in `Induces.attach_funnels`). The

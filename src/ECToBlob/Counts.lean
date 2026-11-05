@@ -6,7 +6,8 @@ public import Basic.Testing.Defs
 public import Phylogenetics.Tree.Detach
 public import ECToBlob.Deterministic
 public import ECToBlob.Remark84
-public import TOBQMC.Counts
+public import Basic.TreeCounts
+public import TINNiK.Counts
 
 /-!
 # ECToBlob: operation counts

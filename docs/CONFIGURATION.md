@@ -34,7 +34,7 @@ The user supplied `ectob_supp.pdf` (6 pages) and `tob-qmc_supp.pdf` (43 pages) f
 
 ## Repository and toolchain
 
-- Public repository [`vltanh/lean4-tob`](https://github.com/vltanh/lean4-tob); branch `formalize/tree-of-blobs`. No draft existed. The first rounds of work were made with Codex; `CREDITS.md` has the rounds.
+- Public repository [`vltanh/lean4-tob`](https://github.com/vltanh/lean4-tob); branch `main`, named `formalize/tree-of-blobs` until 2026-11-04. No draft existed. The first rounds of work were made with Codex; `CREDITS.md` has the rounds.
 - Layout: the Lean code is in `src/`, with `srcDir` in `lakefile.toml`, and the documents other than the `README` in `docs/`. The files for a possible Palomar submission are in `palomar/`, and the checks in `scripts/`.
 - Lean and Mathlib `v4.36.0-rc1`, Mathlib commit `625d8914199bc567cca9b91f90e8e5afafa5ae51`.
 - Lean `v4.36.0-rc2` was released on 2026-10-27, but the corresponding Mathlib release tag returned 404 during setup. Thus rc1 is the newest verified matched pair.
@@ -64,11 +64,15 @@ The library is required by commit, `9948de9`, from GitHub (`lakefile.toml`). `la
 
 On 2026-10-31 the user decided that Palomar is not a target. `src/MainResults.lean` states and proves the main theorems, by hand, and imports the libraries of the five papers and what they use; it replaces `Challenge.lean` and `Solution.lean`, and `scripts/gen_solution.py` and `scripts/sync_challenge_defs.py` are gone. This gives up Palomar's rule that the Challenge imports only Mathlib, deliberately: the user may not submit, and does not care about the limit on its length, and the copy of the definitions was about 800 lines that had to be kept equal to the library's.
 
-[`palomar/`](../palomar) keeps `comparator.json` and `formalization.yaml`, and says what a submission would still need. Comparator runs on `MainResults` as both challenge and solution, so it checks the main theorems under Lean's kernel and NanoDa, and rejects `sorryAx`; it no longer compares a separate statement file with a proof. `scripts/check_kernels.sh` runs it and con-ron, Palomar's three kernels.
+[`palomar/`](../palomar) keeps the files for a possible submission, and says what it would still need. Since 2026-11-04 it has one entry per paper, `palomar/<Paper>/`, with its `comparator.json` and `formalization.yaml`, and the main theorems are in one module per paper, `src/MainResults/<Paper>.lean`. Comparator runs on that module as both challenge and solution, so it checks the main theorems under Lean's kernel and NanoDa, and rejects `sorryAx`; it no longer compares a separate statement file with a proof. `scripts/check_kernels.sh` runs it and con-ron, Palomar's three kernels.
+
+## Decisions of 2026-11-04
+
+The user asked whether each paper should be its own package or repository, pulled in by git submodules, and then said "maybe that's not smart because they can share things!". Agreed ("yes to all"): one repository for now, organized so that each paper could become its own package. [`scripts/layers.toml`](../scripts/layers.toml) lists the units, a paper with its main results and the sources that only it uses, a source that several papers use, or `Basic`, and what each may import, and [`scripts/check_layers.py`](../scripts/check_layers.py) checks it in CI; what two papers share moved to `src/Basic/`. The audit has one report per paper, in [`reports/`](reports). Then the user asked for one Palomar entry per paper: `palomar/<Paper>/`, on `src/MainResults/<Paper>.lean`. If a paper ever moves to a repository of its own, Lake requires it by git and commit, not a submodule.
 
 ## Authorized corrections
 
-The user explicitly approved using the closed probability simplex for TINNiK maximum-likelihood estimation while keeping the generating distribution strictly positive. The open-domain counterexample is `TINNiK.not_exists_generatingCutModel_maximizer`, in `src/TINNiK/Statistics/OpenCutModel.lean`. On 2026-10-27 the user also explicitly approved restricting ECToBlob Theorem 8.2 to generic numerical parameters, outside the exceptional sets in both converse clauses of Assumption 1 for every induced quartet. This is a correction to the printed theorem, justified by E10 in REPORT.md, not an inferred standing hypothesis. The model-level generic claim and the pointwise parameter restriction are kept separate in Lean (`ECToBlob.theorem8_2_generic` and `ECToBlob.theorem8_2`).
+The user explicitly approved using the closed probability simplex for TINNiK maximum-likelihood estimation while keeping the generating distribution strictly positive. The open-domain counterexample is `TINNiK.not_exists_generatingCutModel_maximizer`, in `src/TINNiK/Statistics/OpenCutModel.lean`. On 2026-10-27 the user also explicitly approved restricting ECToBlob Theorem 8.2 to generic numerical parameters, outside the exceptional sets in both converse clauses of Assumption 1 for every induced quartet. This is a correction to the printed theorem, justified by E10 in [`reports/ECToBlob.md`](reports/ECToBlob.md), not an inferred standing hypothesis. The model-level generic claim and the pointwise parameter restriction are kept separate in Lean (`ECToBlob.theorem8_2_generic` and `ECToBlob.theorem8_2`).
 
 The user also approved retaining only the valid forward implication of supplied TOB-QMC supplement Lemma 2: a resolved quartet on the full tree of blobs implies that its induced subnetwork is treelike. The false converse is documented with a five-taxon sunlet counterexample (E23). The main v5 already distinguishes these two kinds of quartet.
 
@@ -76,7 +80,7 @@ The user approved requiring a nontrivial blob in supplied TOB-QMC supplement Lem
 
 ## Correction agreed on 2026-10-31
 
-The user agreed to the correction E11 of REPORT.md: the Cauchy transform is extended continuously at `p = 1`, where the printed formula is undefined, and the Cauchy and CBC variants of ECToBlob's Theorem 8.2 carry the hypothesis of positive alternatives on T1-strict quartets, on the strength of a counterexample that an independent reader checked. A finite value of the transform at `p = 1`, as in the authors' R code, was the alternative, and was not chosen.
+The user agreed to the correction E11 of [`reports/ECToBlob.md`](reports/ECToBlob.md): the Cauchy transform is extended continuously at `p = 1`, where the printed formula is undefined, and the Cauchy and CBC variants of ECToBlob's Theorem 8.2 carry the hypothesis of positive alternatives on T1-strict quartets, on the strength of a counterexample that an independent reader checked. A finite value of the transform at `p = 1`, as in the authors' R code, was the alternative, and was not chosen.
 
 ## Decisions of 2026-11-01
 
@@ -86,8 +90,8 @@ The main session of the formalization chose the rest: each false statement is li
 
 ## Readings
 
-The readings of each paper are in Section 6 of [`REPORT.md`](REPORT.md). The tests are read as implemented in the sources: gene trees are binary in Theorem 8.2, which covers the NMSC and the Displayed Tree model when all displayed trees are binary, and the small-count procedures of MSCquartets are not modelled.
+The readings of each paper are in Section 6 of its report in [`reports/`](reports), and those that ECToBlob, TOB-QMC and TINNiK share in Section 6 of [`REPORT.md`](REPORT.md). The tests are read as implemented in the sources: gene trees are binary in Theorem 8.2, which covers the NMSC and the Displayed Tree model when all displayed trees are binary, and the small-count procedures of MSCquartets are not modelled.
 
 ## Publishing
 
-The repository is public. The user first asked, on 2026-10-31, for everything to be pushed to a private repository, and then made it public. The formalization is on branch `formalize/tree-of-blobs`; the working notes are not in the repository. A push needs the user's go-ahead. No Palomar preflight, submission or registration is authorized.
+The repository is public. The user first asked, on 2026-10-31, for everything to be pushed to a private repository, and then made it public. The formalization is on branch `main` (`formalize/tree-of-blobs` until 2026-11-04, when the user asked to clean it up as `main`); the working notes are not in the repository. A push needs the user's go-ahead. No Palomar preflight, submission or registration is authorized.

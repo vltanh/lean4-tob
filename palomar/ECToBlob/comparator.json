@@ -1,0 +1,27 @@
+{
+  "challenge_module": "MainResults.ECToBlob",
+  "solution_module": "MainResults.ECToBlob",
+  "theorem_names": [
+    "TreeOfBlobs.theorem3_1",
+    "TreeOfBlobs.theorem4_1",
+    "TreeOfBlobs.theorem8_2",
+    "TreeOfBlobs.ectoblob_theorem8_2_displayed",
+    "TreeOfBlobs.ectoblob_displayed_counterexample",
+    "TreeOfBlobs.ectoblob_not_theorem8_2_without_hpos",
+    "TreeOfBlobs.ectoblob_not_consistency_edge_combination_cbc",
+    "TreeOfBlobs.ectoblob_remark3_4_displays",
+    "TreeOfBlobs.ectoblob_consistency_sumOfPairs",
+    "TreeOfBlobs.nanuq_proposition9_source",
+    "TreeOfBlobs.nanuq_theorem36_missing",
+    "TreeOfBlobs.legried_theorem1",
+    "TreeOfBlobs.ectoblob_not_equation33Printed",
+    "TreeOfBlobs.ectoblob_not_theorem8_2_literal"
+  ],
+  "definition_names": [],
+  "permitted_axioms": [
+    "propext",
+    "Quot.sound",
+    "Classical.choice"
+  ],
+  "enable_nanoda": true
+}

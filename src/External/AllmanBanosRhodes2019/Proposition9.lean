@@ -2,8 +2,9 @@ module
 
 public import External.AllmanBanosRhodes2019.NANUQ
 public import External.AllmanBanosRhodes2019.Placement
-public import TOBQMC.Level1
-public import TOBQMC.Lemma1
+public import Basic.InducedSplits
+public import Basic.Level1Blocks
+public import External.HuberEtAl2025.Theorem51
 
 /-!
 # Proposition 9 of NANUQ on binary level-1 networks
@@ -62,6 +63,34 @@ namespace External.AllmanBanosRhodes2019
 
 variable {V E X : Type*} [Fintype V] [Fintype E] [Fintype X] [DecidableEq X]
 variable {N : RootedNetwork V E X} {θ : MetricData E} {ρ : ℝ}
+
+omit [Fintype V] [Fintype E] in
+/-- Four taxa with two on each side of a cut edge are treelike: TOB-QMC's
+`TOBQMC.Level1.isTreelike_of_hasCutSplit`, from Theorem 5.1 of Huber et al. 2025, which is TOB-QMC's Lemma 2. -/
+private theorem isTreelike_of_hasCutSplit (hN : N.IsPhylogenetic) {A Y : Finset X}
+    (hA : N.HasCutSplit (A : Set X)) (hY : Y.card = 4) (hYA : (A ∩ Y).card = 2) : IsTreelike N Y := by
+  obtain ⟨a₁, a₂, hne, h12⟩ := card_eq_two.mp hYA
+  have hin : ∀ a ∈ ({a₁, a₂} : Finset X), a ∈ A ∧ a ∈ Y := by
+    intro a ha
+    rw [← h12] at ha
+    exact mem_inter.mp ha
+  have hPY : ({a₁, a₂} : Finset X) ⊆ Y := fun a ha => (hin a ha).2
+  have hQ : (Y \ {a₁, a₂}).card = 2 := by
+    rw [card_sdiff_of_subset hPY, hY, card_pair hne]
+  obtain ⟨b₁, b₂, -, hb⟩ := card_eq_two.mp hQ
+  have hout : ∀ b ∈ Y \ {a₁, a₂}, b ∉ A := by
+    intro b hb hbA
+    obtain ⟨hbY, hbP⟩ := mem_sdiff.mp hb
+    exact hbP (by rw [← h12]; exact mem_inter.mpr ⟨hbA, hbY⟩)
+  have hcut := External.HuberEtAl2025.theorem5_1_forward hN hA (hin a₁ (by simp)).1 (hin a₂ (by simp)).1
+    (hout b₁ (by rw [hb]; simp)) (hout b₂ (by rw [hb]; simp))
+  have hYeq : ({a₁, a₂, b₁, b₂} : Finset X) = Y := by
+    rw [← union_sdiff_of_subset hPY, hb]
+    ext z
+    simp only [mem_union, mem_insert, mem_singleton]
+    tauto
+  rw [hYeq] at hcut
+  exact isTreelike_of_hasCutSplitOn hY hPY (card_pair hne) hcut
 
 /-! ### Mixtures and pairs -/
 

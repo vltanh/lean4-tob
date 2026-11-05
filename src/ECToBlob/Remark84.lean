@@ -1,6 +1,7 @@
 module
 
 public import Basic.Defs
+public import Basic.InducedSplits
 public import Basic.RhoOne
 public import Phylogenetics.NMSC.DisplayedTreeModel
 public import Basic.Testing.Combining
@@ -447,44 +448,6 @@ def IsNullQuartet (N : RootedNetwork V E X) (s : QuartetTree X) : Prop :=
   InducedCutSplit N s ∨ HasTrivialFourBlob N s.taxa
 
 omit [Fintype X] in
-/-- A cut split of an induced network, from the language of domination. -/
-theorem inducedCutSplit_of_rdom (hN : N.IsPhylogenetic) {a b c d : X}
-    (h : ({a, b, c, d} : Finset X).card = 4) (hr : RDom N a b c d) :
-    InducedCutSplit N (quartetTree a b c d h) := by
-  obtain ⟨_, hac, had, hbc, hbd, _⟩ := ne_of_card_four h
-  refine ⟨{a, b}, by simp [quartetTree], ?_⟩
-  rw [taxa_quartetTree, hasCutSplitOn_iff_separates hN]
-  have hin : ∀ x, x ∈ ((({a, b, c, d} : Finset X) : Set X) ∩ (({a, b} : Finset X) : Set X)) →
-      x = a ∨ x = b := by
-    intro x hx
-    simpa using hx.2
-  have hout : ∀ x, x ∈ ((({a, b, c, d} : Finset X) : Set X) \ (({a, b} : Finset X) : Set X)) →
-      x = c ∨ x = d := by
-    intro x hx
-    have h₁ : x = a ∨ x = b ∨ x = c ∨ x = d := by simpa using hx.1
-    have h₂ : ¬ (x = a ∨ x = b) := by simpa using hx.2
-    tauto
-  obtain ⟨g, ⟨g₁, g₂, g₃, g₄⟩ | ⟨g₁, g₂, g₃, g₄⟩⟩ := hr
-  · refine ⟨g, Or.inl ⟨⟨a, by simp, by simp⟩, ?_, ?_⟩⟩
-    · intro x hx
-      rcases hin x hx with rfl | rfl
-      · exact g₁
-      · exact g₂
-    · intro x hx
-      rcases hout x hx with rfl | rfl
-      · exact g₃
-      · exact g₄
-  · refine ⟨g, Or.inr ⟨⟨c, by simp, by simp [hac.symm, hbc.symm]⟩, ?_, ?_⟩⟩
-    · intro x hx
-      rcases hout x hx with rfl | rfl
-      · exact g₁
-      · exact g₂
-    · intro x hx
-      rcases hin x hx with rfl | rfl
-      · exact g₃
-      · exact g₄
-
-omit [Fintype X] in
 /-- The T1 null on a quartet tree is the T1 null on its tuple. -/
 theorem isNullQuartet_quartetTree_iff (hN : N.IsPhylogenetic) {a b c d : X}
     (h : ({a, b, c, d} : Finset X).card = 4) :
@@ -545,11 +508,6 @@ theorem nullOn_of_forall_multipartition (hN : N.IsPhylogenetic) {T : Finset (Fin
       (fun h => hd (h ▸ ha)) (fun h => hd (h ▸ hb)) (fun h => hrA (h ▸ ha))
       (fun h => hrA (h ▸ hb)) hab
       (step₁ ha hb hc hrA hab hcr).symm (step₁ ha hb hd hrA hab hdr).symm).symm
-
-omit [Fintype X] in
-theorem mem_multipartitionQuartets_empty [Fintype X] {A : Finset X} {s : QuartetTree X}
-    (hs : s ∈ bipartitionQuartets A) : s ∈ multipartitionQuartets (∅ : Finset (Finset X)) A :=
-  mem_filter.2 ⟨hs, by simp, by simp⟩
 
 /-- **The quartet types agree on the T1 null.** At an internal edge of a tree `T`, if all the
 quartets of the multipartition `S_mul` are under the T1 null, then so are all the quartets of the
@@ -1080,21 +1038,6 @@ end Consistency
 section Properties
 
 variable {T₀ : Finset (Finset X)}
-
-/-- A cut split of an induced network, in the language of domination. -/
-theorem exists_rdom_of_inducedCutSplit (hN : N.IsPhylogenetic) {s : QuartetTree X}
-    (h : InducedCutSplit N s) :
-    ∃ (a b c d : X) (hc : ({a, b, c, d} : Finset X).card = 4), s = quartetTree a b c d hc ∧
-      RDom N a b c d := by
-  obtain ⟨B, hB, hcut⟩ := id h
-  have hmem : s ∈ bipartitionQuartets B := by
-    refine mem_filter.2 ⟨mem_univ _, ?_⟩
-    rwa [Finset.inter_eq_left.2 (s.subset_taxa hB)]
-  obtain ⟨a, b, c, d, hc, rfl, ha, hb, hc', hd, hab, hcd⟩ :=
-    exists_tuple (mem_multipartitionQuartets_empty hmem)
-  obtain ⟨_, hac, had, hbc, hbd, _⟩ := ne_of_card_four hc
-  exact ⟨a, b, c, d, hc, rfl,
-    rdom_of_hasCutSplitOn hN hac had hbc hbd (hasCutSplitOn_of_inducedCutSplit hc h)⟩
 
 /-- A cut split of an induced network excludes a trivial 4-blob. -/
 theorem not_hasTrivialFourBlob_of_inducedCutSplit (hN : N.IsPhylogenetic) {s : QuartetTree X}

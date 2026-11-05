@@ -1,6 +1,7 @@
 module
 
 public import Basic.Defs
+public import Basic.InducedSplits
 public import Phylogenetics.Network.Cuts
 public import Basic.Testing.Combining
 public import Basic.Testing.Defs
@@ -156,31 +157,6 @@ theorem mem_treeOfBlobs_of_not_internal {N : RootedNetwork V E X} (hN : N.IsPhyl
       rw [hx, Finset.coe_singleton]
       exact hasSingletonCut N hN x
     simpa using compl_mem_treeOfBlobs this
-
-/-- A side of the tree of blobs is a cut split of the network induced on each quartet it resolves.
--/
-theorem inducedCutSplit_of_mem {N : RootedNetwork V E X} (hN : N.IsPhylogenetic) {A : Finset X}
-    (hA : A ∈ treeOfBlobs N) {s : QuartetTree X} (hs : A ∩ s.taxa ∈ s.val) :
-    InducedCutSplit N s := by
-  obtain ⟨_, _, _, hcut⟩ := mem_filter.1 hA
-  refine ⟨_, hs, ?_⟩
-  have hcard₂ : (A ∩ s.taxa).card = 2 := s.2.2.1 _ hs
-  have hcard₄ : s.taxa.card = 4 := s.card_taxa
-  have hne₁ : ((s.taxa : Set X) ∩ (A : Set X)).Nonempty := by
-    obtain ⟨x, hx⟩ : (A ∩ s.taxa).Nonempty := Finset.card_pos.1 (by omega)
-    exact ⟨x, by simpa [and_comm] using hx⟩
-  have hne₂ : ((s.taxa : Set X) \ (A : Set X)).Nonempty := by
-    have : (s.taxa \ A).Nonempty := by
-      by_contra hemp
-      rw [Finset.not_nonempty_iff_eq_empty, Finset.sdiff_eq_empty_iff_subset] at hemp
-      rw [Finset.inter_eq_right.2 hemp] at hcard₂
-      omega
-    obtain ⟨x, hx⟩ := this
-    exact ⟨x, by simpa using hx⟩
-  refine (hasCutSplitOn_congr ?_).1 (hcut.hasCutSplitOn hN hne₁ hne₂)
-  ext x
-  simp only [Set.mem_inter_iff, Finset.mem_coe, mem_inter]
-  tauto
 
 /-! ### Facts about concordance factors -/
 

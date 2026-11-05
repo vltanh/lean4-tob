@@ -2,16 +2,17 @@ module
 
 public import Phylogenetics.Graph.Tree
 public import Phylogenetics.Network.Induced
-public import TOBQMC.Level1Blobs
+public import Basic.Level1Blobs
 
 /-!
-# Wedge paths, the subnetwork on a set of taxa, and Lemma 4 of TOB-QMC on it
+# Wedge paths, the subnetwork on a set of taxa, and the cycle of a level-1 blob
 
 TOB-QMC reasons on the restriction `N⁻|Y` of a semi-directed network: the union of the wedge paths
 between the taxa of `Y` (§4.1), with degree-two vertices, parallel arcs and degree-two blobs suppressed.
 Wedge paths make sense on the rooted network `N⁺`, and correspond to the paths of `N⁻` with no
 v-structure. This file defines them on `RootedNetwork`, and proves the graph statements of the paper's
-proof of Lemma 4 (lines 541–556 of v5). `TOBQMC.lemma4` in `src/TOBQMC/Level1.lean` assembles them.
+proof of Lemma 4 (lines 541–556 of v5). `TOBQMC.lemma4` in `src/TOBQMC/Level1.lean` assembles them, and NANUQ's
+Proposition 9 and its types of cycles (`src/External/AllmanBanosRhodes2019/`) use them too.
 
 ## The subnetwork and the representation bridge
 

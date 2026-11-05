@@ -1,6 +1,6 @@
 module
 
-public import External.MitchellAllmanRhodes2019.T3Test
+public import Basic.Testing.Defs
 public import Basic.Testing.IID
 public import Basic.Testing.Tails
 
@@ -330,17 +330,6 @@ theorem t1Stat_congr {s : QuartetTree X} (hs : s ∈ treesOn q) (h : ∀ r ∈ t
     h r (mem_treesOn.2 ((QuartetTree.mem_alternatives.1 hr).1.trans (mem_treesOn.1 hs)))
   unfold t1Stat
   rw [sum_congr rfl halt, h s hs, lineStat_congr hs h, mem_treesOn.1 hs, starStat_congr h]
-
-theorem t3Stat_congr (h : ∀ r ∈ treesOn q, c r = c' r) : t3Stat c q = t3Stat c' q := by
-  unfold t3Stat
-  exact iInf_congr fun s => t1Stat_congr s.property h
-
-theorem t3PValue_congr {s : QuartetTree X} (hs : s ∈ treesOn q) (h : ∀ r ∈ treesOn q, c r = c' r) :
-    t3PValue c s = t3PValue c' s := by
-  have halt : ∀ r ∈ s.alternatives, c r = c' r := fun r hr =>
-    h r (mem_treesOn.2 ((QuartetTree.mem_alternatives.1 hr).1.trans (mem_treesOn.1 hs)))
-  unfold t3PValue t1Phi
-  rw [sum_congr rfl halt, h s hs, mem_treesOn.1 hs, t3Stat_congr h]
 
 end Congr
 

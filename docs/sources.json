@@ -69,7 +69,7 @@
       "url": "https://arxiv.org/abs/2205.03466",
       "sha256": "ccfda86079bd3e20b0da51982730fb2af61355767ecf5906f4595e0949772568",
       "bytes": 79447,
-      "content": "The main TeX file. Section 6 of docs/REPORT.md says how it differs from the manuscript."
+      "content": "The main TeX file. Section 6 of docs/reports/AllmanEtAl2023.md says how it differs from the manuscript."
     },
     {
       "paper": "Gusfield et al. 2007",

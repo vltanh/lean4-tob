@@ -1,0 +1,31 @@
+{
+  "challenge_module": "MainResults.TOBQMC",
+  "solution_module": "MainResults.TOBQMC",
+  "theorem_names": [
+    "TreeOfBlobs.theorem1",
+    "TreeOfBlobs.theorem1_optimal",
+    "TreeOfBlobs.theorem2",
+    "TreeOfBlobs.consistency",
+    "TreeOfBlobs.tobqmc_consistency_implementation",
+    "TreeOfBlobs.tobqmc_refinement_not_displayed",
+    "TreeOfBlobs.ane_proposition12",
+    "TreeOfBlobs.huber_theorem5_1",
+    "TreeOfBlobs.dinhBanos_theorem1",
+    "TreeOfBlobs.kaneTao_theorem1",
+    "TreeOfBlobs.tobqmc_not_printedPiMin_pos",
+    "TreeOfBlobs.tobqmc_not_exists_printedError_lt",
+    "TreeOfBlobs.tobqmc_not_lemma2Converse",
+    "TreeOfBlobs.tobqmc_not_supplementLemma7",
+    "TreeOfBlobs.tobqmc_not_supplementTheorem1",
+    "TreeOfBlobs.tobqmc_not_theorem2_without_level_one",
+    "TreeOfBlobs.tobqmc_tendsto_tobqmcT3_rho_one",
+    "TreeOfBlobs.tobqmc_forGenericParams_tendsto"
+  ],
+  "definition_names": [],
+  "permitted_axioms": [
+    "propext",
+    "Quot.sound",
+    "Classical.choice"
+  ],
+  "enable_nanoda": true
+}

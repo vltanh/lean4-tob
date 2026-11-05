@@ -92,7 +92,7 @@ The user asked to formalize Gusfield, Bansal, Bafna, Song 2007 and Allman, Baño
 
 - the project imports the library [`lean4-phylogenetics`](https://github.com/vltanh/lean4-phylogenetics), by commit, in place of its own general layer;
 - that library keeps only what is standard to phylogenetics, each thing acknowledged to its source, and things move upstream only when several projects use them;
-- Palomar is not a target, so there is no Challenge or Solution: main theorems are in [`src/MainResults.lean`](../src/MainResults.lean), the files for a possible submission are in [`palomar/`](../palomar), and the main theorems are checked by several kernels;
+- Palomar is not a target, so there is no Challenge or Solution: main theorems are in [`src/MainResults.lean`](../src/MainResults.lean), since split into one module per paper in [`src/MainResults/`](../src/MainResults), the files for a possible submission are in [`palomar/`](../palomar), one entry per paper since, and the main theorems are checked by several kernels;
 - the layout has [`src/`](../src) and `docs/`, and the working notes are private, in another repository;
 - this repository is public.
 

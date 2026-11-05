@@ -2,7 +2,7 @@ module
 
 public import ECToBlob.DisplayedTreeExample
 public import ECToBlob.Section3
-public import ECToBlob.UnitMetric
+public import Basic.UnitMetric
 
 /-!
 # ECToBlob, equation (3.3) as printed is false

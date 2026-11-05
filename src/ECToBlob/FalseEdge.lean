@@ -2,6 +2,7 @@ module
 
 public import Phylogenetics.Network.Cuts
 public import Phylogenetics.Tree.Splits
+public import Basic.InducedSplits
 public import ECToBlob.Section4
 
 /-!
@@ -343,22 +344,6 @@ reaches it. -/
 def IsStray (N : RootedNetwork V E X) (v : V) (w : X) : Prop :=
   N.graph.Reaches v (N.leaf w) ∧ ∀ f, N.graph.source f = v → ¬ N.Dominates f w
 
-/-- `x₁x₂|x₃x₄` is a cut split of the network induced on the four taxa, in the language of
-domination: `hasCutSplitOn_iff_separates`. -/
-def RDom (N : RootedNetwork V E X) (x₁ x₂ x₃ x₄ : X) : Prop :=
-  ∃ g, (N.Dominates g x₁ ∧ N.Dominates g x₂ ∧ ¬ N.IsBelow g x₃ ∧ ¬ N.IsBelow g x₄) ∨
-    (N.Dominates g x₃ ∧ N.Dominates g x₄ ∧ ¬ N.IsBelow g x₁ ∧ ¬ N.IsBelow g x₂)
-
-theorem RDom.swap {x₁ x₂ x₃ x₄ : X} (h : RDom N x₁ x₂ x₃ x₄) : RDom N x₁ x₂ x₄ x₃ := by
-  obtain ⟨g, ⟨h1, h2, h3, h4⟩ | ⟨h1, h2, h3, h4⟩⟩ := h
-  · exact ⟨g, Or.inl ⟨h1, h2, h4, h3⟩⟩
-  · exact ⟨g, Or.inr ⟨h2, h1, h3, h4⟩⟩
-
-theorem RDom.symm {x₁ x₂ x₃ x₄ : X} (h : RDom N x₁ x₂ x₃ x₄) : RDom N x₃ x₄ x₁ x₂ := by
-  obtain ⟨g, h | h⟩ := h
-  · exact ⟨g, Or.inr h⟩
-  · exact ⟨g, Or.inl h⟩
-
 /-- A stray taxon gives no cut split with three taxa of the hub. -/
 theorem not_rdom_of_isStray (hN : N.IsPhylogenetic) {q : Finset X} {v : V} (hv : IsHub N q v)
     {t₁ t₂ t₃ w : X} (h₁ : t₁ ∈ q) (h₂ : t₂ ∈ q) (h₃ : t₃ ∈ q) (h₁₂ : t₁ ≠ t₂) (h₁₃ : t₁ ≠ t₃)
@@ -436,46 +421,6 @@ theorem isStray_of_enters (hN : N.IsPhylogenetic) {q : Finset X} {v : V} (hv : I
 section Trees
 
 variable [Fintype X] [DecidableEq X]
-
-/-- The taxa `x`, `y` of the side `P` of an edge of `T` are in distinct blocks at that edge. -/
-def Sep (T : Finset (Finset X)) (P : Finset X) (x y : X) : Prop :=
-  x ≠ y ∧ ¬ ∃ C ∈ T, C ⊂ P ∧ x ∈ C ∧ y ∈ C
-
-omit [Fintype X] [DecidableEq X] in
-theorem Sep.symm {T : Finset (Finset X)} {P : Finset X} {x y : X} (h : Sep T P x y) :
-    Sep T P y x :=
-  ⟨h.1.symm, fun ⟨C, hC, hCP, hy, hx⟩ => h.2 ⟨C, hC, hCP, hx, hy⟩⟩
-
-/-- Being in one block is transitive, so at each `z` one of the taxa in distinct blocks is in
-another block than `z`. -/
-theorem Sep.or {T : Finset (Finset X)} (hT : IsSplitFamily T) {P : Finset X} (hP : P ≠ univ)
-    {x y : X} (h : Sep T P x y) (z : X) : Sep T P z x ∨ Sep T P z y := by
-  by_contra hcon
-  rw [not_or] at hcon
-  have key : ∀ {t : X}, ¬ Sep T P z t → z = t ∨ ∃ C ∈ T, C ⊂ P ∧ z ∈ C ∧ t ∈ C := by
-    intro t ht
-    by_cases hzt : z = t
-    · exact Or.inl hzt
-    · right
-      by_contra hne
-      exact ht ⟨hzt, hne⟩
-  rcases key hcon.1 with rfl | ⟨C₁, hC₁, hC₁P, hz₁, hx₁⟩
-  · rcases key hcon.2 with rfl | ⟨C₂, hC₂, hC₂P, hz₂, hy₂⟩
-    · exact h.1 rfl
-    · exact h.2 ⟨C₂, hC₂, hC₂P, hz₂, hy₂⟩
-  · rcases key hcon.2 with rfl | ⟨C₂, hC₂, hC₂P, hz₂, hy₂⟩
-    · exact h.2 ⟨C₁, hC₁, hC₁P, hx₁, hz₁⟩
-    · rcases hT.compatible C₁ hC₁ C₂ hC₂ with hs | hs | hs | hs
-      · exact h.2 ⟨C₂, hC₂, hC₂P, hs hx₁, hy₂⟩
-      · exact h.2 ⟨C₁, hC₁, hC₁P, hx₁, hs hy₂⟩
-      · exact Finset.disjoint_left.1 hs hz₁ hz₂
-      · apply hP
-        rw [eq_univ_iff_forall]
-        intro t
-        have : t ∈ C₁ ∪ C₂ := hs ▸ mem_univ t
-        rcases mem_union.1 this with ht | ht
-        · exact hC₁P.1 ht
-        · exact hC₂P.1 ht
 
 /-- A side with at least two taxa has at least two blocks. -/
 theorem exists_sep {T : Finset (Finset X)} (hT : IsSplitFamily T) {P : Finset X} (hP : P ≠ univ)
@@ -650,188 +595,6 @@ theorem exists_cut_witness (hN : N.IsPhylogenetic) {T : Finset (Finset X)} (hT :
       · exact h'
     exact ⟨a₁, (mem_filter.1 ha₁).1, a₂, (mem_sdiff.1 ha₂).1, b₁, (mem_filter.1 hb₁).1, b₂,
       (mem_sdiff.1 hb₂).1, hsepA, hsepB, hbad⟩
-
-/-! ### Quartet trees as four taxa -/
-
-omit [Fintype X] in
-theorem insert_pair_comm (a b c d : X) : ({c, d, a, b} : Finset X) = {a, b, c, d} := by
-  ext z
-  simp only [mem_insert, mem_singleton]
-  tauto
-
-omit [Fintype X] in
-theorem insert_insert_pair_comm (a b c d : X) : ({a, b, d, c} : Finset X) = {a, b, c, d} := by
-  ext z
-  simp only [mem_insert, mem_singleton]
-  tauto
-
-omit [Fintype X] in
-theorem pair_insert_comm (a b c d : X) : ({b, a, c, d} : Finset X) = {a, b, c, d} := by
-  ext z
-  simp only [mem_insert, mem_singleton]
-  tauto
-
-omit [Fintype X] in
-theorem taxa_quartetTree {a b c d : X} (h : ({a, b, c, d} : Finset X).card = 4) :
-    (quartetTree a b c d h).taxa = {a, b, c, d} := by
-  ext z
-  simp [QuartetTree.taxa, quartetTree]
-  tauto
-
-omit [Fintype X] in
-theorem inter_four {A : Finset X} {a b c d : X} (ha : a ∈ A) (hb : b ∈ A) (hc : c ∉ A)
-    (hd : d ∉ A) :
-    A ∩ {a, b, c, d} = {a, b} := by
-  ext z
-  simp only [mem_inter, mem_insert, mem_singleton]
-  constructor
-  · rintro ⟨hz, rfl | rfl | rfl | rfl⟩
-    · exact Or.inl rfl
-    · exact Or.inr rfl
-    · exact absurd hz hc
-    · exact absurd hz hd
-  · rintro (rfl | rfl)
-    · exact ⟨ha, Or.inl rfl⟩
-    · exact ⟨hb, Or.inr (Or.inl rfl)⟩
-
-/-- A quartet with taxa in distinct blocks at the edge is in the multipartition of the edge. -/
-theorem quartetTree_mem {T : Finset (Finset X)} {A : Finset X} {a b c d : X}
-    (h : ({a, b, c, d} : Finset X).card = 4) (ha : a ∈ A) (hb : b ∈ A) (hc : c ∉ A) (hd : d ∉ A)
-    (hab : Sep T A a b) (hcd : Sep T Aᶜ c d) :
-    quartetTree a b c d h ∈ multipartitionQuartets T A := by
-  have h₁ : A ∩ (quartetTree a b c d h).taxa = {a, b} := by
-    rw [taxa_quartetTree, inter_four ha hb hc hd]
-  have h₂ : Aᶜ ∩ (quartetTree a b c d h).taxa = {c, d} := by
-    rw [taxa_quartetTree, ← insert_pair_comm a b c d,
-      inter_four (mem_compl.2 hc) (mem_compl.2 hd) (fun h' => mem_compl.1 h' ha)
-        (fun h' => mem_compl.1 h' hb)]
-  simp only [multipartitionQuartets, bipartitionQuartets, mem_filter, mem_univ, true_and]
-  refine ⟨?_, ?_, ?_⟩
-  · rw [h₁]
-    simp [quartetTree]
-  · rw [h₁]
-    rintro ⟨C, hC, hCA, hsub⟩
-    exact hab.2 ⟨C, hC, hCA, hsub (by simp), hsub (by simp)⟩
-  · rw [h₂]
-    rintro ⟨C, hC, hCA, hsub⟩
-    exact hcd.2 ⟨C, hC, hCA, hsub (by simp), hsub (by simp)⟩
-
-/-- Every quartet of the multipartition has this form. -/
-theorem exists_tuple {T : Finset (Finset X)} {A : Finset X} {s : QuartetTree X}
-    (hs : s ∈ multipartitionQuartets T A) :
-    ∃ (a b c d : X) (h : ({a, b, c, d} : Finset X).card = 4), s = quartetTree a b c d h ∧ a ∈ A ∧
-      b ∈ A ∧ c ∉ A ∧ d ∉ A ∧ Sep T A a b ∧ Sep T Aᶜ c d := by
-  obtain ⟨hcard, h2, hdisj⟩ := s.2
-  obtain ⟨B, C, hBC, hsv⟩ := Finset.card_eq_two.1 hcard
-  have hB : B ∈ s.val := by simp [hsv]
-  have hC : C ∈ s.val := by simp [hsv]
-  obtain ⟨a, b, hab, rfl⟩ := Finset.card_eq_two.1 (h2 B hB)
-  obtain ⟨c, d, hcd, rfl⟩ := Finset.card_eq_two.1 (h2 C hC)
-  have hdj := Finset.disjoint_left.1 (hdisj _ hB _ hC hBC)
-  have hac : a ≠ c := fun h => hdj (a := a) (by simp) (by simp [h])
-  have had : a ≠ d := fun h => hdj (a := a) (by simp) (by simp [h])
-  have hbc : b ≠ c := fun h => hdj (a := b) (by simp) (by simp [h])
-  have hbd : b ≠ d := fun h => hdj (a := b) (by simp) (by simp [h])
-  have hc4 := TreeMetric.card_four_of_ne hab hac had hbc hbd hcd
-  have htaxa : s.taxa = {a, b, c, d} := by
-    ext z
-    simp [QuartetTree.taxa, hsv]
-    tauto
-  simp only [multipartitionQuartets, bipartitionQuartets, mem_filter, mem_univ, true_and] at hs
-  obtain ⟨hmem, hn₁, hn₂⟩ := hs
-  rw [hsv, mem_insert, mem_singleton] at hmem
-  have hmemA : ∀ {y : X}, y ∈ s.taxa → (y ∈ A ∩ s.taxa ↔ y ∈ A) := fun hy => by simp [hy]
-  have hta : a ∈ s.taxa := by simp [htaxa]
-  have htb : b ∈ s.taxa := by simp [htaxa]
-  have htc : c ∈ s.taxa := by simp [htaxa]
-  have htd : d ∈ s.taxa := by simp [htaxa]
-  have sep : ∀ {P : Finset X} {x y : X}, x ≠ y → x ∈ P ∩ s.taxa → y ∈ P ∩ s.taxa →
-      P ∩ s.taxa = {x, y} → (¬ ∃ C ∈ T, C ⊂ P ∧ P ∩ s.taxa ⊆ C) → Sep T P x y := by
-    intro P x y hxy _ _ hP hn
-    refine ⟨hxy, ?_⟩
-    rintro ⟨C, hC, hCP, hx, hy⟩
-    refine hn ⟨C, hC, hCP, ?_⟩
-    rw [hP]
-    intro z hz
-    rcases mem_insert.1 hz with rfl | hz
-    · exact hx
-    · rw [mem_singleton.1 hz]
-      exact hy
-  rcases hmem with hA | hA
-  · have ha : a ∈ A := ((hmemA hta).1 (by simp [hA]))
-    have hb : b ∈ A := ((hmemA htb).1 (by simp [hA]))
-    have hc : c ∉ A := fun h => by
-      have : c ∈ A ∩ s.taxa := mem_inter.2 ⟨h, htc⟩
-      rw [hA] at this
-      simp [hac.symm, hbc.symm] at this
-    have hd : d ∉ A := fun h => by
-      have : d ∈ A ∩ s.taxa := mem_inter.2 ⟨h, htd⟩
-      rw [hA] at this
-      simp [had.symm, hbd.symm] at this
-    have hAc : Aᶜ ∩ s.taxa = {c, d} := by
-      rw [htaxa, ← insert_pair_comm a b c d,
-        inter_four (mem_compl.2 hc) (mem_compl.2 hd) (fun h' => mem_compl.1 h' ha)
-          (fun h' => mem_compl.1 h' hb)]
-    refine ⟨a, b, c, d, hc4, Subtype.ext hsv, ha, hb, hc, hd, ?_, ?_⟩
-    · exact sep hab (by simp [hA]) (by simp [hA]) hA hn₁
-    · exact sep hcd (by simp [hAc]) (by simp [hAc]) hAc hn₂
-  · have ha : c ∈ A := ((hmemA htc).1 (by simp [hA]))
-    have hb : d ∈ A := ((hmemA htd).1 (by simp [hA]))
-    have hc : a ∉ A := fun h => by
-      have : a ∈ A ∩ s.taxa := mem_inter.2 ⟨h, hta⟩
-      rw [hA] at this
-      simp [hac, had] at this
-    have hd : b ∉ A := fun h => by
-      have : b ∈ A ∩ s.taxa := mem_inter.2 ⟨h, htb⟩
-      rw [hA] at this
-      simp [hbc, hbd] at this
-    have hAc : Aᶜ ∩ s.taxa = {a, b} := by
-      rw [htaxa, inter_four (mem_compl.2 hc) (mem_compl.2 hd) (fun h' => mem_compl.1 h' ha)
-          (fun h' => mem_compl.1 h' hb)]
-    have hc4' := TreeMetric.card_four_of_ne hcd hac.symm hbc.symm had.symm hbd.symm hab
-    refine ⟨c, d, a, b, hc4', Subtype.ext ?_, ha, hb, hc, hd, ?_, ?_⟩
-    · rw [hsv]
-      simp [quartetTree, Finset.pair_comm]
-    · exact sep hcd (by simp [hA]) (by simp [hA]) hA hn₁
-    · exact sep hab (by simp [hAc]) (by simp [hAc]) hAc hn₂
-
-omit [Fintype X] in
-/-- A cut split of an induced network, read from a quartet tree. -/
-theorem hasCutSplitOn_of_inducedCutSplit {a b c d : X} (h : ({a, b, c, d} : Finset X).card = 4)
-    (hi : InducedCutSplit N (quartetTree a b c d h)) :
-    N.HasCutSplitOn (({a, b, c, d} : Finset X) : Set X) (({a, b} : Finset X) : Set X) := by
-  obtain ⟨B, hB, hcut⟩ := hi
-  rw [taxa_quartetTree] at hcut
-  simp only [quartetTree, mem_insert, mem_singleton] at hB
-  rcases hB with rfl | rfl
-  · exact hcut
-  · obtain ⟨_, hac, had, hbc, hbd, _⟩ := ne_of_card_four h
-    refine (hasCutSplitOn_congr ?_).1 ((hasCutSplitOn_compl _ _).2 hcut)
-    ext z
-    simp only [Finset.coe_insert, Finset.coe_singleton, Set.mem_inter_iff, Set.mem_compl_iff,
-      Set.mem_insert_iff, Set.mem_singleton_iff]
-    constructor
-    · rintro ⟨rfl | rfl | rfl | rfl, hn⟩
-      · exact ⟨Or.inl rfl, Or.inl rfl⟩
-      · exact ⟨Or.inr (Or.inl rfl), Or.inr rfl⟩
-      · exact absurd (Or.inl rfl) hn
-      · exact absurd (Or.inr rfl) hn
-    · rintro ⟨hz, rfl | rfl⟩
-      · exact ⟨hz, by simp [hac, had]⟩
-      · exact ⟨hz, by simp [hbc, hbd]⟩
-
-omit [Fintype X] in
-/-- A cut split of an induced network in the language of domination. -/
-theorem rdom_of_hasCutSplitOn (hN : N.IsPhylogenetic) {a b c d : X} (hac : a ≠ c) (had : a ≠ d)
-    (hbc : b ≠ c) (hbd : b ≠ d)
-    (h : N.HasCutSplitOn (({a, b, c, d} : Finset X) : Set X) (({a, b} : Finset X) : Set X)) :
-    RDom N a b c d := by
-  rw [hasCutSplitOn_iff_separates hN] at h
-  obtain ⟨g, ⟨_, h⟩ | ⟨_, h⟩⟩ := h
-  · exact ⟨g, Or.inl ⟨h.1 a (by simp), h.1 b (by simp), h.2 c (by simp [hac.symm, hbc.symm]),
-      h.2 d (by simp [had.symm, hbd.symm])⟩⟩
-  · exact ⟨g, Or.inr ⟨h.1 c (by simp [hac.symm, hbc.symm]), h.1 d (by simp [had.symm, hbd.symm]),
-      h.2 a (by simp), h.2 b (by simp)⟩⟩
 
 /-! ### The heart of the repair -/
 
